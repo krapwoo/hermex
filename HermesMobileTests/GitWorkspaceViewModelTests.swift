@@ -514,7 +514,7 @@ final class GitWorkspaceViewModelTests: APIClientTestCase {
         XCTAssertNil(GitActionToastState.toastAnimation(reduceMotion: true))
         XCTAssertEqual(
             GitActionToastState.toastAnimation(reduceMotion: false),
-            .easeInOut(duration: 0.18)
+            .easeInOut(duration: HermesMotion.Duration.d200)
         )
     }
 

@@ -25,14 +25,14 @@ struct GitInlineCommitButton: View {
     private var isRunning: Bool { runningPhase != nil }
     private var title: String { runningPhase?.inlineTitle ?? String(localized: "Commit & Push") }
 
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 12, style: .continuous) }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous) }
 
     var body: some View {
         Button {
             HapticButtonHaptics.tap(isEnabled: isHapticsEnabled)
             action()
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s8) {
                 Group {
                     if isRunning {
                         ProgressView().controlSize(.small)
@@ -44,12 +44,12 @@ struct GitInlineCommitButton: View {
                 .frame(width: 18, height: 18)
 
                 Text(title)
-                    .font(AppFont.mono(style: .subheadline))
+                    .appFont(.subheadline, design: .monospaced)
                     .lineLimit(1)
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .adaptiveGlass(.regular, isInteractive: true, fallbackMaterial: .ultraThinMaterial, in: shape)
             .clipShape(shape)
             .chatMinimumHitTarget(in: shape)

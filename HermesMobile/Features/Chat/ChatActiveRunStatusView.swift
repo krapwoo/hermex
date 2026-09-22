@@ -7,17 +7,17 @@ struct ChatActiveRunStatusView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             progressIndicator
 
             Text(presentation.label)
-                .font(.caption.weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 .minimumScaleFactor(0.88)
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 7)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .chatTimelineAccessorySurface(
             fallbackMaterial: .regularMaterial,
             in: Capsule(style: .continuous)
@@ -43,7 +43,7 @@ struct ChatActiveRunStatusView: View {
 }
 
 #Preview("Active Run Status") {
-    VStack(spacing: 12) {
+    VStack(spacing: HermesSpacing.s12) {
         ChatActiveRunStatusView(
             presentation: ChatActiveRunStatusPresentation(kind: .active)
         )

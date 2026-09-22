@@ -7,10 +7,10 @@ struct HeroBadge: View {
 
     var body: some View {
         Label(title, systemImage: systemImage)
-            .font(.caption.weight(.medium))
+            .appFont(.caption, weight: .medium)
             .foregroundStyle(.white.opacity(0.68))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .background(Color.white.opacity(0.06), in: Capsule())
             .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
@@ -25,21 +25,21 @@ struct SetupStepRow: View {
     var copyValue: String?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             Text(number)
-                .font(.caption.weight(.bold))
+                .appFont(.caption, weight: .bold)
                 .foregroundStyle(.black)
                 .frame(width: 23, height: 23)
                 .background(Color(red: 1.0, green: 0.74, blue: 0.10), in: Circle())
-                .padding(.top, 1)
+                .padding(.top, HermesSpacing.s2)
 
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.white)
 
                 Text(subtitle)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.white.opacity(0.5))
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -59,8 +59,8 @@ struct OnboardingCommandPill: View {
     @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
 
     var body: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 0) {
+        HStack(spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s0) {
                 if let prefix {
                     Text("\(prefix) ")
                         .foregroundStyle(.white.opacity(0.28))
@@ -83,21 +83,21 @@ struct OnboardingCommandPill: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(didCopy ? Color(red: 0.45, green: 0.92, blue: 0.56) : .white.opacity(0.76))
                         .frame(width: 28, height: 28)
-                        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(didCopy ? String(localized: "Copied Web UI repository link") : String(localized: "Copy Web UI repository link"))
             }
         }
-        .font(.system(.caption, design: .monospaced, weight: .medium))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .appFont(.caption, weight: .medium, design: .monospaced)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .fill(Color.white.opacity(0.055))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
@@ -109,27 +109,27 @@ struct OnboardingField<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color(red: 1.0, green: 0.74, blue: 0.10))
                 .frame(width: 24)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(.white.opacity(0.5))
 
                 content
-                    .font(.body.weight(.medium))
+                    .appFont(.body, weight: .medium)
                     .foregroundStyle(.white)
             }
         }
-        .padding(.horizontal, 13)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.24), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s12)
+        .background(Color.black.opacity(0.24), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
@@ -142,28 +142,28 @@ struct OnboardingStatusBanner: View {
     var showsProgress = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             if showsProgress {
                 ProgressView()
                     .tint(tint)
-                    .padding(.top, 1)
+                    .padding(.top, HermesSpacing.s2)
             } else {
                 Image(systemName: systemImage)
                     .foregroundStyle(tint)
-                    .padding(.top, 1)
+                    .padding(.top, HermesSpacing.s2)
             }
 
             Text(text)
-                .font(.footnote.weight(.medium))
+                .appFont(.footnote, weight: .medium)
                 .foregroundStyle(.white.opacity(0.76))
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 11)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .stroke(tint.opacity(0.18), lineWidth: 1)
         )
     }
@@ -172,14 +172,14 @@ struct OnboardingStatusBanner: View {
 struct OnboardingPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
+            .appFont(.subheadline, weight: .semibold)
             .foregroundStyle(.black)
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 15)
-            .background(Color(red: 1.0, green: 0.74, blue: 0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s16)
+            .background(Color(red: 1.0, green: 0.74, blue: 0.10), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
             .opacity(configuration.isPressed ? 0.78 : 1)
     }
 }
@@ -193,24 +193,24 @@ struct OnboardingStepHeader: View {
     private let accent = Color(red: 1.0, green: 0.74, blue: 0.10)
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: HermesSpacing.s20) {
             Image(systemName: icon)
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(.white)
                 .frame(width: 80, height: 80)
                 .background(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous)
                         .fill(Color.white.opacity(0.06))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous)
                         .stroke(accent.opacity(0.35), lineWidth: 1)
                 )
                 .accessibilityHidden(true)
 
-            VStack(spacing: 10) {
+            VStack(spacing: HermesSpacing.s12) {
                 Text("STEP \(stepNumber)")
-                    .font(.caption2.weight(.bold))
+                    .appFont(.caption2, weight: .bold)
                     .foregroundStyle(accent.opacity(0.8))
                     .kerning(1.5)
 
@@ -221,7 +221,7 @@ struct OnboardingStepHeader: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(description)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.white.opacity(0.45))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -238,10 +238,10 @@ struct OnboardingAgentPromptCard: View {
     @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             ScrollView(.vertical, showsIndicators: true) {
                 Text(prompt)
-                    .font(.system(.footnote, design: .monospaced))
+                    .appFont(.footnote, design: .monospaced)
                     .foregroundStyle(.white.opacity(0.82))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
@@ -252,24 +252,24 @@ struct OnboardingAgentPromptCard: View {
                 UIPasteboard.general.string = prompt
                 hasCopied = true
                 ChatHaptics.copied(isEnabled: isHapticsEnabled)
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(.easeInOut(duration: HermesMotion.Duration.d200)) {
                     didCopyRecently = true
                 }
             } label: {
                 Label(didCopyRecently ? String(localized: "Copied") : String(localized: "Copy prompt"), systemImage: didCopyRecently ? "checkmark" : "doc.on.doc")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(OnboardingPrimaryButtonStyle())
             .accessibilityLabel(didCopyRecently ? String(localized: "Agent setup prompt copied") : String(localized: "Copy agent setup prompt"))
         }
-        .padding(16)
+        .padding(HermesSpacing.s16)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color.white.opacity(0.055))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
     }
@@ -282,7 +282,7 @@ struct OnboardingPageIndicator: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             ForEach(0..<pageCount, id: \.self) { index in
                 Capsule()
                     .fill(index == currentPage ? Color.white : Color.white.opacity(0.18))
@@ -298,16 +298,16 @@ struct OnboardingPageIndicator: View {
 struct OnboardingSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
+            .appFont(.subheadline, weight: .semibold)
             .foregroundStyle(.white.opacity(0.84))
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 15)
-            .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s16)
+            .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
             )
             .opacity(configuration.isPressed ? 0.72 : 1)

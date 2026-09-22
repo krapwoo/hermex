@@ -22,7 +22,7 @@ final class GitActionToastState {
     private var dismissTask: Task<Void, Never>?
 
     static func toastAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeInOut(duration: 0.18)
+        reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d200)
     }
 
     static func toastTransition(reduceMotion: Bool) -> AnyTransition {
@@ -100,8 +100,8 @@ struct GitActionToastOverlay: View {
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.top, HermesSpacing.s12)
         .transition(GitActionToastState.toastTransition(reduceMotion: reduceMotion))
     }
 
@@ -112,16 +112,16 @@ struct GitActionToastOverlay: View {
         isDismissable: Bool,
         @ViewBuilder icon: () -> Icon
     ) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             icon().frame(width: 28, height: 28)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(AppFont.subheadline(weight: .semibold))
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                Text(title).appFont(.subheadline, weight: .semibold)
                 if let subtitle, !subtitle.isEmpty {
-                    Text(subtitle).font(AppFont.caption()).foregroundStyle(.secondary)
+                    Text(subtitle).appFont(.caption).foregroundStyle(.secondary)
                 }
                 ForEach(detailLines, id: \.self) { line in
-                    Text(line).font(AppFont.caption()).foregroundStyle(.secondary)
+                    Text(line).appFont(.caption).foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -134,10 +134,10 @@ struct GitActionToastOverlay: View {
                 .accessibilityLabel("Dismiss")
             }
         }
-        .padding(14)
-        .adaptiveGlass(in: .rect(cornerRadius: 18))
+        .padding(HermesSpacing.s16)
+        .adaptiveGlass(in: .rect(cornerRadius: HermesRadius.r20))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         }
     }

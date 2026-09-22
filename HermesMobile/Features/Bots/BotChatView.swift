@@ -52,7 +52,7 @@ import SwiftUI
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             ScrollViewReader { proxy in
                 ScrollView {
                     // Eager over a bounded window, like the Sessions transcript: a
@@ -65,7 +65,7 @@ import SwiftUI
                         livePrompt: livePrompt, turnStartedAt: model.turnStartedAt, isMidTurn: isStreaming
                     )
                     let folds = turnFolds(windowStart: times.start, hasLivePrompt: livePrompt != nil)
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                         if window.hasEarlier(count: model.messages.count) {
                             // The window widens in place, so there is no loading state.
                             LoadOlderMessagesButton(isLoading: false) { loadEarlier(proxy: proxy) }
@@ -138,8 +138,8 @@ import SwiftUI
                         Color.clear.frame(height: 1).id("bot-transcript-bottom")
                     }
                     .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 20 : 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 44)
+                    .padding(.top, HermesSpacing.s16)
+                    .padding(.bottom, HermesSpacing.s48)
                     // A tapped row must stay under the finger: stop following so
                     // neither the size-change anchor nor the next activity update
                     // moves the reader. Latest brings them back.
@@ -202,7 +202,7 @@ import SwiftUI
                 .contentShape(Rectangle())
                 .simultaneousGesture(TapGesture().onEnded { if composerFocused { composerFocused = false } })
                 .adaptiveSoftScrollEdges(.top)
-                .safeAreaInset(edge: .bottom, spacing: 0) { composer }
+                .safeAreaInset(edge: .bottom, spacing: HermesSpacing.s0) { composer }
             }
         }
         .navigationTitle(model.profile.name)
@@ -212,11 +212,11 @@ import SwiftUI
             // way into its profile. iOS 26 draws the toolbar glass; older systems get a material.
             ToolbarItem(placement: .topBarLeading) {
                 Button { showingProfileEditor = true } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: HermesSpacing.s8) {
                         BotAvatarView(profile: model.profile,
                                       avatar: BotAvatarStore.shared.images(connectionID: model.connection.id)[model.profile.id],
                                       size: 30, motion: titleFaceMotion, expression: model.titleFace.expression)
-                        Text(model.profile.name).font(.headline).foregroundStyle(.primary).lineLimit(1)
+                        Text(model.profile.name).appFont(.headline).foregroundStyle(.primary).lineLimit(1)
                     }
                     .modifier(BotChatTitlePillFallback())
                 }
@@ -449,7 +449,7 @@ struct BotChatTitlePillFallback: ViewModifier {
         if #available(iOS 26, *) {
             content
         } else {
-            content.padding(.leading, 4).padding(.trailing, 12).padding(.vertical, 4)
+            content.padding(.leading, HermesSpacing.s4).padding(.trailing, HermesSpacing.s12).padding(.vertical, HermesSpacing.s4)
                 .background(.regularMaterial, in: Capsule())
         }
     }

@@ -133,11 +133,11 @@ private struct ListenPlaybackBar: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
+        VStack(spacing: HermesSpacing.s0) {
+            HStack(spacing: HermesSpacing.s12) {
                 playPauseButton
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     scrubber
                     timeRow
                 }
@@ -146,8 +146,8 @@ private struct ListenPlaybackBar: View {
                 speedMenu
                 stopButton
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.vertical, HermesSpacing.s8)
 
             Divider()
         }
@@ -199,13 +199,14 @@ private struct ListenPlaybackBar: View {
     }
 
     private var timeRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Text(AudioDurationFormatter.string(from: boundedDisplayTime))
             Text("/")
             Text(AudioDurationFormatter.string(from: duration))
             Spacer(minLength: 0)
         }
-        .font(AppFont.caption2().monospacedDigit())
+        .appFont(.caption2)
+        .monospacedDigit()
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(String(localized: "\(AudioDurationFormatter.string(from: boundedDisplayTime)) of \(AudioDurationFormatter.string(from: duration))"))
@@ -227,10 +228,10 @@ private struct ListenPlaybackBar: View {
             }
         } label: {
             Text(speed.title)
-                .font(AppFont.caption().weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .monospacedDigit()
                 .frame(minWidth: 36, minHeight: 30)
-                .padding(.horizontal, 6)
+                .padding(.horizontal, HermesSpacing.s8)
                 .background(Color(.secondarySystemBackground), in: Capsule())
         }
         .disabled(!isReady)
@@ -723,7 +724,7 @@ struct ChatView: View {
             )
 
             ZStack(alignment: .bottom) {
-                VStack(spacing: 0) {
+                VStack(spacing: HermesSpacing.s0) {
                     if viewModel.isViewingCachedData {
                         ChatOfflineCacheBanner()
                     }
@@ -1325,7 +1326,7 @@ struct ChatView: View {
                     }
                 )
                 .id(clarificationPrompt.id)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, HermesSpacing.s16)
                 .padding(.bottom, composerHeight + 8)
                 .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
             }
@@ -3050,16 +3051,16 @@ struct ChatToolbarTitleLabel: View {
     let subtitle: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(title)
-                .font(.subheadline.weight(.semibold))
+                .appFont(.subheadline, weight: .semibold)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
             if showsSubtitle, let subtitle {
                 Text(subtitle)
-                    .font(.caption2)
+                    .appFont(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -3089,10 +3090,10 @@ struct ChatToolbarActionCluster<Content: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: HermesSpacing.s4) {
             content
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, HermesSpacing.s4)
         .frame(minHeight: 44)
         .modifier(LegacyToolbarClusterStyle())
         .accessibilityElement(children: .contain)
@@ -3142,6 +3143,7 @@ struct ChatToolbarActionSlot<Content: View>: View {
     var body: some View {
         content
             .labelStyle(.iconOnly)
+            // Icon sizing: .iconOnly hides the label's text, so this sizes the SF Symbol.
             .font(.body)
             .frame(width: 44, height: 44)
             .contentShape(Rectangle())

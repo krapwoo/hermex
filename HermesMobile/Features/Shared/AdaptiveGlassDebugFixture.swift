@@ -26,12 +26,12 @@ private struct AdaptiveGlassDebugFixture: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s20) {
             Text(verbatim: "Adaptive surfaces")
-                .font(.headline)
+                .appFont(.headline)
 
-            HStack(spacing: 14) {
-                AdaptiveGlassContainer(spacing: 14) {
+            HStack(spacing: HermesSpacing.s16) {
+                AdaptiveGlassContainer(spacing: HermesSpacing.s16) {
                     sampleCard(
                         title: "Glass",
                         subtitle: "iOS 26 path",
@@ -53,9 +53,9 @@ private struct AdaptiveGlassDebugFixture: View {
             Button {
             } label: {
                 Label { Text(verbatim: "Interactive") } icon: { Image(systemName: "hand.tap") }
-                    .font(.callout.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, HermesSpacing.s12)
             }
             .buttonStyle(.plain)
             .adaptiveGlass(
@@ -66,7 +66,7 @@ private struct AdaptiveGlassDebugFixture: View {
             )
             .defaultAppStorage(AdaptiveGlassPreviewDefaults.glassEnabled)
         }
-        .padding(24)
+        .padding(HermesSpacing.s24)
         .frame(maxWidth: 390)
         .background(Color(.systemGroupedBackground))
     }
@@ -77,26 +77,26 @@ private struct AdaptiveGlassDebugFixture: View {
         systemImage: String,
         tint: Color?
     ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Image(systemName: systemImage)
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(tint ?? .secondary)
                 .scaleEffect(reduceMotion ? 1 : 1.04)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                 Text(subtitle)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
-        .padding(16)
+        .padding(HermesSpacing.s16)
         .adaptiveGlass(
             tint: tint,
             fallbackMaterial: .regularMaterial,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            in: RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(verbatim: "\(title) adaptive surface"))

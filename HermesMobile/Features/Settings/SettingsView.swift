@@ -689,9 +689,9 @@ struct SettingsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 36)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.top, HermesSpacing.s20)
+            .padding(.bottom, HermesSpacing.s40)
             .adaptiveReadableContent(maxWidth: AdaptiveReadableContentWidth.secondaryDestination)
         }
         .background(Color(.systemBackground))
@@ -1005,7 +1005,7 @@ struct SettingsView: View {
                 }
             }
             .disabled(isUpdateApplyInFlight)
-            .padding(.top, 4)
+            .padding(.top, HermesSpacing.s4)
         }
     }
 
@@ -1054,12 +1054,12 @@ struct SettingsView: View {
     }
 
     private func updateNoteRow(systemImage: String, tint: Color, text: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: HermesSpacing.s8) {
             Image(systemName: systemImage)
                 .foregroundStyle(tint)
 
             Text(text)
-                .font(AppFont.footnote())
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -1084,12 +1084,12 @@ struct SettingsView: View {
         case .recovering:
             updateProgressRow(String(localized: "Updating & restarting…"))
         case .blocked:
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 updateMessageRow(systemImage: "clock", tint: .secondary)
                 updateActionButton(title: String(localized: "Retry update"))
             }
         case .failed:
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 updateMessageRow(systemImage: "exclamationmark.triangle", tint: .orange)
                 updateActionButton(title: String(localized: "Retry update"))
             }
@@ -1104,28 +1104,28 @@ struct SettingsView: View {
         // forced check is running, block Update/Retry so apply can't race the
         // in-flight POST /api/updates/check (#308 review).
         .disabled(isCheckingForUpdates)
-        .padding(.top, 4)
+        .padding(.top, HermesSpacing.s4)
     }
 
     private func updateProgressRow(_ text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             ProgressView()
 
             Text(text)
-                .font(AppFont.footnote())
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
         }
-        .padding(.top, 4)
+        .padding(.top, HermesSpacing.s4)
         .accessibilityElement(children: .combine)
     }
 
     private func updateMessageRow(systemImage: String, tint: Color) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: HermesSpacing.s8) {
             Image(systemName: systemImage)
                 .foregroundStyle(tint)
 
             Text(updateApplyMessage ?? String(localized: "The update could not be applied."))
-                .font(AppFont.footnote())
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -1439,22 +1439,22 @@ private struct SessionIdentitySettingsEditor: View {
     let previewForeground: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Text(previewInitials)
-                    .font(AppFont.caption(weight: .semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(previewForeground)
                     .frame(width: avatarPreviewSize, height: avatarPreviewSize)
                     .background(previewColor, in: Circle())
                     .overlay(Circle().stroke(.white.opacity(0.18), lineWidth: 1))
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text("Sessions Avatar")
-                        .font(AppFont.subheadline(weight: .medium))
+                        .appFont(.subheadline, weight: .medium)
 
                     Text("Stored on this device only.")
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -1483,14 +1483,14 @@ private struct SettingsTextFieldRow: View {
     var body: some View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     titleLabel
                     textField
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: HermesSpacing.s12) {
                     titleLabel
 
                     Spacer(minLength: 12)
@@ -1505,7 +1505,7 @@ private struct SettingsTextFieldRow: View {
 
     private var titleLabel: some View {
         Text(title)
-            .font(AppFont.subheadline())
+            .appFont(.subheadline)
     }
 
     @ViewBuilder
@@ -1517,7 +1517,7 @@ private struct SettingsTextFieldRow: View {
                 TextField(placeholder, text: $text)
             }
         }
-        .font(AppFont.subheadline())
+        .appFont(.subheadline)
         .textInputAutocapitalization(autocapitalization)
         .autocorrectionDisabled()
         .keyboardType(keyboardType)
@@ -1535,32 +1535,32 @@ private struct HeaderLogoColorSettings: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Text("Header Logo Color")
                     .foregroundStyle(.primary)
 
                 Spacer(minLength: 12)
 
                 Text(selectedColorName)
-                    .font(.caption.weight(.medium))
+                    .appFont(.caption, weight: .medium)
                     .foregroundStyle(.secondary)
             }
-            .font(.subheadline)
+            .appFont(.subheadline)
 
             HermesHeaderLogo(selectedColor: HeaderLogoColor.color(for: selectedHex))
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color.black.opacity(0.26), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .padding(.horizontal, HermesSpacing.s12)
+                .padding(.vertical, HermesSpacing.s12)
+                .background(Color.black.opacity(0.26), in: RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
                 .accessibilityHidden(true)
 
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 ForEach(HeaderLogoColor.presets) { preset in
                     HeaderLogoColorPresetButton(
                         preset: preset,
@@ -1572,7 +1572,7 @@ private struct HeaderLogoColorSettings: View {
             }
 
             ColorPicker("Custom", selection: customColor, supportsOpacity: false)
-                .font(.subheadline)
+                .appFont(.subheadline)
         }
     }
 }
@@ -1621,21 +1621,21 @@ private struct SettingsCard<Content: View>: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous)
 
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             Text(title)
                 .textCase(.uppercase)
-                .font(AppFont.caption(weight: .semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, HermesSpacing.s4)
+                .padding(.bottom, HermesSpacing.s8)
 
             VStack(alignment: .leading, spacing: contentSpacing) {
                 content
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.vertical, HermesSpacing.s16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 shape.fill(Color(.secondarySystemBackground).opacity(cardFillOpacity))
@@ -1685,7 +1685,7 @@ private struct SettingsPickerRow<SelectionValue: Hashable, Options: View>: View 
     var body: some View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     SettingsRowLabel(title: title, systemImage: systemImage)
                         .accessibilityHidden(true)
 
@@ -1693,7 +1693,7 @@ private struct SettingsPickerRow<SelectionValue: Hashable, Options: View>: View 
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: HermesSpacing.s12) {
                     SettingsRowLabel(title: title, systemImage: systemImage)
                         .accessibilityHidden(true)
 
@@ -1721,7 +1721,7 @@ private struct SettingsRowLabel: View {
     let systemImage: String
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             Image(systemName: systemImage)
                 .font(AppFont.subheadline(weight: .medium))
                 .foregroundStyle(.secondary)
@@ -1729,7 +1729,7 @@ private struct SettingsRowLabel: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(AppFont.subheadline(weight: .medium))
+                .appFont(.subheadline, weight: .medium)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1745,7 +1745,7 @@ private struct SettingsFootnote: View {
 
     var body: some View {
         Text(text)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -1761,13 +1761,13 @@ private struct SettingsErrorFootnote: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 6) {
+        HStack(alignment: .top, spacing: HermesSpacing.s8) {
             Image(systemName: "exclamationmark.triangle")
                 .font(AppFont.caption())
                 .foregroundStyle(.orange)
 
             Text(text)
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1784,14 +1784,14 @@ private struct SettingsValueRow<Trailing: View>: View {
     var body: some View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     titleText
 
                     trailing
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: HermesSpacing.s12) {
                     titleText
 
                     Spacer(minLength: 16)
@@ -1800,7 +1800,7 @@ private struct SettingsValueRow<Trailing: View>: View {
                 }
             }
         }
-        .font(AppFont.subheadline())
+        .appFont(.subheadline)
         .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
     }
 
@@ -1847,29 +1847,29 @@ private struct SettingsAccessoryRow: View {
     var body: some View {
         Group {
             if dynamicTypeSize.isAccessibilitySize, let value {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                    HStack(spacing: HermesSpacing.s12) {
                         leadingLabel
                         Spacer(minLength: 8)
                         accessoryIcon
                     }
 
                     Text(value)
-                        .font(AppFont.caption(weight: .medium))
+                        .appFont(.caption, weight: .medium)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
                         .multilineTextAlignment(.leading)
-                        .padding(.leading, 34)
+                        .padding(.leading, HermesSpacing.s32)
                 }
             } else {
-                HStack(alignment: .center, spacing: 10) {
+                HStack(alignment: .center, spacing: HermesSpacing.s12) {
                     leadingLabel
 
                     Spacer(minLength: 8)
 
                     if let value {
                         Text(value)
-                            .font(AppFont.caption(weight: .medium))
+                            .appFont(.caption, weight: .medium)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -1881,14 +1881,14 @@ private struct SettingsAccessoryRow: View {
             }
         }
         .foregroundStyle(.primary)
-        .padding(.vertical, 7)
+        .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
     private var leadingLabel: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             Image(systemName: systemImage)
                 .font(AppFont.subheadline(weight: .medium))
                 .foregroundStyle(.secondary)
@@ -1896,7 +1896,7 @@ private struct SettingsAccessoryRow: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(AppFont.subheadline(weight: .medium))
+                .appFont(.subheadline, weight: .medium)
                 .layoutPriority(1)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1922,10 +1922,10 @@ private struct CustomHeadersSettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 CustomHeadersEditor(headers: $headers)
             }
-            .padding(20)
+            .padding(HermesSpacing.s20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("Connection Headers")
@@ -1979,7 +1979,7 @@ private struct SettingsButton: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
 
         Button(role: role, action: action) {
             Group {
@@ -1989,7 +1989,7 @@ private struct SettingsButton: View {
                     Text(title)
                 }
             }
-            .font(AppFont.subheadline(weight: .medium))
+            .appFont(.subheadline, weight: .medium)
             .foregroundStyle(role == .destructive ? .red : .primary)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 46)
@@ -2024,12 +2024,12 @@ private struct SettingsStatusPill: View {
 
     var body: some View {
         Text(label)
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, weight: .semibold)
             .foregroundStyle(tint)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .background(Capsule(style: .continuous).fill(tint.opacity(0.12)))
     }
 }
@@ -2037,7 +2037,7 @@ private struct SettingsStatusPill: View {
 private struct SettingsDivider: View {
     var body: some View {
         Divider()
-            .padding(.leading, 2)
+            .padding(.leading, HermesSpacing.s2)
             .opacity(0.72)
     }
 }
@@ -2052,7 +2052,7 @@ private struct ServerAvatarBadge: View {
 
     var body: some View {
         Text(initials)
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, weight: .semibold)
             .foregroundStyle(HeaderLogoColor.prefersDarkForeground(for: colorHex) ? Color.black : Color.white)
             .frame(width: size, height: size)
             .background(HeaderLogoColor.color(for: colorHex), in: Circle())
@@ -2083,16 +2083,16 @@ private struct SettingsServerRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             ServerAvatarBadge(initials: previewInitials, colorHex: account.headerLogoColorHex)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(name)
-                    .font(AppFont.subheadline(weight: .medium))
+                    .appFont(.subheadline, weight: .medium)
                     .lineLimit(1)
 
                 Text(account.urlString)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -2109,7 +2109,7 @@ private struct SettingsServerRow: View {
                 .foregroundStyle(.tertiary)
                 .accessibilityHidden(true)
         }
-        .padding(.vertical, 7)
+        .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -2150,16 +2150,16 @@ private struct ServerIdentityEditor: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s12) {
                 ServerAvatarBadge(initials: previewInitials, colorHex: colorHex, size: 36)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text("Server Avatar")
-                        .font(AppFont.subheadline(weight: .medium))
+                        .appFont(.subheadline, weight: .medium)
 
                     Text("Stored on this device only.")
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -2208,7 +2208,7 @@ private struct ServerDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
+            VStack(spacing: HermesSpacing.s20) {
                 SettingsCard(title: String(localized: "Server")) {
                     SettingsInfoRow(title: String(localized: "URL"), value: account.urlString, valueIsSelectable: true)
 
@@ -2262,9 +2262,9 @@ private struct ServerDetailView: View {
                     .disabled(isRemoving)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 36)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.top, HermesSpacing.s20)
+            .padding(.bottom, HermesSpacing.s40)
         }
         .background(Color(.systemBackground))
         .navigationTitle(displayName.isEmpty ? hostFallback : displayName)
@@ -2373,7 +2373,7 @@ struct AddServerView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: HermesSpacing.s20) {
                     SettingsCard(title: String(localized: "Server")) {
                         SettingsTextFieldRow(
                             title: String(localized: "URL"),
@@ -2415,9 +2415,9 @@ struct AddServerView: View {
 
                     statusBanner
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 18)
-                .padding(.bottom, 36)
+                .padding(.horizontal, HermesSpacing.s16)
+                .padding(.top, HermesSpacing.s20)
+                .padding(.bottom, HermesSpacing.s40)
             }
             .background(Color(.systemBackground))
             .navigationTitle("Add Server")
@@ -2445,7 +2445,7 @@ struct AddServerView: View {
 
         if let errorMessage {
             Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                .font(AppFont.footnote())
+                .appFont(.footnote)
                 .foregroundStyle(.orange)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

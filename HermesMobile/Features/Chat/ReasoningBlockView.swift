@@ -57,7 +57,7 @@ struct ReasoningBlockView: View {
                 .id(liveStreamID)
         } else {
             Text(displayText)
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)

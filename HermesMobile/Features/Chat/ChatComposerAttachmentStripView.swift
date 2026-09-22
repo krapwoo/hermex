@@ -11,7 +11,7 @@ struct ComposerAttachmentStripView: View {
     var body: some View {
         if !attachments.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: HermesSpacing.s12) {
                     ForEach(attachments) { attachment in
                         ComposerAttachmentThumbnailView(
                             attachment: attachment,
@@ -20,9 +20,9 @@ struct ComposerAttachmentStripView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
+                .padding(.horizontal, HermesSpacing.s16)
+                .padding(.top, HermesSpacing.s8)
+                .padding(.bottom, HermesSpacing.s4)
             }
             .frame(height: stripHeight)
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
@@ -45,7 +45,7 @@ struct ComposerAttachmentPillPreview: View {
 
     var body: some View {
         if !attachments.isEmpty {
-            HStack(spacing: 4) {
+            HStack(spacing: HermesSpacing.s4) {
                 ForEach(attachments.prefix(visibleLimit)) { attachment in
                     Button {
                         onPreview(attachment)
@@ -61,7 +61,7 @@ struct ComposerAttachmentPillPreview: View {
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(Color(.secondaryLabel))
                         .frame(width: tileSize, height: tileSize)
-                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
                         .accessibilityLabel(Text("\(attachments.count - visibleLimit) more attachments"))
                 }
             }
@@ -86,7 +86,7 @@ struct ComposerAttachmentPillPreview: View {
             }
         }
         .frame(width: tileSize, height: tileSize)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
     }
 }
 
@@ -116,15 +116,7 @@ private struct ComposerAttachmentThumbnailView: View {
             }
             .buttonStyle(.chatTactile(
                 .icon,
-                shadow: ChatTactileButtonStyle.Shadow(
-                    color: .black,
-                    opacity: 0.12,
-                    radius: 3,
-                    y: 1,
-                    pressedOpacity: 0.06,
-                    pressedRadius: 1,
-                    pressedY: 0
-                )
+                shadow: ChatTactileButtonStyle.Shadow(resting: .controlSubtleResting, pressed: .controlSubtlePressed)
             ))
             .offset(x: RTLLayout.horizontalOffset(6, isRightToLeft: layoutDirection == .rightToLeft), y: -6)
             .accessibilityLabel("Remove attachment \(attachment.name)")
@@ -149,7 +141,7 @@ private struct ComposerAttachmentThumbnailView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .fill(Color(.systemFill))
                     .overlay(
                         Image(systemName: "photo")
@@ -159,18 +151,18 @@ private struct ComposerAttachmentThumbnailView: View {
             }
         }
         .frame(width: imagePreviewSize, height: imagePreviewSize)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(previewBorder(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
+        .overlay(previewBorder(cornerRadius: HermesRadius.r16))
         .accessibilityLabel("Image attachment \(attachment.name)")
     }
 
     private var filePreview: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: HermesSpacing.s12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .fill(fileBadgeColor.opacity(0.15))
 
-                VStack(spacing: 3) {
+                VStack(spacing: HermesSpacing.s4) {
                     Image(systemName: fileIconName)
                         .font(.system(size: 24, weight: .semibold))
                     Text(fileExtensionLabel)
@@ -181,30 +173,30 @@ private struct ComposerAttachmentThumbnailView: View {
             }
             .frame(width: 58, height: 68)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(attachment.name)
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.subheadline, weight: .medium)
                     .foregroundStyle(Color(.label))
                     .lineLimit(2)
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(fileDetailText)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(Color(.secondaryLabel))
                     .lineLimit(usesAccessibilityLayout ? 2 : 1)
             }
             .frame(width: usesAccessibilityLayout ? 160 : 128, alignment: .leading)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, usesAccessibilityLayout ? 10 : 0)
         .frame(width: usesAccessibilityLayout ? 260 : 222)
         .frame(minHeight: usesAccessibilityLayout ? 112 : 92)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
-        .overlay(previewBorder(cornerRadius: 14))
+        .overlay(previewBorder(cornerRadius: HermesRadius.r16))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(attachment.name), \(fileDetailText)")
     }

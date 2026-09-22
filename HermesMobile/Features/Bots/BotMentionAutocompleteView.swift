@@ -13,17 +13,17 @@ struct BotMentionAutocompleteView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: HermesSpacing.s0) {
                 ForEach(Array(completions.enumerated()), id: \.element.id) { index, item in
                     BotMentionRow(item: item, avatars: avatars, room: room, roster: roster, onSelect: onSelect)
-                    if index < completions.count - 1 { Divider().padding(.horizontal, 16) }
+                    if index < completions.count - 1 { Divider().padding(.horizontal, HermesSpacing.s16) }
                 }
             }
         }
         .adaptiveGlass(.regular, fallbackMaterial: .ultraThinMaterial,
                        in: RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
         .clipShape(RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
+        .hermesShadow(.popover)
         .frame(height: min(280, CGFloat(completions.count) * rowHeight))
     }
 }
@@ -41,17 +41,17 @@ struct BotMentionRow: View {
 
     var body: some View {
         Button { onSelect(item) } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 avatar
                     .accessibilityHidden(true)
                 Text(verbatim: "@" + item.tag)
-                    .font(.system(.subheadline, design: .monospaced).weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold, design: .monospaced)
                     .foregroundStyle(.primary).lineLimit(1).layoutPriority(2)
                 Spacer(minLength: 8)
                 Text(verbatim: item.profile.name)
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    .appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-            .padding(.horizontal, 16).padding(.vertical, 12)
+            .padding(.horizontal, HermesSpacing.s16).padding(.vertical, HermesSpacing.s12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

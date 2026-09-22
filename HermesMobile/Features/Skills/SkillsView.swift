@@ -70,7 +70,7 @@ struct SkillsView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 24) {
+                LazyVStack(alignment: .leading, spacing: HermesSpacing.s24) {
                     ForEach(filteredGroups, id: \.category) { group in
                         SkillCategorySection(
                             category: group.category,
@@ -84,9 +84,9 @@ struct SkillsView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-                .padding(.bottom, 32)
+                .padding(.horizontal, HermesSpacing.s20)
+                .padding(.top, HermesSpacing.s20)
+                .padding(.bottom, HermesSpacing.s32)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .refreshable {
@@ -120,14 +120,14 @@ private struct SkillCategorySection: View {
     let onAPIError: (Error) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(category)
                 .textCase(.uppercase)
-                .font(.caption.weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, HermesSpacing.s4)
 
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 ForEach(Array(skills.enumerated()), id: \.offset) { index, skill in
                     NavigationLink {
                         SkillDetailView(
@@ -185,35 +185,35 @@ private struct SkillRow: View {
 
     var body: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(displayName)
-                    .font(.body.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
                 if let description {
                     Text(description)
-                        .font(.subheadline)
+                        .appFont(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
                 }
 
                 if skill.disabled == true || !tags.isEmpty {
-                    HStack(spacing: 6) {
+                    HStack(spacing: HermesSpacing.s8) {
                         if skill.disabled == true {
                             Text("Disabled")
-                                .font(.caption2.weight(.semibold))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
+                                .appFont(.caption2, weight: .semibold)
+                                .padding(.horizontal, HermesSpacing.s8)
+                                .padding(.vertical, HermesSpacing.s4)
                                 .foregroundStyle(.secondary)
                                 .background(Color(.tertiarySystemFill), in: Capsule())
                         }
 
                         ForEach(tags, id: \.self) { tag in
                             Text(tag)
-                                .font(.caption2.weight(.medium))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
+                                .appFont(.caption2, weight: .medium)
+                                .padding(.horizontal, HermesSpacing.s8)
+                                .padding(.vertical, HermesSpacing.s4)
                                 .foregroundStyle(.secondary)
                                 .background(Color(.secondarySystemFill).opacity(0.8), in: Capsule())
                         }
@@ -232,15 +232,15 @@ private struct SkillRow: View {
                 .toggleStyle(.switch)
                 .scaleEffect(0.8, anchor: .trailing)
                 .disabled(isToggling)
-                .padding(.top, 6)
+                .padding(.top, HermesSpacing.s8)
             }
 
             Image(systemName: "chevron.forward")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
-                .padding(.top, 12)
+                .padding(.top, HermesSpacing.s12)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, HermesSpacing.s12)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityActions {
@@ -333,7 +333,7 @@ struct SkillDetailView: View {
             }
         } else if let detail {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     if let content = detail.content, !content.isEmpty {
                         MarkdownRenderer(content: content)
                             .padding(.horizontal)
@@ -394,18 +394,18 @@ private struct SkillLinkedFilesSection: View {
     let onSelect: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text("Linked Files")
-                .font(.caption.weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, HermesSpacing.s20)
 
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 ForEach(Array(fileNames.enumerated()), id: \.element) { index, fileName in
                     Button {
                         onSelect(fileName)
                     } label: {
-                        HStack(spacing: 12) {
+                        HStack(spacing: HermesSpacing.s12) {
                             Image(systemName: "doc.text")
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(.primary)
@@ -413,7 +413,7 @@ private struct SkillLinkedFilesSection: View {
                                 .background(Color(.tertiarySystemFill).opacity(0.7), in: Circle())
 
                             Text(fileName)
-                                .font(.subheadline)
+                                .appFont(.subheadline)
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
 
@@ -423,18 +423,18 @@ private struct SkillLinkedFilesSection: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.tertiary)
                         }
-                        .padding(.vertical, 9)
+                        .padding(.vertical, HermesSpacing.s8)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
 
                     if index < fileNames.count - 1 {
                         Divider()
-                            .padding(.leading, 54)
+                            .padding(.leading, HermesSpacing.s48)
                     }
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, HermesSpacing.s20)
         }
     }
 }

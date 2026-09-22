@@ -32,13 +32,13 @@ import SwiftUI
                 // hosted selection documents, and a lazy stack places unbuilt rows
                 // from an estimate, so the jump to a search hit missed on a cold
                 // open (issue #553). The window keeps the build to the newest page.
-                VStack(spacing: 16) {
+                VStack(spacing: HermesSpacing.s16) {
                     if hasHiddenEvents || reader.hasEarlier {
                         Button("Load earlier") { loadEarlier(proxy: proxy) }
                             .disabled(!hasHiddenEvents && (reader.loadingEarlier || reader.link != .live))
                     }
                     if reader.foreignAuthority {
-                        Text("Managed by another Hermes").font(.caption).foregroundStyle(.secondary)
+                        Text("Managed by another Hermes").appFont(.caption).foregroundStyle(.secondary)
                     }
                     let gapStarts = BotRoomEvent.gapStarts(in: reader.events[start...])
                     ForEach(reader.events[start...]) { event in
@@ -65,7 +65,7 @@ import SwiftUI
                     }
                     Color.clear.frame(height: 1).id("room-bottom")
                 }
-                .padding(16)
+                .padding(HermesSpacing.s16)
                 .background {
                     ChatScrollObserver(isStreaming: false, onFollowEvent: handleFollowEvent, onMetrics: updateScrollMetrics)
                         .accessibilityHidden(true)
@@ -100,7 +100,7 @@ import SwiftUI
             }
         }
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 10) {
+            VStack(spacing: HermesSpacing.s12) {
                 if let pill {
                     BotComposerPillView(pill: pill, onReconnect: { revision = UUID() },
                         onShowRequest: { showRequestID = UUID() }, onCancelUpload: {},
@@ -122,9 +122,9 @@ import SwiftUI
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { showingProfile = true } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: HermesSpacing.s8) {
                         BotRoomAvatars(room: reader.room, roster: roster, avatars: avatars, size: 30)
-                        Text(reader.room.name).font(.headline).lineLimit(1)
+                        Text(reader.room.name).appFont(.headline).lineLimit(1)
                     }
                     .modifier(BotChatTitlePillFallback())
                 }
@@ -274,11 +274,11 @@ private struct BotRoomEventView: View {
                 footer
             }
         } else if event.kind == "message.member" {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .bottom, spacing: 8) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                HStack(alignment: .bottom, spacing: HermesSpacing.s8) {
                     BotRoomMemberAvatar(member: event.member(in: room), roster: roster, avatars: avatars, size: 26)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(event.sender(in: room)).font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                        Text(event.sender(in: room)).appFont(.caption).foregroundStyle(.secondary)
                         ResponseTextSelection(identity: messageText, collectsGlyphs: responseIsVisible) {
                             MarkdownRenderer(content: messageText)
                         }
@@ -286,7 +286,7 @@ private struct BotRoomEventView: View {
                             guard let viewport = geometry.bounds(of: .scrollView(axis: .vertical)) else { return true }
                             return viewport.intersects(CGRect(origin: .zero, size: geometry.size))
                         } action: { responseIsVisible = $0 }
-                            .padding(12).background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 20))
+                            .padding(HermesSpacing.s12).background(.fill.tertiary, in: RoundedRectangle(cornerRadius: HermesRadius.r20))
                             .chatMessageContextMenu(actions, longPress: false)
                     }
                     Spacer(minLength: 20)
@@ -297,7 +297,7 @@ private struct BotRoomEventView: View {
                 footer.padding(.leading, 34)
             }
         } else {
-            Text(event.systemText).font(.caption).foregroundStyle(.secondary)
+            Text(event.systemText).appFont(.caption).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)
         }
     }
@@ -356,15 +356,15 @@ struct BotRoomInboxRow: View {
     let roster: [BotProfile]
     let avatars: [String: UIImage]
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotRoomAvatars(room: room, roster: roster, avatars: avatars, size: 32).frame(width: 44)
-            Text(room.name).font(.headline)
+            Text(room.name).appFont(.headline)
             Spacer(minLength: 8)
             if let date = room.updatedAt {
-                Text(BotInboxDateLabel.text(for: date)).font(.subheadline).foregroundStyle(.secondary)
+                Text(BotInboxDateLabel.text(for: date)).appFont(.subheadline).foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, HermesSpacing.s12)
         .accessibilityElement(children: .combine)
     }
 }

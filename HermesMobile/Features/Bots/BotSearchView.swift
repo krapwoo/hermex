@@ -58,7 +58,7 @@ import SwiftUI
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: HermesSpacing.s0) {
                 if scope != .messages {
                     ForEach(matches) { profile in
                         Button {
@@ -75,7 +75,7 @@ import SwiftUI
                             searchFocused = false; onSelectRoom(room, nil); dismiss()
                         } label: {
                             BotRoomInboxRow(room: room, roster: inbox.profiles, avatars: inbox.avatars)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, HermesSpacing.s20)
                         }
                         .buttonStyle(.plain)
                     }
@@ -85,9 +85,9 @@ import SwiftUI
                 }
                 if scope != .bots {
                     Text("Messages saved on this iPhone")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .appFont(.footnote).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 20).padding(.top, 16)
+                        .padding(.horizontal, HermesSpacing.s20).padding(.top, HermesSpacing.s16)
                     if !request.query.isEmpty {
                         ForEach(visibleHits) { hit in
                             if let room = inbox.roomForSearch(hit) {
@@ -113,10 +113,10 @@ import SwiftUI
                     }
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, HermesSpacing.s12)
         }
         .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .top, spacing: 0) { searchBar }
+        .safeAreaInset(edge: .top, spacing: HermesSpacing.s0) { searchBar }
         .background(Color(uiColor: .systemBackground))
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
@@ -133,18 +133,18 @@ import SwiftUI
     }
 
     private var searchBar: some View {
-        AdaptiveGlassContainer(spacing: 8) { searchControls }
+        AdaptiveGlassContainer(spacing: HermesSpacing.s8) { searchControls }
     }
 
     private var searchControls: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Button("Close search", systemImage: "xmark") { dismiss() }
                 .labelStyle(.iconOnly)
                 .font(.title3)
                 .frame(width: 44, height: 44)
                 .adaptiveGlass(isInteractive: true, in: Circle())
                 .keyboardShortcut(.cancelAction)
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     .accessibilityHidden(true)
                 TextField("Search", text: $query)
@@ -163,7 +163,7 @@ import SwiftUI
                     .frame(minWidth: 44, minHeight: 44)
                 }
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, HermesSpacing.s16)
             .frame(minHeight: 44)
             .adaptiveGlass(in: Capsule())
             Menu {
@@ -182,12 +182,12 @@ import SwiftUI
         }
         .buttonStyle(.plain)
         .foregroundStyle(.primary)
-        .padding(.horizontal, 16).padding(.vertical, 16)
+        .padding(.horizontal, HermesSpacing.s16).padding(.vertical, HermesSpacing.s16)
     }
 
     private func status(_ text: LocalizedStringKey) -> some View {
-        Text(text).font(.callout).foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading).padding(20)
+        Text(text).appFont(.body).foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(HermesSpacing.s20)
     }
 
     private func profile(for hit: BotHistoryCache.Hit) -> BotProfile? {
@@ -198,42 +198,42 @@ import SwiftUI
     }
 
     private func messageResult(_ hit: BotHistoryCache.Hit, profile: BotProfile) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotAvatarView(profile: profile, avatar: inbox.avatars[profile.id], size: 44)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(hit.message.role == "user"
                          ? String(localized: "You to \(profile.name)") : String(localized: "\(profile.name) to you"))
-                        .font(.body).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                        .appFont(.body).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     Spacer(minLength: 8)
-                    Text("Message").font(.subheadline).foregroundStyle(.tertiary)
+                    Text("Message").appFont(.subheadline).foregroundStyle(.tertiary)
                 }
                 Text(SessionSearchExcerpt(text: hit.excerpt, query: request.query).highlighted)
-                    .font(.body).foregroundStyle(.secondary)
+                    .appFont(.body).foregroundStyle(.secondary)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
             }
         }
-        .padding(.horizontal, 20).padding(.vertical, 16)
+        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
     private func roomMessageResult(_ hit: BotHistoryCache.Hit, room: BotGroupRoom) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotRoomAvatars(room: room, roster: inbox.profiles, avatars: inbox.avatars, size: 32).frame(width: 44)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(verbatim: [room.name, hit.message.sender].compactMap { $0 }.joined(separator: " · "))
-                        .font(.body).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                        .appFont(.body).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     Spacer(minLength: 8)
-                    Text("Message").font(.subheadline).foregroundStyle(.tertiary)
+                    Text("Message").appFont(.subheadline).foregroundStyle(.tertiary)
                 }
                 Text(SessionSearchExcerpt(text: hit.excerpt, query: request.query).highlighted)
-                    .font(.body).foregroundStyle(.secondary)
+                    .appFont(.body).foregroundStyle(.secondary)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
             }
         }
-        .padding(.horizontal, 20).padding(.vertical, 16)
+        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle()).accessibilityElement(children: .combine)
     }
 
@@ -256,23 +256,23 @@ import SwiftUI
     }
 
     private func result(_ profile: BotProfile) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotAvatarView(profile: profile, avatar: inbox.avatars[profile.id], size: 44)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(profile.name).font(.body)
+                    Text(profile.name).appFont(.body)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     Spacer(minLength: 8)
-                    Text("Bot").font(.subheadline).foregroundStyle(.tertiary)
+                    Text("Bot").appFont(.subheadline).foregroundStyle(.tertiary)
                 }
                 if let description = profile.description {
-                    Text(description).font(.body).foregroundStyle(.secondary)
+                    Text(description).appFont(.body).foregroundStyle(.secondary)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 20).padding(.vertical, 16)
+        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }

@@ -72,7 +72,7 @@ struct ToolCallDetailBodyView: View {
     var body: some View {
         let displayContent = ToolCallDisplayFormatter.content(for: toolCall)
 
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             if !displayContent.argumentRows.isEmpty {
                 argumentsSection(displayContent.argumentRows)
             }
@@ -117,46 +117,46 @@ struct ToolCallDetailBodyView: View {
     }
 
     private func statusDetail(_ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             Text("Status")
-                .font(AppFont.caption2(weight: .semibold))
+                .appFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
 
             Text(value)
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(statusColor)
                 .textSelection(.enabled)
         }
     }
 
     private func argumentsSection(_ rows: [ToolCallArgumentDisplay]) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             Text("Arguments")
-                .font(AppFont.caption2(weight: .semibold))
+                .appFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 ForEach(rows) { row in
                     argumentRow(row)
                 }
             }
-            .padding(7)
+            .padding(HermesSpacing.s8)
             .chatTimelineAccessoryInsetSurface()
         }
     }
 
     private func resultSection(_ result: ToolCallResultDisplay) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             Text(result.title)
-                .font(AppFont.caption2(weight: .semibold))
+                .appFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
 
             Text(result.text)
-                .font(result.isMonospaced ? AppFont.mono(style: .caption) : AppFont.caption())
+                .appFont(.caption, design: result.isMonospaced ? .monospaced : .default)
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(7)
+                .padding(HermesSpacing.s8)
                 .chatTimelineAccessoryInsetSurface()
         }
     }
@@ -164,12 +164,12 @@ struct ToolCallDetailBodyView: View {
     @ViewBuilder
     private func argumentRow(_ row: ToolCallArgumentDisplay) -> some View {
         if usesStackedRows {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 argumentKey(row.key)
                 argumentValue(row.value)
             }
         } else {
-            HStack(alignment: .top, spacing: 7) {
+            HStack(alignment: .top, spacing: HermesSpacing.s8) {
                 argumentKey(row.key)
                     .frame(width: 78, alignment: .leading)
 
@@ -181,14 +181,14 @@ struct ToolCallDetailBodyView: View {
 
     private func argumentKey(_ value: String) -> some View {
         Text(value)
-            .font(AppFont.mono(style: .caption2, weight: .semibold))
+            .appFont(.caption2, weight: .semibold, design: .monospaced)
             .foregroundStyle(.secondary)
             .lineLimit(1)
     }
 
     private func argumentValue(_ value: String) -> some View {
         Text(value)
-            .font(AppFont.mono(style: .caption))
+            .appFont(.caption, design: .monospaced)
             .foregroundStyle(.primary)
             .textSelection(.enabled)
     }

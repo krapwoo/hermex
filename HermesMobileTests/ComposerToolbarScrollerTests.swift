@@ -199,8 +199,8 @@ final class ComposerToolbarScrollerTests: XCTestCase {
             isStatic: false,
             isDisabled: false,
             color: .primary,
-            controlFont: .body,
-            chevronFont: .caption,
+            controlRole: .body,
+            chevronRole: .caption,
             onSelectProfile: { _ in }
         )
     }

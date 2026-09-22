@@ -21,7 +21,7 @@ struct FileBrowserView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             searchBar
 
             content
@@ -70,7 +70,7 @@ struct FileBrowserView: View {
             } description: {
                 if !searchText.isEmpty {
                     Text("Try a different file name or path.")
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -94,21 +94,21 @@ struct FileBrowserView: View {
                 await viewModel.refresh()
                 handleLastError()
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
+            .safeAreaInset(edge: .top, spacing: HermesSpacing.s0) {
                 if viewModel.isLoadingRoot {
-                    HStack(spacing: 8) {
+                    HStack(spacing: HermesSpacing.s8) {
                         ProgressView()
                         Text("Loading files...")
                     }
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, HermesSpacing.s12)
                     .background(Color(.secondarySystemBackground))
                 } else if let errorMessage = viewModel.errorMessage {
-                    HStack(spacing: 12) {
+                    HStack(spacing: HermesSpacing.s12) {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
 
@@ -120,10 +120,10 @@ struct FileBrowserView: View {
                                 handleLastError()
                             }
                         }
-                        .font(.footnote.weight(.semibold))
+                        .appFont(.footnote, weight: .semibold)
                     }
                     .padding(.horizontal)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, HermesSpacing.s12)
                     .background(Color(.secondarySystemBackground))
                 }
             }
@@ -131,13 +131,13 @@ struct FileBrowserView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: "magnifyingglass")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             TextField("Search files", text: $searchText)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
@@ -153,11 +153,11 @@ struct FileBrowserView: View {
                 .accessibilityLabel("Clear file search")
             }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, HermesSpacing.s12)
         .frame(height: 40)
-        .background(Color(.tertiarySystemFill).opacity(0.5), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(Color(.tertiarySystemFill).opacity(0.5), in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.vertical, HermesSpacing.s12)
         .background(Color(.systemBackground))
         .overlay(alignment: .bottom) {
             Divider()
@@ -201,7 +201,7 @@ private struct FileTreeRowView: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if node.isDirectory {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.forward")
                         .font(.system(size: 12, weight: .semibold))
@@ -215,7 +215,7 @@ private struct FileTreeRowView: View {
                     .frame(width: 22)
 
                 Text(node.name)
-                    .font(.subheadline.weight(isSelected ? .semibold : .medium))
+                    .appFont(.subheadline, weight: isSelected ? .semibold : .medium)
                     .foregroundStyle(isSelected || node.isDirectory ? .primary : .secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -225,7 +225,7 @@ private struct FileTreeRowView: View {
                 trailingAccessory
             }
             .padding(.leading, 8 + CGFloat(item.depth) * 18)
-            .padding(.trailing, 12)
+            .padding(.trailing, HermesSpacing.s12)
             .frame(minHeight: 42)
             .contentShape(Rectangle())
         }
@@ -252,7 +252,7 @@ private struct FileTreeRowView: View {
                     .foregroundStyle(.orange)
             } else if let childCount {
                 Text(childCount, format: .number)
-                    .font(.caption2.weight(.medium))
+                    .appFont(.caption2, weight: .medium)
                     .foregroundStyle(.tertiary)
                     .monospacedDigit()
             }
@@ -300,7 +300,7 @@ private struct FileTreeRowButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .fill(background(isPressed: configuration.isPressed))
             )
             .onChange(of: configuration.isPressed) { _, isPressed in

@@ -53,7 +53,7 @@ struct MarkdownRenderer: View {
     private var markdownContent: some View {
         switch MarkdownMathLayoutCache.layout(for: content) {
         case .segmented(let segments):
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                     switch segment {
                     case .markdown(let markdown):
@@ -139,7 +139,7 @@ private struct StreamingMarkdownDisplayedContentView: View, Equatable {
         // `replacingInlineMath` pass the no-math branch used to run.
         switch MarkdownMathLayoutCache.uncachedLayout(for: content) {
         case .segmented(let segments):
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                     switch segment {
                     case .markdown(let markdown):
@@ -217,7 +217,7 @@ private struct StreamingMarkdownChunkedView: View {
             )
         )
 
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             ForEach(segments.stableChunks) { chunk in
                 ChatMarkdownView(
                     content: chunk.text,
@@ -240,7 +240,7 @@ private struct StreamingMarkdownChunkedView: View {
                 // inputs are untouched, so their bodies (and text layout) are
                 // not re-evaluated.
                 TimelineView(.animation(minimumInterval: nil, paused: !fadesActive)) { context in
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                         ForEach(blockSplit.blocks, id: \.ordinal) { block in
                             StreamingFadeBlockView(
                                 text: block.text,
@@ -470,10 +470,10 @@ private struct ChatCodeBlock: View {
 
     var body: some View {
         let diff = MarkdownDiffFormatter.document(for: content, language: language, isStreaming: isStreaming)
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             HStack {
                 Text(displayLanguage)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
 
                 if let diff {
                     DiffCountsLabel(additions: diff.additions, deletions: diff.deletions)
@@ -505,10 +505,10 @@ private struct ChatCodeBlock: View {
                 }
                 .foregroundStyle(SwiftUI.Color.primary)
             }
-            .padding(.leading, 16)
-            .padding(.trailing, 10)
-            .padding(.top, 14)
-            .padding(.bottom, 4)
+            .padding(.leading, HermesSpacing.s16)
+            .padding(.trailing, HermesSpacing.s12)
+            .padding(.top, HermesSpacing.s16)
+            .padding(.bottom, HermesSpacing.s4)
 
             if let diff {
                 diffBody(diff)
@@ -522,9 +522,9 @@ private struct ChatCodeBlock: View {
             }
         }
         .background(codeBlockBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous)
                 .stroke(SwiftUI.Color(.separator).opacity(0.35), lineWidth: 1)
         }
         .task(id: highlightRequest) {
@@ -611,9 +611,9 @@ private struct ChatCodeBlock: View {
                 FontFamilyVariant(.monospaced)
                 FontSize(.em(0.84))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 16)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.top, HermesSpacing.s8)
+            .padding(.bottom, HermesSpacing.s16)
     }
 
     private var highlightRequest: MarkdownCodeHighlightRequest {
@@ -702,7 +702,7 @@ private struct PlainCodeBlockText: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             ForEach(lines) { line in
                 if wraps {
                     combinedText(for: line)
@@ -711,7 +711,7 @@ private struct PlainCodeBlockText: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .multilineTextAlignment(.leading)
                 } else {
-                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s0) {
                         ForEach(line.segments) { segment in
                             Text(verbatim: segment.text)
                                 .responseSelectableText(segment.text, separator: segment.id == line.segments.last?.id ? "\n" : "")
@@ -742,7 +742,7 @@ private struct HighlightedCodeBlockText: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             ForEach(lines) { line in
                 if wraps {
                     combinedText(for: line)
@@ -751,7 +751,7 @@ private struct HighlightedCodeBlockText: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .multilineTextAlignment(.leading)
                 } else {
-                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s0) {
                         ForEach(line.segments) { segment in
                             Text(AttributedString(segment.attributedText))
                                 .responseSelectableText(segment.attributedText.string, separator: segment.id == line.segments.last?.id ? "\n" : "")
@@ -1329,7 +1329,7 @@ private struct PlainMarkdownFallbackView: View {
     var body: some View {
         Text(verbatim: content)
             .responseSelectableText(content)
-            .font(.body)
+            .appFont(.body)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
             .responseTextSelectionPolicy()
@@ -1401,8 +1401,8 @@ private extension MarkdownUI.Theme {
                         }
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 13)
+                .padding(.vertical, HermesSpacing.s8)
+                .padding(.horizontal, HermesSpacing.s12)
                 .relativeLineSpacing(.em(0.25))
             }
     }
@@ -1526,7 +1526,7 @@ private struct SelectableMarkdownHeading: View {
     }
     var body: some View {
         if level <= 2 {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 label.relativePadding(.bottom, length: .em(0.3))
                 Divider().overlay(dividerColor)
             }

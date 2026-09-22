@@ -55,7 +55,7 @@ struct SourceFileSurface: View {
             onLinePress: handleLinePress,
             onRefresh: onRefresh
         )
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .safeAreaInset(edge: .top, spacing: HermesSpacing.s0) {
             if viewModel.isPlainText { plainTextChip }
         }
         .safeAreaInset(edge: .bottom) {
@@ -76,35 +76,35 @@ struct SourceFileSurface: View {
         HStack {
             Spacer()
             Text("Plain text")
-                .font(AppFont.caption2(weight: .medium))
+                .appFont(.caption2, weight: .medium)
                 .textCase(.uppercase)
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 4)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s4)
         .background(Color(.secondarySystemBackground))
     }
 
     private func selectionBar(count: Int) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             Text(count == 1 ? String(localized: "1 line selected") : String(localized: "\(count) lines selected"))
-                .font(AppFont.footnote(weight: .semibold))
+                .appFont(.footnote, weight: .semibold)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
             Button("Clear") { selection.clear() }
-                .font(AppFont.footnote())
+                .appFont(.footnote)
             // A label-coloured pill needs a background-coloured title, or dark mode
             // draws white on white.
             Button(action: copySelection) {
                 Text("Copy")
-                    .font(AppFont.footnote(weight: .semibold))
+                    .appFont(.footnote, weight: .semibold)
                     .foregroundStyle(Color(.systemBackground))
             }
             .buttonStyle(.borderedProminent)
         }
         .tint(.primary)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.vertical, HermesSpacing.s12)
         .background(.bar)
         .accessibilityElement(children: .contain)
     }

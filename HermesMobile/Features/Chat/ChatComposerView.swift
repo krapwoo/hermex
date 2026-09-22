@@ -8,9 +8,9 @@ private struct ComposerStatusView: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: HermesSpacing.s8) {
             Text(text)
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(textColor)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -26,17 +26,17 @@ private struct ComposerStatusView: View {
                 .accessibilityLabel("Dismiss attachment error")
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(backgroundColor)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .stroke(borderColor, lineWidth: 0.5)
         )
-        .padding(.horizontal, 16)
+        .padding(.horizontal, HermesSpacing.s16)
     }
 
     private var textColor: Color {
@@ -62,7 +62,7 @@ private struct ComposerQuoteDetailView: View {
         NavigationStack {
             ScrollView {
                 Text(verbatim: quote.text)
-                    .font(AppFont.body())
+                    .appFont(.body)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -383,8 +383,8 @@ struct MessageComposerView: View {
     }
 
     var body: some View {
-        AdaptiveGlassContainer(spacing: 6) {
-            VStack(spacing: 6) {
+        AdaptiveGlassContainer(spacing: HermesSpacing.s8) {
+            VStack(spacing: HermesSpacing.s8) {
                 if voiceNoteRecorder.isRecording {
                     ComposerVoiceRecordingBar(
                         elapsed: voiceNoteRecorder.elapsed,
@@ -392,7 +392,7 @@ struct MessageComposerView: View {
                         onStop: { finishVoiceNote(translationHeight: 0) },
                         onCancel: cancelVoiceNote
                     )
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, HermesSpacing.s16)
                 } else if let voiceNoteStatus {
                     ComposerVoiceStatusView(status: voiceNoteStatus)
                 } else if let voiceStatus {
@@ -462,7 +462,7 @@ struct MessageComposerView: View {
                 if isExpanded {
                     toolbarRow
                         .padding(.horizontal)
-                        .padding(.top, 8)
+                        .padding(.top, HermesSpacing.s8)
                         .frame(maxWidth: .infinity)
                         // Solid chat background behind the controls: the card
                         // above is glass on purpose, but transcript text
@@ -472,6 +472,7 @@ struct MessageComposerView: View {
                         // of transcript shows around the row.
                         .background(
                             Color(.systemBackground)
+                                // Platform-owned safe-area compensation, not a HermesSpacing scale step.
                                 .padding(.top, -10)
                                 .padding(.bottom, -12)
                                 .ignoresSafeArea(edges: .bottom)
@@ -721,7 +722,7 @@ struct MessageComposerView: View {
     /// survive the morph. Pill: text, thumbnails, mic, Stop/Send in a row.
     /// Card: strip above the editor, controls move to `toolbarRow` below.
     private var composerSurface: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             if isExpanded {
                 ComposerAttachmentStripView(
                     attachments: pendingAttachments,
@@ -731,7 +732,7 @@ struct MessageComposerView: View {
                 .transition(.opacity)
             }
 
-            HStack(alignment: .center, spacing: 4) {
+            HStack(alignment: .center, spacing: HermesSpacing.s4) {
                 ComposerTextInputView(
                     text: Binding(get: { draftMessage }, set: editDraft),
                     selection: $composerSelection,
@@ -781,7 +782,7 @@ struct MessageComposerView: View {
     /// Card-state row under the surface: a scroller of secondary controls plus
     /// the pinned Stop/Send circle. Visual order is VoiceOver order.
     private var toolbarRow: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: HermesSpacing.s8) {
             ComposerToolbarScroller {
                 composerPlusMenu
 
@@ -796,7 +797,7 @@ struct MessageComposerView: View {
                 voiceControlButton
 
                 ContextWindowIndicatorView(snapshot: contextWindowSnapshot)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, HermesSpacing.s4)
             }
 
             actionButton
@@ -935,12 +936,12 @@ struct MessageComposerView: View {
         dynamicTypeSize.isAccessibilitySize
     }
 
-    private var metaControlFont: Font {
-        AppFont.subheadline()
+    private var metaControlRole: AppFont.Role {
+        .subheadline
     }
 
-    private var metaChevronFont: Font {
-        AppFont.caption2()
+    private var metaChevronRole: AppFont.Role {
+        .caption2
     }
 
     private var workspaceSelector: some View {
@@ -948,8 +949,8 @@ struct MessageComposerView: View {
             title: workspaceTitle,
             isDisabled: isConfigurationControlDisabled,
             color: metaControlColor,
-            controlFont: metaControlFont,
-            chevronFont: metaChevronFont
+            controlRole: metaControlRole,
+            chevronRole: metaChevronRole
         ) {
             prepareForComposerPresentation()
             showsWorkspaceSheet = true
@@ -964,8 +965,8 @@ struct MessageComposerView: View {
             isStatic: isSingleProfileMode,
             isDisabled: isConfigurationControlDisabled,
             color: metaControlColor,
-            controlFont: metaControlFont,
-            chevronFont: metaChevronFont,
+            controlRole: metaControlRole,
+            chevronRole: metaChevronRole,
             onSelectProfile: onSelectProfile
         )
     }
@@ -978,8 +979,8 @@ struct MessageComposerView: View {
             recentModelKeys: recentModelKeys,
             isDisabled: isConfigurationControlDisabled,
             color: metaControlColor,
-            controlFont: metaControlFont,
-            chevronFont: metaChevronFont,
+            controlRole: metaControlRole,
+            chevronRole: metaChevronRole,
             onSelectModel: selectModel,
             onSelectEffort: onSelectReasoningEffort,
             onShowAllModels: showAllModels

@@ -43,14 +43,14 @@ struct CronJobModelRow: View {
     var body: some View {
         Button(action: action) {
             LabeledContent {
-                HStack(spacing: 6) {
-                    VStack(alignment: .trailing, spacing: 1) {
+                HStack(spacing: HermesSpacing.s8) {
+                    VStack(alignment: .trailing, spacing: HermesSpacing.s2) {
                         Text(title)
                             .foregroundStyle(.primary)
 
                         if let providerID = selection?.providerID {
                             Text(verbatim: providerID)
-                                .font(.caption)
+                                .appFont(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -96,7 +96,7 @@ struct CronJobProfileRow: View {
     var body: some View {
         Button(action: action) {
             LabeledContent {
-                HStack(spacing: 6) {
+                HStack(spacing: HermesSpacing.s8) {
                     Text(title)
                         .foregroundStyle(.primary)
                         .lineLimit(2)
@@ -115,15 +115,15 @@ struct CronJobProfileRow: View {
 
         // The saved value keeps showing above; only the list is missing.
         if let errorMessage, !isLoading {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
                 Text(verbatim: errorMessage)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.red)
 
                 Spacer(minLength: 0)
 
                 Button("Try Again", action: onRetry)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
             }
@@ -246,9 +246,9 @@ struct CronJobProfilePickerSheet: View {
             onSelect(nil)
             dismiss()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Text("Server default")
-                    .font(.body)
+                    .appFont(.body)
                     .lineLimit(2)
 
                 Spacer(minLength: 0)
@@ -310,7 +310,7 @@ struct CronJobProfilePickerSheet: View {
             onSelect(profile.normalizedName)
             dismiss()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 // Same rule as the model picker: an unknown provider renders
                 // nothing at all rather than reserving an empty glyph slot.
                 if ProviderGlyphKind.resolve(providerID: profile.provider) != nil {
@@ -318,9 +318,9 @@ struct CronJobProfilePickerSheet: View {
                         .frame(width: 17, height: 17)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(profile.displayName)
-                        .font(.body)
+                        .appFont(.body)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
 
                     // The profile's own model and provider, so the inheritance
@@ -328,7 +328,7 @@ struct CronJobProfilePickerSheet: View {
                     // implied.
                     if let details = Self.details(for: profile) {
                         Text(details)
-                            .font(.caption)
+                            .appFont(.caption)
                             .foregroundStyle(
                                 selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
                             )

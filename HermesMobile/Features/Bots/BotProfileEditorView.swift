@@ -81,7 +81,7 @@ import SwiftUI
 
     private var editorBody: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 identityHeader
                 if !editor.outcomes.isEmpty { saveResults }
                 sectionLabel("Identity")
@@ -94,23 +94,23 @@ import SwiftUI
 
                 sectionLabel("Description")
                 card {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Description").font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                        Text("Description").appFont(.caption).foregroundStyle(.secondary)
                         TextField("Description", text: Binding(get: { editor.draft.description }, set: { editor.setDescription($0) }), axis: .vertical)
                             .lineLimit(2...4)
                     }
-                    .padding(16)
-                    Divider().padding(.leading, 16)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Instructions").font(.caption).foregroundStyle(.secondary)
+                    .padding(HermesSpacing.s16)
+                    Divider().padding(.leading, HermesSpacing.s16)
+                    VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                        Text("Instructions").appFont(.caption).foregroundStyle(.secondary)
                         TextEditor(text: Binding(get: { editor.draft.instructions }, set: { editor.setInstructions($0) }))
                             .frame(minHeight: 130)
                             .scrollContentBackground(.hidden)
                     }
-                    .padding(16)
+                    .padding(HermesSpacing.s16)
                 }
                 Text("Saving replaces this Profile’s complete instructions.")
-                    .font(.caption2).foregroundStyle(.tertiary).padding(.horizontal, 12).padding(.top, 7)
+                    .appFont(.caption2).foregroundStyle(.tertiary).padding(.horizontal, HermesSpacing.s12).padding(.top, HermesSpacing.s8)
 
                 sectionLabel("Model")
                 card { navigationRow(String(localized: "Default Model"), subtitle: editor.draft.model?.providerID,
@@ -120,36 +120,36 @@ import SwiftUI
                 sectionLabel("Capabilities")
                 card {
                     capabilityRow(.skills, systemImage: "sparkles")
-                    Divider().padding(.leading, 52)
+                    Divider().padding(.leading, HermesSpacing.s48)
                     capabilityRow(.toolsets, systemImage: "wrench.and.screwdriver")
-                    Divider().padding(.leading, 52)
+                    Divider().padding(.leading, HermesSpacing.s48)
                     capabilityRow(.mcpServers, systemImage: "server.rack")
                 }
                 sectionLabel("Server")
                 card {
-                    HStack(spacing: 12) {
+                    HStack(spacing: HermesSpacing.s12) {
                         Image(systemName: "circle.fill").font(.caption).foregroundStyle(.green)
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                             Text(editor.connection.name)
                             Text(editor.connection.address.host ?? editor.connection.address.absoluteString)
-                                .font(.caption).foregroundStyle(.secondary)
+                                .appFont(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
                     }
-                    .padding(16)
+                    .padding(HermesSpacing.s16)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 36)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.bottom, HermesSpacing.s40)
         }
         .background(Color(uiColor: .systemBackground))
         .scrollDismissesKeyboard(.interactively)
         .disabled(editor.isSaving)
-        .overlay { if editor.isSaving { ProgressView().padding(18).background(.regularMaterial, in: Circle()) } }
+        .overlay { if editor.isSaving { ProgressView().padding(HermesSpacing.s20).background(.regularMaterial, in: Circle()) } }
     }
 
     private var identityHeader: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: HermesSpacing.s12) {
             ZStack(alignment: .bottomTrailing) {
                 Group {
                     if let avatar = editor.avatar {
@@ -162,20 +162,20 @@ import SwiftUI
                 .accessibilityHidden(true)
                 photoMenu
             }
-            VStack(spacing: 10) {
+            VStack(spacing: HermesSpacing.s12) {
                 Text(editor.draft.appearance.title.isEmpty ? editor.profile.name : editor.draft.appearance.title)
-                    .font(.title2.weight(.bold)).multilineTextAlignment(.center)
+                    .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
                 if !editor.draft.description.isEmpty {
-                    Text(editor.draft.description).font(.subheadline).foregroundStyle(.secondary)
+                    Text(editor.draft.description).appFont(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center).lineLimit(3)
                 }
                 Text(verbatim: "\(editor.profile.id) · \(editor.connection.name)")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .appFont(.caption).foregroundStyle(.tertiary)
             }
             .accessibilityElement(children: .combine)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 26).padding(.bottom, 12)
+        .padding(.top, HermesSpacing.s24).padding(.bottom, HermesSpacing.s12)
     }
 
     /// The Contacts-style badge on the hero avatar: the one place a photo is chosen or removed.
@@ -199,14 +199,14 @@ import SwiftUI
 
     private var characterCard: some View {
         card {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 14) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s12), count: 4), spacing: HermesSpacing.s16) {
                 ForEach(BotAvatarShape.allCases) { shape in
                     Button { editor.setShape(shape); cue = BotFaceCue(.hop) } label: {
                         BotAvatarMarkView(name: editor.profile.id, appearance: appearance(for: shape), size: 42)
                             .frame(maxWidth: .infinity, minHeight: 50)
                             .overlay {
                                 if editor.draft.appearance.shape == shape.rawValue {
-                                    RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: HermesRadius.r12).stroke(.secondary, lineWidth: 2)
                                 }
                             }
                     }
@@ -215,11 +215,13 @@ import SwiftUI
                     .accessibilityAddTraits(editor.draft.appearance.shape == shape.rawValue ? .isSelected : [])
                 }
             }
-            .padding(16)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 15) {
+            .padding(HermesSpacing.s16)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s12), count: 6), spacing: HermesSpacing.s16) {
                 ForEach(colors) { color in
                     Button { editor.setColor(color.hex); cue = BotFaceCue(.wobble) } label: {
                         Circle().fill(color.swatch).frame(width: 30, height: 30)
+                            // Negative inset grows the selection ring past the swatch's own
+                            // bounds so its stroke doesn't clip — not a HermesSpacing scale step.
                             .overlay { if editor.draft.appearance.color == color.hex { Circle().stroke(.secondary, lineWidth: 3).padding(-5) } }
                             .frame(minWidth: 44, minHeight: 44)
                     }
@@ -228,39 +230,39 @@ import SwiftUI
                     .accessibilityAddTraits(editor.draft.appearance.color == color.hex ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 16).padding(.bottom, 10)
-            Divider().padding(.leading, 16)
+            .padding(.horizontal, HermesSpacing.s16).padding(.bottom, HermesSpacing.s12)
+            Divider().padding(.leading, HermesSpacing.s16)
             navigationRow(String(localized: "Expression"), subtitle: nil,
                           value: BotAvatarExpression.resolve(editor.draft.appearance.expression).localizedName,
                           systemImage: "face.smiling") { showsExpressions = true }
             Button("Reset to default", systemImage: "arrow.counterclockwise") { editor.resetAppearance() }
                 .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
                 .tint(.secondary)
-                .padding(.bottom, 14)
+                .padding(.bottom, HermesSpacing.s16)
         }
     }
 
     private var saveResults: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text(editor.outcomes.values.contains(where: { if case .saved = $0 { return false }; return true })
                  ? String(localized: "Needs Attention") : String(localized: "Saved"))
-                .font(.headline)
+                .appFont(.headline)
             ForEach(BotProfileEditor.Field.allCases.filter { editor.outcomes[$0] != nil }) { field in
-                HStack(alignment: .top, spacing: 10) {
+                HStack(alignment: .top, spacing: HermesSpacing.s12) {
                     Image(systemName: resultIcon(editor.outcomes[field]!))
                         .foregroundStyle(resultColor(editor.outcomes[field]!)).frame(width: 20)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(field.title).font(.subheadline.weight(.semibold))
-                        Text(resultText(editor.outcomes[field]!)).font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                        Text(field.title).appFont(.subheadline, weight: .semibold)
+                        Text(resultText(editor.outcomes[field]!)).appFont(.caption).foregroundStyle(.secondary)
                         if editor.outcomes[field] == .conflict {
-                            Button("Reload") { Task { await editor.reloadAppearance() } }.font(.caption.weight(.semibold))
+                            Button("Reload") { Task { await editor.reloadAppearance() } }.appFont(.caption, weight: .semibold)
                         }
                     }
                 }
             }
         }
-        .padding(16).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
-        .padding(.top, 10)
+        .padding(HermesSpacing.s16).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r20))
+        .padding(.top, HermesSpacing.s12)
     }
 
     private func capabilityRow(_ field: BotProfileEditor.Field, systemImage: String) -> some View {
@@ -276,9 +278,9 @@ import SwiftUI
             List(capabilities(field)) { item in
                 Toggle(isOn: Binding(get: { capability(field, id: item.id)?.enabled == true },
                                      set: { editor.setEnabled($0, field: field, id: item.id) })) {
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                         Text(item.name)
-                        if let detail = item.detail, !detail.isEmpty { Text(detail).font(.caption).foregroundStyle(.secondary) }
+                        if let detail = item.detail, !detail.isEmpty { Text(detail).appFont(.caption).foregroundStyle(.secondary) }
                     }
                 }
             }
@@ -304,36 +306,36 @@ import SwiftUI
     }
 
     private func sectionLabel(_ title: LocalizedStringKey) -> some View {
-        Text(title).font(.subheadline).foregroundStyle(.tertiary).padding(.leading, 10).padding(.top, 24).padding(.bottom, 8)
+        Text(title).appFont(.subheadline).foregroundStyle(.tertiary).padding(.leading, HermesSpacing.s12).padding(.top, HermesSpacing.s24).padding(.bottom, HermesSpacing.s8)
     }
 
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(spacing: 0, content: content)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        VStack(spacing: HermesSpacing.s0, content: content)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous))
     }
 
     private func editorField(_ title: LocalizedStringKey, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+            Text(title).appFont(.caption).foregroundStyle(.secondary)
             TextField(title, text: text, axis: .vertical).lineLimit(1...3)
         }
-        .padding(16)
+        .padding(HermesSpacing.s16)
     }
 
     private func navigationRow(_ title: String, subtitle: String?, value: String, systemImage: String,
                                action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: systemImage).foregroundStyle(.secondary).frame(width: 24)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                     Text(title).foregroundStyle(.primary)
-                    if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+                    if let subtitle, !subtitle.isEmpty { Text(subtitle).appFont(.caption).foregroundStyle(.secondary).lineLimit(1) }
                 }
                 Spacer(minLength: 8)
-                Text(value).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                Text(value).appFont(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                 Image(systemName: "chevron.forward").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(16).contentShape(Rectangle())
+            .padding(HermesSpacing.s16).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

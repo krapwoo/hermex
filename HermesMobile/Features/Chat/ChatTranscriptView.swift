@@ -155,7 +155,7 @@ struct ChatTranscriptView: View {
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
-                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                    .safeAreaInset(edge: .bottom, spacing: HermesSpacing.s0) {
                         Color.clear
                             .frame(height: transcriptBottomInsetHeight)
                             .accessibilityHidden(true)
@@ -344,7 +344,7 @@ struct ChatTranscriptView: View {
                 .id(bottomAnchorID)
                 .allowsHitTesting(false)
         }
-        .padding(.top, 16)
+        .padding(.top, HermesSpacing.s16)
         .frame(width: contentWidth, alignment: .leading)
         .padding(.horizontal, transcriptHorizontalPadding)
         .frame(width: viewportWidth, alignment: .leading)
@@ -799,7 +799,7 @@ private struct ChatTranscriptMessageRow: View {
         if let markerKind = ChatMarkerMessageClassifier.classify(message) {
             MarkerMessageCardView(kind: markerKind, content: message.content)
         } else {
-            VStack(alignment: isUserMessage ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: isUserMessage ? .trailing : .leading, spacing: HermesSpacing.s4) {
                 bubble
 
                 if showsMetaRow {
@@ -872,8 +872,6 @@ private struct ChatTranscriptMessageRow: View {
 }
 
 struct ChatScrollToBottomButton: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     let bottomPadding: CGFloat
     let onTap: () -> Void
 
@@ -893,15 +891,7 @@ struct ChatScrollToBottomButton: View {
         }
         .buttonStyle(.chatTactile(
             .icon,
-            shadow: ChatTactileButtonStyle.Shadow(
-                color: .black,
-                opacity: colorScheme == .dark ? 0.32 : 0.16,
-                radius: 8,
-                y: 4,
-                pressedOpacity: colorScheme == .dark ? 0.18 : 0.08,
-                pressedRadius: 3,
-                pressedY: 2
-            )
+            shadow: ChatTactileButtonStyle.Shadow(resting: .controlElevatedResting, pressed: .controlElevatedPressed)
         ))
         .padding(.bottom, bottomPadding)
         .accessibilityLabel("Scroll to latest message")
@@ -916,7 +906,7 @@ struct LoadOlderMessagesButton: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if isLoading {
                     ProgressView()
                         .controlSize(.mini)
@@ -928,13 +918,13 @@ struct LoadOlderMessagesButton: View {
                 }
 
                 Text(isLoading ? String(localized: "Loading older messages") : String(localized: "Load older messages"))
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.88)
             }
             .foregroundStyle(.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .background(.regularMaterial, in: Capsule(style: .continuous))
             .overlay(
                 Capsule(style: .continuous)

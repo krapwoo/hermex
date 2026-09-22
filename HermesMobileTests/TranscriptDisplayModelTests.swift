@@ -640,7 +640,7 @@ final class ClarificationRequestPresentationTests: XCTestCase {
     }
 
     func testToggleCurveIsOneEaseOutClockAndSnapsUnderReduceMotion() {
-        XCTAssertEqual(ChatMotion.clarificationToggle(reduceMotion: false), .easeOut(duration: 0.22))
+        XCTAssertEqual(ChatMotion.clarificationToggle(reduceMotion: false), .easeOut(duration: HermesMotion.Duration.d200))
         XCTAssertNil(ChatMotion.clarificationToggle(reduceMotion: true))
     }
 
@@ -711,11 +711,11 @@ final class ChatMotionTests: XCTestCase {
 
     func testCurvesKeepTheirUnreducedTiming() {
         XCTAssertEqual(ChatMotion.press(duration: 0.2, reduceMotion: false), .smooth(duration: 0.2, extraBounce: 0))
-        XCTAssertEqual(ChatMotion.quickState(reduceMotion: false), .easeInOut(duration: 0.16))
-        XCTAssertEqual(ChatMotion.disclosure(reduceMotion: false), .smooth(duration: 0.18, extraBounce: 0))
-        XCTAssertEqual(ChatMotion.composerChrome(reduceMotion: false), .smooth(duration: 0.22, extraBounce: 0))
-        XCTAssertEqual(ChatMotion.scrollToLatest(reduceMotion: false), .easeOut(duration: 0.20))
-        XCTAssertEqual(ChatMotion.streamingFollow(reduceMotion: false), .easeOut(duration: 0.15))
-        XCTAssertEqual(ChatMotion.clarificationToggle(reduceMotion: false), .easeOut(duration: 0.22))
+        XCTAssertEqual(ChatMotion.quickState(reduceMotion: false), .easeInOut(duration: HermesMotion.Duration.d150))
+        XCTAssertEqual(ChatMotion.disclosure(reduceMotion: false), .smooth(duration: HermesMotion.Duration.d200, extraBounce: 0))
+        XCTAssertEqual(ChatMotion.composerChrome(reduceMotion: false), .smooth(duration: HermesMotion.Duration.d200, extraBounce: 0))
+        XCTAssertEqual(ChatMotion.scrollToLatest(reduceMotion: false), .easeOut(duration: HermesMotion.Duration.d200))
+        XCTAssertEqual(ChatMotion.streamingFollow(reduceMotion: false), .easeOut(duration: HermesMotion.Duration.d150))
+        XCTAssertEqual(ChatMotion.clarificationToggle(reduceMotion: false), .easeOut(duration: HermesMotion.Duration.d200))
     }
 }

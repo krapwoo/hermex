@@ -98,7 +98,7 @@ struct ProviderGlyphGalleryView: View {
 
             Section {
                 ForEach(Self.documentedProviders, id: \.id) { provider in
-                    HStack(spacing: 12) {
+                    HStack(spacing: HermesSpacing.s12) {
                         ZStack {
                             if ProviderGlyphKind.resolve(providerID: provider.id) != nil {
                                 ProviderGlyph(providerID: provider.id)
@@ -110,19 +110,19 @@ struct ProviderGlyphGalleryView: View {
                         }
                         .frame(width: 17, height: 17)
 
-                        VStack(alignment: .leading, spacing: 1) {
+                        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                             Text(verbatim: provider.id)
                                 .font(.system(size: 14, weight: .semibold))
                                 .textCase(.uppercase)
                             Text(verbatim: provider.name)
-                                .font(.footnote)
+                                .appFont(.footnote)
                                 .foregroundStyle(.secondary)
                         }
 
                         Spacer(minLength: 0)
 
                         Text(verbatim: ProviderGlyphKind.resolve(providerID: provider.id)?.rawValue ?? "no glyph")
-                            .font(.caption.monospaced())
+                            .appFont(.caption, design: .monospaced)
                             .foregroundStyle(.tertiary)
                     }
                 }

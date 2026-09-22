@@ -66,7 +66,7 @@ import SwiftUI
         List {
             if inbox.connection != nil {
                 if let message = inbox.errorMessage ?? inbox.routeAdvice {
-                    Text(message).font(.callout)
+                    Text(message).appFont(.body)
                     Button("Reconnect") { revision = UUID() }
                 } else if inbox.isLoadingRoster {
                     // The first row speaks for the set, so VoiceOver hears one
@@ -81,7 +81,7 @@ import SwiftUI
                     Text("No bots yet. Tap + to create one.")
                 }
                 if let notice = inbox.notice {
-                    Text(notice).font(.callout).foregroundStyle(.secondary).listRowSeparator(.hidden)
+                    Text(notice).appFont(.body).foregroundStyle(.secondary).listRowSeparator(.hidden)
                 }
                 let pinned = inbox.pinned
                 if !pinned.isEmpty {
@@ -90,7 +90,7 @@ import SwiftUI
                     // four or more wrap instead of being clipped away.
                     // Top-aligned, so a tile with a status line under its name keeps its avatar
                     // level with its neighbours'.
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8, alignment: .top), count: min(pinned.count, 3)), spacing: 24) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s8, alignment: .top), count: min(pinned.count, 3)), spacing: HermesSpacing.s24) {
                         ForEach(pinned) { chat in
                             // The grid is one list row, and a row merges every
                             // `.contextMenu` inside it into one, so holding any tile
@@ -112,7 +112,7 @@ import SwiftUI
                             }
                         }
                     }
-                    .padding(.vertical, 20)
+                    .padding(.vertical, HermesSpacing.s20)
                     .listRowSeparator(.hidden)
                 }
                 chatSections(inbox.sections)
@@ -120,7 +120,7 @@ import SwiftUI
                     Button(inbox.showsHidden ? "Hide hidden" : "Show hidden (\(inbox.hiddenCount))") {
                         inbox.showsHidden.toggle()
                     }
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .appFont(.subheadline).foregroundStyle(.secondary)
                     .listRowSeparator(.hidden)
                 }
             } else {
@@ -273,7 +273,7 @@ import SwiftUI
             }
         }
         .listRowSeparator(.hidden)
-        .padding(.vertical, 12)
+        .padding(.vertical, HermesSpacing.s12)
     }
 
     private func chat(_ profile: BotProfile, _ connection: BotConnection) -> some View {
@@ -601,11 +601,11 @@ private struct BotHeroTile: View {
     let unread: Bool
     let status: BotLiveStatus?
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: HermesSpacing.s16) {
             BotAvatarView(profile: profile, avatar: avatar, size: 84)
-            VStack(spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(profile.name).font(.body).foregroundStyle(.secondary).lineLimit(1)
+            VStack(spacing: HermesSpacing.s4) {
+                HStack(spacing: HermesSpacing.s8) {
+                    Text(profile.name).appFont(.body).foregroundStyle(.secondary).lineLimit(1)
                     if unread { BotUnreadDot() }
                 }
                 if let status {
@@ -658,22 +658,22 @@ private struct BotInboxRow: View {
         return profile.description ?? profile.id
     }
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotAvatarView(profile: profile, avatar: avatar, size: 44)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 // At accessibility sizes the slot moves under the name, as in Sessions.
                 if dynamicTypeSize.isAccessibilitySize {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) { nameAndChip }
+                    HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) { nameAndChip }
                     trailingSlot
                 } else {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                         nameAndChip
                         Spacer(minLength: 8)
                         trailingSlot
                     }
                 }
-                HStack(spacing: 8) {
-                    Text(subline).font(.body).foregroundStyle(.secondary).lineLimit(1)
+                HStack(spacing: HermesSpacing.s8) {
+                    Text(subline).appFont(.body).foregroundStyle(.secondary).lineLimit(1)
                     Spacer(minLength: 0)
                     if unread { BotUnreadDot() }
                 }

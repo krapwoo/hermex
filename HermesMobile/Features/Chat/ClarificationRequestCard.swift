@@ -108,21 +108,21 @@ struct ClarificationRequestBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Button(action: onExpand) {
-                HStack(spacing: 10) {
+                HStack(spacing: HermesSpacing.s12) {
                     Image(systemName: "questionmark.circle")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: 1) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text("Input needed")
-                            .font(.caption.weight(.semibold))
+                            .appFont(.caption, weight: .semibold)
                             .foregroundStyle(.secondary)
 
                         Text(Self.summary(for: prompt.question))
-                            .font(.subheadline)
+                            .appFont(.subheadline)
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                     }
@@ -152,9 +152,9 @@ struct ClarificationRequestBar: View {
             .disabled(isStopping)
             .accessibilityLabel("Stop response")
         }
-        .padding(.leading, 14)
-        .padding(.trailing, 8)
-        .padding(.vertical, 8)
+        .padding(.leading, HermesSpacing.s16)
+        .padding(.trailing, HermesSpacing.s8)
+        .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: 560)
         .pendingRequestCardSurface(cornerRadius: ChatComposerMetrics.cardCornerRadius)
         .accessibilityElement(children: .contain)
@@ -200,19 +200,19 @@ struct ClarificationRequestCard: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
             Image(systemName: "questionmark.circle")
                 .font(.headline)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text("Clarification Required")
-                    .font(.headline)
+                    .appFont(.headline)
 
                 if prompt.pendingCount > 1 {
                     Text("1 of \(prompt.pendingCount) pending")
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -249,14 +249,14 @@ struct ClarificationRequestCard: View {
 
     private var question: some View {
         Text(prompt.question)
-            .font(.subheadline)
+            .appFont(.subheadline)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
             .pendingRequestBlockSurface()
     }
 
     private var choicesList: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
             ForEach(prompt.choices, id: \.self) { choice in
                 choiceButton(choice)
             }
@@ -265,7 +265,7 @@ struct ClarificationRequestCard: View {
 
     /// Only the question and choices scroll; a drag dismisses the keyboard interactively.
     private var scrollableBody: some View {
-        let content = VStack(alignment: .leading, spacing: 14) {
+        let content = VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             question
 
             if !prompt.choices.isEmpty {
@@ -286,7 +286,7 @@ struct ClarificationRequestCard: View {
     }
 
     private var responseField: some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        HStack(alignment: .bottom, spacing: HermesSpacing.s12) {
             TextField("Type a response", text: $draftResponse, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(2...5)
@@ -311,7 +311,7 @@ struct ClarificationRequestCard: View {
     private var footer: some View {
         if let errorMessage = nonEmpty(errorMessage) {
             Text(errorMessage)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.red)
                 .fixedSize(horizontal: false, vertical: true)
                 .onGeometryChange(for: CGFloat.self) { proxy in
@@ -334,9 +334,9 @@ struct ClarificationRequestCard: View {
     private func expirationBadge(now: Date) -> some View {
         let remaining = remainingSeconds(now: now)
 
-        return VStack(alignment: .trailing, spacing: 5) {
+        return VStack(alignment: .trailing, spacing: HermesSpacing.s4) {
             Text(expirationText(remaining: remaining))
-                .font(.caption2.weight(.semibold))
+                .appFont(.caption2, weight: .semibold)
                 .foregroundStyle(.secondary)
 
             if !reduceMotion {
@@ -362,13 +362,13 @@ struct ClarificationRequestCard: View {
     }
 
     private var cardContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             header
             scrollableBody
             responseField
             footer
         }
-        .padding(16)
+        .padding(HermesSpacing.s16)
     }
 
     private var canFit: Bool? {
@@ -408,11 +408,11 @@ struct ClarificationRequestCard: View {
             onSubmit(choice)
         } label: {
             Text(choice)
-                .font(.callout.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.horizontal, HermesSpacing.s12)
+                .padding(.vertical, HermesSpacing.s12)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .foregroundStyle(.primary)
                 .pendingRequestChoiceSurface(reduceTransparency: reduceTransparency)

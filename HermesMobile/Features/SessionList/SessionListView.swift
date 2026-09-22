@@ -161,7 +161,7 @@ struct SessionListView: View {
                     navigationState.clearDestination()
                 }
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
+            .safeAreaInset(edge: .top, spacing: HermesSpacing.s0) {
                 if hasWaitingSharedImport {
                     waitingSharedImportBanner
                 }
@@ -400,26 +400,26 @@ struct SessionListView: View {
     }
 
     private var waitingSharedImportBanner: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             Image(systemName: "square.and.arrow.down")
                 .foregroundStyle(.secondary)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("Another shared item is waiting")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                 Text("Open it when you are done with this draft.")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 0)
 
             Button("Open Next", action: openNextSharedImport)
-                .font(.subheadline.weight(.semibold))
+                .appFont(.subheadline, weight: .semibold)
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.vertical, HermesSpacing.s12)
         .background(Color(.secondarySystemBackground))
         .overlay(alignment: .bottom) {
             Divider()
@@ -477,8 +477,8 @@ struct SessionListView: View {
 
             if !isSearchingSessions {
                 newSessionButton
-                    .padding(.trailing, 24)
-                    .padding(.bottom, 22)
+                    .padding(.trailing, HermesSpacing.s24)
+                    .padding(.bottom, HermesSpacing.s24)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -594,7 +594,7 @@ struct SessionListView: View {
 
             if viewModel.isViewingCachedData {
                 OfflineCacheBanner()
-                    .padding(.top, 16)
+                    .padding(.top, HermesSpacing.s16)
                     .sessionsScreenListRow()
             }
 
@@ -696,8 +696,8 @@ struct SessionListView: View {
             searchChrome
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 28)
+        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.top, HermesSpacing.s32)
         .animation(SessionListMotion.searchChromeAnimation(reduceMotion: reduceMotion), value: searchChromeIsExpanded)
         .animation(SessionListMotion.searchFocusAnimation(reduceMotion: reduceMotion), value: showsSearchClearButton)
         .onChange(of: searchFieldIsFocused) { _, newValue in
@@ -735,7 +735,7 @@ struct SessionListView: View {
 
             searchTrailingButton
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, HermesSpacing.s2)
         .frame(maxWidth: searchChromeIsExpanded ? .infinity : nil, alignment: .trailing)
         .sessionsChromeGlass(
             isInteractive: true,
@@ -747,7 +747,7 @@ struct SessionListView: View {
 
     private var searchTextField: some View {
         TextField("Search sessions", text: $searchText)
-            .font(AppFont.subheadline())
+            .appFont(.subheadline)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .focused($searchFieldIsFocused)
@@ -786,7 +786,7 @@ struct SessionListView: View {
         } label: {
             ZStack {
                 Text(settingsInitials)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(initialsAvatarForegroundColor)
                     .frame(width: Self.searchChromeIconVisualSize, height: Self.searchChromeIconVisualSize)
                     .background(selectedHeaderLogoColor, in: Circle())
@@ -838,15 +838,15 @@ struct SessionListView: View {
         HapticButton(feedbackStyle: .medium) {
             openNewChat()
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: "square.and.pencil")
                     .font(.title3.weight(.semibold))
 
                 Text("Chat")
-                    .font(.headline.weight(.semibold))
+                    .appFont(.headline, weight: .semibold)
             }
             .foregroundStyle(newSessionButtonForegroundColor)
-            .padding(.horizontal, 22)
+            .padding(.horizontal, HermesSpacing.s24)
             .frame(height: 58)
             // Lock the hit region to the visible capsule so taps in the padding,
             // rounded ends, and icon↔text gap start a new chat instead of falling
@@ -913,7 +913,7 @@ struct SessionListView: View {
         HapticButton {
             selectDestination(.archived)
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: "archivebox")
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -921,16 +921,16 @@ struct SessionListView: View {
                     .accessibilityHidden(true)
 
                 Text("Archived Sessions")
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.subheadline, weight: .medium)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
                 if let archivedCount = viewModel.archivedCount {
                     Text("\(archivedCount)")
-                        .font(.footnote.weight(.semibold))
+                        .appFont(.footnote, weight: .semibold)
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, HermesSpacing.s8)
+                        .padding(.vertical, HermesSpacing.s2)
                         .background(.thinMaterial, in: Capsule())
                 }
 
@@ -941,12 +941,12 @@ struct SessionListView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, HermesSpacing.s24)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.top, 12)
+        .padding(.top, HermesSpacing.s12)
         .accessibilityHint("Shows archived sessions.")
     }
 
@@ -1858,7 +1858,7 @@ private struct PendingNewChatView: View {
                 composerIsFocused = false
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: HermesSpacing.s12) {
                 if let creationErrorMessage {
                     pendingErrorBanner(creationErrorMessage)
                 }
@@ -1866,23 +1866,23 @@ private struct PendingNewChatView: View {
                 pendingComposer
             }
             .padding(.horizontal)
-            .padding(.bottom, 12)
+            .padding(.bottom, HermesSpacing.s12)
         }
         .navigationTitle("New Chat")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var pendingComposer: some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        HStack(alignment: .bottom, spacing: HermesSpacing.s12) {
             TextField("Message Hermex", text: persistedDraftBinding, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
                 .focused($composerIsFocused)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 13)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .padding(.horizontal, HermesSpacing.s16)
+                .padding(.vertical, HermesSpacing.s12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous)
                         .strokeBorder(Color(.separator).opacity(0.18), lineWidth: 0.5)
                 }
                 .submitLabel(.send)
@@ -1901,12 +1901,12 @@ private struct PendingNewChatView: View {
     }
 
     private func pendingErrorBanner(_ message: String) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
 
             Text(message)
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
 
@@ -1915,12 +1915,12 @@ private struct PendingNewChatView: View {
             Button("Retry") {
                 Task { await retryCreateSession() }
             }
-            .font(.footnote.weight(.semibold))
+            .appFont(.footnote, weight: .semibold)
             .disabled(viewModel.isCreatingSession)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
     }
 
     private func createSessionIfNeeded() async {
@@ -2031,13 +2031,13 @@ private struct PendingNewChatView: View {
 }
 
 #Preview("Hermes Header Logo") {
-    VStack(spacing: 16) {
+    VStack(spacing: HermesSpacing.s16) {
         ForEach(HeaderLogoColor.presets.prefix(4)) { preset in
             HermesHeaderLogo(selectedColor: preset.color)
                 .frame(width: 220)
         }
     }
-    .padding(24)
+    .padding(HermesSpacing.s24)
     .background(Color.black)
     .preferredColorScheme(.dark)
 }

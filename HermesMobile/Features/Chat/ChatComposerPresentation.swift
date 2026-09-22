@@ -2,13 +2,12 @@ import SwiftUI
 
 /// Shared geometry for Sessions and the text-only Bot composer.
 enum ChatComposerMetrics {
-    static let cardCornerRadius: CGFloat = 26
+    static let cardCornerRadius: CGFloat = HermesRadius.chrome
     static let actionSize: CGFloat = 44
     static let pillInset: CGFloat = 5
 }
 
 struct ChatComposerSurfaceStyle: ViewModifier {
-    @Environment(\.colorScheme) private var colorScheme
     let isExpanded: Bool
 
     private var shape: RoundedRectangle {
@@ -23,7 +22,7 @@ struct ChatComposerSurfaceStyle: ViewModifier {
         content
             .adaptiveGlass(.regular, isInteractive: true, fallbackMaterial: .ultraThinMaterial, in: shape)
             .clipShape(shape)
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 14, y: 6)
+            .hermesShadow(.chrome)
     }
 }
 

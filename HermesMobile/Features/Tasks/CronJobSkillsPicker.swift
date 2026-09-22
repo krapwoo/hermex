@@ -17,7 +17,7 @@ struct CronJobSkillsRow: View {
     var body: some View {
         Button(action: action) {
             LabeledContent {
-                HStack(spacing: 6) {
+                HStack(spacing: HermesSpacing.s8) {
                     Text(title)
                         .foregroundStyle(selection.isEmpty ? .secondary : .primary)
                         .multilineTextAlignment(.trailing)
@@ -37,15 +37,15 @@ struct CronJobSkillsRow: View {
 
         // The saved skills keep showing above; only the list is missing.
         if let errorMessage, !isLoading {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
                 Text(verbatim: errorMessage)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.red)
 
                 Spacer(minLength: 0)
 
                 Button("Try Again", action: onRetry)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
             }
@@ -161,9 +161,9 @@ struct CronJobSkillsPickerSheet: View {
         return Button {
             onClear()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Text("None")
-                    .font(.body)
+                    .appFont(.body)
                     .lineLimit(2)
 
                 Spacer(minLength: 0)
@@ -186,12 +186,12 @@ struct CronJobSkillsPickerSheet: View {
         let name = customSkillName.trimmingCharacters(in: .whitespacesAndNewlines)
         let isArmed = !name.isEmpty && !selection.contains(name)
 
-        return VStack(spacing: 6) {
+        return VStack(spacing: HermesSpacing.s8) {
             TextField("Skill name", text: $customSkillName)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.body)
-                .padding(.horizontal, 12)
+                .appFont(.body)
+                .padding(.horizontal, HermesSpacing.s12)
                 .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
                 .background(
                     Color(.tertiarySystemFill),
@@ -204,7 +204,7 @@ struct CronJobSkillsPickerSheet: View {
             } label: {
                 HStack {
                     Label("Add skill", systemImage: "plus")
-                        .font(.body.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
 
                     Spacer(minLength: 0)
                 }
@@ -212,7 +212,7 @@ struct CronJobSkillsPickerSheet: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(isArmed ? Color(.systemBackground) : Color(.tertiaryLabel))
-            .padding(.horizontal, 12)
+            .padding(.horizontal, HermesSpacing.s12)
             .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
             .background(
                 isArmed ? Color.primary : Color.clear,
@@ -265,15 +265,15 @@ struct CronJobSkillsPickerSheet: View {
         return Button {
             onToggle(name)
         } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: HermesSpacing.s12) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(verbatim: name)
-                        .font(.body)
+                        .appFont(.body)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
 
                     if let details = Self.details(for: skill) {
                         Text(verbatim: details)
-                            .font(.caption)
+                            .appFont(.caption)
                             .foregroundStyle(
                                 selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
                             )

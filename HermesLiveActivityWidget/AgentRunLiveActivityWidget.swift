@@ -2,6 +2,11 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
+// Retained widget-target exception (family plan 04, SR-2/SR-5 step 4): HermesSpacing and
+// HermesRadius are HermesMobile-target-only and are not members of HermesLiveActivityWidget.
+// Every spacing:/.padding()/cornerRadius: numeric literal in this file is a documented,
+// out-of-scope exception, not an unmigrated site — see the SR-2/SR-5 worksheets.
+
 @main
 struct HermesLiveActivityWidgetBundle: WidgetBundle {
     var body: some Widget {

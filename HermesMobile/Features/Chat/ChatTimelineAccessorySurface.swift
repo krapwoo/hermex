@@ -43,10 +43,10 @@ private struct ChatTimelineAccessoryInsetSurfaceModifier: ViewModifier {
         content
             .background(
                 backgroundColor,
-                in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+                in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                     .stroke(Color(.separator).opacity(colorScheme == .dark ? 0.36 : 0.22), lineWidth: 0.5)
                     .allowsHitTesting(false)
             }

@@ -63,7 +63,7 @@ struct BotChatComposerView: View {
     var body: some View {
         let pill = self.pill
         let showsQuickReplies = showsQuickReplyRow(pill: pill)
-        VStack(spacing: 10) {
+        VStack(spacing: HermesSpacing.s12) {
             // One floating pill instead of a strip of status lines: only what the
             // user can act on or must know, highest priority first, and never a
             // receipt for work the transcript already shows. With nothing to act
@@ -135,14 +135,14 @@ struct BotChatComposerView: View {
     }
 
     private var composerContainer: some View {
-        AdaptiveGlassContainer(spacing: 6) {
-            VStack(spacing: 0) {
+        AdaptiveGlassContainer(spacing: HermesSpacing.s8) {
+            VStack(spacing: HermesSpacing.s0) {
                 if isFocused, model.mayEditDraft { autocomplete }
 
-                composerSurface.padding(.horizontal, 16)
+                composerSurface.padding(.horizontal, HermesSpacing.s16)
 
                 if showsToolbar {
-                    HStack(alignment: .center, spacing: 8) {
+                    HStack(alignment: .center, spacing: HermesSpacing.s8) {
                         ComposerToolbarScroller {
                             plusMenu
                             BotComposerSettings(settings: model.chatControls, preparePresentation: {
@@ -152,8 +152,8 @@ struct BotChatComposerView: View {
                         }
                         promptButtons
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 14)
+                    .padding(.horizontal, HermesSpacing.s16)
+                    .padding(.top, HermesSpacing.s16)
                     .background(
                         Color(.systemBackground)
                             .padding(.top, -10).padding(.bottom, -12)
@@ -270,7 +270,7 @@ struct BotChatComposerView: View {
                             if !match.isDirectory { model.recordFileChipReference(match.path) }
                         }
                     )
-                    .padding(.horizontal, 16).padding(.bottom, 8)
+                    .padding(.horizontal, HermesSpacing.s16).padding(.bottom, HermesSpacing.s8)
                 }
             }
             .task(id: trigger.query) { await model.searchFilePaths(trigger.query) }
@@ -285,7 +285,7 @@ struct BotChatComposerView: View {
                     editDraft(result.draft)
                     selection = selection.moved(to: result.selection)
                 }
-                .padding(.horizontal, 16).padding(.bottom, 8)
+                .padding(.horizontal, HermesSpacing.s16).padding(.bottom, HermesSpacing.s8)
             }
         }
     }
@@ -293,14 +293,14 @@ struct BotChatComposerView: View {
     /// Same pill/card structure as the Sessions composer. The editor keeps its
     /// identity as the attachment strip and controls move around it.
     private var composerSurface: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             if isExpanded {
                 ComposerAttachmentStripView(attachments: model.attachments.items, onRemove: { id in
                     Task { await model.attachments.remove(id) }
                 }, onPreview: { preview = $0 })
                 .disabled(!model.mayEditDraft || model.attachments.isImporting)
             }
-            HStack(alignment: .center, spacing: 4) {
+            HStack(alignment: .center, spacing: HermesSpacing.s4) {
                 ComposerTextInputView(
                     text: Binding(get: { model.draft }, set: editDraft),
                     selection: $selection, isFocused: $isFocused,
@@ -363,7 +363,7 @@ struct BotChatComposerView: View {
     }
 
     private var promptButtons: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             if showsStop { stopButton }
             actionButton
         }

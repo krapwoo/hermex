@@ -19,7 +19,7 @@ struct SessionRowView: View {
     var searchExcerpt: SessionSearchExcerpt?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             if Self.isActiveStreaming(session) && !isViewingCachedData {
                 ActiveSessionStreamingIndicator()
                     .padding(.top, streamingIndicatorTopPadding)
@@ -33,7 +33,7 @@ struct SessionRowView: View {
 
             rowContent
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, verticalPadding)
         .frame(minHeight: rowMinimumHeight, alignment: .center)
         .contentShape(Rectangle())
@@ -176,13 +176,13 @@ struct SessionRowView: View {
     @ViewBuilder
     private var titleArea: some View {
         if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 titleAndPin
 
                 trailingStatusSlot
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 titleAndPin
 
                 if showsTrailingStatus {
@@ -220,7 +220,7 @@ struct SessionRowView: View {
 
     private func attentionStateText(_ state: SessionRowAttentionState) -> some View {
         Text(state.title)
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, weight: .semibold)
             .monospacedDigit()
             .foregroundStyle(state.tint)
             .lineLimit(1)
@@ -229,9 +229,9 @@ struct SessionRowView: View {
     }
 
     private var titleAndPin: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             Text(displayTitle)
-                .font(AppFont.headline(weight: .semibold))
+                .appFont(.headline, weight: .semibold)
                 .foregroundStyle(.primary)
                 .lineLimit(titleLineLimit)
                 .truncationMode(.tail)
@@ -249,7 +249,7 @@ struct SessionRowView: View {
 
     private func relativeDateText(_ text: String) -> some View {
         Text(text)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
@@ -260,7 +260,7 @@ struct SessionRowView: View {
     /// VoiceOver because `accessibilitySummary` already reads it in order.
     private func excerptText(_ excerpt: SessionSearchExcerpt) -> some View {
         Text(excerpt.highlighted)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(excerptLineLimit)
             .truncationMode(.tail)
@@ -271,8 +271,8 @@ struct SessionRowView: View {
     @ViewBuilder
     private var supplementalArea: some View {
         if dynamicTypeSize.isAccessibilitySize {
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .top, spacing: HermesSpacing.s8) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     if !visibleStateBadges.isEmpty {
                         stateBadgesRow
                     }
@@ -289,7 +289,7 @@ struct SessionRowView: View {
                 }
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 if !visibleStateBadges.isEmpty {
                     stateBadgesRow
                 }
@@ -308,7 +308,7 @@ struct SessionRowView: View {
     }
 
     private var stateBadgesRow: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: HermesSpacing.s4) {
             ForEach(visibleStateBadges) { badge in
                 SessionRowStateBadge(badge: badge)
             }
@@ -317,7 +317,7 @@ struct SessionRowView: View {
 
     private func metadataText(_ text: String) -> some View {
         Text(text)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(metadataLineLimit)
             .truncationMode(.middle)
@@ -500,10 +500,10 @@ private struct SessionSourceBadge: View {
 
     var body: some View {
         Text(label)
-            .font(AppFont.caption2(weight: .semibold))
+            .appFont(.caption2, weight: .semibold)
             .foregroundStyle(Color.accentColor)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
+            .padding(.horizontal, HermesSpacing.s4)
+            .padding(.vertical, HermesSpacing.s2)
             .background(Color.accentColor.opacity(0.12), in: Capsule())
             .accessibilityHidden(true)
     }
@@ -514,10 +514,10 @@ private struct SessionRowStateBadge: View {
 
     var body: some View {
         Text(badge.title)
-            .font(AppFont.caption2(weight: .semibold))
+            .appFont(.caption2, weight: .semibold)
             .foregroundStyle(badge.tint)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
+            .padding(.horizontal, HermesSpacing.s4)
+            .padding(.vertical, HermesSpacing.s2)
             .background(badge.tint.opacity(0.12), in: Capsule())
             .accessibilityHidden(true)
     }

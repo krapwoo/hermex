@@ -9,12 +9,12 @@ struct UsageTotalsGrid: View {
 
     private var columns: [GridItem] {
         let count = dynamicTypeSize.isAccessibilitySize ? 1 : 2
-        return Array(repeating: GridItem(.flexible(), spacing: 12, alignment: .topLeading), count: count)
+        return Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s12, alignment: .topLeading), count: count)
     }
 
     var body: some View {
         SectionCard(title: String(localized: "Totals")) {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: HermesSpacing.s16) {
                 ForEach(cells) { cell in
                     UsageMetricCell(cell: cell)
                 }
@@ -29,20 +29,20 @@ private struct UsageMetricCell: View {
     let cell: UsageTotalsCell
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(cell.label)
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
 
             Text(cell.value)
-                .font(AppFont.title3(weight: .semibold))
+                .appFont(.title3, weight: .semibold)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             if let detail = cell.detail {
                 Text(detail)
-                    .font(AppFont.caption2())
+                    .appFont(.caption2)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }

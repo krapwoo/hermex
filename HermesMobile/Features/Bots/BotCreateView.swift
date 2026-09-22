@@ -19,63 +19,63 @@ import SwiftUI
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: HermesSpacing.s0) {
                     BotInteractiveFaceView(name: creator.name, appearance: creator.draft.appearance, size: 150, cue: cue)
-                        .padding(.top, 24).padding(.bottom, 20)
+                        .padding(.top, HermesSpacing.s24).padding(.bottom, HermesSpacing.s20)
                     if creator.hasStarted { results }
                     // Once the Profile write has been dispatched these values are on the
                     // host; a retry only finishes the remaining steps, so editing them
                     // here would be a lie. Edit the bot afterwards instead.
                     card {
                         TextField("Name your bot", text: Binding(get: { creator.draft.title }, set: { creator.setTitle($0); cue = BotFaceCue(.glanceDown) }))
-                            .font(.title3).multilineTextAlignment(.center)
+                            .appFont(.title3).multilineTextAlignment(.center)
                             .textInputAutocapitalization(.words)
                             .submitLabel(.done)
                             .disabled(creator.hasStarted)
-                            .padding(16)
+                            .padding(HermesSpacing.s16)
                     }
                     if let problem = creator.nameProblem {
-                        Text(problem).font(.caption).foregroundStyle(.red).padding(.top, 8).padding(.horizontal, 12)
+                        Text(problem).appFont(.caption).foregroundStyle(.red).padding(.top, HermesSpacing.s8).padding(.horizontal, HermesSpacing.s12)
                     } else if !creator.name.isEmpty, !creator.hasStarted {
-                        Text(verbatim: creator.name).font(.caption).foregroundStyle(.tertiary).padding(.top, 8)
+                        Text(verbatim: creator.name).appFont(.caption).foregroundStyle(.tertiary).padding(.top, HermesSpacing.s8)
                     }
                     if let source = creator.source {
                         Text("Copies \(source.name)’s instructions, settings and skills. Its chat stays with the original.")
-                            .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                            .padding(.top, 10).padding(.horizontal, 12)
+                            .appFont(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            .padding(.top, HermesSpacing.s12).padding(.horizontal, HermesSpacing.s12)
                     }
 
-                    lookCard.padding(.top, 20).disabled(creator.hasStarted)
+                    lookCard.padding(.top, HermesSpacing.s20).disabled(creator.hasStarted)
 
                     sectionLabel("Setup")
                     card {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Role").font(.caption).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                            Text("Role").appFont(.caption).foregroundStyle(.secondary)
                             TextField("What this bot is for (optional)", text: Binding(get: { creator.draft.role }, set: { creator.setRole($0) }), axis: .vertical)
                                 .lineLimit(1...3)
                         }
-                        .padding(16)
-                        Divider().padding(.leading, 16)
+                        .padding(HermesSpacing.s16)
+                        Divider().padding(.leading, HermesSpacing.s16)
                         navigationRow(String(localized: "Model"), subtitle: creator.draft.model?.providerID,
                                       value: creator.draft.model?.displayName ?? String(localized: "Host default"),
                                       systemImage: "cpu") { showsModels = true }
-                        Divider().padding(.leading, 16)
+                        Divider().padding(.leading, HermesSpacing.s16)
                         Toggle(isOn: Binding(get: { creator.draft.sharesCredentials }, set: { creator.setSharesCredentials($0) })) {
                             Text("Use this Hermes’s API keys")
                         }
-                        .padding(16)
+                        .padding(HermesSpacing.s16)
                     }
                     .disabled(creator.hasStarted)
                     Text(creator.draft.sharesCredentials
                          ? "The bot signs in with the keys already saved on the host. Nothing is copied to this phone."
                          : "The bot starts with no API keys. Add them in Hermes Desktop before it can answer.")
-                        .font(.caption2).foregroundStyle(.tertiary).padding(.horizontal, 12).padding(.top, 7)
+                        .appFont(.caption2).foregroundStyle(.tertiary).padding(.horizontal, HermesSpacing.s12).padding(.top, HermesSpacing.s8)
 
                     // A duplicate copies the source's instructions and skills, so these are new-bot only.
                     if !creator.isDuplicate { startingPoint.disabled(creator.hasStarted) }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+                .padding(.horizontal, HermesSpacing.s16)
+                .padding(.bottom, HermesSpacing.s24)
             }
             .background(Color(uiColor: .systemBackground))
             .scrollDismissesKeyboard(.interactively)
@@ -89,11 +89,11 @@ import SwiftUI
                         else if creator.phase == .created { Text("Done") }
                         else { Text(creator.hasStarted ? "Try Again" : creator.isDuplicate ? "Duplicate" : "Create") }
                     }
-                    .font(.headline).frame(maxWidth: .infinity).frame(height: 30)
+                    .appFont(.headline).frame(maxWidth: .infinity).frame(height: 30)
                 }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
                 .disabled(!creator.canCreate && creator.phase != .created)
-                .padding(.horizontal, 24).padding(.vertical, 12)
+                .padding(.horizontal, HermesSpacing.s24).padding(.vertical, HermesSpacing.s12)
                 .background(.bar)
             }
             .navigationTitle(creator.isDuplicate ? "Duplicate Bot" : "New Bot")
@@ -158,14 +158,14 @@ import SwiftUI
 
     private var lookCard: some View {
         card {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 14) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s12), count: 4), spacing: HermesSpacing.s16) {
                 ForEach(BotAvatarShape.allCases) { shape in
                     Button { creator.setShape(shape); cue = BotFaceCue(.hop) } label: {
                         BotAvatarMarkView(name: creator.name, appearance: appearance(for: shape), size: 42)
                             .frame(maxWidth: .infinity, minHeight: 50)
                             .overlay {
                                 if creator.draft.appearance.shape == shape.rawValue {
-                                    RoundedRectangle(cornerRadius: 12).stroke(.secondary, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: HermesRadius.r12).stroke(.secondary, lineWidth: 2)
                                 }
                             }
                     }
@@ -174,11 +174,13 @@ import SwiftUI
                     .accessibilityAddTraits(creator.draft.appearance.shape == shape.rawValue ? .isSelected : [])
                 }
             }
-            .padding(16)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 15) {
+            .padding(HermesSpacing.s16)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: HermesSpacing.s12), count: 6), spacing: HermesSpacing.s16) {
                 ForEach(BotAvatarColor.palette) { color in
                     Button { creator.setColor(color.hex); cue = BotFaceCue(.wobble) } label: {
                         Circle().fill(color.swatch).frame(width: 30, height: 30)
+                            // Negative inset grows the selection ring past the swatch's own
+                            // bounds so its stroke doesn't clip — not a HermesSpacing scale step.
                             .overlay { if creator.draft.appearance.color == color.hex { Circle().stroke(.secondary, lineWidth: 3).padding(-5) } }
                             .frame(minWidth: 44, minHeight: 44)
                     }
@@ -187,8 +189,8 @@ import SwiftUI
                     .accessibilityAddTraits(creator.draft.appearance.color == color.hex ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 16).padding(.bottom, 10)
-            Divider().padding(.leading, 16)
+            .padding(.horizontal, HermesSpacing.s16).padding(.bottom, HermesSpacing.s12)
+            Divider().padding(.leading, HermesSpacing.s16)
             navigationRow(String(localized: "Expression"), subtitle: nil,
                           value: BotAvatarExpression.resolve(creator.draft.appearance.expression).localizedName,
                           systemImage: "face.smiling") { showsExpressions = true }
@@ -197,28 +199,28 @@ import SwiftUI
 
     /// Per-step outcomes after an attempt, mirroring the editor's save results.
     private var results: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(creator.phase == .created ? (creator.needsAttention ? "Created, with a note" : "Created") : "Needs Attention").font(.headline)
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            Text(creator.phase == .created ? (creator.needsAttention ? "Created, with a note" : "Created") : "Needs Attention").appFont(.headline)
             ForEach(BotCreator.Step.allCases.filter { creator.outcomes[$0] != nil }) { step in
-                HStack(alignment: .top, spacing: 10) {
+                HStack(alignment: .top, spacing: HermesSpacing.s12) {
                     Image(systemName: icon(creator.outcomes[step]!)).foregroundStyle(color(creator.outcomes[step]!)).frame(width: 20)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(step.title).font(.subheadline.weight(.semibold))
-                        Text(text(creator.outcomes[step]!)).font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                        Text(step.title).appFont(.subheadline, weight: .semibold)
+                        Text(text(creator.outcomes[step]!)).appFont(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
-            if let note = creator.note { Text(note).font(.caption).foregroundStyle(.secondary) }
+            if let note = creator.note { Text(note).appFont(.caption).foregroundStyle(.secondary) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
-        .padding(.bottom, 16)
+        .padding(HermesSpacing.s16).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r20))
+        .padding(.bottom, HermesSpacing.s16)
     }
 
     private var expressionPicker: some View {
         List(BotAvatarExpression.allCases) { expression in
             Button { creator.setExpression(expression); showsExpressions = false } label: {
-                HStack(spacing: 14) {
+                HStack(spacing: HermesSpacing.s16) {
                     BotAvatarMarkView(name: creator.name, appearance: appearance(expression: expression), size: 40)
                     Text(expression.localizedName).foregroundStyle(.primary)
                     Spacer()
@@ -247,30 +249,30 @@ import SwiftUI
     }
 
     private func sectionLabel(_ title: LocalizedStringKey) -> some View {
-        Text(title).font(.subheadline).foregroundStyle(.tertiary)
+        Text(title).appFont(.subheadline).foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 10).padding(.top, 24).padding(.bottom, 8)
+            .padding(.leading, HermesSpacing.s12).padding(.top, HermesSpacing.s24).padding(.bottom, HermesSpacing.s8)
     }
 
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(spacing: 0, content: content)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        VStack(spacing: HermesSpacing.s0, content: content)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous))
     }
 
     private func navigationRow(_ title: String, subtitle: String?, value: String, systemImage: String,
                                action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: systemImage).foregroundStyle(.secondary).frame(width: 24)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                     Text(title).foregroundStyle(.primary)
-                    if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+                    if let subtitle, !subtitle.isEmpty { Text(subtitle).appFont(.caption).foregroundStyle(.secondary).lineLimit(1) }
                 }
                 Spacer(minLength: 8)
-                Text(value).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                Text(value).appFont(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                 Image(systemName: "chevron.forward").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(16).contentShape(Rectangle())
+            .padding(HermesSpacing.s16).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

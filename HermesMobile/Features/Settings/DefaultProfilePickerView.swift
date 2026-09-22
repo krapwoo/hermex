@@ -31,7 +31,7 @@ struct DefaultProfilePickerView: View {
             List {
                 if let saveError {
                     Text(verbatim: saveError)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 12))
@@ -126,13 +126,13 @@ struct DefaultProfilePickerView: View {
             showsCreateProfile = true
         } label: {
             Label("New Profile", systemImage: "plus")
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(Color.primary)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, HermesSpacing.s12)
         .background(
             Color(.tertiarySystemFill),
             in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
@@ -174,7 +174,7 @@ struct DefaultProfilePickerView: View {
         return Button {
             Task { await save(profile) }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 // Same rule as the model picker: an unknown provider renders
                 // nothing at all rather than reserving an empty glyph slot.
                 if ProviderGlyphKind.resolve(providerID: profile.provider) != nil {
@@ -182,10 +182,10 @@ struct DefaultProfilePickerView: View {
                         .frame(width: 17, height: 17)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                    HStack(spacing: HermesSpacing.s8) {
                         Text(profile.displayName)
-                            .font(.body)
+                            .appFont(.body)
                             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
 
                         if selected {
@@ -197,7 +197,7 @@ struct DefaultProfilePickerView: View {
 
                     if let details = profileDetails(profile) {
                         Text(details)
-                            .font(.caption)
+                            .appFont(.caption)
                             .foregroundStyle(
                                 selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
                             )
@@ -404,7 +404,7 @@ private struct CreateProfileSheet: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .font(.caption)
+                            .appFont(.caption)
                             .foregroundStyle(.red)
                     }
                 }
@@ -529,10 +529,10 @@ private struct ProfileStatusBadge: View {
 
     var body: some View {
         Text(title)
-            .font(.caption2.weight(.semibold))
+            .appFont(.caption2, weight: .semibold)
             .foregroundStyle(isInverted ? Color(.systemBackground) : Color.accentColor)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
+            .padding(.horizontal, HermesSpacing.s8)
+            .padding(.vertical, HermesSpacing.s4)
             .background(
                 isInverted ? Color(.systemBackground).opacity(0.22) : Color.accentColor.opacity(0.12),
                 in: Capsule(style: .continuous)

@@ -5,8 +5,8 @@ struct ComposerWorkspaceSelectorButton: View {
     let title: String
     let isDisabled: Bool
     let color: Color
-    let controlFont: Font
-    let chevronFont: Font
+    let controlRole: AppFont.Role
+    let chevronRole: AppFont.Role
     let onTap: () -> Void
 
     var body: some View {
@@ -15,8 +15,8 @@ struct ComposerWorkspaceSelectorButton: View {
                 title: title,
                 systemImage: "folder",
                 color: color,
-                controlFont: controlFont,
-                chevronFont: chevronFont
+                controlRole: controlRole,
+                chevronRole: chevronRole
             )
         }
         .buttonStyle(.chatTactile(.compactControl))
@@ -34,8 +34,8 @@ struct ComposerProfileSelectorMenu: View {
     let isStatic: Bool
     let isDisabled: Bool
     let color: Color
-    let controlFont: Font
-    let chevronFont: Font
+    let controlRole: AppFont.Role
+    let chevronRole: AppFont.Role
     let onSelectProfile: (ProfileSummary) -> Void
 
     var body: some View {
@@ -45,8 +45,8 @@ struct ComposerProfileSelectorMenu: View {
                 systemImage: "person.crop.circle",
                 showsChevron: false,
                 color: color,
-                controlFont: controlFont,
-                chevronFont: chevronFont
+                controlRole: controlRole,
+                chevronRole: chevronRole
             )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Profile: \(selectedProfileTitle)"))
@@ -61,8 +61,8 @@ struct ComposerProfileSelectorMenu: View {
                 title: selectedProfileTitle,
                 systemImage: "person.crop.circle",
                 color: color,
-                controlFont: controlFont,
-                chevronFont: chevronFont
+                controlRole: controlRole,
+                chevronRole: chevronRole
             )
         } menu: {
             makeMenu()
@@ -110,8 +110,8 @@ struct ComposerModelEffortMenu: View {
     let recentModelKeys: [ModelFavoriteKey]
     let isDisabled: Bool
     let color: Color
-    let controlFont: Font
-    let chevronFont: Font
+    let controlRole: AppFont.Role
+    let chevronRole: AppFont.Role
     let onSelectModel: (ModelCatalogOption) -> Void
     let onSelectEffort: (String) -> Void
     let onShowAllModels: () -> Void
@@ -120,7 +120,7 @@ struct ComposerModelEffortMenu: View {
         // UIKit needs the nested menu's full geometry before presentation. Deferring
         // this tree makes the first submenu expansion visibly re-anchor.
         ChatUIKitMenuButton(loadsMenuEagerly: true) {
-            HStack(spacing: 5) {
+            HStack(spacing: HermesSpacing.s4) {
                 if ProviderGlyphKind.resolve(providerID: selection.modelProviderID) != nil {
                     ProviderGlyph(providerID: selection.modelProviderID)
                         .frame(width: 15, height: 15)
@@ -129,11 +129,11 @@ struct ComposerModelEffortMenu: View {
                 Text(selection.title)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .font(controlFont)
+                    .appFont(controlRole)
                     .layoutPriority(1)
 
                 Image(systemName: "chevron.down")
-                    .font(chevronFont)
+                    .appFont(chevronRole)
             }
             .foregroundStyle(color)
             .fixedSize(horizontal: true, vertical: false)
@@ -312,22 +312,22 @@ struct ComposerInlineControlLabel: View {
     let systemImage: String
     var showsChevron = true
     let color: Color
-    let controlFont: Font
-    let chevronFont: Font
+    let controlRole: AppFont.Role
+    let chevronRole: AppFont.Role
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: systemImage)
-                .font(controlFont)
+                .appFont(controlRole)
 
             Text(title)
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .font(controlFont)
+                .appFont(controlRole)
 
             if showsChevron {
                 Image(systemName: "chevron.down")
-                    .font(chevronFont)
+                    .appFont(chevronRole)
             }
         }
         .foregroundStyle(color)

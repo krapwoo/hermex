@@ -77,7 +77,7 @@ struct InsightsView: View {
 
     private var loadedContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s20) {
                 if viewModel.showsLimits {
                     ProviderLimitsSection(
                         cards: viewModel.limitCards,
@@ -96,7 +96,7 @@ struct InsightsView: View {
                     SectionCard {
                         Label {
                             Text(viewModel.sourceDescription)
-                                .font(AppFont.caption())
+                                .appFont(.caption)
                                 .fixedSize(horizontal: false, vertical: true)
                         } icon: {
                             Image(systemName: "exclamationmark.triangle")
@@ -128,12 +128,12 @@ struct InsightsView: View {
                 }
 
                 Text(viewModel.sourceDescription)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.vertical, HermesSpacing.s12)
         }
         .refreshable {
             await refresh()

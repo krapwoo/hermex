@@ -85,7 +85,7 @@ struct MessageBubbleView: View {
     private var userMessageRow: some View {
         let previewURL = linkPreviewURL
 
-        return VStack(alignment: .trailing, spacing: 8) {
+        return VStack(alignment: .trailing, spacing: HermesSpacing.s8) {
             if !textOnly, let attachments = message.attachments, !attachments.isEmpty {
                 attachmentPreviews
             }
@@ -94,9 +94,9 @@ struct MessageBubbleView: View {
             // message has no bubble text left; skip the empty pill so only the
             // attachment grid shows.
             if hasVisibleUserBubbleText || previewURL != nil {
-                HStack(alignment: .bottom, spacing: 0) {
+                HStack(alignment: .bottom, spacing: HermesSpacing.s0) {
                     Spacer(minLength: userBubbleLeadingGutter)
-                    VStack(alignment: .trailing, spacing: 8) {
+                    VStack(alignment: .trailing, spacing: HermesSpacing.s8) {
                         if hasVisibleUserBubbleText {
                             userBubble
                         }
@@ -156,7 +156,7 @@ struct MessageBubbleView: View {
             isStreaming: isStreaming
         )
 
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             if showsAssistantTurnHeaderForThisMessage {
                 assistantTurnHeader
             }
@@ -208,7 +208,7 @@ struct MessageBubbleView: View {
     /// identity. The reply's time is not here: it sits under the message in
     /// `ChatMessageMetaRow`, next to the copy button.
     private var assistantTurnHeader: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: HermesSpacing.s4) {
             Image(systemName: "sparkle")
                 .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
@@ -218,7 +218,7 @@ struct MessageBubbleView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .font(AppFont.footnote())
+        .appFont(.footnote)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(assistantTurnHeaderAccessibilityLabel)
     }
@@ -272,7 +272,7 @@ struct MessageBubbleView: View {
     }
 
     private func localStatusRow(iconName: String, iconColor: Color) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             Image(systemName: iconName)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(iconColor)
@@ -282,14 +282,14 @@ struct MessageBubbleView: View {
             MarkdownRenderer(content: messageText, isStreaming: isStreaming)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .stroke(Color(.separator).opacity(colorScheme == .dark ? 0.42 : 0.28), lineWidth: 0.5)
         )
-        .padding(.vertical, 4)
+        .padding(.vertical, HermesSpacing.s4)
     }
 
     /// The sent message, with any skill reference drawn as the same chip the
@@ -303,14 +303,14 @@ struct MessageBubbleView: View {
         let chips = textOnly ? [] : userBubbleChips(in: text)
 
         return ComposerChipTextLine.text(text, tokens: chips, style: chipStyle)
-            .font(.body)
+            .appFont(.body)
             .textSelection(.enabled)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(userBubbleBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.vertical, HermesSpacing.s8)
+            .background(userBubbleBackground, in: RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous))
             .foregroundStyle(userBubbleForeground)
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous)
                     .stroke(userBubbleBorder, lineWidth: 0.5)
             )
             // VoiceOver reads a chip by its skill's name rather than announcing
@@ -606,9 +606,9 @@ private struct GridAttachmentCell: View {
             }
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
         )
         .accessibilityElement(children: .ignore)
@@ -617,16 +617,16 @@ private struct GridAttachmentCell: View {
 
     private var fileCell: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
 
-            VStack(spacing: 5) {
+            VStack(spacing: HermesSpacing.s4) {
                 Image(systemName: fileIconName)
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(fileBadgeColor)
 
                 Text(fileDisplayName)
-                    .font(.caption2.weight(.medium))
+                    .appFont(.caption2, weight: .medium)
                     .foregroundStyle(Color(.label))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
@@ -641,7 +641,7 @@ private struct GridAttachmentCell: View {
         }
         .frame(width: size, height: size)
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
         )
         .accessibilityElement(children: .ignore)
@@ -649,7 +649,7 @@ private struct GridAttachmentCell: View {
     }
 
     private var fallbackImage: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
             .fill(Color(.systemFill))
             .overlay(
                 Image(systemName: "photo")
@@ -659,7 +659,7 @@ private struct GridAttachmentCell: View {
     }
 
     private var placeholderImage: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
             .fill(Color(.systemFill))
             .overlay(
                 ProgressView()
@@ -765,7 +765,7 @@ private struct RemoteAttachmentImage: View {
     }
 
     private var fallbackImage: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
             .fill(Color(.systemFill))
             .overlay(
                 Image(systemName: "photo")
@@ -775,7 +775,7 @@ private struct RemoteAttachmentImage: View {
     }
 
     private var placeholderImage: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
             .fill(Color(.systemFill))
             .overlay(
                 ProgressView()

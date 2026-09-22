@@ -52,7 +52,7 @@ struct TranscriptMediaContentView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                 switch segment {
                 case let .text(text):
@@ -184,9 +184,9 @@ private struct TranscriptMediaThumbnailView: View {
                 .scaledToFill()
                 .frame(width: thumbnailWidth, height: thumbnailHeight)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
                 )
         } else if didAttemptLoad {
@@ -196,7 +196,7 @@ private struct TranscriptMediaThumbnailView: View {
                 TranscriptMediaUnavailableChip(reference: reference)
             }
         } else {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color(.systemFill))
                 .frame(width: thumbnailWidth, height: thumbnailHeight)
                 .overlay {
@@ -246,7 +246,7 @@ private struct TranscriptMediaResolvedRemoteView: View {
                 TranscriptMediaUnavailableChip(reference: reference)
 
             case nil:
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .fill(Color(.systemFill))
                     .frame(width: 210, height: 132)
                     .overlay {
@@ -274,9 +274,9 @@ private struct TranscriptMediaResolvedRemoteView: View {
             .scaledToFill()
             .frame(width: 210, height: 132)
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
             )
     }
@@ -324,7 +324,7 @@ private struct TranscriptMediaAudioExportView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: HermesSpacing.s8) {
             InlineAudioPlayerView(title: reference.displayName) {
                 await audioData()
             }
@@ -423,14 +423,14 @@ private struct TranscriptMediaFileExportView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: "doc")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color(.secondaryLabel))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(reference.displayName)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -438,7 +438,7 @@ private struct TranscriptMediaFileExportView: View {
                 Text(isExporting
                      ? String(localized: "Loading…")
                      : String(localized: "Tap to download"))
-                    .font(.caption2)
+                    .appFont(.caption2)
                     .foregroundStyle(Color(.secondaryLabel))
                     .lineLimit(1)
             }
@@ -455,13 +455,13 @@ private struct TranscriptMediaFileExportView: View {
             .disabled(isExporting)
             .accessibilityLabel(String(localized: "Download \(reference.displayName)"))
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: 240, alignment: .leading)
         .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
         )
         .accessibilityElement(children: .contain)
@@ -529,31 +529,31 @@ private struct TranscriptMediaVideoTile: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
                 .frame(width: 210, height: 132)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
                 )
 
-            VStack(spacing: 8) {
+            VStack(spacing: HermesSpacing.s8) {
                 Image(systemName: "play.rectangle.fill")
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
 
                 Text(reference.displayName)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .frame(maxWidth: 172)
 
                 Text("Video")
-                    .font(.caption2)
+                    .appFont(.caption2)
                     .foregroundStyle(Color(.secondaryLabel))
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, HermesSpacing.s16)
         }
     }
 }
@@ -562,31 +562,31 @@ private struct TranscriptMediaUnavailableChip: View {
     let reference: TranscriptMediaReference
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: iconName)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color(.secondaryLabel))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(reference.displayName)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
 
                 Text("Media unavailable")
-                    .font(.caption2)
+                    .appFont(.caption2)
                     .foregroundStyle(Color(.secondaryLabel))
                     .lineLimit(1)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: 240, alignment: .leading)
         .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                 .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
         )
         .accessibilityElement(children: .ignore)
@@ -803,7 +803,7 @@ struct TranscriptMediaPreviewView: View {
 
     private func imageContent(_ image: UIImage) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 mediaHeader
 
                 Image(uiImage: image)
@@ -818,7 +818,7 @@ struct TranscriptMediaPreviewView: View {
     }
 
     private func audioContent(_ data: Data) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             mediaHeader
 
             InlineAudioPlayerView(title: item.reference.displayName) {
@@ -832,15 +832,15 @@ struct TranscriptMediaPreviewView: View {
     }
 
     private func videoContent(_ url: URL) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             mediaHeader
 
             TranscriptVideoPreviewPlayerView(url: url)
                 .frame(maxWidth: .infinity)
                 .aspectRatio(16 / 9, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
                 )
         }
@@ -853,10 +853,10 @@ struct TranscriptMediaPreviewView: View {
         ContentUnavailableView {
             Label("No Preview", systemImage: unavailableIconName)
         } description: {
-            VStack(spacing: 8) {
+            VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(item.reference.rawReference)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .fontDesign(.monospaced)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
@@ -878,16 +878,16 @@ struct TranscriptMediaPreviewView: View {
     }
 
     private var mediaHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(item.reference.rawReference)
-                .font(.caption)
+                .appFont(.caption)
                 .fontDesign(.monospaced)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 
             if let originalByteCount = viewModel.originalByteCount {
                 Text(ByteCountFormatter.string(fromByteCount: Int64(originalByteCount), countStyle: .file))
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         }

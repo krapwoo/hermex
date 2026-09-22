@@ -37,7 +37,7 @@ struct SlashCommandAutocompleteView: View {
         let parsed = parsed
         let results = currentResults
 
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             if parsed.isSubArgMode, let command = parsed.command {
                 subArgList(for: command, results: results)
             } else {
@@ -50,7 +50,7 @@ struct SlashCommandAutocompleteView: View {
             in: RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous)
         )
         .clipShape(RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
-        .shadow(color: Color.black.opacity(0.15), radius: 12, y: 4)
+        .hermesShadow(.popover)
         .frame(height: panelHeight(for: results, parsed: parsed))
         .task(id: rankingInput) {
             let ranked = await rankingInput.rankedResults()
@@ -142,9 +142,9 @@ struct SlashCommandAutocompleteView: View {
             // panel when no skill matches, so an empty pass here only means a
             // stale frame before the newer rows land.
             Text("No commands or skills match \"\(parsed.commandName)\"")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 20)
+                .padding(.vertical, HermesSpacing.s20)
                 .frame(maxWidth: .infinity)
         } else {
             let commands = results.commands
@@ -152,7 +152,7 @@ struct SlashCommandAutocompleteView: View {
             let agentCommands = results.agentCommands
 
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: HermesSpacing.s0) {
                     ForEach(Array(commands.enumerated()), id: \.element.id) { index, command in
                         commandRow(command)
 
@@ -273,7 +273,7 @@ struct SlashCommandAutocompleteView: View {
         style: RowStyle,
         icon: String? = nil
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             if let icon {
                 Image(systemName: icon)
                     .font(.caption2.weight(.semibold))
@@ -298,19 +298,19 @@ struct SlashCommandAutocompleteView: View {
             Spacer(minLength: 8)
 
             Text(detail)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.vertical, HermesSpacing.s12)
         .contentShape(Rectangle())
     }
 
     private var rowDivider: some View {
         Divider()
-            .padding(.horizontal, 16)
+            .padding(.horizontal, HermesSpacing.s16)
     }
 
     @ViewBuilder
@@ -326,13 +326,13 @@ struct SlashCommandAutocompleteView: View {
     private func skillSubArgList(_ filtered: [SkillSlashSuggestion]) -> some View {
         if filtered.isEmpty {
             skillSubArgEmptyText
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 20)
+                .padding(.vertical, HermesSpacing.s20)
                 .frame(maxWidth: .infinity)
         } else {
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: HermesSpacing.s0) {
                     ForEach(Array(filtered.enumerated()), id: \.element.id) { index, skill in
                         skillSubArgRow(skill)
 
@@ -362,20 +362,20 @@ struct SlashCommandAutocompleteView: View {
 
         if filtered.isEmpty {
             Text("No matches for \"\(parsed.argQuery)\"")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 20)
+                .padding(.vertical, HermesSpacing.s20)
                 .frame(maxWidth: .infinity)
         } else {
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: HermesSpacing.s0) {
                     ForEach(Array(filtered.enumerated()), id: \.offset) { index, item in
                         Button {
                             onSelectSubArg(item)
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: HermesSpacing.s12) {
                                 Text(subArgDisplayText(item, for: command))
-                                    .font(.subheadline)
+                                    .appFont(.subheadline)
                                     .foregroundStyle(.primary)
                                     .lineLimit(1)
 
@@ -395,15 +395,15 @@ struct SlashCommandAutocompleteView: View {
                                         .foregroundStyle(Color.accentColor)
                                 }
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
+                            .padding(.horizontal, HermesSpacing.s16)
+                            .padding(.vertical, HermesSpacing.s12)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
 
                         if index < filtered.count - 1 {
                             Divider()
-                                .padding(.horizontal, 16)
+                                .padding(.horizontal, HermesSpacing.s16)
                         }
                     }
                 }

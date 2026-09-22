@@ -40,7 +40,7 @@ struct OnboardingView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 TabView(selection: $currentPage) {
                     OnboardingWelcomePage()
                         .tag(0)
@@ -66,13 +66,13 @@ struct OnboardingView: View {
                 bottomBar
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .safeAreaInset(edge: .bottom, spacing: HermesSpacing.s0) {
             if isEditingConnectionField {
                 keyboardActionBar
                     .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: isEditingConnectionField)
+        .animation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d200), value: isEditingConnectionField)
         .preferredColorScheme(.dark)
         .onChange(of: currentPage) { oldPage, newPage in
             handlePageChange(from: oldPage, to: newPage)
@@ -89,7 +89,7 @@ struct OnboardingView: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: HermesSpacing.s16) {
             OnboardingPageIndicator(
                 pageCount: OnboardingFlowPolicy.pageCount,
                 currentPage: currentPage
@@ -102,15 +102,15 @@ struct OnboardingView: View {
             } else {
                 Button(action: handlePrimaryAction) {
                     Text(OnboardingFlowPolicy.primaryButtonTitle(for: currentPage))
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.subheadline, weight: .semibold)
                         .foregroundStyle(.black)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
+                        .padding(.vertical, HermesSpacing.s16)
                         .background(
                             Color(red: 1.0, green: 0.74, blue: 0.10),
-                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                         )
                 }
                 .buttonStyle(.plain)
@@ -120,16 +120,16 @@ struct OnboardingView: View {
                     Button("Already have a server?") {
                         jumpToConnectPage()
                     }
-                    .font(.footnote.weight(.medium))
+                    .appFont(.footnote, weight: .medium)
                     .foregroundStyle(.white.opacity(0.55))
                     .buttonStyle(.plain)
                     .accessibilityHint("Skips setup and opens the connect screen.")
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
-        .padding(.bottom, 12)
+        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.top, HermesSpacing.s12)
+        .padding(.bottom, HermesSpacing.s12)
         .background(
             LinearGradient(
                 colors: [.clear, .black.opacity(0.6), .black],
@@ -143,22 +143,22 @@ struct OnboardingView: View {
     }
 
     private var keyboardActionBar: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: HermesSpacing.s12) {
             connectActionButtons
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.top, HermesSpacing.s12)
+        .padding(.bottom, HermesSpacing.s8)
     }
 
     private var connectActionButtons: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 testConnectionButton
                 connectButton
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: HermesSpacing.s12) {
                 testConnectionButton
                 connectButton
             }
@@ -222,13 +222,13 @@ struct OnboardingView: View {
 
     private func advanceToNextPage() {
         guard currentPage < OnboardingFlowPolicy.connectPageIndex else { return }
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d300)) {
             currentPage += 1
         }
     }
 
     private func jumpToConnectPage() {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d300)) {
             currentPage = OnboardingFlowPolicy.connectPageIndex
         }
     }

@@ -15,8 +15,8 @@ struct BotRoomComposerView: View {
     @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 16
 
     var body: some View {
-        AdaptiveGlassContainer(spacing: 6) {
-            VStack(spacing: 8) {
+        AdaptiveGlassContainer(spacing: HermesSpacing.s8) {
+            VStack(spacing: HermesSpacing.s8) {
                 if focused, reader.mayEditDraft,
                    let trigger = BotMentionTrigger.detect(in: reader.draft, selection: selection.range) {
                     let completions = BotRoomMentions.completions(room: reader.room, query: trigger.query)
@@ -28,7 +28,7 @@ struct BotRoomComposerView: View {
                         }
                     }
                 }
-                HStack(spacing: 4) {
+                HStack(spacing: HermesSpacing.s4) {
                     ComposerTextInputView(
                         text: $reader.draft, selection: $selection, isFocused: $focused,
                         inputHeight: $inputHeight, measuredHeight: $measuredHeight,
@@ -46,7 +46,7 @@ struct BotRoomComposerView: View {
                 .modifier(ChatComposerSurfaceStyle(isExpanded: focused))
             }
         }
-        .padding(.horizontal, 16).padding(.bottom, 8)
+        .padding(.horizontal, HermesSpacing.s16).padding(.bottom, HermesSpacing.s8)
     }
 
     private var actionButton: some View {
@@ -59,7 +59,7 @@ struct BotRoomComposerView: View {
         } label: {
             Group {
                 if reader.awaitingStop || reader.status.stopping > 0 {
-                    Text("Stopping…").font(.caption).padding(.horizontal, 8)
+                    Text("Stopping…").appFont(.caption).padding(.horizontal, HermesSpacing.s8)
                 } else {
                     Image(systemName: stop ? "stop.fill" : "arrow.up")
                         .font(.system(size: iconSize, weight: .semibold))
@@ -108,16 +108,16 @@ struct BotRoomActionCard: View {
                 onAnswer: { _ in }, onSkip: {}, onCredential: { _ in }, canDecline: false, onDecline: {},
                 onStop: { Task { await reader.stop() } }, onConnection: { _ in })
         } else {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(identity).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+                Text(identity).appFont(.caption).foregroundStyle(.secondary)
                 if action.isRetry {
                     Button("Retry") { Task { await reader.act(action) } }.disabled(!reader.mayAct(action))
                 } else {
                     Label("Needs attention. Answer the request in Hermes Desktop on this same connection.", systemImage: "desktopcomputer")
-                        .font(.callout)
+                        .appFont(.body)
                 }
             }
-            .padding(16).frame(maxWidth: 560, alignment: .leading)
+            .padding(HermesSpacing.s16).frame(maxWidth: 560, alignment: .leading)
             .pendingRequestCardSurface(cornerRadius: BotPendingRequestCard.cornerRadius)
         }
     }

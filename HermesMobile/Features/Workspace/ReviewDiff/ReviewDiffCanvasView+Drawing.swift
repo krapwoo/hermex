@@ -333,7 +333,7 @@ extension ReviewDiffCanvasView {
         for range in line.wordDiffRanges where !range.isEmpty {
             let x = style.codeStartX - horizontalOffset + CGFloat(range.lowerBound) * style.codeCharacterWidth
             let width = max(2, CGFloat(range.count) * style.codeCharacterWidth)
-            UIBezierPath(roundedRect: CGRect(x: x, y: y, width: width, height: height), cornerRadius: 3).fill()
+            UIBezierPath(roundedRect: CGRect(x: x, y: y, width: width, height: height), cornerRadius: HermesRadius.r4).fill()
         }
     }
 
@@ -386,7 +386,7 @@ extension ReviewDiffCanvasView {
 
     private func drawFileIcon(rect: CGRect, changeKind: GitFile.ChangeKind, context: CGContext) {
         let color = theme.tint(for: changeKind)
-        let outline = UIBezierPath(roundedRect: rect, cornerRadius: 6)
+        let outline = UIBezierPath(roundedRect: rect, cornerRadius: HermesRadius.r8)
         color.setStroke()
         outline.lineWidth = 2
         outline.stroke()
@@ -419,7 +419,7 @@ extension ReviewDiffCanvasView {
     }
 
     private func drawViewedCheckbox(rect: CGRect, checked: Bool, context: CGContext) {
-        let path = UIBezierPath(roundedRect: rect, cornerRadius: 6)
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: HermesRadius.r8)
         if checked {
             theme.accent.setFill()
             path.fill()

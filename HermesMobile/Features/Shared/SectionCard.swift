@@ -31,22 +31,22 @@ struct SectionCard<Content: View, Footer: View>: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: HermesRadius.r20, style: .continuous)
 
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             if let title {
                 Text(title)
                     .textCase(.uppercase)
-                    .font(AppFont.caption(weight: .semibold))
+                    .appFont(.caption, weight: .semibold)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, HermesSpacing.s4)
+                    .padding(.bottom, HermesSpacing.s8)
             }
 
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 content
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
+                    .padding(.horizontal, HermesSpacing.s16)
+                    .padding(.vertical, HermesSpacing.s16)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if hasFooter {

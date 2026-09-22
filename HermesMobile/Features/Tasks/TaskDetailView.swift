@@ -31,7 +31,7 @@ struct TaskDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 TaskDetailHeaderCard(
                     job: viewModel.job,
                     runningElapsed: viewModel.runningElapsed,
@@ -113,15 +113,15 @@ struct TaskDetailView: View {
     @ViewBuilder
     private var actionStatusSection: some View {
         if viewModel.isMutating {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 ProgressView()
                 Text("Updating task...")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         } else if let actionErrorMessage = viewModel.actionErrorMessage {
             Text(actionErrorMessage)
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.red)
         }
     }
@@ -131,7 +131,7 @@ struct TaskDetailView: View {
         if let prompt = viewModel.job.prompt, !prompt.isEmpty {
             SectionCard(title: String(localized: "Prompt")) {
                 Text(prompt)
-                    .font(.callout)
+                    .appFont(.body)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -152,7 +152,7 @@ struct TaskDetailView: View {
            !content.isEmpty {
             SectionCard(title: String(localized: "Run Output")) {
                 Text(content.strippingANSIEscapes())
-                    .font(.system(.footnote, design: .monospaced))
+                    .appFont(.footnote, design: .monospaced)
                     .textSelection(.enabled)
                     .lineLimit(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -173,9 +173,9 @@ struct TaskDetailView: View {
                 if dynamicTypeSize.isAccessibilitySize {
                     // At accessibility sizes two columns leave no room for
                     // either, so the label sits above its value instead.
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                         ForEach(fields) { field in
-                            VStack(alignment: .leading, spacing: 1) {
+                            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                                 configurationLabel(field)
                                 configurationValue(field)
                             }
@@ -195,7 +195,7 @@ struct TaskDetailView: View {
                     }
                 }
             }
-            .font(.footnote)
+            .appFont(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -207,14 +207,14 @@ struct TaskDetailView: View {
     }
 
     private func configurationValue(_ field: TaskConfigurationField) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(field.value)
                 .foregroundStyle(.primary)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : 3)
 
             if let detail = field.detail {
                 Text(detail)
-                    .font(.caption2.monospaced())
+                    .appFont(.caption2, design: .monospaced)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
             }

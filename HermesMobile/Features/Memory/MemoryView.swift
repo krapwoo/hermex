@@ -122,12 +122,12 @@ private struct MemorySectionHeader: View {
     let onEdit: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Label(section.title, systemImage: section.systemImage)
             Spacer()
             if let modifiedAt {
                 Text("Modified \(modifiedAt, style: .relative) ago")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
             Button(action: onEdit) {
@@ -146,12 +146,12 @@ private struct ProjectContextSectionHeader: View {
     let modifiedAt: Date?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Label("Project Context", systemImage: "folder.badge.gearshape")
             Spacer()
             if let modifiedAt {
                 Text("Modified \(modifiedAt, style: .relative) ago")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
             Image(systemName: "lock.fill")
@@ -166,7 +166,7 @@ private struct ProjectContextSectionFooter: View {
     let isShadowed: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             if let detail {
                 Text(verbatim: detail)
             }
@@ -220,7 +220,7 @@ private struct MemoryEditSheet: View {
             Form {
                 Section(section.title) {
                     TextEditor(text: $content)
-                        .font(.system(.body, design: .monospaced))
+                        .appFont(.body, design: .monospaced)
                         .frame(minHeight: 320)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -231,7 +231,7 @@ private struct MemoryEditSheet: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.red)
                     }
                 }

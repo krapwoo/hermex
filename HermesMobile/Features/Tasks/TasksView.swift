@@ -144,7 +144,7 @@ struct TasksView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .safeAreaInset(edge: .top, spacing: HermesSpacing.s0) {
             filterPicker
         }
     }
@@ -165,7 +165,7 @@ struct TasksView: View {
         }
         .pickerStyle(.segmented)
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, HermesSpacing.s8)
         .background(.bar)
     }
 
@@ -198,7 +198,7 @@ struct TasksView: View {
                         isShowingAllRecentRuns.toggle()
                     } label: {
                         Text(isTruncated ? "Show All (\(recentRuns.count))" : "Show Less")
-                            .font(.subheadline)
+                            .appFont(.subheadline)
                     }
                 }
             }
@@ -315,11 +315,11 @@ struct StatusBadge: View {
 
     var body: some View {
         Text(text)
-            .font(.caption2)
+            .appFont(.caption2)
             .fontWeight(.semibold)
             .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, HermesSpacing.s8)
+            .padding(.vertical, HermesSpacing.s4)
             .background(color.opacity(0.12), in: Capsule())
             .lineLimit(1)
     }

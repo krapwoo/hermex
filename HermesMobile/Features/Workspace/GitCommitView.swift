@@ -106,7 +106,7 @@ struct GitCommitView: View {
 
     private var fileList: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 10) {
+            LazyVStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 batchActionsBar
 
                 ForEach(viewModel.trackedFiles) { file in
@@ -119,23 +119,23 @@ struct GitCommitView: View {
 
                 if viewModel.status?.truncated == true {
                     Text("Showing first 500 changed files.")
-                        .font(AppFont.footnote())
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .padding(.vertical, HermesSpacing.s8)
                 }
             }
-            .padding(16)
+            .padding(HermesSpacing.s16)
         }
         .refreshable { await viewModel.load() }
     }
 
     private var batchActionsBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Text(viewModel.hasSelection
                 ? "\(viewModel.selectedPaths.count) selected"
                 : "All changes")
-                .font(AppFont.caption())
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 8)
@@ -163,7 +163,7 @@ struct GitCommitView: View {
             HapticButtonHaptics.tap(isEnabled: isHapticsEnabled)
             action()
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: HermesSpacing.s4) {
                 if running {
                     ProgressView().controlSize(.mini)
                 } else {
@@ -171,7 +171,7 @@ struct GitCommitView: View {
                 }
                 Text(title)
             }
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, weight: .semibold)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
@@ -179,16 +179,16 @@ struct GitCommitView: View {
     }
 
     private var commitBar: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             if let error = viewModel.actionErrorMessage {
                 Label(error, systemImage: "exclamationmark.circle")
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.orange)
             }
 
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .top, spacing: HermesSpacing.s8) {
                 TextField("Commit message", text: $viewModel.message, axis: .vertical)
-                    .font(AppFont.mono(style: .subheadline))
+                    .appFont(.subheadline, design: .monospaced)
                     .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
 
@@ -210,15 +210,15 @@ struct GitCommitView: View {
 
             if viewModel.messageWasTruncated {
                 Text("Diff was large; message may be partial.")
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Toggle("Push after commit", isOn: $pushAfterCommit)
-                .font(AppFont.subheadline())
+                .appFont(.subheadline)
                 .disabled(writesDisabled || viewModel.isBusy)
 
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 if viewModel.hasSelection {
                     Button {
                         Task { await runCommit { await viewModel.commitSelected(push: pushAfterCommit) } }
@@ -238,12 +238,12 @@ struct GitCommitView: View {
                 .disabled(commitDisabled || !viewModel.hasStagedChanges)
             }
         }
-        .padding(16)
+        .padding(HermesSpacing.s16)
         .background(.bar)
     }
 
     private func commitLabel(_ title: LocalizedStringKey) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: HermesSpacing.s8) {
             if viewModel.busyOperation == .committing {
                 ProgressView().controlSize(.small)
             }
@@ -286,19 +286,19 @@ private struct GitCommitFileRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(file.fileName)
-                        .font(AppFont.subheadline(weight: .semibold))
+                        .appFont(.subheadline, weight: .semibold)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     if let parent = file.parentDirectory {
                         Text(parent)
-                            .font(AppFont.mono(style: .caption2))
+                            .appFont(.caption2, design: .monospaced)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -309,19 +309,19 @@ private struct GitCommitFileRow: View {
 
                 if file.staged == true {
                     Text("Staged")
-                        .font(AppFont.caption2(weight: .semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .appFont(.caption2, weight: .semibold)
+                        .padding(.horizontal, HermesSpacing.s8)
+                        .padding(.vertical, HermesSpacing.s2)
                         .background(Color.green.opacity(0.18), in: Capsule())
                         .foregroundStyle(.green)
                 }
                 DiffCountsLabel(additions: file.additions ?? 0, deletions: file.deletions ?? 0)
                 GitStatusChip(kind: file.changeKind)
             }
-            .padding(12)
-            .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
+            .padding(HermesSpacing.s12)
+            .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: HermesRadius.r12))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .stroke(isSelected ? Color.accentColor.opacity(0.5) : Color(.separator).opacity(0.35), lineWidth: isSelected ? 1 : 0.5)
             }
             .contentShape(.rect)

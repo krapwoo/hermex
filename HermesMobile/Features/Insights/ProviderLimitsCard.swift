@@ -14,12 +14,12 @@ struct ProviderLimitsSection: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text("Limits")
                 .textCase(.uppercase)
-                .font(AppFont.caption(weight: .semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, HermesSpacing.s4)
 
             if !cards.isEmpty {
                 ForEach(cards) { card in
@@ -29,7 +29,7 @@ struct ProviderLimitsSection: View {
                 ProviderLimitsPlaceholderCard()
             }
         }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: cards)
+        .animation(reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d200), value: cards)
     }
 }
 
@@ -42,16 +42,16 @@ struct ProviderLimitsSection: View {
 private struct ProviderLimitsPlaceholderCard: View {
     var body: some View {
         SectionCard {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 Text(verbatim: "Provider")
-                    .font(AppFont.headline())
+                    .appFont(.headline)
                     .foregroundStyle(.primary)
-                    .padding(.bottom, 14)
+                    .padding(.bottom, HermesSpacing.s16)
 
                 row
 
                 Divider()
-                    .padding(.vertical, 14)
+                    .padding(.vertical, HermesSpacing.s16)
 
                 row
             }
@@ -66,21 +66,21 @@ private struct ProviderLimitsPlaceholderCard: View {
 
     /// Mirrors `ProviderLimitRowView`: an amount line, the bar, and a caption.
     private var row: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 Text(verbatim: "Session")
-                    .font(AppFont.body())
+                    .appFont(.body)
 
                 Spacer(minLength: 8)
 
                 Text(verbatim: "100% left")
-                    .font(AppFont.body(weight: .semibold))
+                    .appFont(.body, weight: .semibold)
             }
 
             ProviderLimitBar(fraction: 0, tint: .normal)
 
             Text(verbatim: "Resets in 12h 00m")
-                .font(AppFont.caption())
+                .appFont(.caption)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -99,13 +99,13 @@ struct ProviderLimitsCard: View {
         let now = Date()
 
         SectionCard {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 header
 
                 ForEach(Array(card.rows.enumerated()), id: \.element.id) { index, row in
                     if index > 0 {
                         Divider()
-                            .padding(.vertical, 14)
+                            .padding(.vertical, HermesSpacing.s16)
                     }
 
                     ProviderLimitRowView(row: row, now: now)
@@ -113,10 +113,10 @@ struct ProviderLimitsCard: View {
 
                 if let updated = providerLimitUpdatedText(card.updatedAt, now: now) {
                     Divider()
-                        .padding(.vertical, 14)
+                        .padding(.vertical, HermesSpacing.s16)
 
                     Text(updated)
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -126,36 +126,36 @@ struct ProviderLimitsCard: View {
     @ViewBuilder
     private var header: some View {
         let title = Text(card.title)
-            .font(AppFont.headline())
+            .appFont(.headline)
             .foregroundStyle(.primary)
 
         Group {
             if dynamicTypeSize.isAccessibilitySize {
                 // Two lines at accessibility sizes: the capsule would otherwise
                 // squeeze the provider name to a couple of characters.
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     title
                     planCapsule
                 }
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                     title
                     Spacer(minLength: 8)
                     planCapsule
                 }
             }
         }
-        .padding(.bottom, 14)
+        .padding(.bottom, HermesSpacing.s16)
     }
 
     @ViewBuilder
     private var planCapsule: some View {
         if let plan = card.plan {
             Text(plan)
-                .font(AppFont.caption(weight: .medium))
+                .appFont(.caption, weight: .medium)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .padding(.horizontal, HermesSpacing.s12)
+                .padding(.vertical, HermesSpacing.s4)
                 .overlay {
                     Capsule()
                         .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
@@ -175,7 +175,7 @@ private struct ProviderLimitRowView: View {
     var body: some View {
         let resetText = providerLimitResetText(row.resetAt, now: now)
 
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             amountRow
 
             if let fraction = row.fraction {
@@ -185,7 +185,7 @@ private struct ProviderLimitRowView: View {
             if let secondary = resetText {
                 Label {
                     Text(secondary)
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                 } icon: {
                     Image(systemName: "arrow.clockwise")
@@ -194,7 +194,7 @@ private struct ProviderLimitRowView: View {
                 }
             } else if let note = row.note {
                 Text(note)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -206,25 +206,25 @@ private struct ProviderLimitRowView: View {
     @ViewBuilder
     private var amountRow: some View {
         let label = Text(row.label)
-            .font(AppFont.body())
+            .appFont(.body)
             .foregroundStyle(.primary)
 
         let amount = Group {
             if let amount = row.amount {
                 Text(amount)
-                    .font(AppFont.body(weight: .semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(tintColor)
                     .monospacedDigit()
             }
         }
 
         if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 label
                 amount
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 label
                 Spacer(minLength: 8)
                 amount

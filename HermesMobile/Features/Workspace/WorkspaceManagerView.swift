@@ -31,7 +31,7 @@ struct WorkspaceManagerView: View {
                 if let errorMessage = viewModel.errorMessage {
                     Section {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.red)
                     }
                 }
@@ -39,7 +39,7 @@ struct WorkspaceManagerView: View {
                 if viewModel.managementUnavailable {
                     Section {
                         Text("Workspace management isn't available on this server.")
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -159,13 +159,13 @@ struct WorkspaceManagerView: View {
     }
 
     private func workspaceRow(_ workspace: WorkspaceRoot) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             Text(displayName(for: workspace))
-                .font(.body)
+                .appFont(.body)
 
             if let path = workspace.path {
                 Text(path)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -242,7 +242,7 @@ private struct WorkspaceAddSheet: View {
                 if let errorMessage = viewModel.errorMessage {
                     Section {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.red)
                     }
                 }
@@ -253,11 +253,11 @@ private struct WorkspaceAddSheet: View {
                             Button {
                                 path = suggestion
                             } label: {
-                                HStack(spacing: 12) {
+                                HStack(spacing: HermesSpacing.s12) {
                                     Image(systemName: "folder")
                                         .foregroundStyle(Color(.secondaryLabel))
                                     Text(suggestion)
-                                        .font(.callout)
+                                        .appFont(.body)
                                         .foregroundStyle(.primary)
                                         .lineLimit(2)
                                 }

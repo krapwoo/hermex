@@ -38,7 +38,7 @@ struct BotPendingRequestCard: View {
     let onConnection: (BotConnectionOperation.Answer) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             switch request {
             case .approval(let approval):
                 BotApprovalRequestBody(
@@ -73,12 +73,12 @@ struct BotPendingRequestCard: View {
             }
             if let resolution {
                 Text(resolution.message)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(resolution.outcome == .answered ? .secondary : Color.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(16)
+        .padding(HermesSpacing.s16)
         .frame(maxWidth: 560, alignment: .leading)
         .pendingRequestCardSurface(cornerRadius: Self.cornerRadius)
         .accessibilityElement(children: .contain)
@@ -121,7 +121,7 @@ private struct BotApprovalRequestBody: View {
         )
         if let consequence = approval.consequence {
             Text(consequence)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -130,14 +130,14 @@ private struct BotApprovalRequestBody: View {
             // readable in full before it is approved.
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(command)
-                    .font(.system(.footnote, design: .monospaced))
+                    .appFont(.footnote, design: .monospaced)
                     .textSelection(.enabled)
             }
             .pendingRequestBlockSurface()
         }
-        VStack(spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 8) {
+                HStack(spacing: HermesSpacing.s8) {
                     ForEach(row, id: \.self) { choice in
                         Button(role: choice == .deny ? .destructive : nil) {
                             onApprove(choice)
@@ -235,15 +235,15 @@ private struct BotQuestionRequestBody: View {
                 : identity
         )
         ForEach(question.questions) { item in
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 Text(item.prompt)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
                     .pendingRequestBlockSurface()
                 if let locked = item.lockedAnswer {
                     Label(locked, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .accessibilityLabel(Text("Already answered: \(locked)"))
                 } else {
@@ -255,7 +255,7 @@ private struct BotQuestionRequestBody: View {
             }
         }
         if !submitsOnTap {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 Button { onAnswer(answers()) } label: {
                     Label("Send answers", systemImage: "arrow.up.circle.fill").frame(maxWidth: .infinity)
                 }
@@ -281,24 +281,24 @@ private struct BotQuestionRequestBody: View {
                 toggle(choice, in: item)
             }
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if !submitsOnTap {
                     Image(systemName: selectionSymbol(isPicked: isPicked, item: item))
                         .foregroundStyle(isPicked ? Color.accentColor : .secondary)
                         .accessibilityHidden(true)
                 }
                 Text(choice.label)
-                    .font(.callout.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 if choice.isRecommended {
                     Text("Recommended")
-                        .font(.caption2.weight(.semibold))
+                        .appFont(.caption2, weight: .semibold)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s12)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             .foregroundStyle(.primary)
             .pendingRequestChoiceSurface(reduceTransparency: reduceTransparency)
@@ -309,7 +309,7 @@ private struct BotQuestionRequestBody: View {
     }
 
     private func responseField(for item: BotQuestionRequest.Question) -> some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        HStack(alignment: .bottom, spacing: HermesSpacing.s12) {
             TextField("Type a response", text: binding(for: item), axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(2...5)
@@ -383,18 +383,18 @@ private struct BotCredentialRequestBody: View {
             tint: .secondary, title: credential.kind.title, identity: identity
         )
         Text(credential.detail)
-            .font(.subheadline)
+            .appFont(.subheadline)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
         if let envVar = credential.envVar {
             // The name the host will store it under, so the user knows which of
             // their keys to paste before they paste one.
             Text(envVar)
-                .font(.system(.footnote, design: .monospaced))
+                .appFont(.footnote, design: .monospaced)
                 .textSelection(.enabled)
                 .pendingRequestBlockSurface()
         }
-        HStack(alignment: .bottom, spacing: 10) {
+        HStack(alignment: .bottom, spacing: HermesSpacing.s12) {
             SecureField(credential.kind == .sudo ? "Administrator password" : "Secret value", text: $value)
                 .textContentType(.password)
                 .textInputAutocapitalization(.never)
@@ -409,7 +409,7 @@ private struct BotCredentialRequestBody: View {
                 .accessibilityLabel(credential.kind == .sudo ? "Send password" : "Send secret")
         }
         Text(credential.handling)
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         Button { onCredential("") } label: {
@@ -452,11 +452,11 @@ private struct BotDesktopTaskRequestBody: View {
             identity: identity
         )
         Text(task.kind.title)
-            .font(.subheadline)
+            .appFont(.subheadline)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
         Text(task.kind.detail)
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         // Skipping beats stopping where it is offered: it calls off this one
@@ -723,13 +723,13 @@ private struct BotRequestHeader: View {
     let identity: String
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
             Image(systemName: systemImage)
                 .foregroundStyle(tint)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline)
-                Text(identity).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+                Text(title).appFont(.headline)
+                Text(identity).appFont(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
         }

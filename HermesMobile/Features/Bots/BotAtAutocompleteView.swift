@@ -62,9 +62,9 @@ struct BotAtAutocompleteView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: HermesSpacing.s0) {
                 ForEach(Array(sections.enumerated()), id: \.offset) { index, section in
-                    if index > 0 { Divider().padding(.horizontal, 16) }
+                    if index > 0 { Divider().padding(.horizontal, HermesSpacing.s16) }
                     switch section {
                     case .bots(let completions): botRows(completions)
                     case .files(let matches): fileRows(matches)
@@ -77,16 +77,16 @@ struct BotAtAutocompleteView: View {
         .clipShape(RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
         .adaptiveGlass(.regular, fallbackMaterial: .ultraThinMaterial,
                        in: RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
+        .hermesShadow(.popover)
         .accessibilityIdentifier("bot-at-autocomplete")
     }
 
     private func header(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(.caption2.weight(.semibold))
+            .appFont(.caption2, weight: .semibold)
             .textCase(.uppercase)
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, HermesSpacing.s16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: headerHeight)
             .accessibilityAddTraits(.isHeader)
@@ -97,7 +97,7 @@ struct BotAtAutocompleteView: View {
         header("Bots")
         ForEach(Array(completions.enumerated()), id: \.element.id) { index, item in
             BotMentionRow(item: item, avatars: avatars, onSelect: onSelectBot)
-            if index < completions.count - 1 { Divider().padding(.horizontal, 16) }
+            if index < completions.count - 1 { Divider().padding(.horizontal, HermesSpacing.s16) }
         }
     }
 
@@ -106,15 +106,15 @@ struct BotAtAutocompleteView: View {
         header("Files")
         if matches.isEmpty {
             Text("Searching files…")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, HermesSpacing.s16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: rowHeight)
         } else {
             ForEach(Array(matches.enumerated()), id: \.element.id) { index, match in
                 FilePathRow(match: match, onSelect: onSelectFile)
-                if index < matches.count - 1 { Divider().padding(.horizontal, 16) }
+                if index < matches.count - 1 { Divider().padding(.horizontal, HermesSpacing.s16) }
             }
         }
     }

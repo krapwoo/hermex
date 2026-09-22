@@ -27,7 +27,7 @@ struct ToolActivityGroupView: View {
         if let lastEntry = entries.last {
             let previousEntries = Array(entries.dropLast())
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 if !previousEntries.isEmpty {
                     previousRowsToggle(hiddenCount: previousEntries.count)
 
@@ -56,20 +56,20 @@ struct ToolActivityGroupView: View {
 
     private func previousRowsToggle(hiddenCount: Int) -> some View {
         Button(action: toggleExpansion) {
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .frame(width: 20, height: 18)
 
                 Text(previousRowsToggleTitle(hiddenCount: hiddenCount))
-                    .font(AppFont.caption(weight: .medium))
+                    .appFont(.caption, weight: .medium)
                     .foregroundStyle(.primary.opacity(0.8))
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, HermesSpacing.s2)
             .frame(minHeight: TranscriptLogRowMetrics.minimumHeight)
             .contentShape(Rectangle())
         }

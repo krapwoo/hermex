@@ -16,11 +16,11 @@ struct BotCachedHistoryView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
+                LazyVStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     Text("Messages saved on this iPhone")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .appFont(.footnote).foregroundStyle(.secondary)
                     Text(hit.snapshot.savedAt, format: .dateTime.month().day().hour().minute())
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .appFont(.footnote).foregroundStyle(.secondary)
                     ForEach(hit.snapshot.messages) { message in
                         let chatMessage = ChatMessage(
                             role: message.role,
@@ -39,21 +39,21 @@ struct BotCachedHistoryView: View {
                             )
                                 .id(message.id)
                         } else {
-                            VStack(alignment: .leading, spacing: 6) {
+                            VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                                 Text(message.role == "user" ? String(localized: "You") : profile.name)
-                                    .font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                                    .appFont(.subheadline, weight: .semibold).foregroundStyle(.secondary)
                                 Text(message.text).textSelection(.enabled)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
+                            .padding(HermesSpacing.s12)
                             .background(message.id == hit.message.id ? Color.accentColor.opacity(0.12) : Color.clear,
-                                        in: RoundedRectangle(cornerRadius: 12))
+                                        in: RoundedRectangle(cornerRadius: HermesRadius.r12))
                             .id(message.id)
                         }
                     }
                 }
                 .scrollTargetLayout()
-                .padding(16)
+                .padding(HermesSpacing.s16)
             }
             .scrollPosition(id: $scrollID, anchor: .center)
             .onScrollGeometryChange(for: Bool.self) { geometry in

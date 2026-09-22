@@ -201,8 +201,21 @@ import XCTest
         // The view debounces its query before reading the cache, so wait on the hit itself.
         let after = try await screenshot(window, name: "528-after-opening-room", awaiting: ["Comms", "chief-of-staff"])
         XCTAssertTrue(after.contains("Comms"), after)
-        XCTAssertTrue(after.contains("chief-of-staff"), after)
+        XCTAssertTrue(Self.ocrText(after, containsToken: "chief-of-staff"), after)
         XCTAssertFalse(after.contains("No saved messages found"), after)
+        wire.listFailure = BotFailure.transport
+        await inbox.open()
+        await renderFrames(40)
+        let offline = try screenshot(window, name: "528-room-search-list-unavailable")
+        XCTAssertTrue(offline.contains("Comms"), offline)
+        XCTAssertTrue(Self.ocrText(offline, containsToken: "chief-of-staff"), offline)
+        XCTAssertFalse(offline.contains("No saved messages found"), offline)
+    }
+
+    func testOCRTokenMatcherAcceptsFragmentedHyphensAndRejectsSubstringFalsePositives() {
+        let fragmented = "chief - of - staff"
+        XCTAssertTrue(Self.ocrText(fragmented, containsToken: "chief-of-staff"))
+        XCTAssertFalse(Self.ocrText("assistant chief of staffer", containsToken: "chief-of-staff"))
     }
 
     func testWarmRoomBuildsOnlyTheNewestPageOfReplies() async throws {
@@ -1200,6 +1213,19 @@ import XCTest
     /// Finds the fixture's saturated avatar colors by row, without depending on
     /// glyph pixels or exact screen coordinates. Short glass reflections are
     /// excluded; full-height color bands identify each header or suggestion.
+    private static func ocrText(_ text: String, containsToken token: String) -> Bool {
+        let normalizedText = text
+            .lowercased()
+            .replacingOccurrences(of: #"\s*-\s*"#, with: "-", options: .regularExpression)
+        let normalizedToken = token.lowercased()
+        let escaped = NSRegularExpression.escapedPattern(for: normalizedToken)
+        guard let regex = try? NSRegularExpression(pattern: "(?<![\\p{L}\\p{N}_-])\(escaped)(?![\\p{L}\\p{N}_-])") else {
+            return false
+        }
+        let range = NSRange(normalizedText.startIndex..<normalizedText.endIndex, in: normalizedText)
+        return regex.firstMatch(in: normalizedText, range: range) != nil
+    }
+
     private static func roomAvatarColorBands(_ image: UIImage) -> [[String]] {
         guard let cgImage = image.cgImage else { return [] }
         let width = cgImage.width, height = cgImage.height

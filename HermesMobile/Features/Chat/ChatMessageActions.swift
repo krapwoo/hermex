@@ -244,9 +244,9 @@ struct EditMessageSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 TextEditor(text: $editDraft)
-                    .font(.body)
+                    .appFont(.body)
                     .padding()
                     .scrollContentBackground(.hidden)
                     .background(Color(.systemGroupedBackground))

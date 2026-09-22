@@ -66,7 +66,7 @@ struct ChatMessageMetaRow<Accessory: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: HermesSpacing.s4) {
             if isUserMessage {
                 accessory
                 time
@@ -87,7 +87,7 @@ struct ChatMessageMetaRow<Accessory: View>: View {
                 time
             }
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, HermesSpacing.s2)
         .frame(maxWidth: .infinity, alignment: isUserMessage ? .trailing : .leading)
     }
 
@@ -95,7 +95,8 @@ struct ChatMessageMetaRow<Accessory: View>: View {
     private var time: some View {
         if let timeText {
             Text(timeText)
-                .font(AppFont.caption(weight: .medium).monospacedDigit())
+                .monospacedDigit()
+                .appFont(.caption, weight: .medium)
                 .foregroundStyle(.secondary)
         }
     }

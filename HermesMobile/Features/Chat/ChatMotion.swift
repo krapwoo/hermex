@@ -7,19 +7,19 @@ enum ChatMotion {
     }
 
     static func quickState(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeInOut(duration: 0.16)
+        reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d150)
     }
 
     static func disclosure(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .smooth(duration: 0.18, extraBounce: 0)
+        reduceMotion ? nil : .smooth(duration: HermesMotion.Duration.d200, extraBounce: 0)
     }
 
     static func composerChrome(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .smooth(duration: 0.22, extraBounce: 0)
+        reduceMotion ? nil : .smooth(duration: HermesMotion.Duration.d200, extraBounce: 0)
     }
 
     static func scrollToLatest(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.20)
+        reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d200)
     }
 
     /// Bottom-follow scrolling and active-row height growth while a response
@@ -27,14 +27,14 @@ enum ChatMotion {
     /// each new flush retargets the previous animation so the streaming edge
     /// glides instead of stepping per flush.
     static func streamingFollow(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.15)
+        reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d150)
     }
 
     /// Expanding or collapsing the clarification card above the composer. The
     /// card slides its own height past the bar's bottom edge on one ease-out
     /// clock, sized like the keyboard's; Reduce Motion snaps.
     static func clarificationToggle(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.22)
+        reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d200)
     }
 
     static func bottomOverlayTransition(reduceMotion: Bool) -> AnyTransition {
@@ -55,6 +55,6 @@ enum ChatMotion {
         guard !reduceMotion else { return .identity }
         let insertion: AnyTransition = isUserRow ? .opacity.combined(with: .offset(y: 8)) : .opacity
         return .asymmetric(insertion: insertion, removal: .identity)
-            .animation(.smooth(duration: 0.22, extraBounce: 0))
+            .animation(.smooth(duration: HermesMotion.Duration.d200, extraBounce: 0))
     }
 }

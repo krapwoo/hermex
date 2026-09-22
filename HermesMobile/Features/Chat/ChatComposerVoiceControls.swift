@@ -12,7 +12,7 @@ struct ComposerVoiceStatusView: View {
 
     var body: some View {
         Label(status.text, systemImage: status.systemImage)
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(status.isError ? Color.red : Color.secondary)
     }
 }
@@ -158,14 +158,15 @@ struct ComposerVoiceRecordingBar: View {
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             Circle()
                 .fill(Color.red)
                 .frame(width: 10, height: 10)
                 .opacity(isCancelArmed ? 0.4 : 1)
 
             Text(AudioDurationFormatter.string(from: elapsed))
-                .font(.callout.monospacedDigit())
+                .monospacedDigit()
+                .appFont(.body)
                 .foregroundStyle(.primary)
 
             Spacer(minLength: 8)
@@ -176,13 +177,13 @@ struct ComposerVoiceRecordingBar: View {
                     : String(localized: "Slide up to cancel"),
                 systemImage: isCancelArmed ? "xmark.circle.fill" : "chevron.up"
             )
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(isCancelArmed ? Color.red : Color.secondary)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.vertical, HermesSpacing.s12)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
         .accessibilityElement(children: .ignore)

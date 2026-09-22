@@ -14,20 +14,20 @@ struct OnboardingFeaturesPage: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: dynamicTypeSize.isAccessibilitySize ? 28 : 36) {
-                VStack(spacing: 10) {
+                VStack(spacing: HermesSpacing.s12) {
                     Text("What you get")
                         .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 26 : 28, weight: .bold))
                         .foregroundStyle(.white)
 
                     Text("Your Hermes agent, reachable from iPhone over Tailscale.")
-                        .font(.subheadline)
+                        .appFont(.subheadline)
                         .foregroundStyle(.white.opacity(0.45))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.top, 24)
+                .padding(.top, HermesSpacing.s24)
 
-                VStack(spacing: 16) {
+                VStack(spacing: HermesSpacing.s16) {
                     ForEach(Array(features.enumerated()), id: \.offset) { _, feature in
                         OnboardingFeatureRow(
                             icon: feature.icon,
@@ -38,8 +38,8 @@ struct OnboardingFeaturesPage: View {
                     }
                 }
             }
-            .padding(.horizontal, 28)
-            .padding(.bottom, 24)
+            .padding(.horizontal, HermesSpacing.s32)
+            .padding(.bottom, HermesSpacing.s24)
         }
         .scrollBounceBehavior(.basedOnSize)
     }
@@ -52,24 +52,24 @@ struct OnboardingFeatureRow: View {
     let subtitle: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: HermesSpacing.s16) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(color)
                 .frame(width: 40, height: 40)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .fill(color.opacity(0.12))
                 )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(subtitle)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.white.opacity(0.4))
                     .fixedSize(horizontal: false, vertical: true)
             }

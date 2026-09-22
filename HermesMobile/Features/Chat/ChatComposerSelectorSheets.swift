@@ -114,18 +114,18 @@ struct ComposerWorkspacePickerSheet: View {
                 await onSelect(path)
             }
         } label: {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: HermesSpacing.s12) {
                 Image(systemName: path == effectiveSelectedWorkspacePath ? "checkmark.circle.fill" : "folder")
                     .foregroundStyle(path == effectiveSelectedWorkspacePath ? Color.accentColor : Color(.secondaryLabel))
-                    .padding(.top, 2)
+                    .padding(.top, HermesSpacing.s2)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(name?.isEmpty == false ? name ?? path.lastPathComponentFallback : path.lastPathComponentFallback)
-                        .font(.body)
+                        .appFont(.body)
                         .foregroundStyle(.primary)
 
                     Text(path)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }

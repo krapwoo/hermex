@@ -5,7 +5,7 @@ struct OnboardingAgentPromptPage: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 28) {
+            VStack(spacing: HermesSpacing.s32) {
                 OnboardingStepHeader(
                     stepNumber: 1,
                     icon: "terminal",
@@ -18,9 +18,9 @@ struct OnboardingAgentPromptPage: View {
                     hasCopied: $hasCopiedAgentPrompt
                 )
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 24)
-            .padding(.bottom, 16)
+            .padding(.horizontal, HermesSpacing.s32)
+            .padding(.top, HermesSpacing.s24)
+            .padding(.bottom, HermesSpacing.s16)
         }
         .scrollBounceBehavior(.basedOnSize)
     }

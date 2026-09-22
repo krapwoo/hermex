@@ -15,7 +15,7 @@ struct OnboardingWelcomePage: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: HermesSpacing.s0) {
                 Spacer(minLength: 24)
 
                 ZStack {
@@ -59,6 +59,7 @@ struct OnboardingWelcomePage: View {
                                     lineWidth: 1
                                 )
                         )
+                        // Onboarding orange glow — retained component exception per design spec §9, not part of the semantic shadow scale.
                         .shadow(color: Color(red: 1.0, green: 0.62, blue: 0.08).opacity(0.35), radius: 24, y: 10)
                 }
                 .accessibilityElement(children: .ignore)
@@ -66,7 +67,7 @@ struct OnboardingWelcomePage: View {
 
                 Spacer(minLength: 32)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                     Text("Control your Hermes agent from iPhone or iPad.")
                         .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 27 : 31, weight: .bold))
                         .foregroundStyle(.white)
@@ -75,18 +76,18 @@ struct OnboardingWelcomePage: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Connect to your self-hosted Web UI over Tailscale.")
-                        .font(.subheadline)
+                        .appFont(.subheadline)
                         .foregroundStyle(.white.opacity(0.58))
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: HermesSpacing.s8) {
                         HeroBadge(systemImage: "lock.shield.fill", title: String(localized: "Password protected"))
                         HeroBadge(systemImage: "network", title: String(localized: "Tailscale ready"))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 28)
-                .padding(.bottom, 16)
+                .padding(.horizontal, HermesSpacing.s32)
+                .padding(.bottom, HermesSpacing.s16)
             }
         }
     }

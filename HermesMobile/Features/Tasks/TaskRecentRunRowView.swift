@@ -9,24 +9,24 @@ struct TaskRecentRunRowView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
             Circle()
                 .fill(completion.didFail ? Color.red : Color.green)
                 .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
 
             Text(completion.displayName)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
 
             Spacer(minLength: 8)
 
             Text(relativeTime)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, HermesSpacing.s2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [completion.displayName, statusWord, relativeTime].joined(separator: ", ")))
     }

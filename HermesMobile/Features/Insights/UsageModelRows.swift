@@ -11,7 +11,7 @@ struct UsageModelsCard: View {
 
     var body: some View {
         SectionCard(title: String(localized: "By model")) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 ForEach(Array(models.enumerated()), id: \.offset) { _, model in
                     UsageModelRow(model: model, hasCost: hasCost)
                 }
@@ -27,15 +27,15 @@ private struct UsageModelRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(model.model ?? String(localized: "Unknown Model"))
-                    .font(AppFont.subheadline(weight: .medium))
+                    .appFont(.subheadline, weight: .medium)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
                     .truncationMode(.middle)
 
                 Text(secondaryLine)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -43,7 +43,7 @@ private struct UsageModelRow: View {
 
             if let cost = model.cost, cost > 0 {
                 Text(usageFormattedCost(cost))
-                    .font(AppFont.subheadline(weight: .medium))
+                    .appFont(.subheadline, weight: .medium)
                     .monospacedDigit()
             }
         }
@@ -77,15 +77,15 @@ struct UsageTopSessionsCard: View {
 
     var body: some View {
         SectionCard(title: String(localized: "Top Sessions")) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 ForEach(sessions.prefix(10)) { session in
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text(session.title ?? String(localized: "Untitled Session"))
-                            .font(AppFont.subheadline(weight: .medium))
+                            .appFont(.subheadline, weight: .medium)
                             .lineLimit(1)
 
                         Text(detail(for: session))
-                            .font(AppFont.caption())
+                            .appFont(.caption)
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -108,11 +108,11 @@ struct ImageLightboxView<Actions: View>: View {
     private var contentLayer: some View {
         switch content {
         case let .loading(message):
-            VStack(spacing: 12) {
+            VStack(spacing: HermesSpacing.s12) {
                 ProgressView()
                     .tint(.white)
                 Text(message)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.white.opacity(0.6))
             }
 
@@ -130,24 +130,24 @@ struct ImageLightboxView<Actions: View>: View {
             .accessibilityAddTraits(.isImage)
 
         case let .failure(message):
-            VStack(spacing: 14) {
+            VStack(spacing: HermesSpacing.s16) {
                 Image(systemName: "exclamationmark.triangle")
                     .font(.system(size: 30))
                     .foregroundStyle(.white.opacity(0.6))
                 Text(message)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.white.opacity(0.85))
                 Button("Try Again", action: onRetry)
                     .buttonStyle(.bordered)
                     .tint(.white)
             }
-            .padding(32)
+            .padding(HermesSpacing.s32)
         }
     }
 
     private var chromeLayer: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             topBar
 
             Spacer(minLength: 0)
@@ -158,19 +158,22 @@ struct ImageLightboxView<Actions: View>: View {
         }
         .opacity(isChromeVisible ? 1 : 0)
         .allowsHitTesting(isChromeVisible)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isChromeVisible)
+        .animation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d200), value: isChromeVisible)
     }
 
     private var topBar: some View {
         ZStack {
             Text(title)
-                .font(.subheadline.weight(.semibold))
+                .appFont(.subheadline, weight: .semibold)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .foregroundStyle(.white)
+                // Reserves clearance for the leading/trailing chrome buttons overlaid by this
+                // ZStack; exceeds the top of the HermesSpacing scale (64) and is retained as a
+                // documented, layout-specific exception rather than rounded down to it.
                 .padding(.horizontal, 88)
 
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 ImageLightboxActionButton(
                     systemImage: "xmark",
                     accessibilityLabel: String(localized: "Done"),
@@ -182,14 +185,14 @@ struct ImageLightboxView<Actions: View>: View {
                 actions
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.vertical, HermesSpacing.s12)
     }
 
     private func caption(path: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(path)
-                .font(.caption2)
+                .appFont(.caption2)
                 .fontDesign(.monospaced)
                 .foregroundStyle(.white.opacity(0.75))
                 .lineLimit(2)
@@ -197,14 +200,14 @@ struct ImageLightboxView<Actions: View>: View {
 
             if case let .image(_, detail) = content, let detail {
                 Text(detail)
-                    .font(.caption2)
+                    .appFont(.caption2)
                     .foregroundStyle(.white.opacity(0.5))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.top, 28)
-        .padding(.bottom, 14)
+        .padding(.horizontal, HermesSpacing.s20)
+        .padding(.top, HermesSpacing.s32)
+        .padding(.bottom, HermesSpacing.s16)
         .background(
             LinearGradient(
                 colors: [.black.opacity(0), .black.opacity(0.7)],

@@ -9,6 +9,7 @@ enum TranscriptLogRowMetrics {
     static let bodyIndent: CGFloat = 26
     /// Tallest an expanded body gets before it scrolls inside its own window.
     /// Fixed at every Dynamic Type size so a long result never owns the screen.
+    // Retained component-content-window exception per design spec §8 — not a HermesRadius scale step.
     static let bodyWindowHeight: CGFloat = 240
 }
 
@@ -103,21 +104,21 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
     @State private var copiedResetTask: Task<Void, Never>?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             rowLine
 
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 if isExpanded {
                     TranscriptLogRowBodyWindow(content: expandedBody)
-                        .padding(.leading, 12)
+                        .padding(.leading, HermesSpacing.s12)
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.quaternary)
                                 .frame(width: 1)
                         }
                         .padding(.leading, TranscriptLogRowMetrics.bodyIndent)
-                        .padding(.top, 2)
-                        .padding(.bottom, 6)
+                        .padding(.top, HermesSpacing.s2)
+                        .padding(.bottom, HermesSpacing.s8)
                         .transition(
                             .asymmetric(
                                 insertion: .opacity,
@@ -133,19 +134,19 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
     }
 
     private var rowLine: some View {
-        HStack(alignment: usesStackedLabel ? .top : .center, spacing: 6) {
+        HStack(alignment: usesStackedLabel ? .top : .center, spacing: HermesSpacing.s8) {
             icon()
                 .frame(width: 20, height: 18)
 
             label
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 1) {
+            HStack(spacing: HermesSpacing.s2) {
                 if showsCopied {
                     Text("Copied")
-                        .font(AppFont.caption2(weight: .semibold))
+                        .appFont(.caption2, weight: .semibold)
                         .foregroundStyle(.green)
-                        .padding(.trailing, 4)
+                        .padding(.trailing, HermesSpacing.s4)
                 }
 
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -157,11 +158,11 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
                     .frame(width: 16, height: 16)
             }
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, HermesSpacing.s2)
         .frame(minHeight: TranscriptLogRowMetrics.minimumHeight)
         .background(
             Color.primary.opacity(isPressed ? 0.06 : 0),
-            in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+            in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: toggle)
@@ -187,7 +188,7 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
     @ViewBuilder
     private var label: some View {
         if usesStackedLabel {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 summaryText
                 if let detail {
                     detailText(detail).lineLimit(2)
@@ -203,13 +204,13 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
 
     private var summaryText: Text {
         Text(summary)
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, dynamicTypeSize: dynamicTypeSize, weight: .semibold)
             .foregroundStyle(isFailure ? Color.red : Color.primary)
     }
 
     private func detailText(_ detail: String) -> Text {
         Text(detail)
-            .font(AppFont.caption())
+            .appFont(.caption, dynamicTypeSize: dynamicTypeSize)
             .foregroundStyle(.secondary)
     }
 

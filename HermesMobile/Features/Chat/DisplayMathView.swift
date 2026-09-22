@@ -25,7 +25,7 @@ struct DisplayMathView: View {
                         fontSize: mathFontSize,
                         colorScheme: colorScheme
                     )
-                    .padding(.vertical, 8)
+                    .padding(.vertical, HermesSpacing.s8)
                 }
             } else {
                 fallback
@@ -33,7 +33,7 @@ struct DisplayMathView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(approximation)
-        .padding(.vertical, 2)
+        .padding(.vertical, HermesSpacing.s2)
         // Math/LaTeX is read left-to-right regardless of the chat direction (#259);
         // mirroring it would reverse equations inside an RTL message.
         .forcedLeftToRight()
@@ -44,10 +44,10 @@ struct DisplayMathView: View {
     private var fallback: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             Text(approximation)
-                .font(.system(.body, design: .serif))
+                .appFont(.body, design: .serif)
                 .lineSpacing(4)
                 .fixedSize(horizontal: true, vertical: true)
-                .padding(.vertical, 8)
+                .padding(.vertical, HermesSpacing.s8)
                 .textSelection(.enabled)
         }
     }

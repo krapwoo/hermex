@@ -74,7 +74,7 @@ struct ComposerTextInputView: View {
             // anywhere in it lands on the editor rather than dead space.
             .frame(height: isCollapsed ? collapsedLineHeight : max(expandedMinimumHeight, inputHeight))
             .padding(.vertical, isCollapsed ? 0 : verticalPadding)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, HermesSpacing.s16)
             .opacity(isCollapsed ? 0 : 1)
             .allowsHitTesting(!isCollapsed)
             .accessibilityHidden(isCollapsed)
@@ -85,7 +85,7 @@ struct ComposerTextInputView: View {
                     chips: renderedChips,
                     placeholder: placeholder
                 )
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, HermesSpacing.s16)
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -96,7 +96,7 @@ struct ComposerTextInputView: View {
             } else if text.isEmpty && quotes.isEmpty {
                 Text(placeholder)
                     .foregroundStyle(Color(.placeholderText))
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, HermesSpacing.s16)
                     .padding(.vertical, verticalPadding)
                     .allowsHitTesting(false)
             }

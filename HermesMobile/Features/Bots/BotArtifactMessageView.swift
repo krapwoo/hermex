@@ -78,7 +78,7 @@ struct BotArtifactMessageView: View {
     /// Attached to the message content, not the row, so the gutter beside a
     /// user bubble stays inert.
     private var assistantContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             ForEach(Array(TranscriptMediaParser.segments(in: message.content ?? "", includesLocalFileLinks: true).enumerated()), id: \.offset) { _, segment in
                 switch segment {
                 case .text(let text):
@@ -269,19 +269,19 @@ private struct BotArtifactRow: View {
 
     var body: some View {
         Button(action: open) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                 if let image {
                     Image(uiImage: image).resizable().scaledToFit()
                         .frame(maxWidth: 210, maxHeight: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12))
                 }
                 Label(reference.displayName, systemImage: reference.isAudioCandidate ? "waveform" : (reference.isRasterImageCandidate ? "photo" : "doc"))
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .lineLimit(2)
                     .truncationMode(.middle)
             }
-            .padding(12)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .padding(HermesSpacing.s12)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r12))
             .foregroundStyle(.primary)
         }
         .buttonStyle(.chatTactile(.thumbnail))

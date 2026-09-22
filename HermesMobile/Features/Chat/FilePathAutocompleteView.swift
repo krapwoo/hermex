@@ -19,22 +19,22 @@ struct FilePathAutocompleteView: View {
     let onSelect: (ComposerFilePathSearch.Match) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             if search.matches.isEmpty {
                 emptyText
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(.vertical, 20)
+                    .padding(.vertical, HermesSpacing.s20)
                     .frame(maxWidth: .infinity)
             } else {
                 ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
+                    LazyVStack(spacing: HermesSpacing.s0) {
                         ForEach(Array(search.matches.enumerated()), id: \.element.id) { index, match in
                             FilePathRow(match: match, onSelect: onSelect)
 
                             if index < search.matches.count - 1 {
                                 Divider()
-                                    .padding(.horizontal, 16)
+                                    .padding(.horizontal, HermesSpacing.s16)
                             }
                         }
                     }
@@ -47,7 +47,7 @@ struct FilePathAutocompleteView: View {
             in: RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous)
         )
         .clipShape(RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
-        .shadow(color: Color.black.opacity(0.15), radius: 12, y: 4)
+        .hermesShadow(.popover)
         .frame(height: panelHeight)
         .task(id: query) {
             await load(query)
@@ -83,12 +83,12 @@ struct FilePathRow: View {
         Button {
             onSelect(match)
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 icon(for: match)
                     .frame(width: 20)
 
                 Text(match.name)
-                    .font(Font.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -96,7 +96,7 @@ struct FilePathRow: View {
 
                 if !match.parentPath.isEmpty {
                     Text(match.parentPath)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.head)
@@ -111,8 +111,8 @@ struct FilePathRow: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.vertical, HermesSpacing.s12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

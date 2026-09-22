@@ -31,18 +31,18 @@ struct MarkerMessageCardView: View {
 
             if isExpanded {
                 Text(cardBody.isEmpty ? kind.title : cardBody)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.primary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .transition(ChatMotion.disclosureTransition(reduceMotion: reduceMotion))
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .chatTimelineAccessorySurface(
             fallbackMaterial: .thinMaterial,
-            cornerRadius: 10
+            cornerRadius: HermesRadius.r12
         )
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -63,19 +63,19 @@ struct MarkerMessageCardView: View {
     }
 
     private func header(summary: String) -> some View {
-        HStack(alignment: usesStackedHeader ? .top : .center, spacing: 8) {
+        HStack(alignment: usesStackedHeader ? .top : .center, spacing: HermesSpacing.s8) {
             Image(systemName: iconName)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 18, height: 18)
 
             if usesStackedHeader {
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                     titleText
                     summaryText(summary, lineLimit: 2)
                 }
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                     titleText
                     summaryText(summary, lineLimit: 1)
                 }
@@ -92,14 +92,14 @@ struct MarkerMessageCardView: View {
 
     private var titleText: some View {
         Text(kind.title)
-            .font(AppFont.caption(weight: .semibold))
+            .appFont(.caption, weight: .semibold)
             .foregroundStyle(.primary)
             .lineLimit(1)
     }
 
     private func summaryText(_ value: String, lineLimit: Int) -> some View {
         Text(value)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(lineLimit)
     }

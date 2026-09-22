@@ -64,7 +64,7 @@ struct ModelPickerSheet: View {
             List {
                 if let errorMessage {
                     Text(verbatim: errorMessage)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, minHeight: rowContentMinHeight(verticalInsets: 8), alignment: .leading)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 12))
@@ -173,9 +173,9 @@ struct ModelPickerSheet: View {
                 dismiss()
             }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Text(clearAction.title)
-                    .font(.body)
+                    .appFont(.body)
                     .lineLimit(2)
 
                 Spacer(minLength: 0)
@@ -200,13 +200,13 @@ struct ModelPickerSheet: View {
     /// of the same list rather than a separate form.
     private var customModelEntry: some View {
         DisclosureGroup {
-            VStack(spacing: 6) {
+            VStack(spacing: HermesSpacing.s8) {
                 TextField("Exact model ID", text: $customModelID)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .modifier(CustomModelFieldStyle())
 
-                HStack(spacing: 8) {
+                HStack(spacing: HermesSpacing.s8) {
                     TextField("Provider ID", text: $customProviderID)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -230,7 +230,7 @@ struct ModelPickerSheet: View {
                 }
                 .modifier(CustomModelFieldStyle())
 
-                HStack(spacing: 12) {
+                HStack(spacing: HermesSpacing.s12) {
                     Button {
                         guard let customOption else { return }
                         commitCustom(customOption)
@@ -242,7 +242,7 @@ struct ModelPickerSheet: View {
                                     .tint(customEntryForeground)
                             } else {
                                 Label(configuration.customActionTitle, systemImage: "plus")
-                                    .font(.body.weight(.semibold))
+                                    .appFont(.body, weight: .semibold)
                             }
 
                             Spacer(minLength: 0)
@@ -265,22 +265,22 @@ struct ModelPickerSheet: View {
                     }
                 }
                 .foregroundStyle(customEntryForeground)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, HermesSpacing.s12)
                 .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
                 .background(
                     customOption == nil ? Color.clear : Color.primary,
                     in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
                 )
                 .disabled(customOption == nil || isSelectionDisabled)
-                .padding(.top, 2)
+                .padding(.top, HermesSpacing.s2)
             }
-            .padding(.top, 4)
+            .padding(.top, HermesSpacing.s4)
         } label: {
             // Row insets 12 + 8 and the 2 + 2 vertical padding below.
             Text("Custom Model")
                 .frame(minHeight: rowContentMinHeight(verticalInsets: 24), alignment: .leading)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, HermesSpacing.s2)
     }
 
     private var customEntryForeground: Color {
@@ -354,7 +354,7 @@ struct ModelPickerSheet: View {
                     .listRowSeparator(.hidden)
             }
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if ProviderGlyphKind.resolve(providerID: group.providerID) != nil {
                     ProviderGlyph(providerID: group.providerID)
                         .frame(width: 17, height: 17)
@@ -406,7 +406,7 @@ struct ModelPickerSheet: View {
         return Button {
             overflowExpansion.setExpanded(!isExpanded, groupID: group.id)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 Text(
                     isExpanded
                         ? String(localized: "Show fewer models")
@@ -420,8 +420,8 @@ struct ModelPickerSheet: View {
                     .font(.system(size: 11, weight: .semibold))
                     .accessibilityHidden(true)
             }
-            .padding(.leading, 28)
-            .padding(.vertical, 8)
+            .padding(.leading, HermesSpacing.s32)
+            .padding(.vertical, HermesSpacing.s8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -465,13 +465,13 @@ struct ModelPickerSheet: View {
         let selected = isSelected(option)
         let inFlight = Self.isInFlight(option, inFlightKey: inFlightKey)
 
-        return HStack(spacing: 12) {
+        return HStack(spacing: HermesSpacing.s12) {
             Button {
                 commit(option)
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: HermesSpacing.s12) {
                     Text(option.displayName)
-                        .font(.body)
+                        .appFont(.body)
                         .lineLimit(2)
 
                     Spacer(minLength: 0)
@@ -774,8 +774,8 @@ private struct ModelProviderChoice: Identifiable, Hashable {
 private struct CustomModelFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .font(.body)
-            .padding(.horizontal, 12)
+            .appFont(.body)
+            .padding(.horizontal, HermesSpacing.s12)
             .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
             .background(
                 Color(.tertiarySystemFill),
@@ -789,7 +789,7 @@ private struct CustomModelFieldStyle: ViewModifier {
 /// here, and the profile rows in `DefaultProfilePickerView`.
 enum PickerRowMetrics {
     static let minHeight: CGFloat = 48
-    static let cornerRadius: CGFloat = 12
+    static let cornerRadius: CGFloat = HermesRadius.field
 }
 
 extension View {
@@ -800,7 +800,7 @@ extension View {
     /// favorite star does.
     func pickerSelectionPill(isSelected: Bool) -> some View {
         foregroundStyle(isSelected ? Color(.systemBackground) : Color.primary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, HermesSpacing.s12)
             .background(
                 isSelected ? Color.primary : Color.clear,
                 in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)

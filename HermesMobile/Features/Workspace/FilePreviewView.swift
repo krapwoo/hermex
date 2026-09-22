@@ -197,10 +197,10 @@ struct FilePreviewView: View {
         ContentUnavailableView {
             Label("No Preview", systemImage: "doc.questionmark")
         } description: {
-            VStack(spacing: 8) {
+            VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(displayPath)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .fontDesign(.monospaced)
                     .foregroundStyle(.secondary)
             }
@@ -208,11 +208,11 @@ struct FilePreviewView: View {
     }
 
     private func sourceContent(_ file: FileResponse) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             fileHeader
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, HermesSpacing.s8)
             Divider()
             SourceFileSurface(
                 content: file.content ?? "",
@@ -232,9 +232,9 @@ struct FilePreviewView: View {
     private func markdownContent(_ content: String) -> some View {
         ScrollView {
             if let chunks = viewModel.markdownChunks {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                LazyVStack(alignment: .leading, spacing: HermesSpacing.s0) {
                     fileHeader
-                        .padding(.bottom, 12)
+                        .padding(.bottom, HermesSpacing.s12)
                     ForEach(chunks) { chunk in
                         MarkdownRenderer(content: chunk.text, isStreaming: false)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -243,7 +243,7 @@ struct FilePreviewView: View {
                 }
                 .padding()
             } else {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                     fileHeader
                     MarkdownRenderer(content: content, isStreaming: false)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -281,7 +281,7 @@ struct FilePreviewView: View {
     private func imageContent(_ data: Data) -> some View {
         if let image = UIImage(data: data) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     fileHeader
 
                     Image(uiImage: image)
@@ -303,16 +303,16 @@ struct FilePreviewView: View {
     }
 
     private var fileHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(displayPath)
-                .font(.caption)
+                .appFont(.caption)
                 .fontDesign(.monospaced)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 
             if let metadataText {
                 Text(metadataText)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         }

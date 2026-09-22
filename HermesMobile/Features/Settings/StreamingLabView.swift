@@ -23,7 +23,7 @@ struct StreamingLabView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     controls
                     Divider()
                     transcript
@@ -31,7 +31,7 @@ struct StreamingLabView: View {
                         .frame(height: 1)
                         .id(Self.tailAnchorID)
                 }
-                .padding(16)
+                .padding(HermesSpacing.s16)
             }
             .onChange(of: displayedContent) { _, _ in
                 guard followsTail else { return }
@@ -49,8 +49,8 @@ struct StreamingLabView: View {
     private static let tailAnchorID = "streaming-lab-tail"
 
     private var controls: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
+            HStack(spacing: HermesSpacing.s12) {
                 Button {
                     replayID += 1
                 } label: {
@@ -72,14 +72,14 @@ struct StreamingLabView: View {
             }
 
             Toggle(isOn: $followsTail) { Text(verbatim: "Follow tail while streaming") }
-                .font(.subheadline)
+                .appFont(.subheadline)
 
             Toggle(isOn: $isStreamedTextAnimationEnabled) { Text(verbatim: "Streamed text animation (user setting)") }
-                .font(.subheadline)
+                .appFont(.subheadline)
 
             if !isStreamedTextAnimationEnabled {
                 Text(verbatim: "Animation is off — the knobs below have no visible effect until it's re-enabled.")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.orange)
             }
 
@@ -130,15 +130,16 @@ struct StreamingLabView: View {
         range: ClosedRange<Double>,
         display: String
     ) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             HStack {
                 Text(title)
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.subheadline, weight: .medium)
 
                 Spacer()
 
                 Text(display)
-                    .font(.caption.monospacedDigit())
+                    .monospacedDigit()
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -156,13 +157,13 @@ struct StreamingLabView: View {
             static let maxStampLead: TimeInterval = \(String(format: "%.3f", maxStampLead))
             """
         )
-        .font(.caption.monospaced())
+        .appFont(.caption, design: .monospaced)
         .foregroundStyle(.secondary)
         .textSelection(.enabled)
-        .padding(10)
+        .padding(HermesSpacing.s12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
     }
@@ -207,6 +208,117 @@ struct StreamingLabView: View {
 #Preview {
     NavigationStack {
         StreamingLabView()
+    }
+}
+
+/// Debug-only visual fixture (token-adoption evidence capture): renders the
+/// complete `AppFont.Role` matrix and a privacy-safe copy of the session
+/// list's elevated Chat control so both can be screenshotted without an
+/// authenticated server or real session data.
+struct ProductionTokenEvidenceLabView: View {
+    private static let chatControlID = "production-token-evidence-chat-control"
+
+    /// Visual order only (largest role first); `AppFontModifierBuildProofTests`
+    /// proves this set matches `AppFont.Role.allCases` with no omissions or
+    /// duplicates.
+    static let fontRoleSamples: [(role: AppFont.Role, label: String)] = [
+        (.title, "title"),
+        (.title2, "title2"),
+        (.title3, "title3"),
+        (.headline, "headline"),
+        (.body, "body"),
+        (.subheadline, "subheadline"),
+        (.footnote, "footnote"),
+        (.caption, "caption"),
+        (.caption2, "caption2"),
+    ]
+
+    static var fontRoleOrder: [AppFont.Role] { fontRoleSamples.map(\.role) }
+
+    @Environment(\.colorScheme) private var colorScheme
+    private let scrollsToShadowOnLaunch: Bool
+
+    init(scrollsToShadowOnLaunch: Bool = false) {
+        self.scrollsToShadowOnLaunch = scrollsToShadowOnLaunch
+    }
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: HermesSpacing.s24) {
+                    fontRoleMatrix
+                    Divider()
+                    chatControlSpecimen
+                        .id(Self.chatControlID)
+                }
+                .padding(HermesSpacing.s16)
+            }
+            .task {
+                guard scrollsToShadowOnLaunch else { return }
+                await Task.yield()
+                proxy.scrollTo(Self.chatControlID, anchor: .bottom)
+            }
+        }
+        .background(Color(.systemBackground))
+        .navigationTitle("Token Evidence")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var fontRoleMatrix: some View {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            Text("AppFont.Role matrix")
+                .appFont(.headline, weight: .semibold)
+
+            ForEach(Self.fontRoleSamples, id: \.role) { sample in
+                Text(sample.label)
+                    .appFont(sample.role)
+            }
+        }
+    }
+
+    /// Same visible structure and modifiers as `SessionListView.newSessionButton`
+    /// (square-and-pencil icon, "Chat" headline, `sessionsChromeGlass`,
+    /// `SessionListFloatingChatButtonStyle`), with a neutral tint instead of
+    /// the server-configured theme color and generous non-black surrounding
+    /// space so the resting shadow penumbra is observable.
+    private var chatControlSpecimen: some View {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            Text("Elevated Chat control (resting shadow)")
+                .appFont(.headline, weight: .semibold)
+
+            HapticButton(feedbackStyle: .medium) {} label: {
+                HStack(spacing: HermesSpacing.s12) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.title3.weight(.semibold))
+
+                    Text("Chat")
+                        .appFont(.headline, weight: .semibold)
+                }
+                .foregroundStyle(colorScheme == .dark ? .black : .white)
+                .padding(.horizontal, HermesSpacing.s24)
+                .frame(height: 58)
+                .contentShape(Capsule())
+                .sessionsChromeGlass(
+                    isInteractive: true,
+                    tint: colorScheme == .dark ? .white : .black,
+                    fallbackMaterial: .regularMaterial,
+                    in: Capsule()
+                )
+            }
+            .buttonStyle(SessionListFloatingChatButtonStyle())
+            .padding(HermesSpacing.s48)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ProductionTokenEvidenceLabView()
     }
 }
 #endif

@@ -97,21 +97,21 @@ struct GitDiffView: View {
     }
 
     private func selectionBar(count: Int) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             Text(count == 1 ? String(localized: "1 line selected") : String(localized: "\(count) lines selected"))
-                .font(AppFont.footnote(weight: .semibold))
+                .appFont(.footnote, weight: .semibold)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
             Button("Clear") { selection.clear() }
-                .font(AppFont.footnote())
+                .appFont(.footnote)
             if onAddToPrompt != nil {
                 Button("Add to prompt", action: addToPrompt)
-                    .font(AppFont.footnote(weight: .semibold))
+                    .appFont(.footnote, weight: .semibold)
                     .buttonStyle(.borderedProminent)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s16)
+        .padding(.vertical, HermesSpacing.s12)
         .background(.bar)
         .accessibilityElement(children: .contain)
     }

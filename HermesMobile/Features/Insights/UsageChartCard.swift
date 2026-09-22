@@ -23,14 +23,14 @@ struct UsageChartCard: View {
 
     var body: some View {
         SectionCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 header
                 chart
                 footer
 
                 if let hourlyNote {
                     Text(hourlyNote)
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -51,22 +51,22 @@ struct UsageChartCard: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             let hero = hero
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(hero.label)
-                    .font(AppFont.subheadline())
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
 
                 Text(hero.value)
-                    .font(AppFont.title(weight: .bold))
+                    .appFont(.title, weight: .bold)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
 
                 Text(hero.caption)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -116,7 +116,7 @@ struct UsageChartCard: View {
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
             .frame(height: Self.chartHeight)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: buckets)
+            .animation(reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d200), value: buckets)
             .chartOverlay { proxy in
                 GeometryReader { geometry in
                     Rectangle()
@@ -130,7 +130,7 @@ struct UsageChartCard: View {
             .accessibilityLabel(chartAccessibilityLabel)
         } else {
             Text("No activity in this window.")
-                .font(AppFont.body())
+                .appFont(.body)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.chartHeight)
@@ -171,8 +171,8 @@ struct UsageChartCard: View {
 
     @ViewBuilder
     private var footer: some View {
-        VStack(spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 edgeLabel(buckets.first?.label ?? "", alignment: .leading)
 
                 if showsLegendInline {
@@ -187,7 +187,7 @@ struct UsageChartCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .font(AppFont.caption2())
+        .appFont(.caption2)
         .foregroundStyle(.secondary)
         .accessibilityHidden(!hasActivity)
     }
@@ -202,9 +202,9 @@ struct UsageChartCard: View {
     /// Sized to its content so the flexible edge labels absorb the slack instead
     /// of squeezing "Cache read" into one character per line.
     private var legend: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             ForEach(legendSegments) { segment in
-                HStack(spacing: 4) {
+                HStack(spacing: HermesSpacing.s4) {
                     Circle()
                         .fill(segment.color)
                         .frame(width: 7, height: 7)

@@ -21,18 +21,18 @@ struct GitBranchPickerButton: View {
         } label: {
             // Quiet inline control matching the composer toolbar row: no pill
             // background, 44 pt tall for the hit target.
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: "arrow.triangle.branch")
                     .font(AppFont.subheadline())
                 Text(currentBranch)
-                    .font(AppFont.subheadline())
+                    .appFont(.subheadline)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Image(systemName: "chevron.down")
                     .font(AppFont.caption2())
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
+            .padding(.horizontal, HermesSpacing.s8)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
@@ -158,15 +158,15 @@ private struct GitBranchPickerSheet: View {
         return Button {
             onSelect(GitCheckoutTarget(ref: name, mode: mode, track: mode == .remote))
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: HermesSpacing.s12) {
                 Image(systemName: isCurrent ? "checkmark" : "arrow.triangle.branch")
                     .foregroundStyle(isCurrent ? Color.accentColor : .secondary)
                     .frame(width: 18)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(name).foregroundStyle(.primary)
                     if let subject = branch.subject, !subject.isEmpty {
-                        Text(subject).font(AppFont.caption()).foregroundStyle(.secondary).lineLimit(1)
+                        Text(subject).appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
 
@@ -176,7 +176,7 @@ private struct GitBranchPickerSheet: View {
 
                 if (branch.ahead ?? 0) > 0 || (branch.behind ?? 0) > 0 {
                     Text("↑\(branch.ahead ?? 0) ↓\(branch.behind ?? 0)")
-                        .font(AppFont.mono(style: .caption2))
+                        .appFont(.caption2, design: .monospaced)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -186,9 +186,9 @@ private struct GitBranchPickerSheet: View {
 
     private func badge(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(AppFont.mono(style: .caption2))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
+            .appFont(.caption2, design: .monospaced)
+            .padding(.horizontal, HermesSpacing.s8)
+            .padding(.vertical, HermesSpacing.s4)
             .background(Color(.secondarySystemFill), in: Capsule())
     }
 }

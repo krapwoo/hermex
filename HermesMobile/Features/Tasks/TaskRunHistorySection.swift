@@ -24,7 +24,7 @@ struct TaskRunHistorySection: View {
 
     var body: some View {
         SectionCard(title: sectionTitle) {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 if let errorMessage {
                     inlineError(errorMessage)
                 }
@@ -64,31 +64,31 @@ struct TaskRunHistorySection: View {
     @ViewBuilder
     private var emptyState: some View {
         if isLoading {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 ProgressView()
                 Text("Loading runs...")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 4)
+            .padding(.vertical, HermesSpacing.s4)
         } else if errorMessage == nil {
             Text("This task has not produced any output yet.")
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 4)
+                .padding(.vertical, HermesSpacing.s4)
         }
     }
 
     /// History failing is a section-local problem: it never takes the screen
     /// down with it, so the retry lives here rather than in a full-page state.
     private func inlineError(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(message)
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
             Button("Try Again", action: retry)
-                .font(.footnote.weight(.semibold))
+                .appFont(.footnote, weight: .semibold)
                 .buttonStyle(.plain)
                 .foregroundStyle(.tint)
         }
@@ -98,15 +98,15 @@ struct TaskRunHistorySection: View {
 
     private var loadMoreRow: some View {
         Button(action: loadMore) {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if isLoadingMore {
                     ProgressView()
                 }
                 Text(remainingCount > 0 ? String(localized: "Load \(remainingCount) more") : String(localized: "Load more"))
-                    .font(.footnote.weight(.semibold))
+                    .appFont(.footnote, weight: .semibold)
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 10)
+            .padding(.vertical, HermesSpacing.s12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -122,21 +122,21 @@ struct TaskRunHistoryRow: View {
     let hasFailed: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             Circle()
                 .fill(hasFailed ? Color.red : Color.green)
                 .frame(width: 7, height: 7)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(titleText)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
                 if let detail = detailText {
                     Text(detail)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -149,7 +149,7 @@ struct TaskRunHistoryRow: View {
                 .foregroundStyle(.tertiary)
                 .accessibilityHidden(true)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, HermesSpacing.s12)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: ([titleText, statusWord] + metaParts).joined(separator: ", ")))

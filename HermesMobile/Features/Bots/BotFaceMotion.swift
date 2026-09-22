@@ -311,7 +311,7 @@ struct BotInteractiveFaceView: View {
                         if moved < 10 { react() }
                     }
             )
-            .animation(reduceMotion ? nil : .spring(duration: 0.3, bounce: 0.4), value: reaction > 0)
+            .animation(reduceMotion ? nil : .spring(duration: HermesMotion.Duration.d300, bounce: 0.4), value: reaction > 0)
             .accessibilityHidden(true)
             .onChange(of: cue?.id) { if let cue { play(cue.bit) } }
             // Reduce Motion is part of the identity so flipping it restarts, or stops, the idle loop.

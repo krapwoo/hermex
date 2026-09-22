@@ -132,7 +132,7 @@ struct CronJobEditorSheet: View {
                 if let formMessage {
                     Section {
                         Text(formMessage)
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(messageColor)
                     }
                 }

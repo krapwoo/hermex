@@ -76,13 +76,13 @@ struct ComposerToolbarScroller<Content: View>: View {
             fades = newFades
         }
         .mask { fadeMask }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: fades)
+        .animation(reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d150), value: fades)
     }
 
     /// Alpha mask: opaque everywhere except an edge that hides content, which
     /// fades over `fadeWidth` so the glass surface shows through.
     private var fadeMask: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: HermesSpacing.s0) {
             LinearGradient(
                 colors: [fades.leading ? .clear : .black, .black],
                 startPoint: .leading,

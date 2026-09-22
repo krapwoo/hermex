@@ -96,9 +96,9 @@ private struct ContextWindowPopover: View {
     private let popoverCornerRadius: CGFloat = 18
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text(ContextWindowFormatter.tokensLabel(from: snapshot))
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .fontWeight(.semibold)
 
             Divider()
@@ -138,11 +138,11 @@ private struct ContextWindowInfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .font(.caption)
+                .appFont(.caption)
                 .fontWeight(.medium)
         }
     }

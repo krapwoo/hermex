@@ -20,7 +20,7 @@ struct TranscriptLinkPreviewView: View {
             compactCard
         }
         .buttonStyle(.chatTactile(.card))
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint("Opens in the external browser")
@@ -221,29 +221,29 @@ private extension TranscriptLinkPreviewView {
     }
 
     private var compactCard: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HermesSpacing.s12) {
             thumbnail
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(displayTitle)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .lineLimit(2)
 
                 Text(displaySubtitle)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.trailing, 10)
+            .padding(.trailing, HermesSpacing.s12)
         }
         .frame(minHeight: 84, alignment: .center)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .stroke(Color(.separator).opacity(colorScheme == .dark ? 0.42 : 0.28), lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
     }
 
     @ViewBuilder

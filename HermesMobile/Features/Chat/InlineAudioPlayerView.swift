@@ -15,13 +15,13 @@ struct InlineAudioPlayerView: View {
     @State private var model = InlineAudioPlayerModel()
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             controlButton
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 if model.phase == .failed {
                     Text("Couldn't play this audio")
-                        .font(AppFont.caption2())
+                        .appFont(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
@@ -30,14 +30,14 @@ struct InlineAudioPlayerView: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s12)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                 .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
         )
         .task {
@@ -107,12 +107,13 @@ struct InlineAudioPlayerView: View {
     }
 
     private var timeRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Text(AudioDurationFormatter.string(from: model.displayTime))
             Spacer(minLength: 8)
             Text(AudioDurationFormatter.string(from: model.duration))
         }
-        .font(AppFont.caption2().monospacedDigit())
+        .appFont(.caption2)
+        .monospacedDigit()
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
     }

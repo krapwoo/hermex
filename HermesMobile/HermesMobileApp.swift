@@ -55,10 +55,21 @@ struct HermesMobileApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG
-            // Launch argument hook so the Streaming Lab can be opened without
-            // UI navigation (agent-driven simulator diagnosis, issue #234):
-            // `xcrun simctl launch <udid> com.uzairansar.hermesmobile --streaming-lab`
-            if ProcessInfo.processInfo.arguments.contains("--streaming-lab") {
+            // Launch argument hook so the token-evidence fixture can be opened
+            // without UI navigation (agent-driven screenshot capture):
+            // `xcrun simctl launch <udid> com.uzairansar.hermesmobile --production-token-lab`
+            if ProcessInfo.processInfo.arguments.contains("--production-token-lab-shadow") {
+                NavigationStack {
+                    ProductionTokenEvidenceLabView(scrollsToShadowOnLaunch: true)
+                }
+            } else if ProcessInfo.processInfo.arguments.contains("--production-token-lab") {
+                NavigationStack {
+                    ProductionTokenEvidenceLabView()
+                }
+            } else if ProcessInfo.processInfo.arguments.contains("--streaming-lab") {
+                // Launch argument hook so the Streaming Lab can be opened without
+                // UI navigation (agent-driven simulator diagnosis, issue #234):
+                // `xcrun simctl launch <udid> com.uzairansar.hermesmobile --streaming-lab`
                 NavigationStack {
                     StreamingLabView()
                 }

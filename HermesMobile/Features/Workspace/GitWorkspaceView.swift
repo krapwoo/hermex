@@ -80,7 +80,7 @@ struct GitWorkspaceView: View {
 
     private func statusContent(_ status: GitStatus) -> some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 12) {
+            LazyVStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 summaryHeader(status)
 
                 if status.trackedFiles.isEmpty {
@@ -90,7 +90,7 @@ struct GitWorkspaceView: View {
                         description: Text("Your working tree is clean.")
                     )
                     .frame(maxWidth: .infinity)
-                    .padding(.top, 36)
+                    .padding(.top, HermesSpacing.s40)
                 } else {
                     ForEach(status.trackedFiles) { file in
                         Button {
@@ -104,30 +104,30 @@ struct GitWorkspaceView: View {
 
                 if status.truncated == true {
                     Text("Showing first 500 changed files.")
-                        .font(AppFont.footnote())
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 6)
+                        .padding(.vertical, HermesSpacing.s8)
                 }
             }
-            .padding(16)
+            .padding(HermesSpacing.s16)
         }
         .refreshable { await reload() }
     }
 
     private func summaryHeader(_ status: GitStatus) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             HStack {
                 Text("\(status.changedCount) files changed")
-                    .font(AppFont.subheadline(weight: .semibold))
+                    .appFont(.subheadline, weight: .semibold)
                 Spacer()
                 DiffCountsLabel(additions: status.totalAdditions, deletions: status.totalDeletions)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
                 Text(status.branch ?? "HEAD")
-                    .font(AppFont.mono(style: .subheadline))
+                    .appFont(.subheadline, design: .monospaced)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
@@ -169,7 +169,7 @@ struct GitAheadBehindBadges: View {
     var body: some View {
         if ahead > 0 || behind > 0 {
             Text(verbatim: "↑\(ahead) ↓\(behind)")
-                .font(AppFont.mono(style: .caption, weight: .semibold))
+                .appFont(.caption, weight: .semibold, design: .monospaced)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
         }
@@ -181,11 +181,11 @@ struct DiffCountsLabel: View {
     let deletions: Int
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Text(verbatim: "+\(additions)").foregroundStyle(.green)
             Text(verbatim: "−\(deletions)").foregroundStyle(.red)
         }
-        .font(AppFont.mono(style: .caption, weight: .semibold))
+        .appFont(.caption, weight: .semibold, design: .monospaced)
         .monospacedDigit()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -198,15 +198,15 @@ struct GitFileCard: View {
     let file: GitFile
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
+        HStack(spacing: HermesSpacing.s12) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(file.fileName)
-                    .font(AppFont.subheadline(weight: .semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let parent = file.parentDirectory {
                     Text(parent)
-                        .font(AppFont.mono(style: .caption2))
+                        .appFont(.caption2, design: .monospaced)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -216,10 +216,10 @@ struct GitFileCard: View {
             DiffCountsLabel(additions: file.additions ?? 0, deletions: file.deletions ?? 0)
             GitStatusChip(kind: file.changeKind)
         }
-        .padding(12)
-        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
+        .padding(HermesSpacing.s12)
+        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: HermesRadius.r12))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
         }
         .contentShape(.rect)
@@ -233,9 +233,9 @@ struct GitStatusChip: View {
     var body: some View {
         if let label {
             Text(label)
-                .font(AppFont.caption2(weight: .semibold))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .appFont(.caption2, weight: .semibold)
+                .padding(.horizontal, HermesSpacing.s8)
+                .padding(.vertical, HermesSpacing.s2)
                 .background(tint.opacity(0.18), in: Capsule())
                 .foregroundStyle(tint)
         }

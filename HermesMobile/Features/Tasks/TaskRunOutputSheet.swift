@@ -21,10 +21,10 @@ struct TaskRunOutputSheet: View {
                 if let text = matchingText, !text.isEmpty {
                     ScrollView {
                         Text(text)
-                            .font(.system(.footnote, design: .monospaced))
+                            .appFont(.footnote, design: .monospaced)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(16)
+                            .padding(HermesSpacing.s16)
                     }
                 } else if isLoading {
                     ProgressView("Loading output...")

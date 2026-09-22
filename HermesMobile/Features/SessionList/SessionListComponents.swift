@@ -132,23 +132,23 @@ enum SessionRowActionPolicy {
 
 enum SessionListMotion {
     static func disclosureAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .smooth(duration: 0.28, extraBounce: 0)
+        reduceMotion ? nil : .smooth(duration: HermesMotion.Duration.d300, extraBounce: 0)
     }
 
     static func searchChromeAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .smooth(duration: 0.24, extraBounce: 0)
+        reduceMotion ? nil : .smooth(duration: HermesMotion.Duration.d250, extraBounce: 0)
     }
 
     static func searchFocusAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeInOut(duration: 0.18)
+        reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d200)
     }
 
     static func pressAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? .easeOut(duration: 0.12) : .smooth(duration: 0.18, extraBounce: 0)
+        reduceMotion ? .easeOut(duration: HermesMotion.Duration.d100) : .smooth(duration: HermesMotion.Duration.d200, extraBounce: 0)
     }
 
     static func sessionMutationAnimation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .snappy(duration: 0.24, extraBounce: 0)
+        reduceMotion ? nil : .snappy(duration: HermesMotion.Duration.d250, extraBounce: 0)
     }
 
     static func sessionRowTransition(reduceMotion: Bool) -> AnyTransition {
@@ -264,7 +264,7 @@ struct SessionSidebarUtilityRows: View {
 
     private func disclosureSubrow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(.horizontal, 24)
+            .padding(.horizontal, HermesSpacing.s24)
             .padding(.top, Self.rowSpacing)
             .sessionsScreenListRow()
             .transition(SessionListMotion.disclosureContentTransition(reduceMotion: reduceMotion))
@@ -308,7 +308,7 @@ struct SessionSidebarUtilityRows: View {
                 }
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, HermesSpacing.s24)
     }
 
     private var activeProfileHeader: some View {
@@ -325,7 +325,7 @@ struct SessionSidebarUtilityRows: View {
                     .controlSize(.small)
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, HermesSpacing.s24)
         .accessibilityLabel(profilesAreExpanded ? "Collapse active profile picker" : "Expand active profile picker")
     }
 
@@ -367,7 +367,7 @@ struct SessionSidebarUtilityRows: View {
     }
 
     private var projectsHeader: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             SidebarDisclosureButton(
                 title: String(localized: "Projects"),
                 assetImage: "LucideFolder",
@@ -396,7 +396,7 @@ struct SessionSidebarUtilityRows: View {
                     }
                 } label: {
                     Text("All")
-                        .padding(.horizontal, 10)
+                        .padding(.horizontal, HermesSpacing.s12)
                         .frame(minHeight: 32)
                         // Flat translucent fill rather than Liquid Glass: the glass
                         // elevation shadow would spill past this tightly-sized List
@@ -405,14 +405,14 @@ struct SessionSidebarUtilityRows: View {
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
-                .font(.footnote.weight(.medium))
+                .appFont(.footnote, weight: .medium)
                 .foregroundStyle(.secondary)
                 .buttonStyle(.plain)
                 .accessibilityLabel("Show all projects")
                 .accessibilityHint("Clears the selected project filter.")
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, HermesSpacing.s24)
     }
 
     private var addProjectButton: some View {
@@ -514,7 +514,7 @@ struct SessionListRowsSection: View {
                 description: emptyDescription,
                 systemImage: "bubble.left"
             )
-                .padding(.horizontal, 24)
+                .padding(.horizontal, HermesSpacing.s24)
                 .sessionsScreenListRow()
         } else {
             ForEach(sessions) { session in
@@ -532,11 +532,11 @@ struct SessionListRowsSection: View {
     }
 
     private var sessionsHeaderRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s12) {
                 if !isSearchActive {
                     Text("Sessions")
-                        .font(.title3.bold())
+                        .appFont(.title3, weight: .bold)
                         .foregroundStyle(.primary)
                 }
 
@@ -549,8 +549,8 @@ struct SessionListRowsSection: View {
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 12)
+        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.bottom, HermesSpacing.s12)
     }
 
     private var sessionLoadingSkeletonRows: some View {
@@ -571,7 +571,7 @@ struct SessionListRowsSection: View {
     private func sessionsErrorRow(message errorMessage: String) -> some View {
         let content = sessionsErrorContent(fallbackMessage: errorMessage)
 
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             SessionListStatusRow(
                 title: content.title,
                 description: content.description,
@@ -580,7 +580,7 @@ struct SessionListRowsSection: View {
             )
 
             Button("Retry", action: actions.retryLoad)
-                .font(.subheadline.weight(.medium))
+                .appFont(.subheadline, weight: .medium)
                 .foregroundStyle(.primary)
                 .buttonStyle(.plain)
                 .frame(minHeight: 44, alignment: .leading)
@@ -588,7 +588,7 @@ struct SessionListRowsSection: View {
                 .accessibilityLabel("Retry loading sessions")
                 .accessibilityHint("Attempts to reconnect to the server and reload sessions.")
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, HermesSpacing.s24)
     }
 
     private func sessionsErrorContent(fallbackMessage: String) -> (title: String, description: String) {
@@ -637,7 +637,7 @@ struct SessionInteractiveRow: View {
             session.sessionId == selectedSessionID
                 ? Color.accentColor.opacity(0.12)
                 : Color.clear,
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            in: RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
         )
         .transition(SessionListMotion.sessionRowTransition(reduceMotion: reduceMotion))
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -735,13 +735,13 @@ struct ScheduledSessionsDisclosure: View {
             userIsExpanded.toggle()
         } accessory: {
             Text("\(totalCount)")
-                .font(.footnote.weight(.semibold))
+                .appFont(.footnote, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
+                .padding(.horizontal, HermesSpacing.s8)
+                .padding(.vertical, HermesSpacing.s2)
                 .background(.thinMaterial, in: Capsule())
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, HermesSpacing.s24)
         .padding(.top, isSearchActive ? 16 : 12)
         .sessionsScreenListRow()
         .accessibilityLabel(
@@ -768,17 +768,17 @@ struct ScheduledSessionsDisclosure: View {
 
             if !isSearchActive && sessions.count > 5 {
                 HapticButton(action: viewAll) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: HermesSpacing.s12) {
                         Image(systemName: "magnifyingglass")
                             .frame(width: 24)
                         Text("View all")
-                            .font(.subheadline.weight(.medium))
+                            .appFont(.subheadline, weight: .medium)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.forward")
                             .font(.caption.weight(.semibold))
                     }
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, HermesSpacing.s24)
                     .frame(minHeight: 44)
                     .contentShape(Rectangle())
                 }
@@ -812,7 +812,7 @@ struct ScheduledSessionsView: View {
                         : String(localized: "Try another search or project filter."),
                     systemImage: "calendar.badge.clock"
                 )
-                .padding(.horizontal, 24)
+                .padding(.horizontal, HermesSpacing.s24)
                 .sessionsScreenListRow()
             } else {
                 ForEach(sessions) { session in
@@ -1182,11 +1182,7 @@ struct SessionListFloatingChatButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(reduceMotion ? 1 : (isPressed ? 0.975 : 1))
             .opacity(isPressed ? 0.96 : 1)
-            .shadow(
-                color: .black.opacity(isPressed ? 0.10 : 0.18),
-                radius: isPressed ? 8 : 18,
-                y: isPressed ? 3 : 8
-            )
+            .hermesShadow(isPressed ? .controlElevatedPressed : .controlElevatedResting)
             .animation(SessionListMotion.pressAnimation(reduceMotion: reduceMotion), value: isPressed)
     }
 }
@@ -1198,11 +1194,11 @@ struct SidebarNavButton: View {
 
     var body: some View {
         HapticButton(action: action) {
-            HStack(spacing: 18) {
+            HStack(spacing: HermesSpacing.s20) {
                 SidebarUtilityIcon(assetImage: assetImage)
 
                 Text(title)
-                    .font(.body.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -1227,11 +1223,11 @@ struct SidebarDisclosureButton<Accessory: View>: View {
 
     var body: some View {
         HapticButton(action: action) {
-            HStack(alignment: .center, spacing: 18) {
+            HStack(alignment: .center, spacing: HermesSpacing.s20) {
                 SidebarUtilityIcon(assetImage: assetImage, tint: tint)
 
                 Text(title)
-                    .font(.body.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -1309,14 +1305,14 @@ struct SidebarSubrowSelectionStyle: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .padding(.leading, 18)
-            .padding(.trailing, 10)
+            .padding(.leading, HermesSpacing.s20)
+            .padding(.trailing, HermesSpacing.s12)
             .background {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                         .fill(Color.accentColor.opacity(0.10))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                                 .stroke(Color.accentColor.opacity(0.20), lineWidth: 1)
                         }
                 }
@@ -1338,20 +1334,20 @@ struct ActiveProfilePickerRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 18) {
+            HStack(spacing: HermesSpacing.s20) {
                 SidebarUtilityIcon(
                     assetImage: "LucideUserRound",
                     tint: isSelected ? Color.accentColor : .primary
                 )
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(profile.displayName)
-                        .font(.body)
+                        .appFont(.body)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Text(defaultModelTitle)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -1400,22 +1396,22 @@ struct ProjectFilterRow: View {
     let delete: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Button(action: action) {
-                HStack(spacing: 18) {
+                HStack(spacing: HermesSpacing.s20) {
                     SidebarUtilityIcon(assetImage: "LucideFolder", tint: projectColor)
 
                     Text(displayName)
-                        .font(.body)
+                        .appFont(.body)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Spacer(minLength: 0)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: HermesSpacing.s8) {
                         if count > 0 {
                             Text("\(count)")
-                                .font(.caption.weight(.semibold))
+                                .appFont(.caption, weight: .semibold)
                                 .foregroundStyle(.secondary)
                         }
 
@@ -1424,7 +1420,7 @@ struct ProjectFilterRow: View {
                         }
                     }
                 }
-                .padding(.leading, 18)
+                .padding(.leading, HermesSpacing.s20)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .contentShape(Rectangle())
             }
@@ -1461,10 +1457,10 @@ struct ProjectFilterRow: View {
         }
         .background {
             if isSelected {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .fill(Color.accentColor.opacity(0.10))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                             .stroke(Color.accentColor.opacity(0.20), lineWidth: 1)
                     }
             }
@@ -1548,7 +1544,7 @@ struct CompactStatusRow: View {
     let systemImage: String
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             Image(systemName: systemImage)
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -1556,7 +1552,7 @@ struct CompactStatusRow: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
 
@@ -1573,23 +1569,23 @@ private struct SessionListStatusRow: View {
     var descriptionLineLimit: Int?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: HermesSpacing.s16) {
             Image(systemName: systemImage)
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .accessibilityAddTraits(.isHeader)
 
                 if let description {
                     Text(description)
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .lineLimit(descriptionLineLimit)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1616,13 +1612,13 @@ struct SessionRowSkeletonView: View {
 
             if let metadataLabel {
                 Text(verbatim: metadataLabel)
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(metadataLineLimit)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, verticalPadding)
         .frame(minHeight: metadataLabel == nil ? 46 : 54)
         .redacted(reason: .placeholder)
@@ -1631,12 +1627,12 @@ struct SessionRowSkeletonView: View {
     @ViewBuilder
     private var titleArea: some View {
         if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 titleText
                 relativeDateText
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 titleText
 
                 Spacer(minLength: 8)
@@ -1648,7 +1644,7 @@ struct SessionRowSkeletonView: View {
 
     private var titleText: some View {
         Text(verbatim: configuration.title)
-            .font(AppFont.headline(weight: .semibold))
+            .appFont(.headline, weight: .semibold)
             .foregroundStyle(.primary)
             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 2)
             .truncationMode(.tail)
@@ -1657,7 +1653,7 @@ struct SessionRowSkeletonView: View {
 
     private var relativeDateText: some View {
         Text(verbatim: configuration.relativeDate)
-            .font(AppFont.caption())
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
@@ -1729,20 +1725,20 @@ struct SessionRowSkeletonConfiguration: Identifiable {
 
 struct OfflineCacheBanner: View {
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: "wifi.slash")
                 .imageScale(.small)
                 .accessibilityHidden(true)
 
             Text("Offline - viewing cached version")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .fontWeight(.semibold)
 
             Spacer()
         }
         .foregroundStyle(.orange)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 10)
+        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.vertical, HermesSpacing.s12)
         .background(Color.orange.opacity(0.12))
         .accessibilityElement(children: .combine)
     }

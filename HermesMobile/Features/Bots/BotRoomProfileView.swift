@@ -15,11 +15,11 @@ import SwiftUI
     var body: some View {
         List {
             Section {
-                VStack(spacing: 24) {
+                VStack(spacing: HermesSpacing.s24) {
                     BotRoomAvatars(room: reader.room, roster: roster, avatars: avatars, size: 84)
                     if reader.showsRename {
                         TextField("Group name", text: $name)
-                            .font(.title2.bold()).multilineTextAlignment(.center)
+                            .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
                             .focused($editingName).submitLabel(.done)
                             .disabled(!reader.mayRename)
                             .onSubmit { commitName() }
@@ -28,11 +28,11 @@ import SwiftUI
                                 .disabled(!reader.mayRename || !BotRoomRPC.validName(name))
                         }
                         if !BotRoomRPC.validName(name) {
-                            Text("Enter a name of up to 200 characters.").font(.caption)
+                            Text("Enter a name of up to 200 characters.").appFont(.caption)
                         }
-                    } else { Text(reader.room.name).font(.title2.bold()) }
+                    } else { Text(reader.room.name).appFont(.title2, weight: .bold) }
                 }
-                .frame(maxWidth: .infinity).padding(.vertical, 24)
+                .frame(maxWidth: .infinity).padding(.vertical, HermesSpacing.s24)
             }
             Section {
                 ForEach(reader.room.members) { member in
@@ -44,11 +44,11 @@ import SwiftUI
                     } else { memberRow(member) }
                 }
             }
-            if reader.foreignAuthority { Text("Managed by another Hermes").font(.callout) }
-            if let message = reader.commandMessage { Text(message).font(.callout) }
-            if reader.finishingStop { Text("Finishing stop…").font(.callout) }
+            if reader.foreignAuthority { Text("Managed by another Hermes").appFont(.body) }
+            if let message = reader.commandMessage { Text(message).appFont(.body) }
+            if reader.finishingStop { Text("Finishing stop…").appFont(.body) }
             if reader.link == .stopped {
-                if let error = reader.errorMessage { Text(error).font(.callout) }
+                if let error = reader.errorMessage { Text(error).appFont(.body) }
                 Button("Reconnect") { revision = UUID() }
             }
         }
@@ -89,7 +89,7 @@ import SwiftUI
         Task { await reader.rename(submitted) }
     }
     private func memberRow(_ member: BotGroupRoom.Member) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             BotRoomMemberAvatar(member: member, roster: roster, avatars: avatars, size: 36)
             Text(member.name)
         }

@@ -17,7 +17,7 @@ struct TaskDetailHeaderCard: View {
 
     var body: some View {
         SectionCard {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 titleRow
                 nextRunBlock
 
@@ -33,14 +33,14 @@ struct TaskDetailHeaderCard: View {
     // MARK: - Pieces
 
     private var titleRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(job.displayName)
-                    .font(.title3.bold())
+                    .appFont(.title3, weight: .bold)
                     .lineLimit(3)
 
                 Text(scheduleSentence)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -59,31 +59,31 @@ struct TaskDetailHeaderCard: View {
     @ViewBuilder
     private var nextRunBlock: some View {
         if let running = runningElapsed {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(CronJobRowView.elapsedText(running))
-                    .font(.title2.weight(.semibold))
+                    .appFont(.title2, weight: .semibold)
                     .foregroundStyle(.blue)
                 Text("Running now")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
         } else if let next = job.nextRunAt?.date {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(CronScheduleHumanizer.countdown(to: next))
-                    .font(.title2.weight(.semibold))
+                    .appFont(.title2, weight: .semibold)
                 Text("Next run · \(next.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
         } else if let last = job.lastRunAt?.date {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("Not scheduled")
-                    .font(.title3.weight(.semibold))
+                    .appFont(.title3, weight: .semibold)
                     .foregroundStyle(.secondary)
                 Text("Last run · \(last.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
@@ -92,10 +92,10 @@ struct TaskDetailHeaderCard: View {
 
     @ViewBuilder
     private func failureBlock(_ failure: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Label {
                 Text(failure)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.primary)
                     .lineLimit(3)
             } icon: {
@@ -107,14 +107,14 @@ struct TaskDetailHeaderCard: View {
 
             if canSeeFullOutput {
                 Button("See full output", action: seeFullOutput)
-                    .font(.footnote.weight(.semibold))
+                    .appFont(.footnote, weight: .semibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(.tint)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.red.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(HermesSpacing.s12)
+        .background(Color.red.opacity(0.10), in: RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
     }
 
     /// The card's two controls, as its bottom edge rather than as objects
@@ -140,13 +140,13 @@ struct TaskDetailHeaderCard: View {
             if dynamicTypeSize.isAccessibilitySize {
                 // Two labels will not sit side by side at these sizes, so the
                 // divider turns with them.
-                VStack(spacing: 0) {
+                VStack(spacing: HermesSpacing.s0) {
                     runButton
                     Divider()
                     pauseButton
                 }
             } else {
-                HStack(spacing: 0) {
+                HStack(spacing: HermesSpacing.s0) {
                     runButton
                     Divider()
                     pauseButton
@@ -162,12 +162,12 @@ struct TaskDetailHeaderCard: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 7) {
+            HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: systemImage)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
             }
             .frame(maxWidth: .infinity, minHeight: 46)
             .contentShape(Rectangle())

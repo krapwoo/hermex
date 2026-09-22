@@ -11,7 +11,7 @@ struct BotComposerSettings: View {
 
     var body: some View {
         let owner = settings.context
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             if let active = settings.catalog.active {
                 ComposerModelEffortMenu(
                     allowsEffortChanges: settings.mayChangeEffort,
@@ -22,7 +22,7 @@ struct BotComposerSettings: View {
                     ),
                     modelGroups: settings.catalog.groups, favoriteModelKeys: [], recentModelKeys: [],
                     isDisabled: !settings.mayChangeModel, color: .secondary,
-                    controlFont: AppFont.subheadline(), chevronFont: AppFont.caption2(),
+                    controlRole: .subheadline, chevronRole: .caption2,
                     onSelectModel: { selectModel($0, context: owner) }, onSelectEffort: { change(.effort($0), context: owner) },
                     onShowAllModels: { sheetContext = owner; preparePresentation(); showsModels = true }
                 )
@@ -31,7 +31,7 @@ struct BotComposerSettings: View {
                 ComposerWorkspaceSelectorButton(
                     title: workspace.lastPathComponentFallback,
                     isDisabled: !settings.mayChangeWorkspace, color: .secondary,
-                    controlFont: AppFont.subheadline(), chevronFont: AppFont.caption2()
+                    controlRole: .subheadline, chevronRole: .caption2
                 ) { sheetContext = owner; preparePresentation(); showsWorkspace = true }
             }
             if let fast = settings.fast, settings.showsFast {
@@ -39,7 +39,7 @@ struct BotComposerSettings: View {
                     ComposerInlineControlLabel(
                         title: fast ? String(localized: "Fast") : String(localized: "Normal"),
                         systemImage: "bolt", showsChevron: false, color: .secondary,
-                        controlFont: AppFont.subheadline(), chevronFont: AppFont.caption2()
+                        controlRole: .subheadline, chevronRole: .caption2
                     )
                 }
                 .buttonStyle(.plain)
@@ -48,7 +48,7 @@ struct BotComposerSettings: View {
                 .accessibilityValue(fast ? String(localized: "On") : String(localized: "Off"))
             }
             ContextWindowIndicatorView(snapshot: settings.usage.hasContext ? settings.usage.snapshot : nil)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, HermesSpacing.s4)
         }
         .onChange(of: settings.context) {
             showsModels = false; showsWorkspace = false; sheetContext = nil

@@ -50,7 +50,7 @@ struct ProvidersView: View {
                 }
 
                 Text("Provider keys are managed on the server. This screen is read-only.")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 24, trailing: 16))
                     .listRowSeparator(.hidden)
@@ -103,28 +103,28 @@ struct ProvidersView: View {
     /// Shown above cached rows when a pull-to-refresh fails: the list would
     /// otherwise look freshly loaded even though the request errored (#42 review).
     private func refreshFailureBanner(detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s4) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .accessibilityHidden(true)
 
                 Text("Couldn't refresh. Showing previously loaded providers.")
-                    .font(.footnote.weight(.medium))
+                    .appFont(.footnote, weight: .medium)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
             }
 
             Text(verbatim: detail)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
         }
-        .padding(12)
+        .padding(HermesSpacing.s12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                 .fill(Color.orange.opacity(0.14))
         )
         .accessibilityElement(children: .combine)
@@ -174,8 +174,8 @@ private struct ProviderDisclosure: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+            HStack(spacing: HermesSpacing.s8) {
                 if ProviderGlyphKind.resolve(providerID: provider.id) != nil {
                     ProviderGlyph(providerID: provider.id)
                         .frame(width: 17, height: 17)
@@ -200,14 +200,14 @@ private struct ProviderDisclosure: View {
             statusLine
 
             if let authError = ProvidersViewModel.authErrorText(for: provider) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.red)
                         .accessibilityHidden(true)
 
                     Text(authError)
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.leading)
                 }
@@ -215,7 +215,7 @@ private struct ProviderDisclosure: View {
                 .accessibilityLabel(Text("Authentication error: \(authError)"))
             }
         }
-        .padding(.vertical, 7)
+        .padding(.vertical, HermesSpacing.s8)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -227,7 +227,7 @@ private struct ProviderDisclosure: View {
         let badge = ProvidersViewModel.keySourceBadge(for: provider)
 
         if provider.hasKey != nil || isActive || badge != nil {
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s8) {
                 if let hasKey = provider.hasKey {
                     Image(systemName: hasKey ? "checkmark.seal.fill" : "key.slash")
                         .font(.caption)
@@ -235,7 +235,7 @@ private struct ProviderDisclosure: View {
                         .accessibilityHidden(true)
 
                     Text(hasKey ? "Key configured" : "No key")
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(hasKey ? Color.primary : Color.secondary)
                         .multilineTextAlignment(.leading)
                 }
@@ -244,9 +244,9 @@ private struct ProviderDisclosure: View {
 
                 if isActive {
                     Text("Active")
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .appFont(.caption2, weight: .semibold)
+                        .padding(.horizontal, HermesSpacing.s8)
+                        .padding(.vertical, HermesSpacing.s4)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
                         .foregroundStyle(.green)
                         .layoutPriority(1)
@@ -255,9 +255,9 @@ private struct ProviderDisclosure: View {
                 if let badge {
                     // Technical token (env / OAuth / config) — deliberately not localized.
                     Text(verbatim: badge)
-                        .font(.caption2.weight(.medium))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .appFont(.caption2, weight: .medium)
+                        .padding(.horizontal, HermesSpacing.s8)
+                        .padding(.vertical, HermesSpacing.s4)
                         .background(Capsule().fill(Color(.tertiarySystemFill)))
                         .foregroundStyle(.secondary)
                         .layoutPriority(1)
@@ -273,21 +273,21 @@ private struct ProviderDisclosure: View {
             Self.modelTitle(model).map { (index: index, title: $0) }
         }
 
-        return VStack(spacing: 1) {
+        return VStack(spacing: HermesSpacing.s2) {
             Divider()
-                .padding(.leading, 10)
+                .padding(.leading, HermesSpacing.s12)
 
-            LazyVStack(spacing: 1) {
+            LazyVStack(spacing: HermesSpacing.s2) {
                 ForEach(titles, id: \.index) { entry in
                     Text(verbatim: entry.title)
-                        .font(.body)
+                        .appFont(.body)
                         .lineLimit(2)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, HermesSpacing.s12)
                         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                 }
             }
         }
-        .padding(.top, 4)
+        .padding(.top, HermesSpacing.s4)
     }
 
     /// "Showing X of Y models" when the server trimmed the catalog, otherwise the

@@ -17,12 +17,12 @@ struct GitTurnChangesCard: View {
     /// Open a single file's diff (per-row tap). Only called for rows with a status match.
     let onOpenFile: (GitFile) -> Void
 
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 12, style: .continuous) }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous) }
     private var dividerColor: Color { Color(.separator).opacity(colorScheme == .dark ? 0.8 : 1.0) }
     private var showsTotals: Bool { summary.totalAdditions > 0 || summary.totalDeletions > 0 }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             header
 
             if isExpanded {
@@ -30,7 +30,7 @@ struct GitTurnChangesCard: View {
                 ForEach(Array(summary.changes.enumerated()), id: \.element.id) { index, change in
                     fileRow(change)
                     if index != summary.changes.count - 1 {
-                        divider.padding(.leading, 12)
+                        divider.padding(.leading, HermesSpacing.s12)
                     }
                 }
             }
@@ -42,13 +42,13 @@ struct GitTurnChangesCard: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: "square.and.pencil")
                 .font(.system(size: 14, weight: .regular))
                 .foregroundStyle(.secondary)
 
             Text("File changes")
-                .font(AppFont.subheadline())
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
 
             if showsTotals {
@@ -71,12 +71,12 @@ struct GitTurnChangesCard: View {
                     : String(localized: "Expand file changes"),
                 rotation: isExpanded ? 0 : -90
             ) {
-                withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
+                withAnimation(.easeInOut(duration: HermesMotion.Duration.d200)) { isExpanded.toggle() }
             }
         }
-        .padding(.leading, 12)
-        .padding(.trailing, 6)
-        .padding(.vertical, 8)
+        .padding(.leading, HermesSpacing.s12)
+        .padding(.trailing, HermesSpacing.s8)
+        .padding(.vertical, HermesSpacing.s8)
     }
 
     private func headerButton(
@@ -103,9 +103,9 @@ struct GitTurnChangesCard: View {
             HapticButtonHaptics.tap(isEnabled: isHapticsEnabled)
             onOpenFile(file)
         } label: {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 Text(change.gitFile?.displayPath ?? change.path)
-                    .font(AppFont.subheadline())
+                    .appFont(.subheadline)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -118,8 +118,8 @@ struct GitTurnChangesCard: View {
 
                 GitStatusChip(kind: change.changeKind)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

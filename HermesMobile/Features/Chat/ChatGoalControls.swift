@@ -75,7 +75,7 @@ struct GoalSubmissionSheet: View {
     var body: some View {
         NavigationStack {
             TextEditor(text: $goalDraft)
-                .font(.body)
+                .appFont(.body)
                 .padding()
                 .scrollContentBackground(.hidden)
                 .background(Color(.systemGroupedBackground))

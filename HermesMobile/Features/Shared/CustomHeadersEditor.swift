@@ -35,7 +35,7 @@ struct CustomHeadersEditor: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             ForEach($headers) { $header in
                 headerRow($header)
             }
@@ -44,22 +44,22 @@ struct CustomHeadersEditor: View {
                 headers.append(CustomHeader())
             } label: {
                 Label("Add Header", systemImage: "plus.circle.fill")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(style.accent)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Add header")
 
             Text("Sent with every request to your server, including media and live streams. Use for a reverse proxy (e.g. Authentik) or token auth, such as an Authorization header.")
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(style.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func headerRow(_ header: Binding<CustomHeader>) -> some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
+            HStack(spacing: HermesSpacing.s8) {
                 field {
                     TextField("Header name", text: header.name)
                         .textInputAutocapitalization(.never)
@@ -89,12 +89,12 @@ struct CustomHeadersEditor: View {
 
     private func field<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         content()
-            .font(.subheadline)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(style.fieldBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .appFont(.subheadline)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s12)
+            .background(style.fieldBackground, in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
                     .strokeBorder(style.fieldStroke, lineWidth: 1)
             )
     }

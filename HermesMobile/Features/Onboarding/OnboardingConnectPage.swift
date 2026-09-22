@@ -24,19 +24,19 @@ struct OnboardingConnectPage: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s20) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     Text("Connect")
-                        .font(.title3.weight(.bold))
+                        .appFont(.title3, weight: .bold)
                         .foregroundStyle(.white)
 
                     Text("Enter the exact HTTPS Tailscale Serve URL your agent returned, for example `https://server.tailnet-name.ts.net`.")
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.white.opacity(0.5))
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                VStack(spacing: 12) {
+                VStack(spacing: HermesSpacing.s12) {
                     OnboardingField(systemImage: "link", title: String(localized: "Server URL")) {
                         ZStack(alignment: .leading) {
                             if viewModel.serverURLString.isEmpty {
@@ -78,10 +78,10 @@ struct OnboardingConnectPage: View {
                 DisclosureGroup(isExpanded: $isShowingAdvanced) {
                     CustomHeadersEditor(headers: $viewModel.customHeaders, style: .onboarding)
                         .disabled(viewModel.isConnectionLocked)
-                        .padding(.top, 10)
+                        .padding(.top, HermesSpacing.s12)
                 } label: {
                     Label("Advanced", systemImage: "slider.horizontal.3")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.subheadline, weight: .semibold)
                         .foregroundStyle(.white.opacity(0.85))
                 }
                 .tint(.white.opacity(0.6))
@@ -111,9 +111,9 @@ struct OnboardingConnectPage: View {
                     )
                 }
             }
-            .padding(.horizontal, 22)
+            .padding(.horizontal, HermesSpacing.s24)
             .padding(.top, dynamicTypeSize.isAccessibilitySize ? 18 : 24)
-            .padding(.bottom, 24)
+            .padding(.bottom, HermesSpacing.s24)
         }
         .scrollBounceBehavior(.basedOnSize)
     }

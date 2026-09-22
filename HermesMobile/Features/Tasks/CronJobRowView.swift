@@ -13,25 +13,25 @@ struct CronJobRowView: View {
     @Environment(\.calendar) private var calendar
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: HermesSpacing.s12) {
             Capsule(style: .continuous)
                 .fill(tint)
                 .frame(width: 3)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(job.displayName)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .foregroundStyle(isDimmed ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
                     .lineLimit(nameLineLimit)
 
                 Text(metaText)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(metaStyle)
                     .lineLimit(metaLineLimit)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, HermesSpacing.s4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: [job.displayName, statusWord, metaText].joined(separator: ", ")))
     }

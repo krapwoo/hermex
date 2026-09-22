@@ -13,14 +13,14 @@ struct ProjectColorOption: Identifiable, Equatable {
 
 enum ProjectCreationPalette {
     static let approvedColors: [ProjectColorOption] = [
-        ProjectColorOption(name: String(localized: "Sky"), hex: "#7cb9ff"),
-        ProjectColorOption(name: String(localized: "Gold"), hex: "#f5c542"),
-        ProjectColorOption(name: String(localized: "Red"), hex: "#e94560"),
-        ProjectColorOption(name: String(localized: "Green"), hex: "#50c878"),
-        ProjectColorOption(name: String(localized: "Violet"), hex: "#c084fc"),
-        ProjectColorOption(name: String(localized: "Orange"), hex: "#fb923c"),
-        ProjectColorOption(name: String(localized: "Cyan"), hex: "#67e8f9"),
-        ProjectColorOption(name: String(localized: "Pink"), hex: "#f472b6")
+        ProjectColorOption(name: String(localized: "Sky"), hex: HermesProductPalette.projectSky),
+        ProjectColorOption(name: String(localized: "Gold"), hex: HermesProductPalette.projectGold),
+        ProjectColorOption(name: String(localized: "Red"), hex: HermesProductPalette.projectRed),
+        ProjectColorOption(name: String(localized: "Green"), hex: HermesProductPalette.projectGreen),
+        ProjectColorOption(name: String(localized: "Violet"), hex: HermesProductPalette.projectViolet),
+        ProjectColorOption(name: String(localized: "Orange"), hex: HermesProductPalette.projectOrange),
+        ProjectColorOption(name: String(localized: "Cyan"), hex: HermesProductPalette.projectCyan),
+        ProjectColorOption(name: String(localized: "Pink"), hex: HermesProductPalette.projectPink)
     ]
 
     static func defaultColor(existingProjectCount: Int) -> ProjectColorOption {
@@ -115,12 +115,12 @@ private struct ProjectFormSheet: View {
                 }
 
                 Section("Color") {
-                    LazyVGrid(columns: colorColumns, alignment: .leading, spacing: 16) {
+                    LazyVGrid(columns: colorColumns, alignment: .leading, spacing: HermesSpacing.s16) {
                         ForEach(ProjectCreationPalette.approvedColors) { option in
                             colorButton(for: option)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, HermesSpacing.s4)
                 }
             }
             .navigationTitle(title)
@@ -157,7 +157,7 @@ private struct ProjectFormSheet: View {
     }
 
     private var colorColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 44), spacing: 16)]
+        [GridItem(.adaptive(minimum: 44), spacing: HermesSpacing.s16)]
     }
 
     private func colorButton(for option: ProjectColorOption) -> some View {

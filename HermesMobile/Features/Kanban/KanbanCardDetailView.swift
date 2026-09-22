@@ -195,7 +195,7 @@ private struct KanbanCardDetailContent: View {
                             HStack { commentMetadata(comment) }
                             VStack(alignment: .leading) { commentMetadata(comment) }
                         }
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
@@ -259,7 +259,7 @@ private struct KanbanCardDetailContent: View {
                 Label("Outcome Uncertain", systemImage: "questionmark.circle")
                     .foregroundStyle(.orange)
                 Text("Refresh to check the Card before trying again.")
-                    .font(.footnote)
+                    .appFont(.footnote)
                 Button("Refresh") { Task { await state.refresh() } }
             }
         }
@@ -283,12 +283,12 @@ private struct KanbanCardDetailContent: View {
     private func prerequisiteGroup(title: String, card: KanbanCard?, canonicalIDs: [String]) -> some View {
         if let card, let cardID = card.cardID {
             let ids = featureModel.displayedPrerequisites(for: cardID, canonical: canonicalIDs)
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title).font(.headline)
+            VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                Text(title).appFont(.headline)
                 ForEach(ids, id: \.self) { prerequisiteID in
                     HStack {
                         Text(verbatim: prerequisiteID)
-                            .font(.body.monospaced())
+                            .appFont(.body, design: .monospaced)
                             .textSelection(.enabled)
                         Spacer()
                         Button("Remove", systemImage: "minus.circle", role: .destructive) {
@@ -357,7 +357,7 @@ private struct KanbanCardDetailContent: View {
                     Label("Outcome Uncertain", systemImage: "questionmark.circle")
                         .foregroundStyle(.orange)
                     Text("Refresh the Card to check the server result before trying again.")
-                        .font(.footnote)
+                        .appFont(.footnote)
                     if case .undoArchive = mutation.kind {
                         EmptyView()
                     } else {
@@ -457,11 +457,11 @@ private struct KanbanCardDetailContent: View {
     @ViewBuilder
     private func dependencyGroup(title: String, ids: [String]) -> some View {
         VStack(alignment: .leading) {
-            Text(title).font(.headline)
+            Text(title).appFont(.headline)
             if !ids.isEmpty {
                 ForEach(ids, id: \.self) { id in
                     Text(verbatim: id)
-                        .font(.body.monospaced())
+                        .appFont(.body, design: .monospaced)
                         .textSelection(.enabled)
                 }
             }
@@ -497,7 +497,7 @@ private struct KanbanCardDetailContent: View {
                             .textSelection(.enabled)
                         if let date = KanbanDetailDateFormatter.format(event.createdAt) {
                             Text(verbatim: date)
-                                .font(.caption)
+                                .appFont(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -515,18 +515,18 @@ private struct KanbanCardDetailContent: View {
                 ForEach(runs, id: \.presentationID) { run in
                     VStack(alignment: .leading) {
                         Text(verbatim: [run.status, run.outcome].compactMap { $0 }.joined(separator: " · "))
-                            .font(.headline)
+                            .appFont(.headline)
                         if let summary = nonEmpty(run.summary) {
                             Text(verbatim: summary).textSelection(.enabled)
                         }
                         if let error = nonEmpty(run.error) {
                             Text(verbatim: error)
-                                .font(.body.monospaced())
+                                .appFont(.body, design: .monospaced)
                                 .textSelection(.enabled)
                         }
                         if let range = runDateRange(run) {
                             Text(verbatim: range)
-                                .font(.caption)
+                                .appFont(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         if let runID = nonEmpty(run.runID) {
@@ -537,7 +537,7 @@ private struct KanbanCardDetailContent: View {
                         }
                         if let tail = nonEmpty(run.logTail) {
                             Text(verbatim: tail)
-                                .font(.body.monospaced())
+                                .appFont(.body, design: .monospaced)
                                 .textSelection(.enabled)
                         }
                     }
@@ -587,11 +587,11 @@ private struct KanbanCardDetailContent: View {
             case let .loaded(log):
                 if log.truncated == true {
                     Label("Only the last part of this log is shown.", systemImage: "scissors")
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.orange)
                 }
                 Text(verbatim: log.content ?? "")
-                    .font(.body.monospaced())
+                    .appFont(.body, design: .monospaced)
                     .textSelection(.enabled)
                 Button("Refresh") { Task { await state.loadWorkerLog() } }
             case .failed:

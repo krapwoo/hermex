@@ -46,12 +46,12 @@ import SwiftUI
     private var membersStep: some View {
         List {
             Section {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                     Text("To:").foregroundStyle(.secondary)
                     if !creator.selected.isEmpty {
                         ViewThatFits(in: .horizontal) {
                             chips
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                                 ForEach(creator.selected) { bot in chip(bot) }
                             }
                         }
@@ -61,7 +61,7 @@ import SwiftUI
                         .autocorrectionDisabled().textInputAutocapitalization(.never)
                         .accessibilityLabel("Find group members")
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, HermesSpacing.s8)
             } footer: {
                 if creator.selected.count == 6 { Text("Groups can have up to six members.") }
                 else { Text("Choose two to six bots.") }
@@ -69,11 +69,11 @@ import SwiftUI
             Section {
                 ForEach(creator.remaining) { bot in
                     Button { creator.select(bot) } label: {
-                        HStack(spacing: 14) {
+                        HStack(spacing: HermesSpacing.s16) {
                             BotAvatarView(profile: bot, avatar: avatars[bot.id], size: 36, motion: .still)
                             Text(bot.name).foregroundStyle(.primary)
                         }
-                        .padding(.vertical, 6)
+                        .padding(.vertical, HermesSpacing.s8)
                     }
                     .disabled(creator.selected.count >= 6)
                     .accessibilityLabel("Add \(bot.name)")
@@ -83,36 +83,36 @@ import SwiftUI
         .listStyle(.insetGrouped)
     }
     private var chips: some View {
-        HStack(spacing: 8) { ForEach(creator.selected) { bot in chip(bot) } }
+        HStack(spacing: HermesSpacing.s8) { ForEach(creator.selected) { bot in chip(bot) } }
             .fixedSize(horizontal: true, vertical: false)
     }
     private func chip(_ bot: BotProfile) -> some View {
         Button { creator.remove(bot) } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s8) {
                 BotAvatarView(profile: bot, avatar: avatars[bot.id], size: 24, motion: .still)
                 Text(bot.name)
                 Image(systemName: "xmark").font(.caption)
             }
-            .padding(8).background(.quaternary, in: Capsule())
+            .padding(HermesSpacing.s8).background(.quaternary, in: Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Remove \(bot.name)")
     }
     private var nameStep: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: HermesSpacing.s24) {
                 BotRoomAvatars(room: creator.preview, roster: creator.roster, avatars: avatars, size: 84)
-                    .padding(.top, 48)
+                    .padding(.top, HermesSpacing.s48)
                 TextField("Group name", text: $creator.name)
-                    .font(.title2.bold()).multilineTextAlignment(.center)
-                    .padding(20).background(.quaternary, in: RoundedRectangle(cornerRadius: 20))
+                    .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
+                    .padding(HermesSpacing.s20).background(.quaternary, in: RoundedRectangle(cornerRadius: HermesRadius.r20))
                     .focused($focused, equals: .name).disabled(creator.locked)
                     .submitLabel(.done)
                     .onSubmit { if creator.mayCreate { Task { await creator.create() } } }
                 if !BotRoomRPC.validName(creator.name) {
-                    Text("Enter a name of up to 200 characters.").font(.caption).foregroundStyle(.secondary)
+                    Text("Enter a name of up to 200 characters.").appFont(.caption).foregroundStyle(.secondary)
                 }
-                if let message = creator.message { Text(message).font(.callout) }
+                if let message = creator.message { Text(message).appFont(.body) }
                 Button(creator.busy ? "Creating…" : creator.locked ? "Try Again" : "Create") {
                     focused = nil
                     Task { await creator.create() }
@@ -120,7 +120,7 @@ import SwiftUI
                 .buttonStyle(.borderedProminent).controlSize(.large)
                 .disabled(!creator.mayCreate)
             }
-            .padding(20)
+            .padding(HermesSpacing.s20)
         }
     }
 }

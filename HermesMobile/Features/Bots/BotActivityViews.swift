@@ -50,7 +50,7 @@ struct BotPlanRowView: View {
         } status: {
             EmptyView()
         } expandedBody: {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 ForEach(plan.items) { item in
                     Label {
                         Text(item.content)
@@ -60,7 +60,7 @@ struct BotPlanRowView: View {
                         Image(systemName: Self.symbol(for: item))
                             .foregroundStyle(item.status == "in_progress" ? Color.accentColor : .secondary)
                     }
-                    .font(AppFont.caption())
+                    .appFont(.caption)
                     .accessibilityLabel(Text("\(Self.stateLabel(for: item)): \(item.content)"))
                 }
             }

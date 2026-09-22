@@ -12,7 +12,7 @@ import UIKit
                 if let error = work.errorMessage {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -91,18 +91,18 @@ import UIKit
 
     @ViewBuilder
     private func workerRow(_ worker: BotDelegatedWorker) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+            HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 Text(worker.goal)
-                    .font(.body.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 8)
                 Text(worker.status.localizedUppercase)
-                    .font(.caption2.weight(.bold))
+                    .appFont(.caption2, weight: .bold)
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 6) {
+            HStack(spacing: HermesSpacing.s4) {
                 if let model = worker.model {
                     Label(model, systemImage: "cpu")
                 }
@@ -112,19 +112,19 @@ import UIKit
                     Label("\(count) tools", systemImage: "hammer")
                 }
             }
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .lineLimit(1)
 
             if work.loadingTail == worker.identity {
                 Text("Loading tail…")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             } else if let tail = work.tail, tail.worker == worker.identity {
                 tailView(tail)
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: HermesSpacing.s12) {
                 Button(work.tail?.worker == worker.identity ? "Hide tail" : "Show tail") {
                     if work.tail?.worker == worker.identity {
                         work.hideTail()
@@ -139,7 +139,7 @@ import UIKit
 
                 if work.interruptedWorker == worker.identity {
                     Label("Interrupt sent", systemImage: "stop.circle")
-                        .font(.caption.weight(.semibold))
+                        .appFont(.caption, weight: .semibold)
                         .foregroundStyle(.secondary)
                 } else {
                     Button("Interrupt", role: .destructive) {
@@ -150,32 +150,32 @@ import UIKit
                 }
             }
         }
-        .padding(.leading, CGFloat(min(worker.depth, 4)) * 16)
+        .padding(.leading, CGFloat(min(worker.depth, 4)) * HermesSpacing.s16)
         .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
     private func tailView(_ tail: BotDelegatedTail) -> some View {
         if tail.available {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 ScrollView(.vertical) {
                     Text(tail.text.isEmpty ? String(localized: "No output yet.") : tail.text)
-                        .font(.system(.caption, design: .monospaced))
+                        .appFont(.caption, design: .monospaced)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(maxHeight: 180)
                 if tail.truncated {
                     Label("Showing the latest 16 KB", systemImage: "scissors")
-                        .font(.caption2)
+                        .appFont(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(10)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+            .padding(HermesSpacing.s12)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: HermesRadius.field))
         } else {
             Text("Live output is no longer available for this worker.")
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
         }
     }
@@ -189,52 +189,54 @@ struct BotDelegationCompletionCard: View {
 
     var body: some View {
         Button { showingResults = true } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+                HStack(alignment: .top, spacing: HermesSpacing.s12) {
                     Image(systemName: completion.hasFailures ? "exclamationmark.triangle.fill" : "checkmark")
+                        // Retained icon-sizing exception: typography adoption covers text, not SF Symbol sizing.
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(iconColor)
                         .frame(width: 28, height: 28)
-                        .background(iconColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+                        .background(iconColor.opacity(0.14), in: RoundedRectangle(cornerRadius: HermesRadius.control))
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text(title)
-                            .font(.subheadline.weight(.semibold))
+                            .appFont(.subheadline, weight: .semibold)
                             .foregroundStyle(.primary)
                         Text(summary)
-                            .font(.caption)
+                            .appFont(.caption)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     Image(systemName: "chevron.forward")
+                        // Retained icon-sizing exception: typography adoption covers text, not SF Symbol sizing.
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.tertiary)
-                        .padding(.top, 6)
+                        .padding(.top, HermesSpacing.s4)
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: HermesSpacing.s8) {
                     if let delegationID = completion.delegationID {
                         Text(delegationID)
-                            .font(.caption2.monospaced())
+                            .appFont(.caption2, design: .monospaced)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                     Spacer(minLength: 8)
                     Text("View results")
-                        .font(.caption.weight(.semibold))
+                        .appFont(.caption, weight: .semibold)
                         .foregroundStyle(.tint)
                 }
-                .padding(.top, 9)
+                .padding(.top, HermesSpacing.s8)
                 .overlay(alignment: .top) { Divider() }
             }
-            .padding(12)
-            .contentShape(RoundedRectangle(cornerRadius: 15))
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 15))
+            .padding(HermesSpacing.s12)
+            .contentShape(RoundedRectangle(cornerRadius: HermesRadius.card))
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.card))
             .overlay {
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: HermesRadius.card)
                     .stroke(.quaternary, lineWidth: 1)
             }
         }
@@ -291,7 +293,7 @@ struct BotDelegationResultsSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     Label {
                         Text(summary)
                     } icon: {
@@ -300,11 +302,11 @@ struct BotDelegationResultsSheet: View {
                               : "checkmark.circle.fill")
                             .foregroundStyle(completion.hasFailures ? .orange : .green)
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
 
                     if let delegationID = completion.delegationID {
                         Text(delegationID)
-                            .font(.caption.monospaced())
+                            .appFont(.caption, design: .monospaced)
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
@@ -324,7 +326,7 @@ struct BotDelegationResultsSheet: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(16)
+                .padding(HermesSpacing.s16)
             }
             .navigationTitle("Delegated work")
             .navigationBarTitleDisplayMode(.inline)

@@ -13,45 +13,45 @@ struct ApprovalRequestOverlay: View {
             Color.black.opacity(0.38)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 header
                 details
                 actions
             }
-            .padding(16)
+            .padding(HermesSpacing.s16)
             .frame(maxWidth: 520, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                     .stroke(.primary.opacity(0.10), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.22), radius: 18, x: 0, y: 12)
-            .padding(.horizontal, 18)
+            .hermesShadow(.overlay)
+            .padding(.horizontal, HermesSpacing.s20)
         }
         .accessibilityElement(children: .contain)
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text("Approval required")
-                    .font(.headline)
+                    .appFont(.headline)
 
                 Text("Pending approvals: \(prompt.pendingCount)")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             if let description = nonEmpty(prompt.pending.description) {
                 Text(description)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -59,26 +59,26 @@ struct ApprovalRequestOverlay: View {
             if let command = nonEmpty(prompt.pending.command) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     Text(command)
-                        .font(.system(.footnote, design: .monospaced))
+                        .appFont(.footnote, design: .monospaced)
                         .textSelection(.enabled)
-                        .padding(10)
+                        .padding(HermesSpacing.s12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r8))
             }
 
             if !prompt.patternKeys.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     Text("Pattern keys")
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(.secondary)
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                         ForEach(prompt.patternKeys, id: \.self) { key in
                             Text(key)
-                                .font(.caption2.monospaced())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
+                                .appFont(.caption2, design: .monospaced)
+                                .padding(.horizontal, HermesSpacing.s8)
+                                .padding(.vertical, HermesSpacing.s4)
                                 .background(Color(uiColor: .tertiarySystemBackground), in: Capsule())
                         }
                     }
@@ -87,26 +87,26 @@ struct ApprovalRequestOverlay: View {
 
             if prompt.pendingCount > 1 {
                 Text("1 of \(prompt.pendingCount) pending")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
             if let errorMessage = nonEmpty(errorMessage) {
                 Text(errorMessage)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.red)
             }
         }
     }
 
     private var actions: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
+            HStack(spacing: HermesSpacing.s8) {
                 approvalButton("Allow once", systemImage: "checkmark.circle.fill", choice: .once, prominent: true)
                 approvalButton("Allow session", systemImage: "lock.open", choice: .session, prominent: false)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 approvalButton("Always allow", systemImage: "star.fill", choice: .always, prominent: false)
                 approvalButton("Deny", systemImage: "xmark.circle.fill", choice: .deny, prominent: false, role: .destructive)
             }
@@ -160,14 +160,14 @@ struct ApprovalRequestOverlay: View {
 struct ApprovalBypassStatusPill: View {
     var body: some View {
         Label("Approval bypass active", systemImage: "bolt.slash.fill")
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .appFont(.caption, weight: .semibold)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .background(.regularMaterial, in: Capsule())
             .overlay(
                 Capsule()
                     .stroke(.primary.opacity(0.10), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+            .hermesShadow(.controlElevatedPressed)
     }
 }

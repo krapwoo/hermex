@@ -156,7 +156,7 @@ struct ChatAttachmentPreviewView: View {
 
     private func audioContent(_ data: Data) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                 fileHeader
 
                 InlineAudioPlayerView(
@@ -171,11 +171,11 @@ struct ChatAttachmentPreviewView: View {
 
     private func textContent(_ file: FileResponse) -> some View {
         ScrollView([.vertical, .horizontal]) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 fileHeader
 
                 Text(file.content ?? "")
-                    .font(.system(.body, design: .monospaced))
+                    .appFont(.body, design: .monospaced)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -188,7 +188,7 @@ struct ChatAttachmentPreviewView: View {
     private func imageContent(_ file: ImageFilePreview) -> some View {
         if let image = UIImage(data: file.data) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     fileHeader
 
                     Image(uiImage: image)
@@ -209,10 +209,10 @@ struct ChatAttachmentPreviewView: View {
         ContentUnavailableView {
             Label("No Preview", systemImage: item.inferredIsImage ? "photo" : "doc.questionmark")
         } description: {
-            VStack(spacing: 8) {
+            VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(item.displayPath)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .fontDesign(.monospaced)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
@@ -221,16 +221,16 @@ struct ChatAttachmentPreviewView: View {
     }
 
     private var fileHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(item.displayPath)
-                .font(.caption)
+                .appFont(.caption)
                 .fontDesign(.monospaced)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 
             if let metadataText {
                 Text(metadataText)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         }

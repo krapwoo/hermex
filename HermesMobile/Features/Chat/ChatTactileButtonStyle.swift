@@ -36,9 +36,9 @@ struct ChatTactileButtonStyle: ButtonStyle {
         var duration: TimeInterval {
             switch self {
             case .icon, .compactControl:
-                0.16
+                HermesMotion.Duration.d150
             case .capsule, .card, .thumbnail:
-                0.20
+                HermesMotion.Duration.d200
             }
         }
 
@@ -53,34 +53,8 @@ struct ChatTactileButtonStyle: ButtonStyle {
     }
 
     struct Shadow {
-        let color: Color
-        let opacity: Double
-        let radius: CGFloat
-        let x: CGFloat
-        let y: CGFloat
-        let pressedOpacity: Double
-        let pressedRadius: CGFloat
-        let pressedY: CGFloat
-
-        init(
-            color: Color,
-            opacity: Double,
-            radius: CGFloat,
-            x: CGFloat = 0,
-            y: CGFloat,
-            pressedOpacity: Double,
-            pressedRadius: CGFloat,
-            pressedY: CGFloat
-        ) {
-            self.color = color
-            self.opacity = opacity
-            self.radius = radius
-            self.x = x
-            self.y = y
-            self.pressedOpacity = pressedOpacity
-            self.pressedRadius = pressedRadius
-            self.pressedY = pressedY
-        }
+        let resting: HermesShadow
+        let pressed: HermesShadow
     }
 
     let variant: Variant
@@ -91,25 +65,12 @@ struct ChatTactileButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let isPressed = isEnabled && configuration.isPressed
-        let shadow = shadow ?? Shadow(
-            color: .clear,
-            opacity: 0,
-            radius: 0,
-            y: 0,
-            pressedOpacity: 0,
-            pressedRadius: 0,
-            pressedY: 0
-        )
+        let shadow = shadow ?? Shadow(resting: .none, pressed: .none)
 
         configuration.label
             .scaleEffect(reduceMotion ? 1 : (isPressed ? variant.pressedScale : 1), anchor: variant.scaleAnchor)
             .opacity(isEnabled ? (isPressed ? variant.pressedOpacity : 1) : 0.62)
-            .shadow(
-                color: shadow.color.opacity(isPressed ? shadow.pressedOpacity : shadow.opacity),
-                radius: isPressed ? shadow.pressedRadius : shadow.radius,
-                x: shadow.x,
-                y: isPressed ? shadow.pressedY : shadow.y
-            )
+            .hermesShadow(isPressed ? shadow.pressed : shadow.resting)
             .animation(animation, value: isPressed)
     }
 
@@ -331,14 +292,14 @@ struct ChatDecisionButtonStyle: ButtonStyle {
         let isPressed = isEnabled && configuration.isPressed
 
         configuration.label
-            .font(.callout.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(foregroundColor)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s8)
             .frame(maxWidth: .infinity, minHeight: 40)
-            .background(backgroundColor(isPressed: isPressed), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(backgroundColor(isPressed: isPressed), in: RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .strokeBorder(borderColor, lineWidth: 1)
             )
             .scaleEffect(reduceMotion ? 1 : (isPressed ? 0.975 : 1))
@@ -388,7 +349,7 @@ struct ChatDecisionButtonStyle: ButtonStyle {
     }
 
     private var animation: Animation? {
-        ChatMotion.press(duration: 0.18, reduceMotion: reduceMotion)
+        ChatMotion.press(duration: HermesMotion.Duration.d200, reduceMotion: reduceMotion)
     }
 }
 

@@ -55,45 +55,45 @@ struct ArchivedSessionsView: View {
     @ViewBuilder
     private var content: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 if viewModel.isLoading && viewModel.sessions.isEmpty {
                     ArchivedStatusRow(title: String(localized: "Loading archived sessions..."), systemImage: "archivebox")
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, HermesSpacing.s24)
                 } else if let errorMessage = viewModel.errorMessage, viewModel.sessions.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                         ArchivedStatusRow(title: String(localized: "Could not load archived sessions"), systemImage: "exclamationmark.triangle")
 
                         Text(errorMessage)
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.secondary)
                             .lineLimit(3)
 
                         Button("Try Again") {
                             Task { await load() }
                         }
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.subheadline, weight: .medium)
                         .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, HermesSpacing.s24)
                 } else if viewModel.sessions.isEmpty {
                     ArchivedStatusRow(title: String(localized: "No archived sessions"), systemImage: "archivebox")
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, HermesSpacing.s24)
                 } else {
-                    VStack(spacing: 2) {
+                    VStack(spacing: HermesSpacing.s2) {
                         ForEach(visibleSessions) { session in
                             archivedSessionRow(for: session)
                         }
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, HermesSpacing.s12)
                 }
             }
-            .padding(.top, 28)
-            .padding(.bottom, 44)
+            .padding(.top, HermesSpacing.s32)
+            .padding(.bottom, HermesSpacing.s48)
         }
     }
 
     private func archivedSessionRow(for session: SessionSummary) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: HermesSpacing.s0) {
             Button {
                 openedSession = session
             } label: {
@@ -182,7 +182,7 @@ private struct ArchivedStatusRow: View {
     let systemImage: String
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HermesSpacing.s16) {
             Image(systemName: systemImage)
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -190,7 +190,7 @@ private struct ArchivedStatusRow: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
 

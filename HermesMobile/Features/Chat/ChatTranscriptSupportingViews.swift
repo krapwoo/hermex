@@ -898,11 +898,12 @@ struct ChatWorkingRowView: View {
 
     var body: some View {
         TimelineView(.periodic(from: startedAt, by: 1)) { context in
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 dots
 
                 Text("Working for \(ChatWorkingElapsedFormatter.label(startedAt: startedAt, now: context.date))")
-                    .font(.caption.weight(.medium).monospacedDigit())
+                    .monospacedDigit()
+                    .appFont(.caption, weight: .medium)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .ignore)
@@ -912,12 +913,12 @@ struct ChatWorkingRowView: View {
                 )
             )
         }
-        .padding(.leading, 4)
-        .padding(.vertical, 6)
+        .padding(.leading, HermesSpacing.s4)
+        .padding(.vertical, HermesSpacing.s8)
     }
 
     private var dots: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: HermesSpacing.s4) {
             ForEach([1.0, 0.8, 0.6], id: \.self) { opacity in
                 Circle()
                     .fill(.secondary)
@@ -934,7 +935,7 @@ struct BottomComposerMaterialFade: View {
     let composerHeight: CGFloat
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: HermesSpacing.s0) {
             Spacer()
 
             ZStack {
@@ -970,19 +971,19 @@ struct StreamRecoveryStatusView: View {
     let state: ActiveStreamRecoveryState
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             ProgressView()
                 .controlSize(.mini)
                 .accessibilityHidden(true)
 
             Text(label)
-                .font(.caption.weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.88)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, HermesSpacing.s12)
+        .padding(.vertical, HermesSpacing.s8)
         .background(.regularMaterial, in: Capsule(style: .continuous))
         .overlay(
             Capsule(style: .continuous)
@@ -1009,7 +1010,7 @@ struct ChatTranscriptLoadingSkeletonView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: HermesSpacing.s12) {
                 ForEach(rows) { row in
                     ChatTranscriptLoadingSkeletonRow(configuration: row)
                 }
@@ -1019,7 +1020,7 @@ struct ChatTranscriptLoadingSkeletonView: View {
                     .accessibilityHidden(true)
             }
             .padding(.horizontal)
-            .padding(.top, 16)
+            .padding(.top, HermesSpacing.s16)
         }
         .scrollDisabled(true)
         .allowsHitTesting(false)
@@ -1041,31 +1042,31 @@ private struct ChatTranscriptLoadingSkeletonRow: View {
     }
 
     private var assistantRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             ForEach(configuration.lines) { line in
                 skeletonLine(line)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 4)
+        .padding(.vertical, HermesSpacing.s4)
         .redacted(reason: .placeholder)
         .accessibilityHidden(true)
     }
 
     private var userRow: some View {
-        HStack(alignment: .bottom, spacing: 0) {
+        HStack(alignment: .bottom, spacing: HermesSpacing.s0) {
             Spacer(minLength: 48)
 
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .trailing, spacing: HermesSpacing.s8) {
                 ForEach(configuration.lines) { line in
                     skeletonLine(line)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, HermesSpacing.s12)
+            .padding(.vertical, HermesSpacing.s12)
             .background(Color(.secondarySystemFill))
             .foregroundStyle(.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
         }
         .redacted(reason: .placeholder)
         .accessibilityHidden(true)
@@ -1073,7 +1074,7 @@ private struct ChatTranscriptLoadingSkeletonRow: View {
 
     private func skeletonLine(_ line: ChatTranscriptSkeletonLine) -> some View {
         Text(verbatim: line.text)
-            .font(.body)
+            .appFont(.body)
             .lineLimit(1)
             .frame(maxWidth: line.maxWidth, alignment: configuration.role == .user ? .trailing : .leading)
     }
@@ -1140,19 +1141,19 @@ private struct ChatTranscriptSkeletonLine: Identifiable {
 
 struct ChatOfflineCacheBanner: View {
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: HermesSpacing.s8) {
             Image(systemName: "wifi.slash")
                 .imageScale(.small)
 
             Text("Offline — viewing cached version")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .fontWeight(.semibold)
 
             Spacer()
         }
         .foregroundStyle(.orange)
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.vertical, HermesSpacing.s12)
         .background(Color.orange.opacity(0.12))
         .accessibilityElement(children: .combine)
     }
@@ -1162,20 +1163,20 @@ struct PinnedLocalNoticeStack: View {
     let notices: [String]
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: HermesSpacing.s8) {
             ForEach(Array(notices.enumerated()), id: \.offset) { _, notice in
-                HStack(alignment: .top, spacing: 10) {
+                HStack(alignment: .top, spacing: HermesSpacing.s12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color.green)
 
                     Text(notice)
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(12)
+                .padding(HermesSpacing.s12)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: ChatComposerMetrics.cardCornerRadius, style: .continuous))
                 .overlay(
@@ -1185,7 +1186,7 @@ struct PinnedLocalNoticeStack: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .shadow(color: Color.black.opacity(0.12), radius: 10, y: 4)
+        .hermesShadow(.popover)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(notices.joined(separator: "\n"))
     }

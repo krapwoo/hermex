@@ -10,10 +10,10 @@ struct AppIconSettingsSection: View {
 
     var body: some View {
         if UIApplication.shared.supportsAlternateIcons {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 DisclosureGroup(isExpanded: $isAppIconPickerExpanded) {
                     appIconChoices
-                        .padding(.top, 12)
+                        .padding(.top, HermesSpacing.s12)
                 } label: {
                     AppIconDisclosureLabel(selectedAppIcon: selectedAppIcon)
                 }
@@ -21,7 +21,7 @@ struct AppIconSettingsSection: View {
 
                 if let appIconErrorMessage {
                     Text(appIconErrorMessage)
-                        .font(AppFont.caption())
+                        .appFont(.caption)
                         .foregroundStyle(.red)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -37,7 +37,7 @@ struct AppIconSettingsSection: View {
     }
 
     private var appIconChoices: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             ForEach(Array(AppIconChoice.allCases.enumerated()), id: \.element.id) { index, icon in
                 if index > 0 {
                     appIconDivider
@@ -60,7 +60,7 @@ struct AppIconSettingsSection: View {
 
     private var appIconDivider: some View {
         Divider()
-            .padding(.leading, 2)
+            .padding(.leading, HermesSpacing.s2)
             .opacity(0.72)
     }
 
@@ -99,16 +99,16 @@ private struct AppIconDisclosureLabel: View {
     let selectedAppIcon: AppIconChoice
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             AppIconChoicePreview(icon: selectedAppIcon)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("App Icon")
-                    .font(AppFont.body(weight: .semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
 
                 Text(selectedAppIcon.title)
-                    .font(AppFont.footnote())
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
 
@@ -126,16 +126,16 @@ private struct AppIconChoiceRow: View {
     let isUpdating: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: HermesSpacing.s12) {
             AppIconChoicePreview(icon: icon)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(icon.title)
-                    .font(AppFont.body(weight: .semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
 
                 Text(icon.subtitle)
-                    .font(AppFont.footnote())
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
 
@@ -196,12 +196,12 @@ private struct AppIconPreviewImage: View {
             .renderingMode(.original)
             .scaledToFit()
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+            .hermesShadow(.controlElevatedPressed)
             .accessibilityHidden(true)
     }
 }

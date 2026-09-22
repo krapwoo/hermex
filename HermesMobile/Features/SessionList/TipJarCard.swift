@@ -17,35 +17,35 @@ struct TipJarCard: View {
     private let accent = Color(red: 1, green: 224 / 255, blue: 0)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+            HStack(spacing: HermesSpacing.s12) {
                 companion
                 Text("Enjoying Hermex?")
-                    .font(.headline)
+                    .appFont(.headline)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Text("It's free and open source. If it's earned a coffee, that would mean a lot.")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 8) { actions }
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) { actions }
             } else {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 16) { actions }
-                    VStack(alignment: .leading, spacing: 8) { actions }
+                    HStack(spacing: HermesSpacing.s16) { actions }
+                    VStack(alignment: .leading, spacing: HermesSpacing.s8) { actions }
                 }
             }
         }
-        .padding(18)
+        .padding(HermesSpacing.s20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colorScheme == .dark ? Color(white: 0.14) : .white,
-                    in: RoundedRectangle(cornerRadius: 18))
+                    in: RoundedRectangle(cornerRadius: HermesRadius.r20))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: HermesRadius.r20)
                 .strokeBorder(.primary.opacity(0.1), lineWidth: 1)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, HermesSpacing.s12)
         .onAppear {
             isVisible = true
             RatingPromptState.shared.recordTipCardShown()
@@ -83,7 +83,7 @@ struct TipJarCard: View {
         return BotAvatarMarkView(name: "Hermex", appearance: appearance,
                                  size: dynamicTypeSize.isAccessibilitySize ? 36 : 50,
                                  pose: pose)
-            .animation(canAnimate ? .easeInOut(duration: 0.18) : nil, value: phase)
+            .animation(canAnimate ? .easeInOut(duration: HermesMotion.Duration.d200) : nil, value: phase)
             .accessibilityHidden(true)
     }
 
@@ -94,7 +94,7 @@ struct TipJarCard: View {
                 .foregroundStyle(.black)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.subheadline.weight(.semibold))
+        .appFont(.subheadline, weight: .semibold)
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
         .tint(accent)
@@ -106,7 +106,7 @@ struct TipJarCard: View {
         Button("Not now") {
             TipJarPromptState(defaults: .standard).dismiss()
         }
-        .font(.subheadline)
+        .appFont(.subheadline)
         .buttonStyle(.borderless)
         .foregroundStyle(.secondary)
         .frame(minHeight: 44)

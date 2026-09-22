@@ -239,9 +239,10 @@ struct TranscriptTurnFoldRowView: View {
 
     var body: some View {
         Button(action: onToggle) {
-            HStack(spacing: 8) {
+            HStack(spacing: HermesSpacing.s8) {
                 Text(fold.label.title)
-                    .font(AppFont.subheadline(weight: .medium).monospacedDigit())
+                    .appFont(.subheadline, weight: .medium)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
@@ -251,7 +252,7 @@ struct TranscriptTurnFoldRowView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, HermesSpacing.s8)
             .frame(minHeight: Self.minimumHeight)
             .contentShape(Rectangle())
             .overlay(alignment: .bottom) {
