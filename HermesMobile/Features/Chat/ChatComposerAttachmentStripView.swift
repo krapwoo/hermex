@@ -52,7 +52,7 @@ struct ComposerAttachmentPillPreview: View {
                     } label: {
                         tile(for: attachment)
                     }
-                    .buttonStyle(.chatTactile(.thumbnail))
+                    .buttonStyle(.hermesPressOnly(.thumbnail))
                     .accessibilityLabel("Open attachment \(attachment.name)")
                 }
 
@@ -103,7 +103,7 @@ private struct ComposerAttachmentThumbnailView: View {
             Button(action: onOpen) {
                 thumbnailContent
             }
-            .buttonStyle(.chatTactile(.thumbnail))
+            .buttonStyle(.hermesPressOnly(.thumbnail))
             .accessibilityLabel("Open attachment \(attachment.name)")
 
             Button(action: onRemove) {
@@ -114,9 +114,9 @@ private struct ComposerAttachmentThumbnailView: View {
                     .foregroundStyle(Color(.label))
                     .overlay(Circle().stroke(Color(.separator).opacity(0.35), lineWidth: 0.5))
             }
-            .buttonStyle(.chatTactile(
+            .buttonStyle(.hermesPressOnly(
                 .icon,
-                shadow: ChatTactileButtonStyle.Shadow(resting: .controlSubtleResting, pressed: .controlSubtlePressed)
+                shadow: HermesButtonPressOnlyStyle.Shadow(resting: .controlSubtleResting, pressed: .controlSubtlePressed)
             ))
             .offset(x: RTLLayout.horizontalOffset(6, isRightToLeft: layoutDirection == .rightToLeft), y: -6)
             .accessibilityLabel("Remove attachment \(attachment.name)")
@@ -192,11 +192,7 @@ private struct ComposerAttachmentThumbnailView: View {
         .padding(.vertical, usesAccessibilityLayout ? 10 : 0)
         .frame(width: usesAccessibilityLayout ? 260 : 222)
         .frame(minHeight: usesAccessibilityLayout ? 112 : 92)
-        .background(
-            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-        .overlay(previewBorder(cornerRadius: HermesRadius.r16))
+        .compactCardSurface(cornerRadius: HermesRadius.r16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(attachment.name), \(fileDetailText)")
     }
@@ -206,37 +202,20 @@ private struct ComposerAttachmentThumbnailView: View {
             .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
     }
 
+    private var fileType: AttachmentFileType {
+        AttachmentFileType(fileName: attachment.name)
+    }
+
     private var fileExtensionLabel: String {
-        let ext = URL(fileURLWithPath: attachment.name).pathExtension.uppercased()
-        return ext.isEmpty ? String(localized: "FILE") : String(ext.prefix(5))
+        fileType.extensionLabel
     }
 
     private var fileIconName: String {
-        switch URL(fileURLWithPath: attachment.name).pathExtension.lowercased() {
-        case "csv", "tsv", "xls", "xlsx":
-            "tablecells"
-        case "json", "md", "txt", "log", "xml", "yaml", "yml":
-            "doc.text"
-        case "pdf":
-            "doc.richtext"
-        case "zip", "tar", "gz", "tgz":
-            "archivebox"
-        default:
-            "doc"
-        }
+        fileType.iconName
     }
 
     private var fileBadgeColor: Color {
-        switch URL(fileURLWithPath: attachment.name).pathExtension.lowercased() {
-        case "csv", "tsv", "xls", "xlsx":
-            Color.green
-        case "pdf":
-            Color.red
-        case "json", "md", "txt", "log", "xml", "yaml", "yml":
-            Color.blue
-        default:
-            Color.accentColor
-        }
+        fileType.tintColor
     }
 
     private var fileDetailText: String {

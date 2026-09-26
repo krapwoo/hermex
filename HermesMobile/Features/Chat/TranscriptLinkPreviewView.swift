@@ -19,7 +19,7 @@ struct TranscriptLinkPreviewView: View {
         } label: {
             compactCard
         }
-        .buttonStyle(.chatTactile(.card))
+        .buttonStyle(.hermesPressOnly(.card))
         .contentShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)

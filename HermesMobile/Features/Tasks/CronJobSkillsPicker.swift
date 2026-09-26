@@ -133,23 +133,18 @@ struct CronJobSkillsPickerSheet: View {
     @ViewBuilder
     private var statusPlaceholder: some View {
         if skills.isEmpty, isLoading {
-            ContentUnavailableView {
-                ProgressView()
-            } description: {
-                Text("Loading skills...")
-            }
+            HermesContentUnavailable(variant: .loading, description: Text("Loading skills..."))
         } else if skills.isEmpty, let errorMessage {
-            ContentUnavailableView {
-                Label("Could Not Load Skills", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(verbatim: errorMessage)
-            } actions: {
-                Button("Try Again", action: onRetry)
-            }
+            HermesContentUnavailable(
+                variant: .error,
+                title: "Could Not Load Skills",
+                description: Text(verbatim: errorMessage),
+                primaryAction: .init(title: "Try Again", handler: onRetry)
+            )
         } else if listedSkills.isEmpty, !trimmedSearchQuery.isEmpty {
             ContentUnavailableView.search(text: searchText)
         } else if skills.isEmpty {
-            ContentUnavailableView("No skills available", systemImage: "wand.and.stars")
+            HermesContentUnavailable(variant: .empty, title: "No skills available", systemImage: "wand.and.stars")
         }
     }
 
@@ -158,28 +153,12 @@ struct CronJobSkillsPickerSheet: View {
     private var clearRow: some View {
         let selected = selection.isEmpty
 
-        return Button {
-            onClear()
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
-                Text("None")
-                    .appFont(.body)
-                    .lineLimit(2)
-
-                Spacer(minLength: 0)
-
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .pickerSelectionPill(isSelected: selected)
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        return ListItem(
+            title: Text("None"),
+            titleLineLimit: 2,
+            state: ListItemState(isSelected: selected),
+            action: onClear
+        )
     }
 
     private var customSkillEntry: some View {
@@ -192,10 +171,10 @@ struct CronJobSkillsPickerSheet: View {
                 .autocorrectionDisabled()
                 .appFont(.body)
                 .padding(.horizontal, HermesSpacing.s12)
-                .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
                 .background(
                     Color(.tertiarySystemFill),
-                    in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
                 )
 
             Button {
@@ -213,10 +192,10 @@ struct CronJobSkillsPickerSheet: View {
             .buttonStyle(.plain)
             .foregroundStyle(isArmed ? Color(.systemBackground) : Color(.tertiaryLabel))
             .padding(.horizontal, HermesSpacing.s12)
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
             .background(
                 isArmed ? Color.primary : Color.clear,
-                in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
+                in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
             )
             .disabled(!isArmed)
         }
@@ -262,41 +241,15 @@ struct CronJobSkillsPickerSheet: View {
         let name = skill.name ?? ""
         let selected = selection.contains(name)
 
-        return Button {
-            onToggle(name)
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
-                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                    Text(verbatim: name)
-                        .appFont(.body)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-
-                    if let details = Self.details(for: skill) {
-                        Text(verbatim: details)
-                            .appFont(.caption)
-                            .foregroundStyle(
-                                selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
-                            )
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .pickerSelectionPill(isSelected: selected)
-        .disabled(name.isEmpty)
-        .accessibilityLabel(Self.details(for: skill).map { "\(name), \($0)" } ?? name)
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        return ListItem(
+            title: Text(verbatim: name),
+            titleLineLimit: dynamicTypeSize.isAccessibilitySize ? 2 : 1,
+            subtitle: Self.details(for: skill).map { Text(verbatim: $0) },
+            subtitleLineLimit: dynamicTypeSize.isAccessibilitySize ? 3 : 1,
+            accessibilityLabel: Text(Self.details(for: skill).map { "\(name), \($0)" } ?? name),
+            state: ListItemState(isSelected: selected, isDisabled: name.isEmpty),
+            action: { onToggle(name) }
+        )
     }
 
     static func details(for skill: SkillSummary) -> String? {

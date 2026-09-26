@@ -45,8 +45,8 @@ struct SectionCard<Content: View, Footer: View>: View {
 
             VStack(spacing: HermesSpacing.s0) {
                 content
-                    .padding(.horizontal, HermesSpacing.s16)
-                    .padding(.vertical, HermesSpacing.s16)
+                    .padding(.horizontal, HermesCardMetrics.contentPadding)
+                    .padding(.vertical, HermesCardMetrics.contentPadding)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if hasFooter {

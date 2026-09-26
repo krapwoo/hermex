@@ -232,12 +232,7 @@ struct GitStatusChip: View {
 
     var body: some View {
         if let label {
-            Text(label)
-                .appFont(.caption2, weight: .semibold)
-                .padding(.horizontal, HermesSpacing.s8)
-                .padding(.vertical, HermesSpacing.s2)
-                .background(tint.opacity(0.18), in: Capsule())
-                .foregroundStyle(tint)
+            Tag(label: label, tint: tint, fillOpacity: 0.18, size: .compact)
         }
     }
 

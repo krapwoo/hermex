@@ -646,7 +646,7 @@ final class SessionListViewModel {
     /// probes go out together, so N streaming rows cost about N round trips per
     /// tick instead of 2N.
     private func refreshAttentionStates() async -> ActiveSessionStateRefreshResult {
-        let streamingSessions = sessions.filter { SessionRowView.isActiveStreaming($0) }
+        let streamingSessions = sessions.filter { SessionListItem.isActiveStreaming($0) }
         guard !streamingSessions.isEmpty else {
             clearAttentionStates()
             return .unchanged
@@ -728,7 +728,7 @@ final class SessionListViewModel {
         guard !attentionStatesBySessionID.isEmpty else { return }
 
         let streamingSessionIDs = Set(sessions.compactMap { session -> String? in
-            guard SessionRowView.isActiveStreaming(session) else { return nil }
+            guard SessionListItem.isActiveStreaming(session) else { return nil }
             return Self.nonEmpty(session.sessionId)
         })
         let pruned = attentionStatesBySessionID.filter { streamingSessionIDs.contains($0.key) }

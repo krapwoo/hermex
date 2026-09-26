@@ -314,13 +314,6 @@ struct StatusBadge: View {
     let color: Color
 
     var body: some View {
-        Text(text)
-            .appFont(.caption2)
-            .fontWeight(.semibold)
-            .foregroundStyle(color)
-            .padding(.horizontal, HermesSpacing.s8)
-            .padding(.vertical, HermesSpacing.s4)
-            .background(color.opacity(0.12), in: Capsule())
-            .lineLimit(1)
+        Tag(label: text, tint: color, size: .regular)
     }
 }

@@ -111,7 +111,7 @@ final class RatingPromptState {
                 moment: moment,
                 isSessionListVisible: isSessionListVisible(),
                 hasActiveStream: hasActiveStream(on: server)
-                    || sessions.contains(where: SessionRowView.isActiveStreaming),
+                    || sessions.contains(where: SessionListItem.isActiveStreaming),
                 request: request
             )
         } catch {

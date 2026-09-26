@@ -29,7 +29,7 @@ struct ReasoningBlockView: View {
         if let displayText = ReasoningBlockContent.displayText(from: text) {
             let summary = ReasoningSummaryFormatter.summary(for: displayText)
 
-            TranscriptLogRowView(
+            DisclosureRow(
                 summary: String(localized: "Thinking"),
                 detail: summary,
                 isExpanded: isExpanded,
@@ -250,9 +250,9 @@ private struct StreamingReasoningTextView: UIViewRepresentable {
         let size = uiView.sizeThatFits(
             CGSize(width: width, height: .greatestFiniteMagnitude)
         )
-        let layout = TranscriptLogRowBodyWindowLayout.resolve(
+        let layout = DisclosureRowBodyWindowLayout.resolve(
             contentHeight: ceil(size.height),
-            cap: TranscriptLogRowMetrics.bodyWindowHeight
+            cap: DisclosureRowMetrics.bodyWindowHeight
         )
         if uiView.isScrollEnabled != layout.scrolls {
             uiView.isScrollEnabled = layout.scrolls

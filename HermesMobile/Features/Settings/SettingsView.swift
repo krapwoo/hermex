@@ -2023,14 +2023,7 @@ private struct SettingsStatusPill: View {
     var tint: Color = .secondary
 
     var body: some View {
-        Text(label)
-            .appFont(.caption, weight: .semibold)
-            .foregroundStyle(tint)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, HermesSpacing.s12)
-            .padding(.vertical, HermesSpacing.s8)
-            .background(Capsule(style: .continuous).fill(tint.opacity(0.12)))
+        Tag(label: label, tint: tint, size: .prominent, font: .caption, minimumScaleFactor: 0.8)
     }
 }
 

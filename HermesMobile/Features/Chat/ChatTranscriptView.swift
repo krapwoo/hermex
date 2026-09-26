@@ -889,9 +889,9 @@ struct ChatScrollToBottomButton: View {
                 )
                 .chatMinimumHitTarget(in: Circle())
         }
-        .buttonStyle(.chatTactile(
+        .buttonStyle(.hermesPressOnly(
             .icon,
-            shadow: ChatTactileButtonStyle.Shadow(resting: .controlElevatedResting, pressed: .controlElevatedPressed)
+            shadow: HermesButtonPressOnlyStyle.Shadow(resting: .controlElevatedResting, pressed: .controlElevatedPressed)
         ))
         .padding(.bottom, bottomPadding)
         .accessibilityLabel("Scroll to latest message")
@@ -931,7 +931,7 @@ struct LoadOlderMessagesButton: View {
                     .stroke(Color(.separator).opacity(0.32), lineWidth: 0.5)
             )
         }
-        .buttonStyle(.chatTactile(.capsule))
+        .buttonStyle(.hermesPressOnly(.capsule))
         .disabled(isLoading)
         .frame(maxWidth: .infinity)
         .accessibilityLabel(isLoading ? String(localized: "Loading older messages") : String(localized: "Load older messages"))

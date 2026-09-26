@@ -31,24 +31,24 @@ final class SessionIdentityTests: XCTestCase {
             """.utf8)
         )
 
-        XCTAssertEqual(SessionRowView.displayTitle(for: session), longTitle)
-        XCTAssertEqual(SessionRowView.displayTitle(for: untitled), "Untitled Session")
+        XCTAssertEqual(SessionListItem.displayTitle(for: session), longTitle)
+        XCTAssertEqual(SessionListItem.displayTitle(for: untitled), "Untitled Session")
     }
 
     func testSessionRowActiveStreamingUsesStreamingFlagOrActiveStreamID() {
-        XCTAssertTrue(SessionRowView.isActiveStreaming(SessionSummary(sessionId: "streaming", isStreaming: true)))
+        XCTAssertTrue(SessionListItem.isActiveStreaming(SessionSummary(sessionId: "streaming", isStreaming: true)))
         XCTAssertTrue(
-            SessionRowView.isActiveStreaming(
+            SessionListItem.isActiveStreaming(
                 SessionSummary(sessionId: "stream-id", activeStreamId: "stream-123", isStreaming: false)
             )
         )
     }
 
     func testSessionRowActiveStreamingIsFalseWhenNoActiveSignalExists() {
-        XCTAssertFalse(SessionRowView.isActiveStreaming(SessionSummary(sessionId: "idle")))
-        XCTAssertFalse(SessionRowView.isActiveStreaming(SessionSummary(sessionId: "finished", isStreaming: false)))
-        XCTAssertFalse(SessionRowView.isActiveStreaming(SessionSummary(sessionId: "empty-stream", activeStreamId: "")))
-        XCTAssertFalse(SessionRowView.isActiveStreaming(SessionSummary(sessionId: "blank-stream", activeStreamId: "   ")))
+        XCTAssertFalse(SessionListItem.isActiveStreaming(SessionSummary(sessionId: "idle")))
+        XCTAssertFalse(SessionListItem.isActiveStreaming(SessionSummary(sessionId: "finished", isStreaming: false)))
+        XCTAssertFalse(SessionListItem.isActiveStreaming(SessionSummary(sessionId: "empty-stream", activeStreamId: "")))
+        XCTAssertFalse(SessionListItem.isActiveStreaming(SessionSummary(sessionId: "blank-stream", activeStreamId: "   ")))
     }
 
     func testSessionRowMetadataLabelUsesVisiblePartsAndWorkspaceBasename() {
@@ -59,15 +59,15 @@ final class SessionIdentityTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            SessionRowView.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: true),
+            SessionListItem.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: true),
             "2 messages • hermes-mobile"
         )
         XCTAssertEqual(
-            SessionRowView.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: false),
+            SessionListItem.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: false),
             "2 messages"
         )
         XCTAssertEqual(
-            SessionRowView.metadataLabel(for: session, showsMessageCount: false, showsWorkspace: true),
+            SessionListItem.metadataLabel(for: session, showsMessageCount: false, showsWorkspace: true),
             "hermes-mobile"
         )
     }
@@ -79,8 +79,8 @@ final class SessionIdentityTests: XCTestCase {
             messageCount: -1
         )
 
-        XCTAssertNil(SessionRowView.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: true))
-        XCTAssertNil(SessionRowView.metadataLabel(for: session, showsMessageCount: false, showsWorkspace: false))
+        XCTAssertNil(SessionListItem.metadataLabel(for: session, showsMessageCount: true, showsWorkspace: true))
+        XCTAssertNil(SessionListItem.metadataLabel(for: session, showsMessageCount: false, showsWorkspace: false))
     }
 
     func testSessionRowAccessibilityStateLabelsIncludeAttentionPinnedAndCachedState() {
@@ -94,15 +94,15 @@ final class SessionIdentityTests: XCTestCase {
         // Cached rows say nothing about attention: the stream fields in a
         // cached summary are as old as the cache.
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: session, isViewingCachedData: true),
+            SessionListItem.accessibilityStateLabels(for: session, isViewingCachedData: true),
             ["Pinned", "Cached"]
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: session, isViewingCachedData: false),
+            SessionListItem.accessibilityStateLabels(for: session, isViewingCachedData: false),
             ["Working", "Pinned"]
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: SessionSummary(sessionId: "plain"), isViewingCachedData: false),
+            SessionListItem.accessibilityStateLabels(for: SessionSummary(sessionId: "plain"), isViewingCachedData: false),
             []
         )
     }
@@ -153,7 +153,7 @@ final class SessionIdentityTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: session, isViewingCachedData: false),
+            SessionListItem.accessibilityStateLabels(for: session, isViewingCachedData: false),
             ["Telegram", "Read-only"]
         )
     }

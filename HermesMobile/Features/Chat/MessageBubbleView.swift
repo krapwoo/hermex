@@ -555,7 +555,7 @@ private struct GridAttachmentCell: View {
             } label: {
                 cellContent
             }
-            .buttonStyle(.chatTactile(.thumbnail))
+            .buttonStyle(.hermesPressOnly(.thumbnail))
             .accessibilityLabel("Open attachment \(fileDisplayName)")
         } else {
             cellContent
@@ -616,34 +616,26 @@ private struct GridAttachmentCell: View {
     }
 
     private var fileCell: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+        VStack(spacing: HermesSpacing.s4) {
+            Image(systemName: fileIconName)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(fileBadgeColor)
 
-            VStack(spacing: HermesSpacing.s4) {
-                Image(systemName: fileIconName)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(fileBadgeColor)
+            Text(fileDisplayName)
+                .appFont(.caption2, weight: .medium)
+                .foregroundStyle(Color(.label))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .truncationMode(.middle)
+                .frame(maxWidth: size - 18)
 
-                Text(fileDisplayName)
-                    .appFont(.caption2, weight: .medium)
-                    .foregroundStyle(Color(.label))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: size - 18)
-
-                Text(fileExtensionLabel)
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(fileBadgeColor)
-                    .lineLimit(1)
-            }
+            Text(fileExtensionLabel)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(fileBadgeColor)
+                .lineLimit(1)
         }
         .frame(width: size, height: size)
-        .overlay(
-            RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
-                .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
-        )
+        .compactCardSurface(cornerRadius: HermesRadius.r12)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(fileDisplayName), \(fileExtensionLabel)")
     }
@@ -667,9 +659,12 @@ private struct GridAttachmentCell: View {
             )
     }
 
+    private var fileType: AttachmentFileType {
+        AttachmentFileType(fileName: attachment.name ?? "")
+    }
+
     private var fileExtensionLabel: String {
-        let ext = URL(fileURLWithPath: attachment.name ?? "").pathExtension.uppercased()
-        return ext.isEmpty ? String(localized: "FILE") : String(ext.prefix(5))
+        fileType.extensionLabel
     }
 
     private var fileDisplayName: String {
@@ -692,31 +687,11 @@ private struct GridAttachmentCell: View {
     }
 
     private var fileIconName: String {
-        switch URL(fileURLWithPath: attachment.name ?? "").pathExtension.lowercased() {
-        case "csv", "tsv", "xls", "xlsx":
-            "tablecells"
-        case "json", "md", "txt", "log", "xml", "yaml", "yml":
-            "doc.text"
-        case "pdf":
-            "doc.richtext"
-        case "zip", "tar", "gz", "tgz":
-            "archivebox"
-        default:
-            "doc"
-        }
+        fileType.iconName
     }
 
     private var fileBadgeColor: Color {
-        switch URL(fileURLWithPath: attachment.name ?? "").pathExtension.lowercased() {
-        case "csv", "tsv", "xls", "xlsx":
-            Color.green
-        case "pdf":
-            Color.red
-        case "json", "md", "txt", "log", "xml", "yaml", "yml":
-            Color.blue
-        default:
-            Color.accentColor
-        }
+        fileType.tintColor
     }
 }
 

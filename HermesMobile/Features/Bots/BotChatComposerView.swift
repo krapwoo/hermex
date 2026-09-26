@@ -450,7 +450,7 @@ struct BotChatComposerView: View {
                 .frame(width: ChatComposerMetrics.actionSize, height: ChatComposerMetrics.actionSize)
                 .background(colors.background).foregroundStyle(colors.foreground).clipShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .disabled(!model.mayStop)
         .accessibilityLabel("Stop current work")
     }
@@ -464,7 +464,7 @@ struct BotChatComposerView: View {
                 .foregroundStyle(appearance.foreground)
                 .clipShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .disabled(!canSend)
         .accessibilityLabel(Text("Send"))
         .keyboardShortcut(.return, modifiers: .command)

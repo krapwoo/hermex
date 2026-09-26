@@ -99,21 +99,13 @@ struct DefaultProfilePickerView: View {
     @ViewBuilder
     private var statusPlaceholder: some View {
         if profiles.isEmpty, isLoading {
-            ContentUnavailableView {
-                ProgressView()
-            } description: {
-                Text("Loading profiles...")
-            }
+            HermesContentUnavailable(variant: .loading, description: Text("Loading profiles..."))
         } else if profiles.isEmpty, let errorMessage {
-            ContentUnavailableView {
-                Label("Could Not Load Profiles", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(verbatim: errorMessage)
-            }
+            HermesContentUnavailable(variant: .error, title: "Could Not Load Profiles", description: Text(verbatim: errorMessage))
         } else if filteredProfiles.isEmpty, !trimmedSearchQuery.isEmpty {
             ContentUnavailableView.search(text: searchText)
         } else if profiles.isEmpty {
-            ContentUnavailableView("No profiles available", systemImage: "person.crop.circle")
+            HermesContentUnavailable(variant: .empty, title: "No profiles available", systemImage: "person.crop.circle")
         }
     }
 
@@ -127,7 +119,7 @@ struct DefaultProfilePickerView: View {
         } label: {
             Label("New Profile", systemImage: "plus")
                 .appFont(.body, weight: .semibold)
-                .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -135,7 +127,7 @@ struct DefaultProfilePickerView: View {
         .padding(.horizontal, HermesSpacing.s12)
         .background(
             Color(.tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
+            in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
         )
         .disabled(isLoading || isSaving)
         .accessibilityHint("Opens the new profile form.")
@@ -171,61 +163,37 @@ struct DefaultProfilePickerView: View {
         let selected = isSelected(profile)
         let inFlight = isSaving && selectedProfileName == profile.normalizedName
 
-        return Button {
-            Task { await save(profile) }
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
+        return ListItem(
+            title: Text(profile.displayName),
+            titleLineLimit: dynamicTypeSize.isAccessibilitySize ? 2 : 1,
+            subtitle: profileDetails(profile).map { Text($0) },
+            subtitleLineLimit: dynamicTypeSize.isAccessibilitySize ? 2 : 1,
+            accessibilityLabel: Text(profileAccessibilityLabel(for: profile)),
+            accessibilityValue: Text(profileAccessibilityValue(for: profile)),
+            state: ListItemState(
+                isSelected: selected,
+                isPending: inFlight,
+                isDisabled: isSaving || profile.normalizedName == nil
+            ),
+            action: {
+                Task { await save(profile) }
+            },
+            leading: {
                 // Same rule as the model picker: an unknown provider renders
                 // nothing at all rather than reserving an empty glyph slot.
                 if ProviderGlyphKind.resolve(providerID: profile.provider) != nil {
                     ProviderGlyph(providerID: profile.provider)
                         .frame(width: 17, height: 17)
                 }
-
-                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                    HStack(spacing: HermesSpacing.s8) {
-                        Text(profile.displayName)
-                            .appFont(.body)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-
-                        if selected {
-                            ProfileStatusBadge(title: String(localized: "Selected"), isInverted: true)
-                        } else if profile.isDefault == true {
-                            ProfileStatusBadge(title: String(localized: "Server Default"), isInverted: false)
-                        }
-                    }
-
-                    if let details = profileDetails(profile) {
-                        Text(details)
-                            .appFont(.caption)
-                            .foregroundStyle(
-                                selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
-                            )
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                if inFlight {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(selected ? Color(.systemBackground) : Color.primary)
-                } else if selected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
+            },
+            titleAccessory: {
+                if selected {
+                    ProfileStatusBadge(title: String(localized: "Selected"), isInverted: true)
+                } else if profile.isDefault == true {
+                    ProfileStatusBadge(title: String(localized: "Server Default"), isInverted: false)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .pickerSelectionPill(isSelected: selected)
-        .disabled(isSaving || profile.normalizedName == nil)
-        .accessibilityLabel(profileAccessibilityLabel(for: profile))
-        .accessibilityValue(profileAccessibilityValue(for: profile))
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        )
     }
 
     private func profileAccessibilityLabel(for profile: ProfileSummary) -> String {
@@ -528,14 +496,11 @@ private struct ProfileStatusBadge: View {
     let isInverted: Bool
 
     var body: some View {
-        Text(title)
-            .appFont(.caption2, weight: .semibold)
-            .foregroundStyle(isInverted ? Color(.systemBackground) : Color.accentColor)
-            .padding(.horizontal, HermesSpacing.s8)
-            .padding(.vertical, HermesSpacing.s4)
-            .background(
-                isInverted ? Color(.systemBackground).opacity(0.22) : Color.accentColor.opacity(0.12),
-                in: Capsule(style: .continuous)
-            )
+        Tag(
+            label: title,
+            tint: isInverted ? Color(.systemBackground) : Color.accentColor,
+            fillOpacity: isInverted ? 0.22 : 0.12,
+            size: .regular
+        )
     }
 }

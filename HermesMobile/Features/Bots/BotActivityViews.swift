@@ -36,7 +36,7 @@ struct BotPlanRowView: View {
     }
 
     var body: some View {
-        TranscriptLogRowView(
+        DisclosureRow(
             summary: String(localized: "Plan"),
             detail: detail,
             isExpanded: isExpanded,

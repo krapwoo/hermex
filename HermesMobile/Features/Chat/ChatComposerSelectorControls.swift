@@ -19,7 +19,7 @@ struct ComposerWorkspaceSelectorButton: View {
                 chevronRole: chevronRole
             )
         }
-        .buttonStyle(.chatTactile(.compactControl))
+        .buttonStyle(.hermesPressOnly(.compactControl))
         .disabled(isDisabled)
         .accessibilityLabel("Choose workspace path")
     }

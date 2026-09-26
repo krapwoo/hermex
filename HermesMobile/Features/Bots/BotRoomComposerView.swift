@@ -69,7 +69,7 @@ struct BotRoomComposerView: View {
             .frame(minHeight: ChatComposerMetrics.actionSize)
             .background(appearance.background).foregroundStyle(appearance.foreground).clipShape(Capsule())
         }
-        .buttonStyle(.chatTactile(.icon)).disabled(!enabled)
+        .buttonStyle(.hermesPressOnly(.icon)).disabled(!enabled)
         .accessibilityLabel(stop ? Text("Stop every bot in this room") : Text("Send"))
     }
 
@@ -118,7 +118,7 @@ struct BotRoomActionCard: View {
                 }
             }
             .padding(HermesSpacing.s16).frame(maxWidth: 560, alignment: .leading)
-            .pendingRequestCardSurface(cornerRadius: BotPendingRequestCard.cornerRadius)
+            .requestCardSurface(cornerRadius: BotPendingRequestCard.cornerRadius)
         }
     }
     private var identity: String {

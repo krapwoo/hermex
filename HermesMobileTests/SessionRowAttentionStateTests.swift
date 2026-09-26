@@ -84,7 +84,7 @@ final class SessionRowAttentionStateTests: XCTestCase {
         let session = SessionSummary(sessionId: "s", pinned: true, activeStreamId: "stream-1")
 
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(
+            SessionListItem.accessibilityStateLabels(
                 for: session,
                 isViewingCachedData: false,
                 attentionState: .approval
@@ -92,7 +92,7 @@ final class SessionRowAttentionStateTests: XCTestCase {
             ["Waiting for approval", "Pinned"]
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(
+            SessionListItem.accessibilityStateLabels(
                 for: session,
                 isViewingCachedData: false,
                 attentionState: .input
@@ -107,7 +107,7 @@ final class SessionRowAttentionStateTests: XCTestCase {
         let streaming = SessionSummary(sessionId: "s", activeStreamId: "stream-1")
 
         XCTAssertEqual(
-            SessionRowView.effectiveAttentionState(
+            SessionListItem.effectiveAttentionState(
                 for: streaming,
                 attentionState: nil,
                 isViewingCachedData: false
@@ -115,7 +115,7 @@ final class SessionRowAttentionStateTests: XCTestCase {
             .working
         )
         XCTAssertNil(
-            SessionRowView.effectiveAttentionState(
+            SessionListItem.effectiveAttentionState(
                 for: SessionSummary(sessionId: "s"),
                 attentionState: nil,
                 isViewingCachedData: false
@@ -129,18 +129,18 @@ final class SessionRowAttentionStateTests: XCTestCase {
         let streaming = SessionSummary(sessionId: "s", activeStreamId: "stream-1")
 
         XCTAssertNil(
-            SessionRowView.effectiveAttentionState(
+            SessionListItem.effectiveAttentionState(
                 for: streaming,
                 attentionState: nil,
                 isViewingCachedData: true
             )
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: streaming, isViewingCachedData: true),
+            SessionListItem.accessibilityStateLabels(for: streaming, isViewingCachedData: true),
             ["Cached"]
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(for: streaming, isViewingCachedData: false),
+            SessionListItem.accessibilityStateLabels(for: streaming, isViewingCachedData: false),
             ["Working"]
         )
     }

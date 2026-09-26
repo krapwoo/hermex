@@ -1,0 +1,138 @@
+import XCTest
+import SwiftUI
+@testable import HermesMobile
+
+/// Contracts for the shared Hermex Button family (`HermesButton.swift`): sizing, emphasis, and
+/// Press Feedback resolution are pure contracts; Reduce-Motion safety and glass composition are
+/// source contracts, since a SwiftUI `ButtonStyle`'s `makeBody` isn't invokable without a live
+/// button-press context.
+final class HermesButtonTests: XCTestCase {
+    private func resourceURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+    }
+
+    private func source(_ relativePath: String) throws -> String {
+        try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
+    }
+
+    // MARK: - Pure contracts
+
+    func testStandardPressFeedbackIsTheDefault() {
+        XCTAssertEqual(HermesButton(content: .label("Go"), action: {}).pressFeedback, .standard)
+    }
+
+    func testEveryPressFeedbackCaseHasAScaleLessThanOrEqualToRestingExceptNone() {
+        XCTAssertLessThan(HermesButtonPressFeedback.standard.scale, 1)
+        XCTAssertLessThan(HermesButtonPressFeedback.emphasized.scale, HermesButtonPressFeedback.standard.scale)
+        XCTAssertEqual(HermesButtonPressFeedback.none.scale, 1)
+        XCTAssertEqual(HermesButtonPressFeedback.none.opacity, 1)
+        XCTAssertEqual(HermesButtonPressFeedback.none.duration, 0)
+    }
+
+    func testStandardPressFeedbackReusesTheSharedMotionToken() {
+        XCTAssertEqual(HermesButtonPressFeedback.standard.scale, HermesMotion.Properties.scalePress)
+        XCTAssertEqual(HermesButtonPressFeedback.standard.duration, HermesMotion.Bundle.feedbackPress.duration)
+    }
+
+    func testSizesScaleMonotonicallyFromExtraSmallToLarge() {
+        let sizes = HermesButtonSize.allCases
+        for (a, b) in zip(sizes, sizes.dropFirst()) {
+            XCTAssertLessThan(a.minHeight, b.minHeight)
+            XCTAssertLessThanOrEqual(a.horizontalPadding, b.horizontalPadding)
+        }
+    }
+
+    // MARK: - Compile contracts
+
+    func testEveryContentConfigurationCompiles() {
+        let views: [any View] = [
+            HermesButton(content: .label("Go"), action: {}),
+            HermesButton(content: .icon("star"), action: {}),
+            HermesButton(content: .iconLeading(icon: "star", label: "Favorite"), action: {}),
+            HermesButton(content: .iconTrailing(icon: "chevron.right", label: "Next"), action: {}),
+            HermesButton(content: .label("Save"), isPending: true, action: {})
+        ]
+        XCTAssertEqual(views.count, 5)
+    }
+
+    func testEveryEmphasisAndSizeProducesAUsableButtonStyle() {
+        for size in HermesButtonSize.allCases {
+            for emphasis in HermesButtonEmphasis.allCases {
+                let style = HermesButtonStyle(size: size, emphasis: emphasis)
+                XCTAssertEqual(style.size, size)
+                XCTAssertEqual(style.emphasis, emphasis)
+            }
+        }
+    }
+
+    // MARK: - Source contracts
+
+    func testPressFeedbackIsReduceMotionSafe() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains("reduceMotion ? 1 : (isPressed ? scale : 1)"))
+        XCTAssertTrue(src.contains("scale: pressFeedback.scale"))
+        XCTAssertTrue(src.contains("guard !reduceMotion, pressFeedback != .none else { return nil }"))
+    }
+
+    func testGlassSurfaceComposesAdaptiveGlassInsteadOfDuplicatingItsFallback() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains(".adaptiveGlass("))
+    }
+
+    func testHapticsStayOptionalAndSeparateFromPressFeedback() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains("var haptic: (() -> Void)?"))
+    }
+
+    func testContentUnavailablePatternAdoptsTheSharedButtonStyle() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesContentUnavailable.swift")
+        XCTAssertTrue(src.contains(".buttonStyle(.hermes("))
+    }
+
+    // MARK: - One Buttons family (production correction 3)
+
+    private func allProductionSwiftSources() throws -> [(path: String, contents: String)] {
+        let root = resourceURL("HermesMobile")
+        guard let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil) else {
+            return []
+        }
+        var results: [(path: String, contents: String)] = []
+        for case let url as URL in enumerator where url.pathExtension == "swift" {
+            results.append((url.path, try String(contentsOf: url, encoding: .utf8)))
+        }
+        return results
+    }
+
+    func testNoProductionCallerReferencesTheRemovedChatButtonFamilies() throws {
+        let banned = ["ChatTactileButtonStyle", "ChatDecisionButtonStyle", ".chatTactile(", ".chatDecision("]
+        for (path, contents) in try allProductionSwiftSources() {
+            for symbol in banned {
+                XCTAssertFalse(contents.contains(symbol), "\(path) still references \(symbol)")
+            }
+        }
+    }
+
+    func testPressOnlyStyleLivesUnderTheHermesButtonsFamily() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains("struct HermesButtonPressOnlyStyle"))
+        XCTAssertTrue(src.contains("static func hermesPressOnly("))
+    }
+
+    func testPressOnlyAndFullChromeStylesShareOnePressFeedbackApplicationPoint() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        // One shared helper, called from both HermesButtonStyle and HermesButtonPressOnlyStyle's
+        // makeBody, not two hand-rolled scale/opacity/animation chains.
+        let occurrences = src.components(separatedBy: "applyingHermesButtonPressFeedback").count - 1
+        XCTAssertGreaterThanOrEqual(occurrences, 3, "expected a definition plus a call from each style")
+    }
+
+    func testPressOnlyStylePreservesEveryExistingChromeVariant() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        for variant in ["icon", "compactControl", "capsule", "card", "thumbnail"] {
+            XCTAssertTrue(src.contains("case \(variant)"), "missing preserved chrome variant \(variant)")
+        }
+    }
+}

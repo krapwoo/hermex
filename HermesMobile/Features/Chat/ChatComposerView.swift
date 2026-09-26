@@ -831,7 +831,7 @@ struct MessageComposerView: View {
                 .foregroundStyle(actionButtonForeground)
                 .clipShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .disabled(isActionButtonDisabled)
         .accessibilityLabel(showsStopButton ? "Stop response" : "Send")
     }

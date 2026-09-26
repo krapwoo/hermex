@@ -284,7 +284,7 @@ private struct BotArtifactRow: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: HermesRadius.r12))
             .foregroundStyle(.primary)
         }
-        .buttonStyle(.chatTactile(.thumbnail))
+        .buttonStyle(.hermesPressOnly(.thumbnail))
         .accessibilityLabel("Open attachment \(reference.accessibilityName)")
         .task(id: LoadIdentity(context: model.artifactContext, reference: reference.rawReference)) {
             image = nil

@@ -109,7 +109,7 @@ private struct TranscriptMediaThumbnailView: View {
             } label: {
                 thumbnailContent
             }
-            .buttonStyle(.chatTactile(.thumbnail))
+            .buttonStyle(.hermesPressOnly(.thumbnail))
             .accessibilityLabel(imageButtonAccessibilityLabel)
             .task(id: imageCacheKey) {
                 guard let loadMediaImage else { return }
@@ -144,7 +144,7 @@ private struct TranscriptMediaThumbnailView: View {
             } label: {
                 TranscriptMediaVideoTile(reference: reference)
             }
-            .buttonStyle(.chatTactile(.thumbnail))
+            .buttonStyle(.hermesPressOnly(.thumbnail))
             .accessibilityLabel(String(localized: "Open media video \(reference.displayName)"))
 
         case .unsupported where loadMediaData != nil:
@@ -223,7 +223,7 @@ private struct TranscriptMediaResolvedRemoteView: View {
                 } label: {
                     thumbnailContent(image)
                 }
-                .buttonStyle(.chatTactile(.thumbnail))
+                .buttonStyle(.hermesPressOnly(.thumbnail))
                 .accessibilityLabel(String(localized: "Open media image \(reference.displayName)"))
 
             case let .audio(data):
@@ -239,7 +239,7 @@ private struct TranscriptMediaResolvedRemoteView: View {
                 } label: {
                     TranscriptMediaVideoTile(reference: reference)
                 }
-                .buttonStyle(.chatTactile(.thumbnail))
+                .buttonStyle(.hermesPressOnly(.thumbnail))
                 .accessibilityLabel(String(localized: "Open media video \(reference.displayName)"))
 
             case .unavailable:
@@ -336,7 +336,7 @@ private struct TranscriptMediaAudioExportView: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 15, weight: .semibold))
             }
-            .buttonStyle(.chatTactile(.icon))
+            .buttonStyle(.hermesPressOnly(.icon))
             .disabled(isExporting)
             .accessibilityLabel(String(localized: "Export audio \(reference.displayName)"))
         }
@@ -451,7 +451,7 @@ private struct TranscriptMediaFileExportView: View {
                 Image(systemName: "square.and.arrow.down")
                     .font(.system(size: 15, weight: .semibold))
             }
-            .buttonStyle(.chatTactile(.icon))
+            .buttonStyle(.hermesPressOnly(.icon))
             .disabled(isExporting)
             .accessibilityLabel(String(localized: "Download \(reference.displayName)"))
         }

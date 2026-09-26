@@ -40,6 +40,23 @@
 		B5A1000000000000000000A0 /* ServerRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000A1 /* ServerRegistryTests.swift */; };
 		C0DE512E0000000000000202 /* InsightsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E0000000000000201 /* InsightsModels.swift */; };
 		C0DE512E0000000000000204 /* SectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E0000000000000203 /* SectionCard.swift */; };
+		C0CAF00000000000000000A2 /* Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAF00000000000000000A1 /* Tag.swift */; };
+		C0CAF00000000000000000B2 /* TagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAF00000000000000000B1 /* TagTests.swift */; };
+		C0AFF00000000000000000A2 /* AttachmentFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AFF00000000000000000A1 /* AttachmentFileType.swift */; };
+		C0AFF00000000000000000B2 /* AttachmentFileTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */; };
+		C05CE00000000000000000A2 /* SkeletonPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */; };
+		C05CE00000000000000000B2 /* SkeletonPlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */; };
+		C0CAD00000000000000000A2 /* HermesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAD00000000000000000A1 /* HermesCard.swift */; };
+		C0CAD00000000000000000B2 /* HermesCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAD00000000000000000B1 /* HermesCardTests.swift */; };
+		C0CAD00000000000000000C2 /* SessionListItemCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAD00000000000000000C1 /* SessionListItemCompositionTests.swift */; };
+		C0BA4000000000000000A2 /* Banner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0BA4000000000000000A1 /* Banner.swift */; };
+		C0BA4000000000000000B2 /* BannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0BA4000000000000000B1 /* BannerTests.swift */; };
+		C0117E00000000000000A2 /* ListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0117E00000000000000A1 /* ListItem.swift */; };
+		C0117E00000000000000B2 /* ListItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0117E00000000000000B1 /* ListItemTests.swift */; };
+		C0CE1F00000000000000A2 /* HermesContentUnavailable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CE1F00000000000000A1 /* HermesContentUnavailable.swift */; };
+		C0CE1F00000000000000B2 /* HermesContentUnavailableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */; };
+		C0B00700000000000000A2 /* HermesButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B00700000000000000A1 /* HermesButton.swift */; };
+		C0B00700000000000000B2 /* HermesButtonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B00700000000000000B1 /* HermesButtonTests.swift */; };
 		C0DE512E00000000000002206 /* UsageChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002205 /* UsageChartData.swift */; };
 		C0DE512E00000000000002208 /* UsageChartCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002207 /* UsageChartCard.swift */; };
 		C0DE512E0000000000000220A /* UsageTotalsGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002209 /* UsageTotalsGrid.swift */; };
@@ -154,7 +171,8 @@
 		C05100000000000000000002 /* ChatMessageActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05100000000000000000012 /* ChatMessageActions.swift */; };
 		C05100000000000000000003 /* ChatGoalControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05100000000000000000013 /* ChatGoalControls.swift */; };
 		C05100000000000000000004 /* ChatTranscriptSupportingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05100000000000000000014 /* ChatTranscriptSupportingViews.swift */; };
-		1A2B3C4D5E6F7000000000D0 /* SessionRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7000000000D2 /* SessionRowView.swift */; };
+		1A2B3C4D5E6F7000000000D0 /* SessionListSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7000000000D2 /* SessionListSettings.swift */; };
+		C0CAD00000000000000000D2 /* SessionListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAD00000000000000000D1 /* SessionListItem.swift */; };
 		B23000000000000000000001 /* SessionSearchExcerpt.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23000000000000000000002 /* SessionSearchExcerpt.swift */; };
 		1A2B3C4D5E6F7000000000D1 /* SessionListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7000000000D3 /* SessionListViewModel.swift */; };
 		A04300000000000000000001 /* SessionListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04300000000000000000011 /* SessionListComponents.swift */; };
@@ -195,7 +213,7 @@
 		C0DE12000000000000000001 /* TranscriptLinkPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE12000000000000000002 /* TranscriptLinkPreview.swift */; };
 		C0DE12000000000000000007 /* TranscriptLinkPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE12000000000000000008 /* TranscriptLinkPreviewCache.swift */; };
 		C0DE12000000000000000005 /* TranscriptLinkPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE12000000000000000006 /* TranscriptLinkPreviewView.swift */; };
-		C0DE20000000000000000001 /* ChatTactileButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ChatTactileButtonStyle.swift */; };
+		C0DE20000000000000000001 /* ChatUIKitMenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20000000000000000002 /* ChatUIKitMenuButton.swift */; };
 		C0DE21000000000000000001 /* ChatMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE21000000000000000002 /* ChatMotion.swift */; };
 		C0DE25000000000000000001 /* ChatScrollPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE25000000000000000002 /* ChatScrollPolicy.swift */; };
 		C0DE25000000000000000003 /* ChatScrollPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE25000000000000000004 /* ChatScrollPolicyTests.swift */; };
@@ -241,10 +259,10 @@
 		C12800000000000000000001 /* ToolActivityGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12800000000000000000002 /* ToolActivityGroupView.swift */; };
 		C0AA02000000000000000B02 /* ToolCallLogRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA02000000000000000F02 /* ToolCallLogRowView.swift */; };
 		C0AA020000000000000000B12 /* ReasoningSummaryFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F12 /* ReasoningSummaryFormatterTests.swift */; };
-		C0AA020000000000000000B13 /* TranscriptLogRowBodyWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F13 /* TranscriptLogRowBodyWindowTests.swift */; };
+		C0AA020000000000000000B13 /* DisclosureRowBodyWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F13 /* DisclosureRowBodyWindowTests.swift */; };
 		C0AA0208000000000000B002 /* ChatMessageActionMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA0208000000000000F002 /* ChatMessageActionMenuTests.swift */; };
 		C0AA020000000000000000B11 /* ReasoningSummaryFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F11 /* ReasoningSummaryFormatter.swift */; };
-		C0AA020000000000000000B10 /* TranscriptLogRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F10 /* TranscriptLogRowView.swift */; };
+		C0AA020000000000000000B10 /* DisclosureRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA020000000000000000F10 /* DisclosureRow.swift */; };
 		C0AA03000000000000000B01 /* TranscriptTurnFolding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA03000000000000000F01 /* TranscriptTurnFolding.swift */; };
 		C0AA05000000000000000B01 /* ChatMessageMeta.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA05000000000000000F01 /* ChatMessageMeta.swift */; };
 		C0AA0208000000000000B001 /* ChatMessageContextMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA0208000000000000F001 /* ChatMessageContextMenuView.swift */; };
@@ -744,7 +762,8 @@
 		C05100000000000000000012 /* ChatMessageActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageActions.swift; sourceTree = "<group>"; };
 		C05100000000000000000013 /* ChatGoalControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGoalControls.swift; sourceTree = "<group>"; };
 		C05100000000000000000014 /* ChatTranscriptSupportingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTranscriptSupportingViews.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7000000000D2 /* SessionRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRowView.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F7000000000D2 /* SessionListSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListSettings.swift; sourceTree = "<group>"; };
+		C0CAD00000000000000000D1 /* SessionListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListItem.swift; sourceTree = "<group>"; };
 		B23000000000000000000002 /* SessionSearchExcerpt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSearchExcerpt.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F7000000000D3 /* SessionListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListViewModel.swift; sourceTree = "<group>"; };
 		A04300000000000000000011 /* SessionListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListComponents.swift; sourceTree = "<group>"; };
@@ -785,7 +804,7 @@
 		C0DE12000000000000000002 /* TranscriptLinkPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLinkPreview.swift; sourceTree = "<group>"; };
 		C0DE12000000000000000008 /* TranscriptLinkPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLinkPreviewCache.swift; sourceTree = "<group>"; };
 		C0DE12000000000000000006 /* TranscriptLinkPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLinkPreviewView.swift; sourceTree = "<group>"; };
-		C0DE20000000000000000002 /* ChatTactileButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTactileButtonStyle.swift; sourceTree = "<group>"; };
+		C0DE20000000000000000002 /* ChatUIKitMenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatUIKitMenuButton.swift; sourceTree = "<group>"; };
 		C0DE21000000000000000002 /* ChatMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMotion.swift; sourceTree = "<group>"; };
 		C0DE25000000000000000002 /* ChatScrollPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatScrollPolicy.swift; sourceTree = "<group>"; };
 		C0DE25000000000000000004 /* ChatScrollPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatScrollPolicyTests.swift; sourceTree = "<group>"; };
@@ -831,10 +850,10 @@
 		C12800000000000000000002 /* ToolActivityGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolActivityGroupView.swift; sourceTree = "<group>"; };
 		C0AA02000000000000000F02 /* ToolCallLogRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallLogRowView.swift; sourceTree = "<group>"; };
 		C0AA020000000000000000F12 /* ReasoningSummaryFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReasoningSummaryFormatterTests.swift; sourceTree = "<group>"; };
-		C0AA020000000000000000F13 /* TranscriptLogRowBodyWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLogRowBodyWindowTests.swift; sourceTree = "<group>"; };
+		C0AA020000000000000000F13 /* DisclosureRowBodyWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisclosureRowBodyWindowTests.swift; sourceTree = "<group>"; };
 		C0AA0208000000000000F002 /* ChatMessageActionMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageActionMenuTests.swift; sourceTree = "<group>"; };
 		C0AA020000000000000000F11 /* ReasoningSummaryFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReasoningSummaryFormatter.swift; sourceTree = "<group>"; };
-		C0AA020000000000000000F10 /* TranscriptLogRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLogRowView.swift; sourceTree = "<group>"; };
+		C0AA020000000000000000F10 /* DisclosureRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisclosureRow.swift; sourceTree = "<group>"; };
 		C0AA03000000000000000F01 /* TranscriptTurnFolding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptTurnFolding.swift; sourceTree = "<group>"; };
 		C0AA05000000000000000F01 /* ChatMessageMeta.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageMeta.swift; sourceTree = "<group>"; };
 		C0AA0208000000000000F001 /* ChatMessageContextMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageContextMenuView.swift; sourceTree = "<group>"; };
@@ -986,6 +1005,23 @@
 		57B5FD09B6B5937573B5F9A4 /* InsightsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		C0DE512E0000000000000201 /* InsightsModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsModels.swift; sourceTree = "<group>"; };
 		C0DE512E0000000000000203 /* SectionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SectionCard.swift; sourceTree = "<group>"; };
+		C0CAF00000000000000000A1 /* Tag.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Tag.swift; sourceTree = "<group>"; };
+		C0CAF00000000000000000B1 /* TagTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TagTests.swift; sourceTree = "<group>"; };
+		C0AFF00000000000000000A1 /* AttachmentFileType.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AttachmentFileType.swift; sourceTree = "<group>"; };
+		C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AttachmentFileTypeTests.swift; sourceTree = "<group>"; };
+		C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholder.swift; sourceTree = "<group>"; };
+		C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholderTests.swift; sourceTree = "<group>"; };
+		C0CAD00000000000000000A1 /* HermesCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesCard.swift; sourceTree = "<group>"; };
+		C0CAD00000000000000000B1 /* HermesCardTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesCardTests.swift; sourceTree = "<group>"; };
+		C0CAD00000000000000000C1 /* SessionListItemCompositionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionListItemCompositionTests.swift; sourceTree = "<group>"; };
+		C0BA4000000000000000A1 /* Banner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Banner.swift; sourceTree = "<group>"; };
+		C0BA4000000000000000B1 /* BannerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BannerTests.swift; sourceTree = "<group>"; };
+		C0117E00000000000000A1 /* ListItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ListItem.swift; sourceTree = "<group>"; };
+		C0117E00000000000000B1 /* ListItemTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ListItemTests.swift; sourceTree = "<group>"; };
+		C0CE1F00000000000000A1 /* HermesContentUnavailable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesContentUnavailable.swift; sourceTree = "<group>"; };
+		C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesContentUnavailableTests.swift; sourceTree = "<group>"; };
+		C0B00700000000000000A1 /* HermesButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesButton.swift; sourceTree = "<group>"; };
+		C0B00700000000000000B1 /* HermesButtonTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesButtonTests.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002205 /* UsageChartData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageChartData.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002207 /* UsageChartCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageChartCard.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002209 /* UsageTotalsGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageTotalsGrid.swift; sourceTree = "<group>"; };
@@ -1395,7 +1431,7 @@
 				C03120000000000000F008 /* TurnFileChangeAggregatorTests.swift */,
 				C0AA02000000000000000F03 /* ToolCallSummaryFormatterTests.swift */,
 				C0AA020000000000000000F12 /* ReasoningSummaryFormatterTests.swift */,
-				C0AA020000000000000000F13 /* TranscriptLogRowBodyWindowTests.swift */,
+				C0AA020000000000000000F13 /* DisclosureRowBodyWindowTests.swift */,
 				454454454454454454454431 /* ResponseSelectionTests.swift */,
 				C0AA0208000000000000F002 /* ChatMessageActionMenuTests.swift */,
 				C0AA03000000000000000F02 /* TranscriptTurnFoldingTests.swift */,
@@ -1407,6 +1443,15 @@
 				C08800000000000000000004 /* SessionHapticsTests.swift */,
 				C09300000000000000000004 /* HapticButtonTests.swift */,
 				C09500000000000000000004 /* AdaptiveGlassTests.swift */,
+				C0CAF00000000000000000B1 /* TagTests.swift */,
+				C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */,
+				C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */,
+				C0CAD00000000000000000B1 /* HermesCardTests.swift */,
+				C0CAD00000000000000000C1 /* SessionListItemCompositionTests.swift */,
+				C0BA4000000000000000B1 /* BannerTests.swift */,
+				C0117E00000000000000B1 /* ListItemTests.swift */,
+				C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */,
+				C0B00700000000000000B1 /* HermesButtonTests.swift */,
 				1A2B3C4D5E6F70000000122 /* ContextWindowIndicatorTests.swift */,
 				1A2B3C4D5E6F70000000143 /* ModelFavoritesStoreTests.swift */,
 				105050000000000000000004 /* ComposerModelPickerSectionExpansionStateTests.swift */,
@@ -1651,6 +1696,14 @@
 				C0366000000000000000002 /* ModelPickerSheet.swift */,
 				C0366000000000000000004 /* ModelPickerConfiguration.swift */,
 				C0DE512E0000000000000203 /* SectionCard.swift */,
+				C0CAF00000000000000000A1 /* Tag.swift */,
+				C0AFF00000000000000000A1 /* AttachmentFileType.swift */,
+				C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */,
+				C0CAD00000000000000000A1 /* HermesCard.swift */,
+				C0BA4000000000000000A1 /* Banner.swift */,
+				C0117E00000000000000A1 /* ListItem.swift */,
+				C0CE1F00000000000000A1 /* HermesContentUnavailable.swift */,
+				C0B00700000000000000A1 /* HermesButton.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1660,7 +1713,8 @@
 			children = (
 				1A2B3C4D5E6F7000000000B7 /* SessionListView.swift */,
 				531000000000000000000102 /* TipJarCard.swift */,
-				1A2B3C4D5E6F7000000000D2 /* SessionRowView.swift */,
+				1A2B3C4D5E6F7000000000D2 /* SessionListSettings.swift */,
+				C0CAD00000000000000000D1 /* SessionListItem.swift */,
 				B23000000000000000000002 /* SessionSearchExcerpt.swift */,
 				1A2B3C4D5E6F7000000000D3 /* SessionListViewModel.swift */,
 				A04300000000000000000011 /* SessionListComponents.swift */,
@@ -1703,7 +1757,7 @@
 				C040F000000000000000002 /* ProviderGlyph.swift */,
 				C0A5C9000000000000000002 /* ChatComposerToolbarScroller.swift */,
 				C042A000000000000000004 /* ChatComposerSelectorSheets.swift */,
-				C0DE20000000000000000002 /* ChatTactileButtonStyle.swift */,
+				C0DE20000000000000000002 /* ChatUIKitMenuButton.swift */,
 				C0DE21000000000000000002 /* ChatMotion.swift */,
 				C0DE25000000000000000002 /* ChatScrollPolicy.swift */,
 				C27800000000000000000002 /* ChatGitControlsVisibilityPolicy.swift */,
@@ -1718,7 +1772,7 @@
 				C12800000000000000000002 /* ToolActivityGroupView.swift */,
 				C0AA02000000000000000F02 /* ToolCallLogRowView.swift */,
 				C0AA020000000000000000F11 /* ReasoningSummaryFormatter.swift */,
-				C0AA020000000000000000F10 /* TranscriptLogRowView.swift */,
+				C0AA020000000000000000F10 /* DisclosureRow.swift */,
 				C0AA03000000000000000F01 /* TranscriptTurnFolding.swift */,
 				C0AA05000000000000000F01 /* ChatMessageMeta.swift */,
 				C0AA0208000000000000F001 /* ChatMessageContextMenuView.swift */,
@@ -2459,7 +2513,7 @@
 				C12800000000000000000001 /* ToolActivityGroupView.swift in Sources */,
 				C0AA02000000000000000B02 /* ToolCallLogRowView.swift in Sources */,
 				C0AA020000000000000000B11 /* ReasoningSummaryFormatter.swift in Sources */,
-				C0AA020000000000000000B10 /* TranscriptLogRowView.swift in Sources */,
+				C0AA020000000000000000B10 /* DisclosureRow.swift in Sources */,
 				C0AA03000000000000000B01 /* TranscriptTurnFolding.swift in Sources */,
 				C0AA05000000000000000B01 /* ChatMessageMeta.swift in Sources */,
 				C0AA0208000000000000B001 /* ChatMessageContextMenuView.swift in Sources */,
@@ -2497,7 +2551,7 @@
 				C0DE12000000000000000001 /* TranscriptLinkPreview.swift in Sources */,
 				C0DE12000000000000000007 /* TranscriptLinkPreviewCache.swift in Sources */,
 				C0DE12000000000000000005 /* TranscriptLinkPreviewView.swift in Sources */,
-				C0DE20000000000000000001 /* ChatTactileButtonStyle.swift in Sources */,
+				C0DE20000000000000000001 /* ChatUIKitMenuButton.swift in Sources */,
 				C0DE21000000000000000001 /* ChatMotion.swift in Sources */,
 				C0DE25000000000000000001 /* ChatScrollPolicy.swift in Sources */,
 				C27800000000000000000001 /* ChatGitControlsVisibilityPolicy.swift in Sources */,
@@ -2515,7 +2569,8 @@
 					1A2B3C4D5E6F7000000000D4 /* ChatViewModel.swift in Sources */,
 				1A2B3C4D5E6F7000000000D6 /* SSEClient.swift in Sources */,
 				C0FF000000000000000000A1 /* CustomHeader.swift in Sources */,
-				1A2B3C4D5E6F7000000000D0 /* SessionRowView.swift in Sources */,
+				1A2B3C4D5E6F7000000000D0 /* SessionListSettings.swift in Sources */,
+				C0CAD00000000000000000D2 /* SessionListItem.swift in Sources */,
 				B23000000000000000000001 /* SessionSearchExcerpt.swift in Sources */,
 				1A2B3C4D5E6F7000000000D1 /* SessionListViewModel.swift in Sources */,
 				A04300000000000000000001 /* SessionListComponents.swift in Sources */,
@@ -2570,6 +2625,14 @@
 				8B71DA2AAC521382F54A841C /* InsightsView.swift in Sources */,
 				C0DE512E0000000000000202 /* InsightsModels.swift in Sources */,
 				C0DE512E0000000000000204 /* SectionCard.swift in Sources */,
+				C0CAF00000000000000000A2 /* Tag.swift in Sources */,
+				C0AFF00000000000000000A2 /* AttachmentFileType.swift in Sources */,
+				C05CE00000000000000000A2 /* SkeletonPlaceholder.swift in Sources */,
+				C0CAD00000000000000000A2 /* HermesCard.swift in Sources */,
+				C0BA4000000000000000A2 /* Banner.swift in Sources */,
+				C0117E00000000000000A2 /* ListItem.swift in Sources */,
+				C0CE1F00000000000000A2 /* HermesContentUnavailable.swift in Sources */,
+				C0B00700000000000000A2 /* HermesButton.swift in Sources */,
 				C0DE512E00000000000002206 /* UsageChartData.swift in Sources */,
 				C0DE512E00000000000002208 /* UsageChartCard.swift in Sources */,
 				C0DE512E0000000000000220A /* UsageTotalsGrid.swift in Sources */,
@@ -2719,7 +2782,7 @@
 				C03120000000000000B008 /* TurnFileChangeAggregatorTests.swift in Sources */,
 				C0AA02000000000000000B03 /* ToolCallSummaryFormatterTests.swift in Sources */,
 				C0AA020000000000000000B12 /* ReasoningSummaryFormatterTests.swift in Sources */,
-				C0AA020000000000000000B13 /* TranscriptLogRowBodyWindowTests.swift in Sources */,
+				C0AA020000000000000000B13 /* DisclosureRowBodyWindowTests.swift in Sources */,
 				454454454454454454454432 /* ResponseSelectionTests.swift in Sources */,
 				C0AA0208000000000000B002 /* ChatMessageActionMenuTests.swift in Sources */,
 				C0AA03000000000000000B02 /* TranscriptTurnFoldingTests.swift in Sources */,
@@ -2731,6 +2794,15 @@
 				C08800000000000000000003 /* SessionHapticsTests.swift in Sources */,
 				C09300000000000000000003 /* HapticButtonTests.swift in Sources */,
 				C09500000000000000000003 /* AdaptiveGlassTests.swift in Sources */,
+				C0CAF00000000000000000B2 /* TagTests.swift in Sources */,
+				C0AFF00000000000000000B2 /* AttachmentFileTypeTests.swift in Sources */,
+				C05CE00000000000000000B2 /* SkeletonPlaceholderTests.swift in Sources */,
+				C0CAD00000000000000000B2 /* HermesCardTests.swift in Sources */,
+				C0CAD00000000000000000C2 /* SessionListItemCompositionTests.swift in Sources */,
+				C0BA4000000000000000B2 /* BannerTests.swift in Sources */,
+				C0117E00000000000000B2 /* ListItemTests.swift in Sources */,
+				C0CE1F00000000000000B2 /* HermesContentUnavailableTests.swift in Sources */,
+				C0B00700000000000000B2 /* HermesButtonTests.swift in Sources */,
 					1A2B3C4D5E6F70000000132 /* ContextWindowIndicatorTests.swift in Sources */,
 					1A2B3C4D5E6F70000000141 /* ModelFavoritesStoreTests.swift in Sources */,
 					105050000000000000000003 /* ComposerModelPickerSectionExpansionStateTests.swift in Sources */,

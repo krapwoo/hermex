@@ -80,6 +80,12 @@ struct ComposerChipToken: Equatable {
         guard kind == .file else { return nil }
         return String(source.dropFirst())
     }
+
+    /// Whether this reference exposes a tap action. Only a file reference opens the source
+    /// viewer; skills and bots are inert Tag-style references (see `ComposerChipVisualStyle`).
+    var isInteractiveReference: Bool {
+        kind == .file
+    }
 }
 
 /// The references a draft can draw as chips, in the shape the tokenizer needs.

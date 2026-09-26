@@ -182,7 +182,7 @@ struct SessionListView: View {
             }
             .sheet(item: $sessionPendingRename) { session in
                 SessionRenameSheet(
-                    initialTitle: SessionRowView.displayTitle(for: session),
+                    initialTitle: SessionListItem.displayTitle(for: session),
                     isSaving: viewModel.isRenamingSession
                 ) {
                     sessionPendingRename = nil
@@ -593,7 +593,7 @@ struct SessionListView: View {
             }
 
             if viewModel.isViewingCachedData {
-                OfflineCacheBanner()
+                Banner.offlineCache(horizontalPadding: HermesSpacing.s24)
                     .padding(.top, HermesSpacing.s16)
                     .sessionsScreenListRow()
             }

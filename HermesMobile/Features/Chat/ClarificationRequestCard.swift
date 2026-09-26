@@ -148,7 +148,7 @@ struct ClarificationRequestBar: View {
                     .foregroundStyle(.red)
                     .clipShape(Circle())
             }
-            .buttonStyle(.chatTactile(.icon))
+            .buttonStyle(.hermesPressOnly(.icon))
             .disabled(isStopping)
             .accessibilityLabel("Stop response")
         }
@@ -156,7 +156,7 @@ struct ClarificationRequestBar: View {
         .padding(.trailing, HermesSpacing.s8)
         .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: 560)
-        .pendingRequestCardSurface(cornerRadius: ChatComposerMetrics.cardCornerRadius)
+        .requestCardSurface(cornerRadius: ChatComposerMetrics.cardCornerRadius)
         .accessibilityElement(children: .contain)
     }
 }
@@ -182,11 +182,11 @@ struct ClarificationRequestCard: View {
     @State private var footerHeight: CGFloat?
     @State private var bodyContentHeight: CGFloat?
     private let contentSpacing: CGFloat = 14
-    private let verticalPadding: CGFloat = 32
+    private let verticalPadding: CGFloat = HermesCardMetrics.contentPadding * 2
     var body: some View {
         cardContent
             .frame(maxWidth: 560, alignment: .leading)
-            .pendingRequestCardSurface(cornerRadius: ChatComposerMetrics.cardCornerRadius)
+            .requestCardSurface(cornerRadius: ChatComposerMetrics.cardCornerRadius)
             // Honor the clamped ideal height; hide only until base measurements settle.
             .fixedSize(horizontal: false, vertical: true)
             .opacity(hasMeasuredBaseContent ? 1 : 0)
@@ -243,7 +243,7 @@ struct ClarificationRequestCard: View {
                 .foregroundStyle(.secondary)
                 .clipShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .accessibilityLabel("Collapse clarification")
     }
 
@@ -368,7 +368,7 @@ struct ClarificationRequestCard: View {
             responseField
             footer
         }
-        .padding(HermesSpacing.s16)
+        .padding(HermesCardMetrics.contentPadding)
     }
 
     private var canFit: Bool? {
@@ -417,7 +417,7 @@ struct ClarificationRequestCard: View {
                 .foregroundStyle(.primary)
                 .pendingRequestChoiceSurface(reduceTransparency: reduceTransparency)
         }
-        .buttonStyle(.chatTactile(.capsule))
+        .buttonStyle(.hermesPressOnly(.capsule))
         .disabled(isResponding)
     }
 

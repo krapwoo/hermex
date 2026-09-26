@@ -621,7 +621,7 @@ struct SessionInteractiveRow: View {
         Button {
             actions.open(session)
         } label: {
-            SessionRowView(
+            SessionListItem(
                 session: session,
                 showsMessageCount: showsMessageCount,
                 showsWorkspace: showsWorkspace,
@@ -859,7 +859,7 @@ struct SessionRowContextMenu: View {
     let actions: SessionListRowActions
 
     var body: some View {
-        let fullTitle = SessionRowView.displayTitle(for: session)
+        let fullTitle = SessionListItem.displayTitle(for: session)
 
         Section("Full Title") {
             Text(fullTitle)
@@ -1621,7 +1621,7 @@ struct SessionRowSkeletonView: View {
         .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, verticalPadding)
         .frame(minHeight: metadataLabel == nil ? 46 : 54)
-        .redacted(reason: .placeholder)
+        .skeletonPlaceholder()
     }
 
     @ViewBuilder
@@ -1721,25 +1721,4 @@ struct SessionRowSkeletonConfiguration: Identifiable {
             relativeDate: "2d"
         )
     ]
-}
-
-struct OfflineCacheBanner: View {
-    var body: some View {
-        HStack(spacing: HermesSpacing.s8) {
-            Image(systemName: "wifi.slash")
-                .imageScale(.small)
-                .accessibilityHidden(true)
-
-            Text("Offline - viewing cached version")
-                .appFont(.subheadline)
-                .fontWeight(.semibold)
-
-            Spacer()
-        }
-        .foregroundStyle(.orange)
-        .padding(.horizontal, HermesSpacing.s24)
-        .padding(.vertical, HermesSpacing.s12)
-        .background(Color.orange.opacity(0.12))
-        .accessibilityElement(children: .combine)
-    }
 }

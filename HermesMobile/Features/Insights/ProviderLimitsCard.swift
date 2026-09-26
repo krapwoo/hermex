@@ -56,12 +56,9 @@ private struct ProviderLimitsPlaceholderCard: View {
                 row
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .redacted(reason: .placeholder)
+            .skeletonPlaceholder()
         }
-        .allowsHitTesting(false)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Limits"))
-        .accessibilityValue(Text("Loading"))
+        .skeletonAnnouncement(label: Text("Limits"), value: Text("Loading"))
     }
 
     /// Mirrors `ProviderLimitRowView`: an amount line, the bar, and a caption.

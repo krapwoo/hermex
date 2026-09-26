@@ -1,6 +1,11 @@
 import SwiftUI
 
-struct SessionRowView: View {
+/// The named Sessions composition under the List/ListItem family: streaming indication, search
+/// highlighting, session metadata and Tags, attention status, Dynamic Type reflow, and the
+/// accessibility summary. Native Button wrapping, selection background, swipe actions, context
+/// menus, and transitions are caller-owned — `SessionInteractiveRow` in `SessionListComponents.swift`
+/// supplies them around this content.
+struct SessionListItem: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .caption2) private var pinnedIconSize: CGFloat = 11
     @ScaledMetric(relativeTo: .body) private var verticalPadding: CGFloat = 8
@@ -433,7 +438,7 @@ enum SessionRowAttentionState: String, Equatable {
             return .input
         }
 
-        return SessionRowView.isActiveStreaming(session) ? .working : nil
+        return SessionListItem.isActiveStreaming(session) ? .working : nil
     }
 
     var title: String {
@@ -499,13 +504,7 @@ private struct SessionSourceBadge: View {
     let label: String
 
     var body: some View {
-        Text(label)
-            .appFont(.caption2, weight: .semibold)
-            .foregroundStyle(Color.accentColor)
-            .padding(.horizontal, HermesSpacing.s4)
-            .padding(.vertical, HermesSpacing.s2)
-            .background(Color.accentColor.opacity(0.12), in: Capsule())
-            .accessibilityHidden(true)
+        Tag(label: label, tint: .accentColor, size: .micro, isDecorative: true)
     }
 }
 
@@ -513,13 +512,7 @@ private struct SessionRowStateBadge: View {
     let badge: SessionRowStateBadgeKind
 
     var body: some View {
-        Text(badge.title)
-            .appFont(.caption2, weight: .semibold)
-            .foregroundStyle(badge.tint)
-            .padding(.horizontal, HermesSpacing.s4)
-            .padding(.vertical, HermesSpacing.s2)
-            .background(badge.tint.opacity(0.12), in: Capsule())
-            .accessibilityHidden(true)
+        Tag(label: badge.title, tint: badge.tint, size: .micro, isDecorative: true)
     }
 }
 
@@ -570,136 +563,4 @@ enum SessionRelativeDateFormatter {
         formatter.unitsStyle = .abbreviated
         return formatter
     }()
-}
-
-enum SessionRowDisplaySettings {
-    static let showMessageCountKey = "sessionRow.showMessageCount"
-    static let showWorkspaceKey = "sessionRow.showWorkspace"
-    // Cron and CLI sessions default to shown; delegated subagents default to
-    // hidden. Each kind has an independent visibility control.
-    static let showCronSessionsKey = "sessionRow.showCronSessions"
-    static let showSubagentSessionsKey = "sessionRow.showSubagentSessions"
-    static let defaultShowsSubagentSessions = false
-    // Legacy global CLI-sessions key. Since #19 the CLI toggle is stored
-    // per-server (it mirrors the server's own `show_cli_sessions` setting, and a
-    // value adopted from server A must not leak to server B); this key survives
-    // only as the migration seed for servers with no per-server value yet.
-    static let showCliSessionsKey = "sessionRow.showCliSessions"
-    static let showClaudeCodeSessionsKey = "sessionRow.showClaudeCodeSessions"
-
-    /// Per-server storage key for the CLI-sessions toggle (#19). Keyed by the
-    /// active server's absolute URL, matching how the offline cache scopes rows.
-    static func showCliSessionsKey(for server: URL) -> String {
-        "\(showCliSessionsKey)|\(server.absoluteString)"
-    }
-
-    static func showClaudeCodeSessionsKey(for server: URL) -> String {
-        "\(showClaudeCodeSessionsKey)|\(server.absoluteString)"
-    }
-
-    /// Effective CLI-sessions visibility for `server`: the per-server value if
-    /// one was ever stored, else the pre-#19 global value, else shown-by-default
-    /// like every other session-row toggle.
-    static func showsCliSessions(for server: URL, in defaults: UserDefaults = .standard) -> Bool {
-        if let perServer = defaults.object(forKey: showCliSessionsKey(for: server)) as? Bool {
-            return perServer
-        }
-
-        if let legacy = defaults.object(forKey: showCliSessionsKey) as? Bool {
-            return legacy
-        }
-
-        return true
-    }
-
-    /// Claude Code visibility is new and per-server, with no legacy global
-    /// value. Omission defaults to shown for compatibility with older servers.
-    static func showsClaudeCodeSessions(
-        for server: URL,
-        in defaults: UserDefaults = .standard
-    ) -> Bool {
-        defaults.object(forKey: showClaudeCodeSessionsKey(for: server)) as? Bool ?? true
-    }
-
-    static func showsSubagentSessions(in defaults: UserDefaults = .standard) -> Bool {
-        guard let stored = defaults.object(forKey: showSubagentSessionsKey) as? Bool else {
-            return defaultShowsSubagentSessions
-        }
-
-        return stored
-    }
-}
-
-enum SessionSidebarDisclosureSettings {
-    static let profilesAreExpandedKey = "sessionSidebar.profilesAreExpanded"
-    static let projectsAreExpandedKey = "sessionSidebar.projectsAreExpanded"
-    static let scheduledSessionsAreExpandedKey = "sessionSidebar.scheduledSessionsAreExpanded"
-    static let defaultProfilesAreExpanded = false
-    static let defaultProjectsAreExpanded = false
-    static let defaultScheduledSessionsAreExpanded = false
-
-    static func profilesAreExpanded(in defaults: UserDefaults = .standard) -> Bool {
-        guard let value = defaults.object(forKey: profilesAreExpandedKey) as? Bool else {
-            return defaultProfilesAreExpanded
-        }
-
-        return value
-    }
-
-    static func projectsAreExpanded(in defaults: UserDefaults = .standard) -> Bool {
-        guard let value = defaults.object(forKey: projectsAreExpandedKey) as? Bool else {
-            return defaultProjectsAreExpanded
-        }
-
-        return value
-    }
-
-    static func scheduledSessionsAreExpanded(in defaults: UserDefaults = .standard) -> Bool {
-        guard let value = defaults.object(forKey: scheduledSessionsAreExpandedKey) as? Bool else {
-            return defaultScheduledSessionsAreExpanded
-        }
-
-        return value
-    }
-}
-
-enum SessionIdentitySettings {
-    static let displayNameKey = "sessionIdentity.displayName"
-    static let initialsKey = "sessionIdentity.initials"
-
-    static func normalizedInitials(_ rawValue: String) -> String {
-        rawValue
-            .filter { $0.isLetter || $0.isNumber }
-            .prefix(3)
-            .map { String($0).uppercased() }
-            .joined()
-    }
-
-    static func displayInitials(
-        displayName: String,
-        storedInitials: String,
-        fallbackFullName: String
-    ) -> String {
-        let normalizedStoredInitials = normalizedInitials(storedInitials)
-        if !normalizedStoredInitials.isEmpty {
-            return normalizedStoredInitials
-        }
-
-        let displayNameInitials = initials(from: displayName)
-        if !displayNameInitials.isEmpty {
-            return displayNameInitials
-        }
-
-        let fallbackInitials = initials(from: fallbackFullName)
-        return fallbackInitials.isEmpty ? "UZ" : fallbackInitials
-    }
-
-    private static func initials(from rawName: String) -> String {
-        rawName
-            .split(whereSeparator: { $0.isWhitespace || $0 == "-" || $0 == "_" })
-            .compactMap(\.first)
-            .prefix(2)
-            .map { String($0).uppercased() }
-            .joined()
-    }
 }

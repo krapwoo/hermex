@@ -78,9 +78,9 @@ struct BotPendingRequestCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(HermesSpacing.s16)
+        .padding(HermesCardMetrics.contentPadding)
         .frame(maxWidth: 560, alignment: .leading)
-        .pendingRequestCardSurface(cornerRadius: Self.cornerRadius)
+        .requestCardSurface(cornerRadius: Self.cornerRadius)
         .accessibilityElement(children: .contain)
         .onChange(of: request.requestID, initial: true) { announce() }
     }
@@ -145,7 +145,7 @@ private struct BotApprovalRequestBody: View {
                             Label(Self.title(for: choice), systemImage: Self.symbol(for: choice))
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.chatDecision(Self.emphasis(for: choice)))
+                        .buttonStyle(.hermes(.medium, emphasis: Self.emphasis(for: choice)))
                         .disabled(!isEnabled || isAnswering)
                     }
                 }
@@ -179,7 +179,7 @@ private struct BotApprovalRequestBody: View {
         }
     }
 
-    private static func emphasis(for choice: BotApprovalRequest.Choice) -> ChatDecisionButtonStyle.Emphasis {
+    private static func emphasis(for choice: BotApprovalRequest.Choice) -> HermesButtonEmphasis {
         switch choice {
         case .once: return .primary
         case .deny: return .destructive
@@ -259,13 +259,13 @@ private struct BotQuestionRequestBody: View {
                 Button { onAnswer(answers()) } label: {
                     Label("Send answers", systemImage: "arrow.up.circle.fill").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.chatDecision(.primary))
+                .buttonStyle(.hermes(.medium, emphasis: .primary))
                 .disabled(!canSubmit)
 
                 Button(action: onSkip) {
                     Text("Skip").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.chatDecision(.secondary))
+                .buttonStyle(.hermes(.medium, emphasis: .secondary))
                 .disabled(!isEnabled || isAnswering)
             }
         }
@@ -303,7 +303,7 @@ private struct BotQuestionRequestBody: View {
             .foregroundStyle(.primary)
             .pendingRequestChoiceSurface(reduceTransparency: reduceTransparency)
         }
-        .buttonStyle(.chatTactile(.capsule))
+        .buttonStyle(.hermesPressOnly(.capsule))
         .disabled(!isEnabled || isAnswering)
         .accessibilityAddTraits(isPicked ? .isSelected : [])
     }
@@ -415,7 +415,7 @@ private struct BotCredentialRequestBody: View {
         Button { onCredential("") } label: {
             Text("Skip").frame(maxWidth: .infinity)
         }
-        .buttonStyle(.chatDecision(.secondary))
+        .buttonStyle(.hermes(.medium, emphasis: .secondary))
         .disabled(!isEnabled || isAnswering)
         .accessibilityHint(Text(credential.kind.skipConsequence))
     }
@@ -465,13 +465,13 @@ private struct BotDesktopTaskRequestBody: View {
             Button(action: onDecline) {
                 Text("Skip").frame(maxWidth: .infinity)
             }
-            .buttonStyle(.chatDecision(.secondary))
+            .buttonStyle(.hermes(.medium, emphasis: .secondary))
             .disabled(!canDecline)
         }
         Button(role: .destructive, action: onStop) {
             Label("Stop current work", systemImage: "stop.fill").frame(maxWidth: .infinity)
         }
-        .buttonStyle(.chatDecision(.destructive))
+        .buttonStyle(.hermes(.medium, emphasis: .destructive))
         .disabled(!canStop)
     }
 }

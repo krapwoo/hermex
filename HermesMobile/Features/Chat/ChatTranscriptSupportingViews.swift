@@ -1023,9 +1023,7 @@ struct ChatTranscriptLoadingSkeletonView: View {
             .padding(.top, HermesSpacing.s16)
         }
         .scrollDisabled(true)
-        .allowsHitTesting(false)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Loading messages")
+        .skeletonAnnouncement(label: Text("Loading messages"))
     }
 }
 
@@ -1049,7 +1047,7 @@ private struct ChatTranscriptLoadingSkeletonRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, HermesSpacing.s4)
-        .redacted(reason: .placeholder)
+        .skeletonPlaceholder()
         .accessibilityHidden(true)
     }
 
@@ -1068,7 +1066,7 @@ private struct ChatTranscriptLoadingSkeletonRow: View {
             .foregroundStyle(.primary)
             .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
         }
-        .redacted(reason: .placeholder)
+        .skeletonPlaceholder()
         .accessibilityHidden(true)
     }
 
@@ -1137,26 +1135,6 @@ private struct ChatTranscriptSkeletonLine: Identifiable {
     let id: String
     let text: String
     let maxWidth: CGFloat
-}
-
-struct ChatOfflineCacheBanner: View {
-    var body: some View {
-        HStack(spacing: HermesSpacing.s8) {
-            Image(systemName: "wifi.slash")
-                .imageScale(.small)
-
-            Text("Offline — viewing cached version")
-                .appFont(.subheadline)
-                .fontWeight(.semibold)
-
-            Spacer()
-        }
-        .foregroundStyle(.orange)
-        .padding(.horizontal)
-        .padding(.vertical, HermesSpacing.s12)
-        .background(Color.orange.opacity(0.12))
-        .accessibilityElement(children: .combine)
-    }
 }
 
 struct PinnedLocalNoticeStack: View {

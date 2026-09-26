@@ -36,7 +36,7 @@ struct GitBranchPickerButton: View {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.chatTactile(.compactControl))
+        .buttonStyle(.hermesPressOnly(.compactControl))
         .disabled(isDisabled || isLoading || isSwitching)
         .accessibilityLabel("Current Git branch")
         .accessibilityValue(currentBranch)

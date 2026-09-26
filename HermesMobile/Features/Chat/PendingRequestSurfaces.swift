@@ -1,24 +1,9 @@
 import SwiftUI
 
-/// The surfaces a pending approval or clarification card is built from, shared
-/// by the Sessions cards and the Bot one. Placement differs per surface: the
-/// Sessions clarification pins above the composer, the Bot card sits in the
-/// transcript. What the user reads and taps does not.
+/// The domain-owned surfaces inside a pending approval or clarification card: the recessed
+/// question/command block, the response field, and the choice-button surface. The outer card
+/// surface itself is Request Card, in the Card family (`HermesCard.swift`'s `requestCardSurface`).
 extension View {
-    /// Opaque on purpose: these cards float over live transcript text, and a
-    /// translucent surface would render the request on top of whatever message
-    /// happens to sit underneath.
-    func pendingRequestCardSurface(cornerRadius: CGFloat) -> some View {
-        background(
-            Color(.secondarySystemBackground),
-            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(.primary.opacity(0.10), lineWidth: 1)
-        )
-    }
-
     /// The recessed block a question or a command sits in, inside a card.
     func pendingRequestBlockSurface() -> some View {
         modifier(PendingRequestBlockSurface())
@@ -79,7 +64,7 @@ struct PendingRequestSubmitButton: View {
                 .foregroundStyle(foreground)
                 .clipShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .disabled(isBusy || !canSubmit)
     }
 

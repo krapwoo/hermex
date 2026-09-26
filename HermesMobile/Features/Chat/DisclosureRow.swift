@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Geometry shared by every log row so the group toggle and the rows line up.
-enum TranscriptLogRowMetrics {
+enum DisclosureRowMetrics {
     /// Row height at the default text size; text grows the row at larger sizes.
     static let minimumHeight: CGFloat = 32
     /// Icon column width plus the gap, so the expanded body indents under the text.
@@ -16,7 +16,7 @@ enum TranscriptLogRowMetrics {
 /// Pure sizing rule for an expanded body window: the frame it takes and
 /// whether it scrolls, from the measured content height. Shared by the
 /// SwiftUI window and the live thinking text view so both cap alike.
-struct TranscriptLogRowBodyWindowLayout: Equatable {
+struct DisclosureRowBodyWindowLayout: Equatable {
     /// Zero until the content has been measured, then the lesser of its
     /// natural height and the cap. Starting closed prevents one unbounded
     /// layout pass from moving the transcript before the cap takes effect.
@@ -31,20 +31,20 @@ struct TranscriptLogRowBodyWindowLayout: Equatable {
     }
 }
 
-/// Clips an expanded body at `TranscriptLogRowMetrics.bodyWindowHeight` and
+/// Clips an expanded body at `DisclosureRowMetrics.bodyWindowHeight` and
 /// scrolls the overflow inside the window. Shorter content takes its natural
 /// height and cannot scroll. The measurement lives only here, so collapsed
 /// rows in the lazy transcript pay nothing for it.
-struct TranscriptLogRowBodyWindow<Content: View>: View {
+struct DisclosureRowBodyWindow<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var contentHeight: CGFloat?
 
     var body: some View {
-        let layout = TranscriptLogRowBodyWindowLayout.resolve(
+        let layout = DisclosureRowBodyWindowLayout.resolve(
             contentHeight: contentHeight,
-            cap: TranscriptLogRowMetrics.bodyWindowHeight
+            cap: DisclosureRowMetrics.bodyWindowHeight
         )
 
         ScrollView(.vertical) {
@@ -75,13 +75,14 @@ struct TranscriptLogRowBodyWindow<Content: View>: View {
     }
 }
 
-/// The dense log row settled tool calls and thinking share: a 20 pt icon
-/// column, bold summary, dim one-line detail, `Copied` badge, chevron slot, and
-/// a fixed status slot so labels align across rows. Tap toggles the owner's
-/// expansion state and reveals `expandedBody` under the text behind a hairline,
-/// inside a `TranscriptLogRowBodyWindow` that scrolls once the body outgrows
-/// the cap; long-press copies `copyText` with a haptic and a short "Copied" badge.
-struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View {
+/// Hermex's Activity Disclosure Row: the dense log row settled tool calls and thinking share. A 20 pt
+/// icon column, bold summary, dim one-line detail, `Copied` badge, chevron slot, and a fixed status
+/// slot so labels align across rows. Tap toggles the owner's expansion state and reveals
+/// `expandedBody` under the text behind a hairline, inside a `DisclosureRowBodyWindow` that scrolls
+/// once the body outgrows the cap; long-press copies `copyText` with a haptic and a short "Copied"
+/// badge. Turn Summary stays a separate component: its height and expansion contract differ enough
+/// that folding it into this one would blur both.
+struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
     let summary: String
     let detail: String?
     var isFailure = false
@@ -109,14 +110,14 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
 
             VStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 if isExpanded {
-                    TranscriptLogRowBodyWindow(content: expandedBody)
+                    DisclosureRowBodyWindow(content: expandedBody)
                         .padding(.leading, HermesSpacing.s12)
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.quaternary)
                                 .frame(width: 1)
                         }
-                        .padding(.leading, TranscriptLogRowMetrics.bodyIndent)
+                        .padding(.leading, DisclosureRowMetrics.bodyIndent)
                         .padding(.top, HermesSpacing.s2)
                         .padding(.bottom, HermesSpacing.s8)
                         .transition(
@@ -159,7 +160,7 @@ struct TranscriptLogRowView<Icon: View, Status: View, ExpandedBody: View>: View 
             }
         }
         .padding(.horizontal, HermesSpacing.s2)
-        .frame(minHeight: TranscriptLogRowMetrics.minimumHeight)
+        .frame(minHeight: DisclosureRowMetrics.minimumHeight)
         .background(
             Color.primary.opacity(isPressed ? 0.06 : 0),
             in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)

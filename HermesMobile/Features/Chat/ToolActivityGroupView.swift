@@ -70,7 +70,7 @@ struct ToolActivityGroupView: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, HermesSpacing.s2)
-            .frame(minHeight: TranscriptLogRowMetrics.minimumHeight)
+            .frame(minHeight: DisclosureRowMetrics.minimumHeight)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

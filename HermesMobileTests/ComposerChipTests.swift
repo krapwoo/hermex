@@ -780,6 +780,63 @@ private final class TextStorageEditObserver: NSObject, NSTextStorageDelegate {
     }
 }
 
+/// Correction 1: Tag versus Inline Reference Link. Inert skill/bot references keep the existing
+/// muted capsule (Tag treatment); an interactive file reference gets a visually distinct Inline
+/// Reference Link (no capsule, accent/link treatment) in both the UIKit composer editor and the
+/// shared SwiftUI line renderer the collapsed pill and sent bubble both use.
+final class ComposerChipVisualStyleTests: XCTestCase {
+    private func resourceURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+    }
+
+    private func source(_ relativePath: String) throws -> String {
+        try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
+    }
+
+    private func skillToken() -> ComposerChipToken {
+        ComposerChipToken(range: NSRange(location: 0, length: 9), source: "/ask-matt", label: "ask-matt", kind: .skill)
+    }
+
+    private func fileToken() -> ComposerChipToken {
+        ComposerChipToken(range: NSRange(location: 0, length: 10), source: "@a/b.swift", label: "b.swift", kind: .file)
+    }
+
+    // MARK: - Pure contracts
+
+    func testOnlyFileReferencesAreInteractive() {
+        XCTAssertFalse(skillToken().isInteractiveReference)
+        XCTAssertTrue(fileToken().isInteractiveReference)
+    }
+
+    func testVisualStyleResolvesTagForInertReferencesAndInlineReferenceLinkForFiles() {
+        XCTAssertEqual(ComposerChipVisualStyle.resolve(for: skillToken()), .tag)
+        XCTAssertEqual(ComposerChipVisualStyle.resolve(for: fileToken()), .inlineReferenceLink)
+    }
+
+    // MARK: - Source contracts
+
+    func testInlineReferenceLinkExistsAsADistinctStyleInTheSharedRenderer() throws {
+        let src = try source("HermesMobile/Features/Chat/ComposerChipRendering.swift")
+        XCTAssertTrue(src.contains("enum ComposerChipVisualStyle"))
+        XCTAssertTrue(src.contains("case inlineReferenceLink"))
+        XCTAssertTrue(src.contains("visualStyle == .inlineReferenceLink"))
+        XCTAssertTrue(src.contains("if !isLink {"))
+    }
+
+    func testComposerEditorResolvesVisualStyleFromTheToken() throws {
+        let src = try source("HermesMobile/Features/Chat/ComposerChipTextView.swift")
+        XCTAssertTrue(src.contains("ComposerChipVisualStyle.resolve(for: token)"))
+    }
+
+    func testInteractiveFileReferencesCarryLinkAccessibilitySemantics() throws {
+        let src = try source("HermesMobile/Features/Chat/ComposerChipRendering.swift")
+        XCTAssertTrue(src.contains("accessibilityTraits = .link"))
+    }
+}
+
 final class ComposerDropRouteTests: XCTestCase {
     func testRoutesAMixOfFilesAndImages() throws {
         let route = try XCTUnwrap(

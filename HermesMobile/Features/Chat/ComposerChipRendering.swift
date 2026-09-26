@@ -20,6 +20,9 @@ final class ComposerChipAttachment: NSTextAttachment {
         image.accessibilityLabel = token.label
         self.image = image
         accessibilityLabel = token.label
+        if token.isInteractiveReference {
+            accessibilityTraits = .link
+        }
         bounds = CGRect(origin: CGPoint(x: 0, y: baselineOffset), size: image.size)
     }
 
@@ -85,6 +88,19 @@ struct ComposerChipMetrics: Equatable {
     }
 }
 
+/// A chip's visual family. Tag and Inline Reference Link share this one baked-image renderer, but
+/// never its chrome: Tag stays a display-only capsule (skill and bot references, and the quote
+/// chip), Inline Reference Link drops the capsule fill and outline for an accent/link-tinted icon
+/// and label (an interactive file reference, which is the only reference kind that opens anything).
+enum ComposerChipVisualStyle: Equatable {
+    case tag
+    case inlineReferenceLink
+
+    static func resolve(for token: ComposerChipToken) -> ComposerChipVisualStyle {
+        token.isInteractiveReference ? .inlineReferenceLink : .tag
+    }
+}
+
 /// Draws the chip. The image is baked against a trait collection, so the editor
 /// re-renders it when the appearance or the content size category changes.
 @MainActor enum ComposerChipRenderer {
@@ -118,7 +134,8 @@ struct ComposerChipMetrics: Equatable {
         traits: UITraitCollection,
         isRightToLeft: Bool,
         maximumWidth: CGFloat? = nil,
-        usesAccentIcon: Bool = false
+        usesAccentIcon: Bool = false,
+        visualStyle: ComposerChipVisualStyle = .tag
     ) -> UIImage {
         let values: [NSObject] = [
             label as NSString,
@@ -129,7 +146,8 @@ struct ComposerChipMetrics: Equatable {
             String(traits.accessibilityContrast.rawValue) as NSString,
             (isRightToLeft ? "rtl" : "ltr") as NSString,
             (maximumWidth.map(String.init(describing:)) ?? "unbounded") as NSString,
-            (usesAccentIcon ? "accent" : "secondary") as NSString
+            (usesAccentIcon ? "accent" : "secondary") as NSString,
+            (visualStyle == .tag ? "tag" : "inlineReferenceLink") as NSString
         ]
         let key = CacheKey(values)
 
@@ -144,7 +162,8 @@ struct ComposerChipMetrics: Equatable {
             traits: traits,
             isRightToLeft: isRightToLeft,
             maximumWidth: maximumWidth,
-            usesAccentIcon: usesAccentIcon
+            usesAccentIcon: usesAccentIcon,
+            visualStyle: visualStyle
         )
         cache.setObject(image, forKey: key)
         return image
@@ -188,17 +207,23 @@ struct ComposerChipMetrics: Equatable {
         traits: UITraitCollection,
         isRightToLeft: Bool,
         maximumWidth: CGFloat?,
-        usesAccentIcon: Bool
+        usesAccentIcon: Bool,
+        visualStyle: ComposerChipVisualStyle
     ) -> UIImage {
+        // Inline Reference Link never draws Tag's capsule fill or outline, and its icon and label
+        // both take the accent/link tint instead of Tag's neutral secondary/label colors.
+        let isLink = visualStyle == .inlineReferenceLink
         let background = UIColor.secondarySystemFill.resolvedColor(with: traits)
         let border = UIColor.separator.resolvedColor(with: traits)
-        let textColor = UIColor.label.resolvedColor(with: traits)
+        let textColor = isLink
+            ? UIColor.systemBlue.resolvedColor(with: traits)
+            : UIColor.label.resolvedColor(with: traits)
 
         let icon = iconImage(
             iconStyle,
             metrics: metrics,
             traits: traits,
-            usesAccentIcon: usesAccentIcon
+            usesAccentIcon: usesAccentIcon || isLink
         )
 
         let paragraphStyle = NSMutableParagraphStyle()
@@ -222,16 +247,18 @@ struct ComposerChipMetrics: Equatable {
         )
 
         return renderer.image { _ in
-            let bounds = CGRect(x: 0, y: 0, width: width, height: metrics.height)
-            let path = UIBezierPath(
-                roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
-                cornerRadius: metrics.cornerRadius
-            )
-            background.setFill()
-            path.fill()
-            border.setStroke()
-            path.lineWidth = 1
-            path.stroke()
+            if !isLink {
+                let bounds = CGRect(x: 0, y: 0, width: width, height: metrics.height)
+                let path = UIBezierPath(
+                    roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
+                    cornerRadius: metrics.cornerRadius
+                )
+                background.setFill()
+                path.fill()
+                border.setStroke()
+                path.lineWidth = 1
+                path.stroke()
+            }
 
             // The icon leads in both directions: mirroring it by hand is what
             // keeps an RTL chip from reading back to front, since the image is
@@ -335,7 +362,8 @@ enum ComposerChipTextLine {
                 icon: token.icon,
                 metrics: style.metrics,
                 traits: style.traits,
-                isRightToLeft: style.isRightToLeft
+                isRightToLeft: style.isRightToLeft,
+                visualStyle: ComposerChipVisualStyle.resolve(for: token)
             )
             line = line + Text(Image(uiImage: chip))
             cursor = token.range.upperBound

@@ -178,7 +178,7 @@ private struct ListenPlaybackBar: View {
                 }
                 .frame(width: 34, height: 34)
             }
-            .buttonStyle(.chatTactile(.icon))
+            .buttonStyle(.hermesPressOnly(.icon))
             .disabled(!isReady)
             .accessibilityLabel(isPlaying ? String(localized: "Pause audio") : String(localized: "Play audio"))
         }
@@ -247,7 +247,7 @@ private struct ListenPlaybackBar: View {
                 .frame(width: 30, height: 30)
                 .contentShape(Circle())
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .accessibilityLabel(String(localized: "Stop audio"))
     }
 }
@@ -726,7 +726,7 @@ struct ChatView: View {
             ZStack(alignment: .bottom) {
                 VStack(spacing: HermesSpacing.s0) {
                     if viewModel.isViewingCachedData {
-                        ChatOfflineCacheBanner()
+                        Banner.offlineCache()
                     }
 
                     listenPlaybackBar

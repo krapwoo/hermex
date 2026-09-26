@@ -18,13 +18,9 @@ struct ApprovalRequestOverlay: View {
                 details
                 actions
             }
-            .padding(HermesSpacing.s16)
+            .padding(HermesCardMetrics.contentPadding)
             .frame(maxWidth: 520, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
-                    .stroke(.primary.opacity(0.10), lineWidth: 1)
-            )
+            .requestCardSurface(cornerRadius: HermesRadius.r16, material: .translucentOverScrim)
             .hermesShadow(.overlay)
             .padding(.horizontal, HermesSpacing.s20)
         }
@@ -117,7 +113,7 @@ struct ApprovalRequestOverlay: View {
                 Label("Skip all this session", systemImage: "bolt.slash")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.chatDecision(.secondary))
+            .buttonStyle(.hermes(.medium, emphasis: .secondary))
             .disabled(isResponding)
         }
     }
@@ -137,7 +133,7 @@ struct ApprovalRequestOverlay: View {
                 Label(title, systemImage: systemImage)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.chatDecision(.primary))
+            .buttonStyle(.hermes(.medium, emphasis: .primary))
             .disabled(isResponding)
         } else {
             Button(role: role) {
@@ -146,7 +142,7 @@ struct ApprovalRequestOverlay: View {
                 Label(title, systemImage: systemImage)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.chatDecision(role == .destructive ? .destructive : .secondary))
+            .buttonStyle(.hermes(.medium, emphasis: role == .destructive ? .destructive : .secondary))
             .disabled(isResponding)
         }
     }

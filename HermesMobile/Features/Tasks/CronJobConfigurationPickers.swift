@@ -219,52 +219,32 @@ struct CronJobProfilePickerSheet: View {
     @ViewBuilder
     private var statusPlaceholder: some View {
         if profiles.isEmpty, isLoading {
-            ContentUnavailableView {
-                ProgressView()
-            } description: {
-                Text("Loading profiles...")
-            }
+            HermesContentUnavailable(variant: .loading, description: Text("Loading profiles..."))
         } else if profiles.isEmpty, let errorMessage {
-            ContentUnavailableView {
-                Label("Could Not Load Profiles", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(verbatim: errorMessage)
-            } actions: {
-                Button("Try Again", action: onRetry)
-            }
+            HermesContentUnavailable(
+                variant: .error,
+                title: "Could Not Load Profiles",
+                description: Text(verbatim: errorMessage),
+                primaryAction: .init(title: "Try Again", handler: onRetry)
+            )
         } else if listedProfiles.isEmpty, !trimmedSearchQuery.isEmpty {
             ContentUnavailableView.search(text: searchText)
         } else if profiles.isEmpty {
-            ContentUnavailableView("No profiles available", systemImage: "person.crop.circle")
+            HermesContentUnavailable(variant: .empty, title: "No profiles available", systemImage: "person.crop.circle")
         }
     }
 
     private var serverDefaultRow: some View {
         let selected = CronJobModelSelection.nonEmpty(selectedProfileName) == nil
 
-        return Button {
+        return ListItem(
+            title: Text("Server default"),
+            titleLineLimit: 2,
+            state: ListItemState(isSelected: selected)
+        ) {
             onSelect(nil)
             dismiss()
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
-                Text("Server default")
-                    .appFont(.body)
-                    .lineLimit(2)
-
-                Spacer(minLength: 0)
-
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .pickerSelectionPill(isSelected: selected)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var trimmedSearchQuery: String {
@@ -306,52 +286,29 @@ struct CronJobProfilePickerSheet: View {
     private func profileRow(_ profile: ProfileSummary) -> some View {
         let selected = profile.normalizedName == CronJobModelSelection.nonEmpty(selectedProfileName)
 
-        return Button {
-            onSelect(profile.normalizedName)
-            dismiss()
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
+        return ListItem(
+            title: Text(profile.displayName),
+            titleLineLimit: dynamicTypeSize.isAccessibilitySize ? 2 : 1,
+            subtitle: Self.details(for: profile).map { Text($0) },
+            subtitleLineLimit: dynamicTypeSize.isAccessibilitySize ? 2 : 1,
+            accessibilityLabel: Text(Self.details(for: profile).map { "\(profile.displayName), \($0)" } ?? profile.displayName),
+            state: ListItemState(
+                isSelected: selected,
+                isDisabled: profile.normalizedName == nil
+            ),
+            action: {
+                onSelect(profile.normalizedName)
+                dismiss()
+            },
+            leading: {
                 // Same rule as the model picker: an unknown provider renders
                 // nothing at all rather than reserving an empty glyph slot.
                 if ProviderGlyphKind.resolve(providerID: profile.provider) != nil {
                     ProviderGlyph(providerID: profile.provider)
                         .frame(width: 17, height: 17)
                 }
-
-                VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                    Text(profile.displayName)
-                        .appFont(.body)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-
-                    // The profile's own model and provider, so the inheritance
-                    // the section footer describes is visible rather than
-                    // implied.
-                    if let details = Self.details(for: profile) {
-                        Text(details)
-                            .appFont(.caption)
-                            .foregroundStyle(
-                                selected ? Color(.systemBackground).opacity(0.7) : Color.secondary
-                            )
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
-                }
             }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .pickerSelectionPill(isSelected: selected)
-        .disabled(profile.normalizedName == nil)
-        .accessibilityLabel(Self.details(for: profile).map { "\(profile.displayName), \($0)" } ?? profile.displayName)
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        )
     }
 
     static func details(for profile: ProfileSummary) -> String? {

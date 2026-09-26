@@ -412,7 +412,8 @@ final class ComposerChipTextView: UITextView, UIGestureRecognizerDelegate {
             icon: token.icon,
             metrics: metrics,
             traits: traitCollection,
-            isRightToLeft: isRightToLeft
+            isRightToLeft: isRightToLeft,
+            visualStyle: ComposerChipVisualStyle.resolve(for: token)
         )
         let font = (attributes[.font] as? UIFont) ?? .preferredFont(forTextStyle: .body)
         let attachment = ComposerChipAttachment(

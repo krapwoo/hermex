@@ -151,7 +151,7 @@ struct ChatCopyButton: View {
                     in: Rectangle()
                 )
         }
-        .buttonStyle(.chatTactile(.icon))
+        .buttonStyle(.hermesPressOnly(.icon))
         .accessibilityLabel(showsCopied ? copiedLabel : label)
         .task(id: copyCount) {
             guard copyCount > 0 else { return }

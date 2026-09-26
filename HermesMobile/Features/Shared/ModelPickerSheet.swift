@@ -146,17 +146,9 @@ struct ModelPickerSheet: View {
     @ViewBuilder
     private func statusPlaceholder(groups: [ModelCatalogGroup]) -> some View {
         if modelGroups.isEmpty, loadStatus == .loading {
-            ContentUnavailableView {
-                ProgressView()
-            } description: {
-                Text("Loading models...")
-            }
+            HermesContentUnavailable(variant: .loading, description: Text("Loading models..."))
         } else if modelGroups.isEmpty, case .failed(let message) = loadStatus {
-            ContentUnavailableView {
-                Label("Could Not Load Models", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(verbatim: message)
-            }
+            HermesContentUnavailable(variant: .error, title: "Could Not Load Models", description: Text(verbatim: message))
         } else if groups.isEmpty, !trimmedSearchQuery.isEmpty {
             ContentUnavailableView.search(text: searchText)
         }
@@ -167,32 +159,19 @@ struct ModelPickerSheet: View {
     /// the list. Hidden while searching, where it would answer a query about
     /// model names with a row that has none.
     private func clearSelectionRow(_ clearAction: ModelPickerClearAction) -> some View {
-        Button {
+        ListItem(
+            title: Text(clearAction.title),
+            titleLineLimit: 2,
+            state: ListItemState(
+                isSelected: clearAction.isSelected,
+                isDisabled: isSelectionDisabled
+            )
+        ) {
             clearAction.action()
             if configuration.dismissesOnCommit {
                 dismiss()
             }
-        } label: {
-            HStack(spacing: HermesSpacing.s12) {
-                Text(clearAction.title)
-                    .appFont(.body)
-                    .lineLimit(2)
-
-                Spacer(minLength: 0)
-
-                if clearAction.isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .disabled(isSelectionDisabled)
-        .pickerSelectionPill(isSelected: clearAction.isSelected)
-        .accessibilityAddTraits(clearAction.isSelected ? .isSelected : [])
     }
 
     /// Custom entry uses the same type scale and row geometry as the model
@@ -266,10 +245,10 @@ struct ModelPickerSheet: View {
                 }
                 .foregroundStyle(customEntryForeground)
                 .padding(.horizontal, HermesSpacing.s12)
-                .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
                 .background(
                     customOption == nil ? Color.clear : Color.primary,
-                    in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
                 )
                 .disabled(customOption == nil || isSelectionDisabled)
                 .padding(.top, HermesSpacing.s2)
@@ -465,47 +444,29 @@ struct ModelPickerSheet: View {
         let selected = isSelected(option)
         let inFlight = Self.isInFlight(option, inFlightKey: inFlightKey)
 
-        return HStack(spacing: HermesSpacing.s12) {
-            Button {
-                commit(option)
-            } label: {
-                HStack(spacing: HermesSpacing.s12) {
-                    Text(option.displayName)
-                        .appFont(.body)
-                        .lineLimit(2)
-
-                    Spacer(minLength: 0)
-
-                    if inFlight {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(selected ? Color(.systemBackground) : Color.primary)
-                    } else if selected {
-                        Image(systemName: "checkmark")
-                            .font(.body.weight(.semibold))
-                            .accessibilityHidden(true)
+        return ListItem(
+            title: Text(verbatim: option.displayName),
+            titleLineLimit: 2,
+            accessibilityLabel: Text(verbatim: option.displayName),
+            state: ListItemState(
+                isSelected: selected,
+                isPending: inFlight,
+                isDisabled: isSelectionDisabled
+            ),
+            action: { commit(option) },
+            trailingAccessory: {
+                if configuration.showsModelFavoriteStars {
+                    favoriteStar(
+                        isFavorite: isFavorite(option),
+                        isInverted: selected,
+                        removeLabel: Text("Remove \(option.displayName) from favorites"),
+                        addLabel: Text("Add \(option.displayName) to favorites")
+                    ) {
+                        onToggleFavorite(option)
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .disabled(isSelectionDisabled)
-            .accessibilityLabel(Text(verbatim: option.displayName))
-            .accessibilityAddTraits(selected ? .isSelected : [])
-
-            if configuration.showsModelFavoriteStars {
-                favoriteStar(
-                    isFavorite: isFavorite(option),
-                    isInverted: selected,
-                    removeLabel: Text("Remove \(option.displayName) from favorites"),
-                    addLabel: Text("Add \(option.displayName) to favorites")
-                ) {
-                    onToggleFavorite(option)
-                }
-            }
-        }
-        .pickerSelectionPill(isSelected: selected)
+        )
     }
 
     private func commit(_ option: ModelCatalogOption) {
@@ -770,40 +731,16 @@ private struct ModelProviderChoice: Identifiable, Hashable {
     let name: String
 }
 
-/// Field chrome for the custom-model entry, matching the model rows' geometry.
+/// Field chrome for the custom-model entry, matching `ListItem`'s row geometry.
 private struct CustomModelFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .appFont(.body)
             .padding(.horizontal, HermesSpacing.s12)
-            .frame(maxWidth: .infinity, minHeight: PickerRowMetrics.minHeight, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
             .background(
                 Color(.tertiarySystemFill),
-                in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
-            )
-    }
-}
-
-/// Row geometry shared by every picker row in Settings, so Default Model and
-/// Default Profile stay visually identical: the model rows and custom entry
-/// here, and the profile rows in `DefaultProfilePickerView`.
-enum PickerRowMetrics {
-    static let minHeight: CGFloat = 48
-    static let cornerRadius: CGFloat = HermesRadius.field
-}
-
-extension View {
-    /// The selected-row treatment shared by the model rows and the profile
-    /// rows: a filled `Color.primary` pill with the inverted foreground that
-    /// fill needs. The caller owns the row's frame, because the pill can wrap
-    /// content that sits outside the row's own button — the model rows'
-    /// favorite star does.
-    func pickerSelectionPill(isSelected: Bool) -> some View {
-        foregroundStyle(isSelected ? Color(.systemBackground) : Color.primary)
-            .padding(.horizontal, HermesSpacing.s12)
-            .background(
-                isSelected ? Color.primary : Color.clear,
-                in: RoundedRectangle(cornerRadius: PickerRowMetrics.cornerRadius, style: .continuous)
+                in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
             )
     }
 }

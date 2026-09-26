@@ -71,7 +71,7 @@ struct InlineAudioPlayerView: View {
                 }
                 .frame(width: 40, height: 40)
             }
-            .buttonStyle(.chatTactile(.icon))
+            .buttonStyle(.hermesPressOnly(.icon))
             .accessibilityLabel(
                 model.isPlaying
                     ? String(localized: "Pause \(title)")

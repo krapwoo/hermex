@@ -11,7 +11,7 @@ struct ToolCallLogRowView: View {
     private var row: ToolCallLogRow { entry.row }
 
     var body: some View {
-        TranscriptLogRowView(
+        DisclosureRow(
             summary: row.summary,
             detail: row.detail,
             isFailure: row.isFailure,

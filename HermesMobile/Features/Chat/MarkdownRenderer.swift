@@ -489,7 +489,7 @@ private struct ChatCodeBlock: View {
                         .frame(width: 36, height: 36)
                         .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
                 }
-                .buttonStyle(.chatTactile(.icon))
+                .buttonStyle(.hermesPressOnly(.icon))
                 .foregroundStyle(SwiftUI.Color.primary)
                 .accessibilityLabel(wrapsCodeBlockLines ? "Disable code line wrapping" : "Enable code line wrapping")
 
