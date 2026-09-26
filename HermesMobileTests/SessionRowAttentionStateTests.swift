@@ -149,13 +149,13 @@ final class SessionRowAttentionStateTests: XCTestCase {
         let session = SessionSummary(sessionId: "s", lastMessageAt: 200)
 
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(
+            SessionListItem.accessibilityStateLabels(
                 for: session, isViewingCachedData: true, isUnread: true
             ),
             ["Unread", "Cached"]
         )
         XCTAssertEqual(
-            SessionRowView.accessibilityStateLabels(
+            SessionListItem.accessibilityStateLabels(
                 for: session, isViewingCachedData: false,
                 attentionState: .approval, isUnread: true
             ),

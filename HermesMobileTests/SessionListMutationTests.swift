@@ -3182,7 +3182,7 @@ final class SessionListMutationTests: XCTestCase {
                 searchText: searchText,
                 selectedProjectID: projectID,
                 automatedVisibility: visibility
-            ).filter(SessionRowView.isActiveStreaming)
+            ).filter(SessionListItem.isActiveStreaming)
             let active = viewModel.visibleActiveSessions(
                 searchText: searchText,
                 selectedProjectID: projectID,

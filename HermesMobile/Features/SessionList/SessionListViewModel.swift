@@ -204,7 +204,7 @@ final class SessionListViewModel {
         selectedProjectID: String?,
         automatedVisibility: AutomatedSessionVisibility = .showAll
     ) -> [SessionSummary] {
-        let activeSessions = sessions.filter(SessionRowView.isActiveStreaming)
+        let activeSessions = sessions.filter(SessionListItem.isActiveStreaming)
         guard !activeSessions.isEmpty else { return [] }
         return visibleSessions(
             among: activeSessions,
@@ -562,7 +562,7 @@ final class SessionListViewModel {
         guard let sessionID = Self.nonEmpty(session.sessionId),
               let timestamp = Self.messageTime(for: session),
               let seen = seenMessageTimes[sessionID],
-              !SessionRowView.isActiveStreaming(session),
+              !SessionListItem.isActiveStreaming(session),
               session.hasPendingUserMessage != true
         else { return false }
         return timestamp > seen
@@ -571,7 +571,7 @@ final class SessionListViewModel {
     func canToggleUnread(_ session: SessionSummary) -> Bool {
         Self.nonEmpty(session.sessionId) != nil
             && Self.messageTime(for: session) != nil
-            && !SessionRowView.isActiveStreaming(session)
+            && !SessionListItem.isActiveStreaming(session)
             && session.hasPendingUserMessage != true
     }
 
