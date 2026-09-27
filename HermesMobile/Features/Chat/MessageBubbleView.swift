@@ -363,8 +363,8 @@ struct MessageBubbleView: View {
         let audioItems = allItems.filter { $0.attachment.inferredIsAudio }
         let gridItems = allItems.filter { !$0.attachment.inferredIsAudio }
         let columns = 2
-        let spacing: CGFloat = 8
-        let cellSize: CGFloat = 118
+        let spacing: CGFloat = HermesSpacing.s8
+        let cellSize: CGFloat = HermesAttachmentSize.messageGridCell
         let contentWidth = CGFloat(columns) * cellSize + CGFloat(columns - 1) * spacing
 
         return VStack(alignment: .trailing, spacing: spacing) {
@@ -586,40 +586,28 @@ private struct GridAttachmentCell: View {
 
     @ViewBuilder
     private var imageCell: some View {
-        ZStack {
+        AttachmentImageTileSurface(width: size, height: size, cornerRadius: HermesRadius.r16) {
             if let localData, let uiImage = UIImage(data: localData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: size, height: size)
-                    .clipped()
             } else if let path = resolvedPath, let loadAttachmentImage {
                 RemoteAttachmentImage(
                     path: path,
                     cacheNamespace: cacheNamespace,
                     loadAttachmentImage: loadAttachmentImage
                 )
-                .frame(width: size, height: size)
-                .clipped()
             } else {
                 fallbackImage
             }
         }
-        .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
-                .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
-        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Image attachment \(attachmentAccessibilityName)")
     }
 
     private var fileCell: some View {
         VStack(spacing: HermesSpacing.s4) {
-            Image(systemName: fileIconName)
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(fileBadgeColor)
+            AttachmentFileGlyph(fileType: fileType, size: HermesIconSize.extraLarge)
 
             Text(fileDisplayName)
                 .appFont(.caption2, weight: .medium)
@@ -627,12 +615,9 @@ private struct GridAttachmentCell: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .truncationMode(.middle)
-                .frame(maxWidth: size - 18)
+                .frame(maxWidth: size - HermesAttachmentSize.messageFileTextInset)
 
-            Text(fileExtensionLabel)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(fileBadgeColor)
-                .lineLimit(1)
+            AttachmentExtensionLabel(fileType: fileType)
         }
         .frame(width: size, height: size)
         .compactCardSurface(cornerRadius: HermesRadius.r12)
@@ -645,17 +630,8 @@ private struct GridAttachmentCell: View {
             .fill(Color(.systemFill))
             .overlay(
                 Image(systemName: "photo")
-                    .font(.system(size: 34, weight: .regular))
+                    .font(.system(size: HermesIconSize.extraLarge, weight: .regular))
                     .foregroundStyle(Color(.tertiaryLabel))
-            )
-    }
-
-    private var placeholderImage: some View {
-        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
-            .fill(Color(.systemFill))
-            .overlay(
-                ProgressView()
-                    .tint(Color(.tertiaryLabel))
             )
     }
 
@@ -685,15 +661,29 @@ private struct GridAttachmentCell: View {
     private var attachmentAccessibilityName: String {
         fileDisplayName == String(localized: "File") ? String(localized: "image") : fileDisplayName
     }
+}
 
-    private var fileIconName: String {
-        fileType.iconName
-    }
-
-    private var fileBadgeColor: Color {
-        fileType.tintColor
+#if DEBUG
+/// Privacy-safe fixture that renders the production message-file attachment cell without a server.
+struct AttachmentMessageTileEvidenceView: View {
+    var body: some View {
+        GridAttachmentCell(
+            attachment: MessageAttachment(
+                name: "quarterly-report.pdf",
+                path: "fixture/quarterly-report.pdf",
+                mime: "application/pdf",
+                size: 2_100_000,
+                isImage: false
+            ),
+            localData: nil,
+            cacheNamespace: "attachment-evidence",
+            loadAttachmentImage: nil,
+            onPreviewAttachment: nil,
+            size: HermesAttachmentSize.messageGridCell
+        )
     }
 }
+#endif
 
 // MARK: - Remote image loading with cookie-aware session
 
@@ -714,7 +704,7 @@ private struct RemoteAttachmentImage: View {
                     .resizable()
                     .scaledToFill()
             } else if !didAttempt {
-                placeholderImage
+                AttachmentLoadingTile()
             } else {
                 fallbackImage
             }
@@ -744,17 +734,8 @@ private struct RemoteAttachmentImage: View {
             .fill(Color(.systemFill))
             .overlay(
                 Image(systemName: "photo")
-                    .font(.system(size: 24, weight: .regular))
+                    .font(.system(size: HermesIconSize.large, weight: .regular))
                     .foregroundStyle(Color(.tertiaryLabel))
-            )
-    }
-
-    private var placeholderImage: some View {
-        RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
-            .fill(Color(.systemFill))
-            .overlay(
-                ProgressView()
-                    .tint(Color(.tertiaryLabel))
             )
     }
 }

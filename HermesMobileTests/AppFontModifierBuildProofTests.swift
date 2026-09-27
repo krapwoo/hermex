@@ -39,4 +39,11 @@ final class AppFontModifierBuildProofTests: XCTestCase {
         }
         XCTAssertNotNil(view)
     }
+
+    func testProductionTokenEvidenceLabAttachmentRouteCompiles() {
+        let view: some View = NavigationStack {
+            ProductionTokenEvidenceLabView(scrollsToAttachmentsOnLaunch: true)
+        }
+        XCTAssertNotNil(view)
+    }
 }

@@ -58,7 +58,11 @@ struct HermesMobileApp: App {
             // Launch argument hook so the token-evidence fixture can be opened
             // without UI navigation (agent-driven screenshot capture):
             // `xcrun simctl launch <udid> com.uzairansar.hermesmobile --production-token-lab`
-            if ProcessInfo.processInfo.arguments.contains("--production-token-lab-shadow") {
+            if ProcessInfo.processInfo.arguments.contains("--production-token-lab-attachments") {
+                NavigationStack {
+                    ProductionTokenEvidenceLabView(scrollsToAttachmentsOnLaunch: true)
+                }
+            } else if ProcessInfo.processInfo.arguments.contains("--production-token-lab-shadow") {
                 NavigationStack {
                     ProductionTokenEvidenceLabView(scrollsToShadowOnLaunch: true)
                 }

@@ -14,22 +14,28 @@ struct AttachmentFileType {
         switch ext {
         case "csv", "tsv", "xls", "xlsx":
             iconName = "tablecells"
-            tintColor = .green
+            tintColor = HermesColorRamp.Green.s500.color
         case "json", "md", "txt", "log", "xml", "yaml", "yml":
             iconName = "doc.text"
-            tintColor = .blue
+            tintColor = HermesColorRamp.Blue.s500.color
         case "pdf":
             iconName = "doc.richtext"
-            tintColor = .red
+            tintColor = HermesColorRamp.Red.s500.color
         case "zip", "tar", "gz", "tgz":
             iconName = "archivebox"
-            tintColor = .accentColor
+            tintColor = HermesColorRamp.Orange.s500.color
         default:
             iconName = "doc"
-            tintColor = .accentColor
+            tintColor = HermesColorRamp.Neutral.s500.color
         }
 
         let uppercased = ext.uppercased()
         extensionLabel = uppercased.isEmpty ? String(localized: "FILE") : String(uppercased.prefix(5))
+    }
+
+    /// The one derivation point for a file type's subtle badge fill, so a caller that wants a
+    /// tinted panel behind its icon (`AttachmentFileBadge`) never hand-computes its own opacity.
+    var badgeFill: Color {
+        tintColor.opacity(0.15)
     }
 }

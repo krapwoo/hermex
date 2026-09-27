@@ -30,6 +30,30 @@ final class HermesSpacingTests: XCTestCase {
         XCTAssertEqual(HermesIconSize.small, 16)
         XCTAssertEqual(HermesIconSize.medium, 20)
         XCTAssertEqual(HermesIconSize.large, 24)
+        XCTAssertEqual(HermesIconSize.extraLarge, 32)
+    }
+
+    func testAttachmentSizeScaleMatchesApprovedValues() {
+        XCTAssertEqual(HermesAttachmentSize.compactPreview, 30)
+        XCTAssertEqual(HermesAttachmentSize.messageGridCell, 118)
+        XCTAssertEqual(HermesAttachmentSize.composerImage, 96)
+        XCTAssertEqual(HermesAttachmentSize.composerImageAccessibility, 108)
+        XCTAssertEqual(HermesAttachmentSize.fileIconPanelWidth, 58)
+        XCTAssertEqual(HermesAttachmentSize.fileIconPanelHeight, 68)
+        XCTAssertEqual(HermesAttachmentSize.fileIconPanelWidthAccessibility, 76)
+        XCTAssertEqual(HermesAttachmentSize.fileIconPanelHeightAccessibility, 84)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTextWidth, 128)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTextWidthAccessibility, 160)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTileWidth, 222)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTileWidthAccessibility, 280)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTileMinHeight, 92)
+        XCTAssertEqual(HermesAttachmentSize.composerFileTileMinHeightAccessibility, 112)
+        XCTAssertEqual(HermesAttachmentSize.composerStripHeight, 108)
+        XCTAssertEqual(HermesAttachmentSize.composerStripHeightAccessibility, 132)
+        XCTAssertEqual(HermesAttachmentSize.messageFileTextInset, 18)
+        XCTAssertEqual(HermesAttachmentSize.removeControl, 24)
+        XCTAssertEqual(HermesAttachmentSize.removeOverlap, 6)
+        XCTAssertEqual(HermesAttachmentSize.accessibilityVerticalPadding, 10)
     }
 
     func testCustomScreenFamiliesUseSemanticHorizontalInset() throws {

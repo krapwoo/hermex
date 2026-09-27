@@ -30,7 +30,9 @@ struct ComposerAttachmentStripView: View {
     }
 
     private var stripHeight: CGFloat {
-        dynamicTypeSize.isAccessibilitySize ? 132 : 108
+        dynamicTypeSize.isAccessibilitySize
+            ? HermesAttachmentSize.composerStripHeightAccessibility
+            : HermesAttachmentSize.composerStripHeight
     }
 }
 
@@ -40,7 +42,7 @@ struct ComposerAttachmentPillPreview: View {
     let attachments: [PendingAttachment]
     let onPreview: (PendingAttachment) -> Void
 
-    private let tileSize: CGFloat = 30
+    private let tileSize: CGFloat = HermesAttachmentSize.compactPreview
     private let visibleLimit = 3
 
     var body: some View {
@@ -58,7 +60,7 @@ struct ComposerAttachmentPillPreview: View {
 
                 if attachments.count > visibleLimit {
                     Text("+\(attachments.count - visibleLimit)")
-                        .font(.system(size: 11, weight: .bold))
+                        .appFont(.caption2, weight: .bold)
                         .foregroundStyle(Color(.secondaryLabel))
                         .frame(width: tileSize, height: tileSize)
                         .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
@@ -79,7 +81,7 @@ struct ComposerAttachmentPillPreview: View {
                     .scaledToFill()
             } else {
                 Image(systemName: attachment.isImage ? "photo" : "doc")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: HermesIconSize.xs, weight: .semibold))
                     .foregroundStyle(Color(.secondaryLabel))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(.tertiarySystemFill))
@@ -108,8 +110,8 @@ private struct ComposerAttachmentThumbnailView: View {
 
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .frame(width: 24, height: 24)
+                    .font(.system(size: HermesIconSize.xs, weight: .bold))
+                    .frame(width: HermesAttachmentSize.removeControl, height: HermesAttachmentSize.removeControl)
                     .background(Circle().fill(Color(.systemBackground)))
                     .foregroundStyle(Color(.label))
                     .overlay(Circle().stroke(Color(.separator).opacity(0.35), lineWidth: 0.5))
@@ -118,7 +120,10 @@ private struct ComposerAttachmentThumbnailView: View {
                 .icon,
                 shadow: HermesButtonPressOnlyStyle.Shadow(resting: .controlSubtleResting, pressed: .controlSubtlePressed)
             ))
-            .offset(x: RTLLayout.horizontalOffset(6, isRightToLeft: layoutDirection == .rightToLeft), y: -6)
+            .offset(
+                x: RTLLayout.horizontalOffset(HermesAttachmentSize.removeOverlap, isRightToLeft: layoutDirection == .rightToLeft),
+                y: -HermesAttachmentSize.removeOverlap
+            )
             .accessibilityLabel("Remove attachment \(attachment.name)")
         }
     }
@@ -134,44 +139,36 @@ private struct ComposerAttachmentThumbnailView: View {
 
     @ViewBuilder
     private var imagePreview: some View {
-        Group {
+        AttachmentImageTileSurface(width: imagePreviewSize, height: imagePreviewSize, cornerRadius: HermesRadius.r16) {
             if let thumbnailData = attachment.thumbnailData,
                let uiImage = UIImage(data: thumbnailData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
             } else {
-                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
                     .fill(Color(.systemFill))
                     .overlay(
                         Image(systemName: "photo")
-                            .font(.system(size: 30, weight: .regular))
+                            .font(.system(size: HermesIconSize.extraLarge, weight: .regular))
                             .foregroundStyle(Color(.tertiaryLabel))
                     )
             }
         }
-        .frame(width: imagePreviewSize, height: imagePreviewSize)
-        .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
-        .overlay(previewBorder(cornerRadius: HermesRadius.r16))
         .accessibilityLabel("Image attachment \(attachment.name)")
     }
 
     private var filePreview: some View {
         HStack(alignment: .center, spacing: HermesSpacing.s12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
-                    .fill(fileBadgeColor.opacity(0.15))
-
-                VStack(spacing: HermesSpacing.s4) {
-                    Image(systemName: fileIconName)
-                        .font(.system(size: 24, weight: .semibold))
-                    Text(fileExtensionLabel)
-                        .font(.system(size: 9, weight: .bold))
-                        .lineLimit(1)
-                }
-                .foregroundStyle(fileBadgeColor)
-            }
-            .frame(width: 58, height: 68)
+            AttachmentFileBadge(
+                fileType: fileType,
+                width: usesAccessibilityLayout
+                    ? HermesAttachmentSize.fileIconPanelWidthAccessibility
+                    : HermesAttachmentSize.fileIconPanelWidth,
+                height: usesAccessibilityLayout
+                    ? HermesAttachmentSize.fileIconPanelHeightAccessibility
+                    : HermesAttachmentSize.fileIconPanelHeight
+            )
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(attachment.name)
@@ -186,20 +183,20 @@ private struct ComposerAttachmentThumbnailView: View {
                     .foregroundStyle(Color(.secondaryLabel))
                     .lineLimit(usesAccessibilityLayout ? 2 : 1)
             }
-            .frame(width: usesAccessibilityLayout ? 160 : 128, alignment: .leading)
+            .frame(
+                width: usesAccessibilityLayout
+                    ? HermesAttachmentSize.composerFileTextWidthAccessibility
+                    : HermesAttachmentSize.composerFileTextWidth,
+                alignment: .leading
+            )
         }
         .padding(.horizontal, HermesSpacing.s12)
-        .padding(.vertical, usesAccessibilityLayout ? 10 : 0)
-        .frame(width: usesAccessibilityLayout ? 260 : 222)
-        .frame(minHeight: usesAccessibilityLayout ? 112 : 92)
+        .padding(.vertical, usesAccessibilityLayout ? HermesAttachmentSize.accessibilityVerticalPadding : 0)
+        .frame(width: usesAccessibilityLayout ? HermesAttachmentSize.composerFileTileWidthAccessibility : HermesAttachmentSize.composerFileTileWidth)
+        .frame(minHeight: usesAccessibilityLayout ? HermesAttachmentSize.composerFileTileMinHeightAccessibility : HermesAttachmentSize.composerFileTileMinHeight)
         .compactCardSurface(cornerRadius: HermesRadius.r16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(attachment.name), \(fileDetailText)")
-    }
-
-    private func previewBorder(cornerRadius: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .stroke(Color(.separator).opacity(0.25), lineWidth: 0.5)
     }
 
     private var fileType: AttachmentFileType {
@@ -208,14 +205,6 @@ private struct ComposerAttachmentThumbnailView: View {
 
     private var fileExtensionLabel: String {
         fileType.extensionLabel
-    }
-
-    private var fileIconName: String {
-        fileType.iconName
-    }
-
-    private var fileBadgeColor: Color {
-        fileType.tintColor
     }
 
     private var fileDetailText: String {
@@ -231,6 +220,6 @@ private struct ComposerAttachmentThumbnailView: View {
     }
 
     private var imagePreviewSize: CGFloat {
-        usesAccessibilityLayout ? 108 : 96
+        usesAccessibilityLayout ? HermesAttachmentSize.composerImageAccessibility : HermesAttachmentSize.composerImage
     }
 }

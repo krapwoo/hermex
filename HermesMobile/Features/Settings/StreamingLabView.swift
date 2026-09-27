@@ -212,11 +212,12 @@ struct StreamingLabView: View {
 }
 
 /// Debug-only visual fixture (token-adoption evidence capture): renders the
-/// complete `AppFont.Role` matrix and a privacy-safe copy of the session
-/// list's elevated Chat control so both can be screenshotted without an
-/// authenticated server or real session data.
+/// complete `AppFont.Role` matrix, a privacy-safe copy of the session list's
+/// elevated Chat control, and the production Attachment family so they can be
+/// screenshotted without an authenticated server or real session data.
 struct ProductionTokenEvidenceLabView: View {
     private static let chatControlID = "production-token-evidence-chat-control"
+    private static let attachmentID = "production-token-evidence-attachments"
 
     /// Visual order only (largest role first); `AppFontModifierBuildProofTests`
     /// proves this set matches `AppFont.Role.allCases` with no omissions or
@@ -237,9 +238,14 @@ struct ProductionTokenEvidenceLabView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     private let scrollsToShadowOnLaunch: Bool
+    private let scrollsToAttachmentsOnLaunch: Bool
 
-    init(scrollsToShadowOnLaunch: Bool = false) {
+    init(
+        scrollsToShadowOnLaunch: Bool = false,
+        scrollsToAttachmentsOnLaunch: Bool = false
+    ) {
         self.scrollsToShadowOnLaunch = scrollsToShadowOnLaunch
+        self.scrollsToAttachmentsOnLaunch = scrollsToAttachmentsOnLaunch
     }
 
     var body: some View {
@@ -250,13 +256,19 @@ struct ProductionTokenEvidenceLabView: View {
                     Divider()
                     chatControlSpecimen
                         .id(Self.chatControlID)
+                    Divider()
+                    attachmentSpecimen
+                        .id(Self.attachmentID)
                 }
                 .padding(HermesSpacing.s16)
             }
             .task {
-                guard scrollsToShadowOnLaunch else { return }
+                guard scrollsToShadowOnLaunch || scrollsToAttachmentsOnLaunch else { return }
                 await Task.yield()
-                proxy.scrollTo(Self.chatControlID, anchor: .bottom)
+                proxy.scrollTo(
+                    scrollsToAttachmentsOnLaunch ? Self.attachmentID : Self.chatControlID,
+                    anchor: .bottom
+                )
             }
         }
         .background(Color(.systemBackground))
@@ -314,6 +326,64 @@ struct ProductionTokenEvidenceLabView: View {
             )
         }
     }
+
+    private var attachmentSpecimen: some View {
+        VStack(alignment: .leading, spacing: HermesSpacing.s16) {
+            Text("Attachment family")
+                .appFont(.headline, weight: .semibold)
+
+            HStack(alignment: .top, spacing: HermesSpacing.s24) {
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                    Text("Message file")
+                        .appFont(.caption)
+                        .foregroundStyle(Color(.secondaryLabel))
+                    AttachmentMessageTileEvidenceView()
+                }
+
+                VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+                    Text("Loading image")
+                        .appFont(.caption)
+                        .foregroundStyle(Color(.secondaryLabel))
+                    AttachmentImageTileSurface(
+                        width: HermesAttachmentSize.messageGridCell,
+                        height: HermesAttachmentSize.messageGridCell,
+                        cornerRadius: HermesRadius.r16
+                    ) {
+                        AttachmentLoadingTile()
+                    }
+                }
+            }
+
+            Text("Composer previews")
+                .appFont(.caption)
+                .foregroundStyle(Color(.secondaryLabel))
+
+            ComposerAttachmentStripView(
+                attachments: Self.attachmentSamples,
+                onRemove: { _ in },
+                onPreview: { _ in }
+            )
+        }
+    }
+
+    private static let attachmentSamples: [PendingAttachment] = [
+        PendingAttachment(
+            id: UUID(uuidString: "A7C38F5A-1257-46B3-8D1A-405E285B3188")!,
+            name: "quarterly-report.pdf",
+            path: "fixture/quarterly-report.pdf",
+            mime: "application/pdf",
+            size: 2_100_000,
+            isImage: false
+        ),
+        PendingAttachment(
+            id: UUID(uuidString: "EEC3040D-9324-44AA-8908-20291964BD0E")!,
+            name: "workspace-preview.png",
+            path: "fixture/workspace-preview.png",
+            mime: "image/png",
+            size: 480_000,
+            isImage: true
+        ),
+    ]
 }
 
 #Preview {
