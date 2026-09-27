@@ -74,7 +74,9 @@ struct BotQuickRepliesEditorView: View {
         .navigationTitle("Quick Replies")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !replies.isEmpty { EditButton() }
+            TopNav(trailingPrimary: {
+                if !replies.isEmpty { EditButton() }
+            })
         }
         .environment(\.editMode, $editMode)
         .onChange(of: replies.isEmpty) { _, isEmpty in
@@ -155,16 +157,18 @@ private struct BotQuickReplyEditSheet: View {
             .navigationTitle(isNew ? Text("Add Reply") : Text("Edit Reply"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave(trimmed)
-                        dismiss()
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: { Button("Cancel") { dismiss() } },
+                    trailingPrimary: {
+                        Button("Save") {
+                            onSave(trimmed)
+                            dismiss()
+                        }
+                        .disabled(trimmed.isEmpty)
                     }
-                    .disabled(trimmed.isEmpty)
-                }
+                )
             }
             .onAppear { isFocused = true }
         }

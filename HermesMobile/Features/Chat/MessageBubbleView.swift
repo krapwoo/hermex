@@ -586,7 +586,7 @@ private struct GridAttachmentCell: View {
 
     @ViewBuilder
     private var imageCell: some View {
-        AttachmentImageTileSurface(width: size, height: size, cornerRadius: HermesRadius.r16) {
+        AttachmentImageTileSurface(width: size, height: size) {
             if let localData, let uiImage = UIImage(data: localData) {
                 Image(uiImage: uiImage)
                     .resizable()
@@ -620,7 +620,7 @@ private struct GridAttachmentCell: View {
             AttachmentExtensionLabel(fileType: fileType)
         }
         .frame(width: size, height: size)
-        .compactCardSurface(cornerRadius: HermesRadius.r12)
+        .compactCardSurface()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(fileDisplayName), \(fileExtensionLabel)")
     }

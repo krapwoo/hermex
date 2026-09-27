@@ -66,10 +66,12 @@ struct AttachmentLoadingTile: View {
 /// The image-tile outer surface both the chat grid cell and the composer's pending-attachment
 /// preview clip their thumbnail content into: a fixed frame, rounded clip, and Compact Card's
 /// hairline border with no fill, since the image content beneath already covers the surface.
+/// `cornerRadius` defaults to `HermesRadius.card` — the outer radius every normal Attachment
+/// surface shares with Card — so a caller only overrides it for a deliberately different tile.
 struct AttachmentImageTileSurface<Content: View>: View {
     let width: CGFloat
     let height: CGFloat
-    let cornerRadius: CGFloat
+    var cornerRadius: CGFloat = HermesRadius.card
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -77,5 +79,22 @@ struct AttachmentImageTileSurface<Content: View>: View {
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .compactCardSurface(cornerRadius: cornerRadius, fill: .clear)
+    }
+}
+
+/// The Attachment remove/close control's opaque light/dark mapping: background, border, and
+/// content (the "xmark" glyph) each a Neutral ramp step, never `.opacity`, so the chip reads
+/// correctly floating over an attachment thumbnail in either appearance.
+enum AttachmentRemoveControlColors {
+    static var background: Color {
+        HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Neutral.s100, dark: HermesColorRamp.Neutral.s800)
+    }
+
+    static var border: Color {
+        HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Neutral.s300, dark: HermesColorRamp.Neutral.s700)
+    }
+
+    static var content: Color {
+        HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Neutral.s900, dark: HermesColorRamp.Neutral.s100)
     }
 }

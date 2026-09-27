@@ -72,19 +72,20 @@ struct ComposerWorkspacePickerSheet: View {
             .navigationTitle("Choose Workspace")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if managementServer != nil {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Manage") {
-                            showsManagerSheet = true
+                TopNav(
+                    leadingPrimary: {
+                        if managementServer != nil {
+                            Button("Manage") {
+                                showsManagerSheet = true
+                            }
+                        }
+                    },
+                    trailingPrimary: {
+                        Button("Done") {
+                            dismiss()
                         }
                     }
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+                )
             }
             .task(id: prefix) {
                 if !prefix.isEmpty {

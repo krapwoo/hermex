@@ -19,19 +19,23 @@ import SwiftUI
             .navigationTitle("New Group Chat")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(naming && !creator.locked ? "Back" : "Cancel",
-                           systemImage: naming && !creator.locked ? "chevron.backward" : "xmark") {
-                        if naming && !creator.locked { naming = false; focused = .members }
-                        else { dismiss() }
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button(naming && !creator.locked ? "Back" : "Cancel",
+                               systemImage: naming && !creator.locked ? "chevron.backward" : "xmark") {
+                            if naming && !creator.locked { naming = false; focused = .members }
+                            else { dismiss() }
+                        }
+                    },
+                    trailingPrimary: {
+                        if !naming {
+                            Button("Next") { naming = true; focused = .name }
+                                .disabled(!creator.mayContinue)
+                        }
                     }
-                }
-                if !naming {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Next") { naming = true; focused = .name }
-                            .disabled(!creator.mayContinue)
-                    }
-                }
+                )
             }
             .task { focused = .members }
             .onChange(of: creator.created) {

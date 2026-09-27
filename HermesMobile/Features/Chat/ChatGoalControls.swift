@@ -82,19 +82,19 @@ struct GoalSubmissionSheet: View {
                 .navigationTitle("Set Goal")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            dismiss()
+                    TopNav(
+                        leadingPlacement: .cancellationAction,
+                        trailingPlacement: .confirmationAction,
+                        leadingPrimary: { Button("Cancel") { dismiss() } },
+                        trailingPrimary: {
+                            Button("Set") {
+                                let submittedGoal = goalDraft
+                                dismiss()
+                                onSubmit(submittedGoal)
+                            }
+                            .disabled(goalDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
                         }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Set") {
-                            let submittedGoal = goalDraft
-                            dismiss()
-                            onSubmit(submittedGoal)
-                        }
-                        .disabled(goalDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
-                    }
+                    )
                 }
         }
         .presentationDetents([.medium, .large])

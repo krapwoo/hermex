@@ -59,7 +59,7 @@ struct GitDiffView: View {
                 .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+                    TopNav(trailingPrimary: { Button("Done") { dismiss() } })
                 }
                 .safeAreaInset(edge: .bottom) {
                     let selected = selectedRowIDs

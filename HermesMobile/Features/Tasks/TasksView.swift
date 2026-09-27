@@ -24,7 +24,7 @@ struct TasksView: View {
         content
             .navigationTitle("Tasks")
             .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
+                TopNav(trailingPrimary: {
                     Button {
                         viewModel.clearActionError()
                         isPresentingCreateTask = true
@@ -43,7 +43,7 @@ struct TasksView: View {
                         }
                     }
                     .disabled(viewModel.isLoading)
-                }
+                })
             }
             .sheet(isPresented: $isPresentingCreateTask, onDismiss: {
                 // A failed create leaves its message behind; without this the

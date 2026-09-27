@@ -61,6 +61,69 @@ final class AttachmentTileTests: XCTestCase {
         XCTAssertEqual(surface.cornerRadius, HermesRadius.r16)
     }
 
+    func testImageTileSurfaceDefaultsItsCornerRadiusToTheSharedCardToken() {
+        let surface = AttachmentImageTileSurface(
+            width: HermesAttachmentSize.messageGridCell,
+            height: HermesAttachmentSize.messageGridCell
+        ) { Color.clear }
+
+        XCTAssertEqual(surface.cornerRadius, HermesRadius.card)
+    }
+
+    // MARK: - Attachment outer-surface radius derives from Card (issue #607)
+
+    func testCompactCardSurfaceDefaultsItsCornerRadiusToTheSharedCardToken() throws {
+        let cardSource = try source("HermesMobile/Features/Shared/HermesCard.swift")
+
+        XCTAssertTrue(cardSource.contains("func compactCardSurface(cornerRadius: CGFloat = HermesRadius.card"))
+    }
+
+    func testMessageFileCellNoLongerPicksItsOwnIndependentOuterRadius() throws {
+        let messageSource = try source("HermesMobile/Features/Chat/MessageBubbleView.swift")
+
+        XCTAssertFalse(messageSource.contains(".compactCardSurface(cornerRadius:"))
+    }
+
+    func testComposerFilePreviewNoLongerPicksItsOwnIndependentOuterRadius() throws {
+        let composerSource = try source("HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift")
+
+        XCTAssertFalse(composerSource.contains(".compactCardSurface(cornerRadius:"))
+    }
+
+    func testComposerAndMessageImageTilesNoLongerPassAnIndependentOuterRadius() throws {
+        let messageSource = try source("HermesMobile/Features/Chat/MessageBubbleView.swift")
+        let composerSource = try source("HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift")
+
+        XCTAssertFalse(messageSource.contains("AttachmentImageTileSurface(width: size, height: size, cornerRadius:"))
+        XCTAssertFalse(composerSource.contains("AttachmentImageTileSurface(width: imagePreviewSize, height: imagePreviewSize, cornerRadius:"))
+    }
+
+    // MARK: - Attachment remove/close control uses opaque Hermes tokens (issue #607)
+
+    func testRemoveControlColorsAreDerivedFromOpaqueNeutralRampSteps() {
+        // Distinct opaque colors per appearance, never `.opacity`-derived, satisfy the contract at
+        // the API surface: each resolves to a concrete Color backed by a Neutral ramp step pair.
+        XCTAssertNotNil(AttachmentRemoveControlColors.background)
+        XCTAssertNotNil(AttachmentRemoveControlColors.border)
+        XCTAssertNotNil(AttachmentRemoveControlColors.content)
+    }
+
+    func testComposerRemoveControlUsesTheSharedOpaqueTokensWithNoOpacityRecipe() throws {
+        let composerSource = try source("HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift")
+
+        guard let start = composerSource.range(of: "Button(action: onRemove)"),
+              let end = composerSource.range(of: "}\n            .buttonStyle(.hermesPressOnly(\n                .icon,")
+        else {
+            throw XCTSkip("Remove control button not found in the expected shape")
+        }
+        let removeControlSource = String(composerSource[start.lowerBound..<end.lowerBound])
+
+        XCTAssertTrue(removeControlSource.contains("AttachmentRemoveControlColors.background"))
+        XCTAssertTrue(removeControlSource.contains("AttachmentRemoveControlColors.border"))
+        XCTAssertTrue(removeControlSource.contains("AttachmentRemoveControlColors.content"))
+        XCTAssertFalse(removeControlSource.contains(".opacity("))
+    }
+
     func testFileBadgeComposesFromTheSharedGlyphExtensionLabelAndBadgeFillDerivation() throws {
         let familySource = try source("HermesMobile/Features/Shared/AttachmentTile.swift")
 

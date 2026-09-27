@@ -193,29 +193,32 @@ struct CronJobEditorSheet: View {
                 )
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(isSaving)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        Task {
-                            if await onSave(draft) {
-                                dismiss()
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                        .disabled(isSaving)
+                    },
+                    trailingPrimary: {
+                        Button {
+                            Task {
+                                if await onSave(draft) {
+                                    dismiss()
+                                }
+                            }
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                            } else {
+                                Text(saveTitle)
                             }
                         }
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                        } else {
-                            Text(saveTitle)
-                        }
+                        .disabled(isSaving || draft.validationMessage != nil)
                     }
-                    .disabled(isSaving || draft.validationMessage != nil)
-                }
+                )
             }
         }
         .adaptiveFormPresentation()

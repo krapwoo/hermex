@@ -46,6 +46,9 @@
 		C0AFF00000000000000000B2 /* AttachmentFileTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */; };
 		C0A771000000000000000A2 /* AttachmentTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A771000000000000000A1 /* AttachmentTile.swift */; };
 		C0A771000000000000000B2 /* AttachmentTileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A771000000000000000B1 /* AttachmentTileTests.swift */; };
+		C65154736056FF1DA6C53F3B /* TopNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359781BF3BDF18ADA4B7A9BE /* TopNav.swift */; };
+		0DFC3D8880ECA24C715D75D9 /* TopNavTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3343F3A98D09C404B8C86215 /* TopNavTests.swift */; };
+		43B9F4CE05D2A1174904CF9E /* TopNavMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476AB1D21FC1C018CF9F952C /* TopNavMigrationTests.swift */; };
 		C05CE00000000000000000A2 /* SkeletonPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */; };
 		C05CE00000000000000000B2 /* SkeletonPlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */; };
 		C0CAD00000000000000000A2 /* HermesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAD00000000000000000A1 /* HermesCard.swift */; };
@@ -1015,6 +1018,9 @@
 		C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AttachmentFileTypeTests.swift; sourceTree = "<group>"; };
 		C0A771000000000000000A1 /* AttachmentTile.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AttachmentTile.swift; sourceTree = "<group>"; };
 		C0A771000000000000000B1 /* AttachmentTileTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AttachmentTileTests.swift; sourceTree = "<group>"; };
+		359781BF3BDF18ADA4B7A9BE /* TopNav.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopNav.swift; sourceTree = "<group>"; };
+		3343F3A98D09C404B8C86215 /* TopNavTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopNavTests.swift; sourceTree = "<group>"; };
+		476AB1D21FC1C018CF9F952C /* TopNavMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopNavMigrationTests.swift; sourceTree = "<group>"; };
 		C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholder.swift; sourceTree = "<group>"; };
 		C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholderTests.swift; sourceTree = "<group>"; };
 		C0CAD00000000000000000A1 /* HermesCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesCard.swift; sourceTree = "<group>"; };
@@ -1454,6 +1460,8 @@
 				C0CAF00000000000000000B1 /* TagTests.swift */,
 				C0AFF00000000000000000B1 /* AttachmentFileTypeTests.swift */,
 				C0A771000000000000000B1 /* AttachmentTileTests.swift */,
+				3343F3A98D09C404B8C86215 /* TopNavTests.swift */,
+				476AB1D21FC1C018CF9F952C /* TopNavMigrationTests.swift */,
 				C05CE00000000000000000B1 /* SkeletonPlaceholderTests.swift */,
 				C0CAD00000000000000000B1 /* HermesCardTests.swift */,
 				C0CAD00000000000000000C1 /* SessionListItemCompositionTests.swift */,
@@ -1709,6 +1717,7 @@
 				C0CAF00000000000000000A1 /* Tag.swift */,
 				C0AFF00000000000000000A1 /* AttachmentFileType.swift */,
 				C0A771000000000000000A1 /* AttachmentTile.swift */,
+				359781BF3BDF18ADA4B7A9BE /* TopNav.swift */,
 				C05CE00000000000000000A1 /* SkeletonPlaceholder.swift */,
 				C0CAD00000000000000000A1 /* HermesCard.swift */,
 				C0BA4000000000000000A1 /* Banner.swift */,
@@ -2640,6 +2649,7 @@
 				C0CAF00000000000000000A2 /* Tag.swift in Sources */,
 				C0AFF00000000000000000A2 /* AttachmentFileType.swift in Sources */,
 				C0A771000000000000000A2 /* AttachmentTile.swift in Sources */,
+				C65154736056FF1DA6C53F3B /* TopNav.swift in Sources */,
 				C05CE00000000000000000A2 /* SkeletonPlaceholder.swift in Sources */,
 				C0CAD00000000000000000A2 /* HermesCard.swift in Sources */,
 				C0BA4000000000000000A2 /* Banner.swift in Sources */,
@@ -2811,6 +2821,8 @@
 				C0CAF00000000000000000B2 /* TagTests.swift in Sources */,
 				C0AFF00000000000000000B2 /* AttachmentFileTypeTests.swift in Sources */,
 				C0A771000000000000000B2 /* AttachmentTileTests.swift in Sources */,
+				0DFC3D8880ECA24C715D75D9 /* TopNavTests.swift in Sources */,
+				43B9F4CE05D2A1174904CF9E /* TopNavMigrationTests.swift in Sources */,
 				C05CE00000000000000000B2 /* SkeletonPlaceholderTests.swift in Sources */,
 				C0CAD00000000000000000B2 /* HermesCardTests.swift in Sources */,
 				C0CAD00000000000000000C2 /* SessionListItemCompositionTests.swift in Sources */,

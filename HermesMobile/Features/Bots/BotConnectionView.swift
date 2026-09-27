@@ -81,7 +81,7 @@ import Observation
         }
         .navigationTitle("Hermes connection")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } } }
+        .toolbar { TopNav(leadingPlacement: .cancellationAction, leadingPrimary: { Button("Done") { dismiss() } }) }
         .task { setup.load(); await setup.checkStatus() }
         .onDisappear { operation?.cancel(); statusCheck?.cancel(); setup.cancel() }
         .confirmationDialog("Remove this connection from Hermex?", isPresented: $confirmingRemoval, titleVisibility: .visible) {

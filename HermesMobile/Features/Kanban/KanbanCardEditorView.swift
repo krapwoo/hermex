@@ -227,22 +227,26 @@ struct KanbanCardEditorView: View {
 
     @ToolbarContentBuilder
     private var editorToolbar: some ToolbarContent {
-        ToolbarItem(placement: .cancellationAction) {
-            Button("Cancel") { dismiss() }
-                .disabled(state.submission.isInFlight)
-        }
-        ToolbarItem(placement: .confirmationAction) {
-            Button {
-                beginSubmit()
-            } label: {
-                if state.submission.isInFlight {
-                    ProgressView().accessibilityLabel(Text("Saving"))
-                } else {
-                    Text(state.isEditing ? "Save" : "Create")
+        TopNav(
+            leadingPlacement: .cancellationAction,
+            trailingPlacement: .confirmationAction,
+            leadingPrimary: {
+                Button("Cancel") { dismiss() }
+                    .disabled(state.submission.isInFlight)
+            },
+            trailingPrimary: {
+                Button {
+                    beginSubmit()
+                } label: {
+                    if state.submission.isInFlight {
+                        ProgressView().accessibilityLabel(Text("Saving"))
+                    } else {
+                        Text(state.isEditing ? "Save" : "Create")
+                    }
                 }
+                .disabled(!allowsMutation || !state.canSubmit)
             }
-            .disabled(!allowsMutation || !state.canSubmit)
-        }
+        )
     }
 
     private func beginSubmit() {

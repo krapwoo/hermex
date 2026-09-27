@@ -198,11 +198,11 @@ struct CronJobProfilePickerSheet: View {
                 prompt: "Search profiles"
             )
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Cancel") {
                         dismiss()
                     }
-                }
+                })
             }
         }
         .adaptiveFormPresentation()

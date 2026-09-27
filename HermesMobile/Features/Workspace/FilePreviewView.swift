@@ -72,7 +72,7 @@ struct FilePreviewView: View {
         .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
+            TopNav(trailingPrimary: {
                 if case let .text(file) = viewModel.preview, !isMarkdownFile {
                     sourceActionsMenu(content: file.content ?? "")
                 }
@@ -96,7 +96,7 @@ struct FilePreviewView: View {
                     .disabled(exportActionsAreDisabled)
                     .accessibilityLabel("Export file")
                 }
-            }
+            })
         }
         .task {
             await loadFile()

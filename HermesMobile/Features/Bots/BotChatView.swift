@@ -209,43 +209,45 @@ import SwiftUI
         .toolbar {
             // The bot's face and name sit in one pill beside Back, and that pill is the
             // way into its profile. iOS 26 draws the toolbar glass; older systems get a material.
-            ToolbarItem(placement: .topBarLeading) {
-                Button { showingProfileEditor = true } label: {
-                    HStack(spacing: HermesSpacing.s8) {
-                        BotAvatarView(profile: model.profile,
-                                      avatar: BotAvatarStore.shared.images(connectionID: model.connection.id)[model.profile.id],
-                                      size: 30, motion: titleFaceMotion, expression: model.titleFace.expression)
-                        Text(model.profile.name).appFont(.headline).foregroundStyle(.primary).lineLimit(1)
+            TopNav(
+                leadingPrimary: {
+                    Button { showingProfileEditor = true } label: {
+                        HStack(spacing: HermesSpacing.s8) {
+                            BotAvatarView(profile: model.profile,
+                                          avatar: BotAvatarStore.shared.images(connectionID: model.connection.id)[model.profile.id],
+                                          size: 30, motion: titleFaceMotion, expression: model.titleFace.expression)
+                            Text(model.profile.name).appFont(.headline).foregroundStyle(.primary).lineLimit(1)
+                        }
+                        .modifier(BotChatTitlePillFallback())
                     }
-                    .modifier(BotChatTitlePillFallback())
-                }
-                .accessibilityLabel(model.profile.name)
-                .accessibilityValue(model.titleFace.accessibilityValue ?? "")
-                .accessibilityHint(Text("Opens this bot’s profile."))
-            }
-            if model.delegatedWork.hasWorkers {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingDelegatedWork = true
-                        Task { await model.delegatedWork.refresh() }
-                    } label: {
-                        Image(systemName: "person.2")
-                            .overlay(alignment: .topTrailing) {
-                                Text("\(min(model.delegatedWork.activeCount, 99))")
-                                    .font(.system(size: 9, weight: .bold))
-                                    .foregroundStyle(.black)
-                                    .frame(minWidth: 15, minHeight: 15)
-                                    .background(.green, in: Capsule())
-                                    .offset(x: 7, y: -7)
-                            }
+                    .accessibilityLabel(model.profile.name)
+                    .accessibilityValue(model.titleFace.accessibilityValue ?? "")
+                    .accessibilityHint(Text("Opens this bot’s profile."))
+                },
+                trailingPrimary: {
+                    if model.delegatedWork.hasWorkers {
+                        Button {
+                            showingDelegatedWork = true
+                            Task { await model.delegatedWork.refresh() }
+                        } label: {
+                            Image(systemName: "person.2")
+                                .overlay(alignment: .topTrailing) {
+                                    Text("\(min(model.delegatedWork.activeCount, 99))")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(.black)
+                                        .frame(minWidth: 15, minHeight: 15)
+                                        .background(.green, in: Capsule())
+                                        .offset(x: 7, y: -7)
+                                }
+                        }
+                        .accessibilityLabel("Delegated work, \(model.delegatedWork.activeCount) active workers")
+                        .accessibilityHint(Text("Shows worker status, recent output, and interrupt controls."))
                     }
-                    .accessibilityLabel("Delegated work, \(model.delegatedWork.activeCount) active workers")
-                    .accessibilityHint(Text("Shows worker status, recent output, and interrupt controls."))
+                    if !model.chatControls.controls.isEmpty {
+                        BotSessionControlMenu(settings: model.chatControls)
+                    }
                 }
-            }
-            if !model.chatControls.controls.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) { BotSessionControlMenu(settings: model.chatControls) }
-            }
+            )
         }
         .toolbar(removing: .title)
         .navigationDestination(isPresented: $showingProfileEditor) {

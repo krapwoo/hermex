@@ -118,11 +118,11 @@ struct ModelPickerSheet: View {
                 sectionExpansion.updateSearchText(newValue)
             }
             .toolbar {
-                ToolbarItem(placement: configuration.dismissPlacement) {
+                TopNav(trailingPlacement: configuration.dismissPlacement, trailingPrimary: {
                     Button(configuration.dismissTitle) {
                         dismiss()
                     }
-                }
+                })
             }
         }
         .adaptiveFormPresentation()

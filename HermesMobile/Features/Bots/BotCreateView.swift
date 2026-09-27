@@ -99,10 +99,10 @@ import SwiftUI
             .navigationTitle(creator.isDuplicate ? "Duplicate Bot" : "New Bot")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Close", systemImage: "xmark") { dismiss() }
                         .disabled(creator.phase == .creating)
-                }
+                })
             }
             .navigationDestination(isPresented: $showsExpressions) { expressionPicker }
         }

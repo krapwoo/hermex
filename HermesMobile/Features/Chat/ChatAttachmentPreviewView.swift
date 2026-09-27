@@ -124,11 +124,11 @@ struct ChatAttachmentPreviewView: View {
             .navigationTitle(item.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Done") {
                         dismiss()
                     }
-                }
+                })
             }
             .task {
                 await loadAttachment()

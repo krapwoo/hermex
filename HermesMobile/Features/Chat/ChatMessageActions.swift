@@ -198,11 +198,11 @@ struct SelectableTextPresentationView: View {
                 .navigationTitle("Select Text")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    TopNav(trailingPrimary: {
                         Button("Done") {
                             dismiss()
                         }
-                    }
+                    })
                 }
         }
     }
@@ -254,18 +254,18 @@ struct EditMessageSheet: View {
             .navigationTitle("Edit Message")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: { Button("Cancel") { dismiss() } },
+                    trailingPrimary: {
+                        Button("Send") {
+                            dismiss()
+                            onSubmit()
+                        }
+                        .disabled(editDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Send") {
-                        dismiss()
-                        onSubmit()
-                    }
-                    .disabled(editDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
+                )
             }
         }
         .presentationDetents([.medium, .large])

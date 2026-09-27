@@ -2416,13 +2416,15 @@ struct AddServerView: View {
             .navigationTitle("Add Server")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") { Task { await submit() } }
-                        .disabled(!canSubmit)
-                }
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: { Button("Cancel") { dismiss() } },
+                    trailingPrimary: {
+                        Button("Add") { Task { await submit() } }
+                            .disabled(!canSubmit)
+                    }
+                )
             }
         }
         .adaptiveFormPresentation()

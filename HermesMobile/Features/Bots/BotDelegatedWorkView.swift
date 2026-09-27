@@ -47,18 +47,20 @@ import UIKit
             .navigationTitle("Delegated work")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        Task { await work.refresh() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .primaryAction,
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: {
+                        Button {
+                            Task { await work.refresh() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .disabled(work.isRefreshing)
+                        .accessibilityLabel("Refresh delegated work")
                     }
-                    .disabled(work.isRefreshing)
-                    .accessibilityLabel("Refresh delegated work")
-                }
+                )
             }
             .refreshable { await work.refresh() }
             .confirmationDialog(
@@ -331,19 +333,21 @@ struct BotDelegationResultsSheet: View {
             .navigationTitle("Delegated work")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        UIPasteboard.general.string = completion.report
-                        ChatHaptics.copied(isEnabled: isHapticsEnabled)
-                    } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .primaryAction,
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: {
+                        Button {
+                            UIPasteboard.general.string = completion.report
+                            ChatHaptics.copied(isEnabled: isHapticsEnabled)
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                        .accessibilityLabel("Copy")
+                        .disabled(completion.report.isEmpty)
                     }
-                    .accessibilityLabel("Copy")
-                    .disabled(completion.report.isEmpty)
-                }
+                )
             }
         }
     }

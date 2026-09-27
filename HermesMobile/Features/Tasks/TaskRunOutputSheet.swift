@@ -48,18 +48,17 @@ struct TaskRunOutputSheet: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Done") { dismiss() }
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        UIPasteboard.general.string = matchingText
-                    } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
+                TopNav(
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: {
+                        Button {
+                            UIPasteboard.general.string = matchingText
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                        .disabled(matchingText?.isEmpty != false)
                     }
-                    .disabled(matchingText?.isEmpty != false)
-                }
+                )
             }
         }
     }

@@ -29,6 +29,13 @@ struct HermesHexColor: Equatable {
 
 enum HermesColorRamp {
     enum Neutral {
+        /// An opaque light/dark pair of ramp steps, resolved with the platform's own
+        /// `userInterfaceStyle` trait so the result never depends on `.opacity` to read correctly
+        /// over arbitrary content underneath.
+        static func adaptive(light: HermesHexColor, dark: HermesHexColor) -> Color {
+            Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark.uiColor : light.uiColor })
+        }
+
         static let s50 = HermesHexColor("#F9F9FA")
         static let s100 = HermesHexColor("#F1F1F2")
         static let s200 = HermesHexColor("#DFDFE1")

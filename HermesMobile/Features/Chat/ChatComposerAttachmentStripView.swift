@@ -112,9 +112,9 @@ private struct ComposerAttachmentThumbnailView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: HermesIconSize.xs, weight: .bold))
                     .frame(width: HermesAttachmentSize.removeControl, height: HermesAttachmentSize.removeControl)
-                    .background(Circle().fill(Color(.systemBackground)))
-                    .foregroundStyle(Color(.label))
-                    .overlay(Circle().stroke(Color(.separator).opacity(0.35), lineWidth: 0.5))
+                    .background(Circle().fill(AttachmentRemoveControlColors.background))
+                    .foregroundStyle(AttachmentRemoveControlColors.content)
+                    .overlay(Circle().stroke(AttachmentRemoveControlColors.border, lineWidth: 0.5))
             }
             .buttonStyle(.hermesPressOnly(
                 .icon,
@@ -139,14 +139,14 @@ private struct ComposerAttachmentThumbnailView: View {
 
     @ViewBuilder
     private var imagePreview: some View {
-        AttachmentImageTileSurface(width: imagePreviewSize, height: imagePreviewSize, cornerRadius: HermesRadius.r16) {
+        AttachmentImageTileSurface(width: imagePreviewSize, height: imagePreviewSize) {
             if let thumbnailData = attachment.thumbnailData,
                let uiImage = UIImage(data: thumbnailData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
             } else {
-                RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous)
                     .fill(Color(.systemFill))
                     .overlay(
                         Image(systemName: "photo")
@@ -194,7 +194,7 @@ private struct ComposerAttachmentThumbnailView: View {
         .padding(.vertical, usesAccessibilityLayout ? HermesAttachmentSize.accessibilityVerticalPadding : 0)
         .frame(width: usesAccessibilityLayout ? HermesAttachmentSize.composerFileTileWidthAccessibility : HermesAttachmentSize.composerFileTileWidth)
         .frame(minHeight: usesAccessibilityLayout ? HermesAttachmentSize.composerFileTileMinHeightAccessibility : HermesAttachmentSize.composerFileTileMinHeight)
-        .compactCardSurface(cornerRadius: HermesRadius.r16)
+        .compactCardSurface()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("File attachment \(attachment.name), \(fileDetailText)")
     }

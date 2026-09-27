@@ -31,9 +31,9 @@ struct GitWorkspaceView: View {
                 .navigationTitle("Git")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    TopNav(trailingPrimary: {
                         Button("Done") { dismiss() }
-                    }
+                    })
                 }
                 .task {
                     await viewModel.loadIfNeeded()

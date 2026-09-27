@@ -664,9 +664,9 @@ struct ChatView: View {
                 onAPIError: onAPIError
             )
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Done") { openedFileReference = nil }
-                }
+                })
             }
         }
     }
@@ -826,40 +826,41 @@ struct ChatView: View {
             }
             .onChange(of: viewModel.streamingHapticPulseTrigger, handleStreamingHapticPulse)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    ChatToolbarTitleLabel(
-                        title: displayTitle,
-                        subtitle: headerSubtitle
-                    )
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    ChatToolbarActionCluster {
-                        if viewModel.hasActivatedGoalCommand {
-                            ChatToolbarActionSlot {
-                                goalControlMenu
-                            }
-                        }
-
-                        if showsFilesButton {
-                            ChatToolbarActionSlot {
-                                NavigationLink {
-                                    FileBrowserView(session: session, server: server, onAPIError: onAPIError)
-                                } label: {
-                                    Label("Files", systemImage: "folder")
+                TopNav(
+                    center: {
+                        ChatToolbarTitleLabel(
+                            title: displayTitle,
+                            subtitle: headerSubtitle
+                        )
+                    },
+                    trailingPrimary: {
+                        ChatToolbarActionCluster {
+                            if viewModel.hasActivatedGoalCommand {
+                                ChatToolbarActionSlot {
+                                    goalControlMenu
                                 }
-                                .disabled(viewModel.isViewingCachedData)
-                                .accessibilityLabel("Files")
                             }
-                        }
 
-                        if showsGitControls, gitAvailabilityViewModel.hasRepository {
-                            ChatToolbarActionSlot {
-                                gitActionsMenu
+                            if showsFilesButton {
+                                ChatToolbarActionSlot {
+                                    NavigationLink {
+                                        FileBrowserView(session: session, server: server, onAPIError: onAPIError)
+                                    } label: {
+                                        Label("Files", systemImage: "folder")
+                                    }
+                                    .disabled(viewModel.isViewingCachedData)
+                                    .accessibilityLabel("Files")
+                                }
+                            }
+
+                            if showsGitControls, gitAvailabilityViewModel.hasRepository {
+                                ChatToolbarActionSlot {
+                                    gitActionsMenu
+                                }
                             }
                         }
                     }
-                }
+                )
             }
             .navigationDestination(item: $forkedSession) { session in
                 ChatView(session: session, server: server, onAPIError: onAPIError)

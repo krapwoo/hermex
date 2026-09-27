@@ -65,7 +65,7 @@ struct BotCachedHistoryView: View {
             }
             .navigationTitle(profile.name)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .toolbar { TopNav(trailingPlacement: .confirmationAction, trailingPrimary: { Button("Done") { dismiss() } }) }
         }
     }
 }

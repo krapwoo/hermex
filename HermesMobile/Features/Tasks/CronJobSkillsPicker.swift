@@ -112,11 +112,11 @@ struct CronJobSkillsPickerSheet: View {
                 prompt: "Search skills"
             )
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                TopNav(trailingPlacement: .confirmationAction, trailingPrimary: {
                     Button("Done") {
                         dismiss()
                     }
-                }
+                })
             }
         }
         .adaptiveFormPresentation()

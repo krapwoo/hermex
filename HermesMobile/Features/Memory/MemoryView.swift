@@ -17,7 +17,7 @@ struct MemoryView: View {
         content
             .navigationTitle("Memory")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                TopNav(trailingPrimary: {
                     Button {
                         Task { await loadMemory() }
                     } label: {
@@ -28,7 +28,7 @@ struct MemoryView: View {
                         }
                     }
                     .disabled(viewModel.isLoading)
-                }
+                })
             }
             .sheet(item: $editingSection) { section in
                 MemoryEditSheet(
@@ -239,29 +239,32 @@ private struct MemoryEditSheet: View {
             .navigationTitle("Edit \(section.title)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(isSaving)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        Task {
-                            if await onSave(content) {
-                                dismiss()
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                        .disabled(isSaving)
+                    },
+                    trailingPrimary: {
+                        Button {
+                            Task {
+                                if await onSave(content) {
+                                    dismiss()
+                                }
+                            }
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                            } else {
+                                Text("Save")
                             }
                         }
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                        } else {
-                            Text("Save")
-                        }
+                        .disabled(isSaving)
                     }
-                    .disabled(isSaving)
-                }
+                )
             }
         }
         .adaptiveFormPresentation()

@@ -716,33 +716,31 @@ struct TranscriptMediaPreviewView: View {
             .navigationTitle(item.reference.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    if viewModel.canSaveMediaToPhotos {
-                        Button {
-                            Task { await saveMediaToPhotos() }
-                        } label: {
-                            Image(systemName: "photo")
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: {
+                        if viewModel.canSaveMediaToPhotos {
+                            Button {
+                                Task { await saveMediaToPhotos() }
+                            } label: {
+                                Image(systemName: "photo")
+                            }
+                            .disabled(exportActionsAreDisabled)
+                            .accessibilityLabel("Save media to Photos")
                         }
-                        .disabled(exportActionsAreDisabled)
-                        .accessibilityLabel("Save media to Photos")
-                    }
 
-                    if viewModel.canExportMedia {
-                        Button {
-                            Task { await exportMedia() }
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
+                        if viewModel.canExportMedia {
+                            Button {
+                                Task { await exportMedia() }
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                            .disabled(exportActionsAreDisabled)
+                            .accessibilityLabel("Export media")
                         }
-                        .disabled(exportActionsAreDisabled)
-                        .accessibilityLabel("Export media")
                     }
-                }
+                )
             }
             .task {
                 await loadMedia()

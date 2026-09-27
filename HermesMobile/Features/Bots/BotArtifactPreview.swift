@@ -82,7 +82,7 @@ struct BotArtifactPreview: View {
             }
             .navigationTitle(reference.displayName)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .toolbar { TopNav(trailingPlacement: .confirmationAction, trailingPrimary: { Button("Done") { dismiss() } }) }
         }
         .task(id: attempt) { await model.load(name: reference.displayName, download: download) }
         .onDisappear { model.cleanup() }

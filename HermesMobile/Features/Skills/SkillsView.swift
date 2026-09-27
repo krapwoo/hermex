@@ -19,7 +19,7 @@ struct SkillsView: View {
             .adaptiveReadableScrollContent(maxWidth: AdaptiveReadableContentWidth.secondaryDestination)
             .navigationTitle("Skills")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                TopNav(trailingPrimary: {
                     Button {
                         Task { await loadSkills() }
                     } label: {
@@ -30,7 +30,7 @@ struct SkillsView: View {
                         }
                     }
                     .disabled(viewModel.isLoading)
-                }
+                })
             }
             .task {
                 await loadSkills()
@@ -289,7 +289,7 @@ struct SkillDetailView: View {
         content
             .navigationTitle(skill.name ?? String(localized: "Skill"))
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                TopNav(trailingPrimary: {
                     Button {
                         Task { await loadDetail() }
                     } label: {
@@ -300,7 +300,7 @@ struct SkillDetailView: View {
                         }
                     }
                     .disabled(isLoading)
-                }
+                })
             }
             .task {
                 await loadDetail()
@@ -466,11 +466,11 @@ struct SkillLinkedFileView: View {
         .navigationTitle(fileName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
+            TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                 Button("Close") {
                     dismiss()
                 }
-            }
+            })
         }
     }
 }

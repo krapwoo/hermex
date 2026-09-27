@@ -120,7 +120,7 @@ import SwiftUI
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(removing: .title)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            TopNav(leadingPrimary: {
                 Button { showingProfile = true } label: {
                     HStack(spacing: HermesSpacing.s8) {
                         BotRoomAvatars(room: reader.room, roster: roster, avatars: avatars, size: 30)
@@ -130,7 +130,7 @@ import SwiftUI
                 }
                 .accessibilityLabel(reader.room.name)
                 .accessibilityHint("Opens this room’s profile.")
-            }
+            })
         }
         .navigationDestination(isPresented: $showingProfile) {
             BotRoomProfileView(reader: reader, roster: roster, avatars: avatars)

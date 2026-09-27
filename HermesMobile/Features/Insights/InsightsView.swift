@@ -19,7 +19,7 @@ struct InsightsView: View {
         content
             .navigationTitle("Usage")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                TopNav(trailingPrimary: {
                     Button {
                         Task { await refresh() }
                     } label: {
@@ -33,7 +33,7 @@ struct InsightsView: View {
                         }
                     }
                     .disabled(viewModel.isLoading)
-                }
+                })
             }
             .task(id: viewModel.selectedTimeframe) {
                 await loadInsights()

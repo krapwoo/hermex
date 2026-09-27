@@ -60,14 +60,19 @@ final class HermesCardTests: XCTestCase {
 
     // MARK: - Source contracts: normal Attachment tiles compose Compact Card
 
+    // `cornerRadius` now defaults to `HermesRadius.card` (issue #607) so a normal Attachment tile's
+    // outer radius can no longer drift from Card's: the call site composes `compactCardSurface()`
+    // with no independent radius choice of its own.
     func testComposerFileAttachmentTileComposesCompactCard() throws {
         let src = try source("HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift")
-        XCTAssertTrue(src.contains(".compactCardSurface(cornerRadius:"))
+        XCTAssertTrue(src.contains(".compactCardSurface()"))
+        XCTAssertFalse(src.contains(".compactCardSurface(cornerRadius:"))
     }
 
     func testMessageFileAttachmentTileComposesCompactCard() throws {
         let src = try source("HermesMobile/Features/Chat/MessageBubbleView.swift")
-        XCTAssertTrue(src.contains(".compactCardSurface(cornerRadius:"))
+        XCTAssertTrue(src.contains(".compactCardSurface()"))
+        XCTAssertFalse(src.contains(".compactCardSurface(cornerRadius:"))
     }
 
     // MARK: - Request Card lives in the Card family (production correction 4)

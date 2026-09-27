@@ -80,23 +80,20 @@ struct WorkspaceManagerView: View {
             .navigationTitle("Manage Workspaces")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+                TopNav(
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: {
+                        EditButton()
+                            .disabled(viewModel.rows.isEmpty)
 
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    EditButton()
-                        .disabled(viewModel.rows.isEmpty)
-
-                    Button {
-                        showsAddSheet = true
-                    } label: {
-                        Label("Add Workspace", systemImage: "plus")
+                        Button {
+                            showsAddSheet = true
+                        } label: {
+                            Label("Add Workspace", systemImage: "plus")
+                        }
+                        .disabled(viewModel.isMutating)
                     }
-                    .disabled(viewModel.isMutating)
-                }
+                )
             }
             .overlay {
                 if viewModel.isLoading && viewModel.rows.isEmpty {
@@ -270,18 +267,15 @@ private struct WorkspaceAddSheet: View {
             .navigationTitle("Add Workspace")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                TopNav(
+                    leadingPrimary: { Button("Cancel") { dismiss() } },
+                    trailingPrimary: {
+                        Button("Add") {
+                            submit()
+                        }
+                        .disabled(trimmedPath.isEmpty || isSubmitting)
                     }
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") {
-                        submit()
-                    }
-                    .disabled(trimmedPath.isEmpty || isSubmitting)
-                }
+                )
             }
             .task(id: path) {
                 if !path.isEmpty {

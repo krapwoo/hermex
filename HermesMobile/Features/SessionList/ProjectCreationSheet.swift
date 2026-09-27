@@ -126,24 +126,27 @@ private struct ProjectFormSheet: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                        .disabled(isSaving)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        onSave(trimmedProjectName, selectedColorHex)
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Text("Save")
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button("Cancel", action: onCancel)
+                            .disabled(isSaving)
+                    },
+                    trailingPrimary: {
+                        Button {
+                            onSave(trimmedProjectName, selectedColorHex)
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Text("Save")
+                            }
                         }
+                        .disabled(trimmedProjectName.isEmpty || isSaving)
                     }
-                    .disabled(trimmedProjectName.isEmpty || isSaving)
-                }
+                )
             }
             .onAppear {
                 nameIsFocused = true

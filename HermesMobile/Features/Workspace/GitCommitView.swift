@@ -41,9 +41,9 @@ struct GitCommitView: View {
                 .navigationTitle("Commit Changes")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    TopNav(trailingPrimary: {
                         Button("Done") { dismiss() }
-                    }
+                    })
                 }
                 .task {
                     await viewModel.load()

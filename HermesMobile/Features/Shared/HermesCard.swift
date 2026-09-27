@@ -21,8 +21,10 @@ extension View {
     /// Compact Card's opaque surface: a tinted fill plus the hairline border every normal (non-mini)
     /// Attachment tile already drew by hand. `fill` defaults to the shared file-badge tint; pass
     /// `.clear` for a tile whose own image content already covers the surface and only wants the
-    /// border.
-    func compactCardSurface(cornerRadius: CGFloat, fill: Color = Color(.secondarySystemBackground)) -> some View {
+    /// border. `cornerRadius` defaults to `HermesRadius.card` — the one outer radius every normal
+    /// Attachment tile shares with Card — so a call site only overrides it for a deliberately
+    /// different (for example mini) surface instead of hand-picking a radius that can drift.
+    func compactCardSurface(cornerRadius: CGFloat = HermesRadius.card, fill: Color = Color(.secondarySystemBackground)) -> some View {
         background(fill, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

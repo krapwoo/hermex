@@ -43,11 +43,11 @@ import SwiftUI
         .navigationTitle(editor.profile.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            TopNav(trailingPrimary: {
                 Button("Save") { Task { await editor.save() } }
                     .fontWeight(.semibold)
                     .disabled(!editor.canSave)
-            }
+            })
         }
         .task { if editor.state == .idle { await editor.load() } }
         .onDisappear { editor.close() }
@@ -285,7 +285,7 @@ import SwiftUI
                 }
             }
             .navigationTitle(field.title).navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { capabilitySheet = nil } } }
+            .toolbar { TopNav(trailingPlacement: .confirmationAction, trailingPrimary: { Button("Done") { capabilitySheet = nil } }) }
         }
         .adaptiveFormPresentation()
     }

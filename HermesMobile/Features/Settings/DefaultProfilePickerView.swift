@@ -65,11 +65,11 @@ struct DefaultProfilePickerView: View {
                 prompt: "Search profiles"
             )
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Cancel") {
                         dismiss()
                     }
-                }
+                })
             }
             .task {
                 await loadProfiles()
@@ -381,23 +381,26 @@ private struct CreateProfileSheet: View {
             .navigationTitle("New Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(isCreating)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    if isCreating {
-                        ProgressView()
-                    } else {
-                        Button("Create") {
-                            Task { await create() }
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button("Cancel") {
+                            dismiss()
                         }
-                        .disabled(!ProfileNameRules.isValid(trimmedName) || hasInvalidBaseURL)
+                        .disabled(isCreating)
+                    },
+                    trailingPrimary: {
+                        if isCreating {
+                            ProgressView()
+                        } else {
+                            Button("Create") {
+                                Task { await create() }
+                            }
+                            .disabled(!ProfileNameRules.isValid(trimmedName) || hasInvalidBaseURL)
+                        }
                     }
-                }
+                )
             }
             .interactiveDismissDisabled(isCreating)
             .task {

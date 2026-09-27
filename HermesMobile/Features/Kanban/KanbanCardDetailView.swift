@@ -69,7 +69,7 @@ private struct KanbanCardDetailContent: View {
             }
         }
         .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
+            TopNav(trailingPrimary: {
                 Button("Edit") {
                     guard let detail = state.detail else { return }
                     cardEditor = featureModel.makeEditCardEditorState(detail: detail)
@@ -78,7 +78,7 @@ private struct KanbanCardDetailContent: View {
                 if let card = state.detail?.card {
                     cardActionsMenu(card)
                 }
-            }
+            })
         }
         .sheet(item: $cardEditor) { editor in
             KanbanCardEditorView(

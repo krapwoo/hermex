@@ -70,12 +70,12 @@ private struct ComposerQuoteDetailView: View {
             .navigationTitle("Quoted passage")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Remove Quote", role: .destructive, action: onRemove)
-                }
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: { Button("Done") { dismiss() } },
+                    trailingPrimary: { Button("Remove Quote", role: .destructive, action: onRemove) }
+                )
             }
         }
     }

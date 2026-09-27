@@ -33,24 +33,27 @@ struct SessionRenameSheet: View {
             .navigationTitle("Rename Session")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                        .disabled(isSaving)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        onSave(trimmedSessionTitle)
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Text("Save")
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: {
+                        Button("Cancel", action: onCancel)
+                            .disabled(isSaving)
+                    },
+                    trailingPrimary: {
+                        Button {
+                            onSave(trimmedSessionTitle)
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Text("Save")
+                            }
                         }
+                        .disabled(trimmedSessionTitle.isEmpty || isSaving)
                     }
-                    .disabled(trimmedSessionTitle.isEmpty || isSaving)
-                }
+                )
             }
             .interactiveDismissDisabled(isSaving)
             .onAppear {

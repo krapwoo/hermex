@@ -377,9 +377,9 @@ struct KanbanStatusFocusView: View {
             .navigationTitle("Dispatcher")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                TopNav(trailingPlacement: .confirmationAction, trailingPrimary: {
                     Button("Done") { showsDispatcher = false }
-                }
+                })
             }
         }
         .presentationDetents([.medium, .large])
@@ -1359,110 +1359,111 @@ struct KanbanStatusFocusView: View {
     /// truncates inside it.
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            Menu {
-                ForEach(model.boards, id: \.slug) { board in
-                    if let slug = board.slug {
-                        Button {
-                            Task { await model.selectBoard(slug) }
-                        } label: {
-                            if slug == model.selectedBoardSlug {
-                                Label(board.name ?? slug, systemImage: "checkmark")
-                            } else {
-                                Text(board.name ?? slug)
+        TopNav(
+            center: {
+                Menu {
+                    ForEach(model.boards, id: \.slug) { board in
+                        if let slug = board.slug {
+                            Button {
+                                Task { await model.selectBoard(slug) }
+                            } label: {
+                                if slug == model.selectedBoardSlug {
+                                    Label(board.name ?? slug, systemImage: "checkmark")
+                                } else {
+                                    Text(board.name ?? slug)
+                                }
                             }
                         }
                     }
-                }
-                Divider()
-                Button {
-                    showsBoardManagement = true
-                } label: {
-                    Label("Manage", systemImage: "slider.horizontal.3")
-                }
-            } label: {
-                HStack(spacing: HermesSpacing.s4) {
-                    Text(boardTitle)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Image(systemName: "chevron.down")
-                        .font(.caption2)
-                        .layoutPriority(1)
-                }
-                .frame(maxWidth: boardPickerMaxWidth, minHeight: 44)
-            }
-            .accessibilityLabel(String(localized: "Switch Board"))
-        }
-
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            Button {
-                cardEditor = model.makeCreateCardEditorState()
-            } label: {
-                Image(systemName: "plus")
-            }
-            .disabled(!model.canCreateCards)
-            .frame(minWidth: 44, minHeight: 44)
-            .accessibilityLabel(Text("New Card"))
-
-            Button {
-                showsDispatcher = true
-            } label: {
-                Label(
-                    "Dispatcher",
-                    systemImage: KanbanDispatcherPresentation.toolbarSystemImage(
-                        for: model.dispatchState
-                    )
-                )
-            }
-            .frame(minWidth: 44, minHeight: 44)
-            .accessibilityLabel(
-                Text(KanbanDispatcherPresentation.toolbarAccessibilityLabel(for: model.dispatchState))
-            )
-            .accessibilityFocused($dispatcherButtonIsFocused)
-
-            // Select Cards and Card Filters sit behind More so the trailing group stays
-            // narrow enough to leave the inline Board title room to read. Select mode
-            // swaps More for Cancel in the same slot.
-            if model.isSelectingCards {
-                Button {
-                    model.clearCardSelection()
-                } label: {
-                    Image(systemName: "xmark")
-                }
-                .disabled(model.bulkActionPhase != nil || !model.canUseBulkActions)
-                .frame(minWidth: 44, minHeight: 44)
-                .accessibilityLabel(Text("Cancel"))
-            } else {
-                Menu {
+                    Divider()
                     Button {
-                        model.beginSelectingCards()
-                        selectionControlsAreFocused = true
+                        showsBoardManagement = true
                     } label: {
-                        Label("Select Cards", systemImage: "checkmark.circle")
+                        Label("Manage", systemImage: "slider.horizontal.3")
+                    }
+                } label: {
+                    HStack(spacing: HermesSpacing.s4) {
+                        Text(boardTitle)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                            .layoutPriority(1)
+                    }
+                    .frame(maxWidth: boardPickerMaxWidth, minHeight: 44)
+                }
+                .accessibilityLabel(String(localized: "Switch Board"))
+            },
+            trailingPrimary: {
+                Button {
+                    cardEditor = model.makeCreateCardEditorState()
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .disabled(!model.canCreateCards)
+                .frame(minWidth: 44, minHeight: 44)
+                .accessibilityLabel(Text("New Card"))
+
+                Button {
+                    showsDispatcher = true
+                } label: {
+                    Label(
+                        "Dispatcher",
+                        systemImage: KanbanDispatcherPresentation.toolbarSystemImage(
+                            for: model.dispatchState
+                        )
+                    )
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                .accessibilityLabel(
+                    Text(KanbanDispatcherPresentation.toolbarAccessibilityLabel(for: model.dispatchState))
+                )
+                .accessibilityFocused($dispatcherButtonIsFocused)
+
+                // Select Cards and Card Filters sit behind More so the trailing group stays
+                // narrow enough to leave the inline Board title room to read. Select mode
+                // swaps More for Cancel in the same slot.
+                if model.isSelectingCards {
+                    Button {
+                        model.clearCardSelection()
+                    } label: {
+                        Image(systemName: "xmark")
                     }
                     .disabled(model.bulkActionPhase != nil || !model.canUseBulkActions)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text("Cancel"))
+                } else {
+                    Menu {
+                        Button {
+                            model.beginSelectingCards()
+                            selectionControlsAreFocused = true
+                        } label: {
+                            Label("Select Cards", systemImage: "checkmark.circle")
+                        }
+                        .disabled(model.bulkActionPhase != nil || !model.canUseBulkActions)
 
-                    Button {
-                        showsFilters = true
+                        Button {
+                            showsFilters = true
+                        } label: {
+                            Label(
+                                "Card Filters",
+                                systemImage: KanbanHeaderPresentation.cardFiltersSystemImage(
+                                    hasActiveFilters: model.hasActiveFilters
+                                )
+                            )
+                        }
                     } label: {
-                        Label(
-                            "Card Filters",
-                            systemImage: KanbanHeaderPresentation.cardFiltersSystemImage(
+                        Image(
+                            systemName: KanbanHeaderPresentation.overflowSystemImage(
                                 hasActiveFilters: model.hasActiveFilters
                             )
                         )
                     }
-                } label: {
-                    Image(
-                        systemName: KanbanHeaderPresentation.overflowSystemImage(
-                            hasActiveFilters: model.hasActiveFilters
-                        )
-                    )
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel(Text("More"))
                 }
-                .frame(minWidth: 44, minHeight: 44)
-                .accessibilityLabel(Text("More"))
             }
-        }
+        )
     }
 
     private func unavailableContent(title: String, detail: String, systemImage: String) -> some View {
@@ -1525,19 +1526,21 @@ private struct KanbanBoardManagementView: View {
         .navigationTitle("Manage")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    model.dismissBoardMutationResult()
-                    editorMode = .create
-                } label: {
-                    Label("Create", systemImage: "plus")
+            TopNav(
+                leadingPlacement: .cancellationAction,
+                trailingPlacement: .primaryAction,
+                leadingPrimary: { Button("Done") { dismiss() } },
+                trailingPrimary: {
+                    Button {
+                        model.dismissBoardMutationResult()
+                        editorMode = .create
+                    } label: {
+                        Label("Create", systemImage: "plus")
+                    }
+                    .disabled(!model.canManageBoards)
+                    .accessibilityHint(Text("Creating a Board does not make it active."))
                 }
-                .disabled(!model.canManageBoards)
-                .accessibilityHint(Text("Creating a Board does not make it active."))
-            }
+            )
         }
         .sheet(item: $editorMode) { mode in
             NavigationStack {
@@ -1851,13 +1854,15 @@ private struct KanbanBoardEditorView: View {
         .navigationTitle(isEditing ? "Edit" : "Create")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { submit() }
-                    .disabled(!model.canManageBoards)
-            }
+            TopNav(
+                leadingPlacement: .cancellationAction,
+                trailingPlacement: .confirmationAction,
+                leadingPrimary: { Button("Cancel") { dismiss() } },
+                trailingPrimary: {
+                    Button("Save") { submit() }
+                        .disabled(!model.canManageBoards)
+                }
+            )
         }
     }
 
@@ -1966,10 +1971,10 @@ private struct KanbanBulkActionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(model.bulkActionPhase != nil)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                TopNav(leadingPlacement: .cancellationAction, leadingPrimary: {
                     Button("Cancel") { dismiss() }
                         .disabled(model.bulkActionPhase != nil)
-                }
+                })
             }
         }
     }
@@ -2045,17 +2050,19 @@ private struct KanbanFiltersView: View {
             .navigationTitle("Card Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Apply") {
-                        Task {
-                            await draft.apply(to: model)
-                            dismiss()
+                TopNav(
+                    leadingPlacement: .cancellationAction,
+                    trailingPlacement: .confirmationAction,
+                    leadingPrimary: { Button("Cancel") { dismiss() } },
+                    trailingPrimary: {
+                        Button("Apply") {
+                            Task {
+                                await draft.apply(to: model)
+                                dismiss()
+                            }
                         }
                     }
-                }
+                )
             }
         }
     }

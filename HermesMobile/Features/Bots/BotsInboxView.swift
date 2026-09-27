@@ -147,30 +147,31 @@ import SwiftUI
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(removing: .title)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Search bots and messages", systemImage: "magnifyingglass") { showingSearch = true }
-                    .disabled(inbox.connection == nil)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("New Bot", systemImage: "plus.bubble") { creation = .new }
-                    Button("New Group Chat", systemImage: "person.2") {
-                        guard let connection = inbox.connection else { return }
-                        roomCreator = BotRoomCreator(server: server, connection: connection, roster: inbox.profiles,
-                            onReconciled: { inbox.reconcileRooms($0, connectionID: connection.id) })
-                    }
-                    .disabled(!inbox.roomCapabilities.enabled || !inbox.roomCapabilities.methods.contains("groups.create"))
-                    if inbox.reorderableSectionNames.count >= 2 {
-                        Divider()
-                        Button("Reorder Sections…", systemImage: "arrow.up.arrow.down") { showingSectionOrder = true }
-                    }
-                } label: { Label("New chat", systemImage: "plus") }
-                .disabled(inbox.link != .live)
-            }
-            if #available(iOS 26, *) { ToolbarSpacer(.fixed, placement: .topBarTrailing) }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Bot connection", systemImage: "gearshape") { showingSetup = true }
-            }
+            TopNav(
+                trailingSpacer: true,
+                trailingPrimary: {
+                    Button("Search bots and messages", systemImage: "magnifyingglass") { showingSearch = true }
+                        .disabled(inbox.connection == nil)
+
+                    Menu {
+                        Button("New Bot", systemImage: "plus.bubble") { creation = .new }
+                        Button("New Group Chat", systemImage: "person.2") {
+                            guard let connection = inbox.connection else { return }
+                            roomCreator = BotRoomCreator(server: server, connection: connection, roster: inbox.profiles,
+                                onReconciled: { inbox.reconcileRooms($0, connectionID: connection.id) })
+                        }
+                        .disabled(!inbox.roomCapabilities.enabled || !inbox.roomCapabilities.methods.contains("groups.create"))
+                        if inbox.reorderableSectionNames.count >= 2 {
+                            Divider()
+                            Button("Reorder Sections…", systemImage: "arrow.up.arrow.down") { showingSectionOrder = true }
+                        }
+                    } label: { Label("New chat", systemImage: "plus") }
+                    .disabled(inbox.link != .live)
+                },
+                trailingSecondary: {
+                    Button("Bot connection", systemImage: "gearshape") { showingSetup = true }
+                }
+            )
         }
     }
 
@@ -574,7 +575,7 @@ private struct BotSectionOrderView: View {
             .navigationTitle("Reorder Sections")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                TopNav(trailingPlacement: .confirmationAction, trailingPrimary: { Button("Done") { dismiss() } })
             }
         }
     }

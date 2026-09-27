@@ -54,15 +54,15 @@ import SwiftUI
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if reader.showsDisband {
-                ToolbarItem(placement: .topBarTrailing) {
+            TopNav(trailingPrimary: {
+                if reader.showsDisband {
                     Menu {
                         Button("Disband Group", role: .destructive) { confirmingDisband = true }
                             .disabled(!reader.mayDisband)
                         if reader.finishingStop { Text("Finishing stop…") }
                     } label: { Label("Group options", systemImage: "ellipsis") }
                 }
-            }
+            })
         }
         .confirmationDialog("Disband this group?", isPresented: $confirmingDisband, titleVisibility: .visible) {
             Button("Disband Group", role: .destructive) { Task { await reader.disband() } }

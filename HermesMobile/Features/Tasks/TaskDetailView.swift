@@ -224,7 +224,7 @@ struct TaskDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItemGroup(placement: .topBarTrailing) {
+        TopNav(trailingPrimary: {
             Button {
                 Task { await loadDetail() }
             } label: {
@@ -271,7 +271,7 @@ struct TaskDetailView: View {
                 Label("Task Actions", systemImage: "ellipsis.circle")
             }
             .disabled(viewModel.isMutating)
-        }
+        })
     }
 
     // MARK: - State
