@@ -205,8 +205,11 @@ import XCTest
         XCTAssertFalse(after.contains("No saved messages found"), after)
         wire.listFailure = BotFailure.transport
         await inbox.open()
-        await settle(window)
-        let offline = try screenshot(window, name: "528-room-search-list-unavailable")
+        let offline = try await screenshot(
+            window,
+            name: "528-room-search-list-unavailable",
+            awaiting: ["Comms", "chief-of-staff"]
+        )
         XCTAssertTrue(offline.contains("Comms"), offline)
         XCTAssertTrue(Self.ocrText(offline, containsToken: "chief-of-staff"), offline)
         XCTAssertFalse(offline.contains("No saved messages found"), offline)
