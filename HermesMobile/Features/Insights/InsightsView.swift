@@ -85,12 +85,13 @@ struct InsightsView: View {
                     )
                 }
 
-                Picker("Window", selection: $viewModel.selectedTimeframe) {
-                    ForEach(AnalyticsTimeframe.allCases) { timeframe in
-                        Text(timeframe.title).tag(timeframe)
+                SegmentedControl(
+                    "Window",
+                    selection: $viewModel.selectedTimeframe,
+                    options: AnalyticsTimeframe.allCases.map { timeframe in
+                        SegmentedControlOption(value: timeframe, title: timeframe.title)
                     }
-                }
-                .pickerStyle(.segmented)
+                )
 
                 if viewModel.dataSource != .server {
                     SectionCard {

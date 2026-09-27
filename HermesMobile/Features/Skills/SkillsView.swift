@@ -159,7 +159,7 @@ private struct SkillCategorySection: View {
                     }
 
                     if index < skills.count - 1 {
-                        Divider()
+                        HermesDivider()
                     }
                 }
             }
@@ -201,21 +201,19 @@ private struct SkillRow: View {
                 if skill.disabled == true || !tags.isEmpty {
                     HStack(spacing: HermesSpacing.s8) {
                         if skill.disabled == true {
-                            Text("Disabled")
-                                .appFont(.caption2, weight: .semibold)
-                                .padding(.horizontal, HermesSpacing.s8)
-                                .padding(.vertical, HermesSpacing.s4)
-                                .foregroundStyle(.secondary)
-                                .background(Color(.tertiarySystemFill), in: Capsule())
+                            Tag(
+                                label: "Disabled",
+                                foreground: .secondary,
+                                fill: Color(.tertiarySystemFill)
+                            )
                         }
 
                         ForEach(tags, id: \.self) { tag in
-                            Text(tag)
-                                .appFont(.caption2, weight: .medium)
-                                .padding(.horizontal, HermesSpacing.s8)
-                                .padding(.vertical, HermesSpacing.s4)
-                                .foregroundStyle(.secondary)
-                                .background(Color(.secondarySystemFill).opacity(0.8), in: Capsule())
+                            Tag(
+                                label: tag,
+                                foreground: .secondary,
+                                fill: Color(.secondarySystemFill).opacity(0.8)
+                            )
                         }
                     }
                 }
@@ -429,8 +427,7 @@ private struct SkillLinkedFilesSection: View {
                     .buttonStyle(.plain)
 
                     if index < fileNames.count - 1 {
-                        Divider()
-                            .padding(.leading, HermesSpacing.s48)
+                        HermesDivider(leadingInset: HermesSpacing.s48)
                     }
                 }
             }

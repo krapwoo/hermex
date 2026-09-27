@@ -121,7 +121,7 @@ struct TasksView: View {
             } else {
                 // The list stays mounted while the feed has rows, so switching
                 // to a filter with no tasks does not take "Ran Recently" away.
-                List {
+                HermesList {
                     recentRunsSection
 
                     if sections.isEmpty {
@@ -158,12 +158,16 @@ struct TasksView: View {
     }
 
     private var filterPicker: some View {
-        Picker("Filter", selection: $viewModel.filter) {
-            ForEach(TaskFilter.allCases) { filter in
-                Text(filter.title(count: viewModel.count(for: filter))).tag(filter)
+        SegmentedControl(
+            "Filter",
+            selection: $viewModel.filter,
+            options: TaskFilter.allCases.map { filter in
+                SegmentedControlOption(
+                    value: filter,
+                    title: filter.title(count: viewModel.count(for: filter))
+                )
             }
-        }
-        .pickerStyle(.segmented)
+        )
         .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(.bar)

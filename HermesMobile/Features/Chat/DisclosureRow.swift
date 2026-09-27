@@ -154,6 +154,11 @@ struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
                     .font(.system(size: HermesIconSize.xs, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .frame(width: HermesIconSize.small, height: HermesIconSize.small)
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .animation(
+                        reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d150),
+                        value: isExpanded
+                    )
 
                 status()
                     .frame(width: 16, height: 16)
@@ -173,6 +178,7 @@ struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
         .accessibilityHint(
             isExpanded
                 ? "Double tap to hide details. Long press to copy."

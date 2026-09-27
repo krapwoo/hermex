@@ -135,7 +135,7 @@ private struct MemorySectionHeader: View {
                     .labelStyle(.iconOnly)
             }
             .disabled(isEditingDisabled)
-            .buttonStyle(.borderless)
+            .buttonStyle(.hermesPressOnly(.icon))
         }
     }
 }

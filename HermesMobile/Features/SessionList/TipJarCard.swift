@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TipJarCard: View {
-    @Environment(\.colorScheme) private var colorScheme
+
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -14,36 +14,30 @@ struct TipJarCard: View {
         isVisible && scenePhase == .active && !reduceMotion && !dismissed
     }
 
-    private let accent = Color(red: 1, green: 224 / 255, blue: 0)
+    private let accent = HermesColorRamp.Gold.s400.color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: HermesSpacing.s12) {
-            HStack(spacing: HermesSpacing.s12) {
-                companion
-                Text("Enjoying Hermex?")
-                    .appFont(.headline)
+        SectionCard {
+            VStack(alignment: .leading, spacing: HermesSpacing.s12) {
+                HStack(spacing: HermesSpacing.s12) {
+                    companion
+                    Text("Enjoying Hermex?")
+                        .appFont(.headline)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text("It's free and open source. If it's earned a coffee, that would mean a lot.")
+                    .appFont(.subheadline)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-            Text("It's free and open source. If it's earned a coffee, that would mean a lot.")
-                .appFont(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: HermesSpacing.s8) { actions }
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: HermesSpacing.s16) { actions }
+                if dynamicTypeSize.isAccessibilitySize {
                     VStack(alignment: .leading, spacing: HermesSpacing.s8) { actions }
+                } else {
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: HermesSpacing.s16) { actions }
+                        VStack(alignment: .leading, spacing: HermesSpacing.s8) { actions }
+                    }
                 }
             }
-        }
-        .padding(HermesSpacing.s20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(colorScheme == .dark ? Color(white: 0.14) : .white,
-                    in: RoundedRectangle(cornerRadius: HermesRadius.r20))
-        .overlay {
-            RoundedRectangle(cornerRadius: HermesRadius.r20)
-                .strokeBorder(.primary.opacity(0.1), lineWidth: 1)
         }
         .padding(.vertical, HermesSpacing.s12)
         .onAppear {
@@ -76,7 +70,7 @@ struct TipJarCard: View {
         default: pose = .rest
         }
         let appearance = BotProfileAppearance(
-            look: ["shape": .string("circle"), "color": .string("#ffe000"),
+            look: ["shape": .string("circle"), "color": .string(HermesColorRamp.Gold.s400.hex.lowercased()),
                    "expression": .string(expression)],
             fallbackTitle: "Hermex"
         )
@@ -95,8 +89,7 @@ struct TipJarCard: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .appFont(.subheadline, weight: .semibold)
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
+        .buttonStyle(.hermes(.medium, emphasis: .primary))
         .tint(accent)
         .accessibilityLabel("Buy Uzi a coffee, opens in browser")
         .environment(\.openURL, OpenURLAction { url in
@@ -106,9 +99,7 @@ struct TipJarCard: View {
         Button("Not now") {
             TipJarPromptState(defaults: .standard).dismiss()
         }
-        .appFont(.subheadline)
-        .buttonStyle(.borderless)
+        .buttonStyle(.hermes(.medium, emphasis: .neutral))
         .foregroundStyle(.secondary)
-        .frame(minHeight: 44)
     }
 }

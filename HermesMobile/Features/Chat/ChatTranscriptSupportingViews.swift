@@ -1060,20 +1060,12 @@ private struct ChatTranscriptLoadingSkeletonRow: View {
                     skeletonLine(line)
                 }
             }
-            .padding(.horizontal, HermesSpacing.s12)
-            .padding(.vertical, HermesSpacing.s12)
-            .background(Color(.secondarySystemFill))
-            .foregroundStyle(.primary)
-            .clipShape(RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous))
         }
-        .skeletonPlaceholder()
         .accessibilityHidden(true)
     }
 
     private func skeletonLine(_ line: ChatTranscriptSkeletonLine) -> some View {
-        Text(verbatim: line.text)
-            .appFont(.body)
-            .lineLimit(1)
+        Skeleton(shape: .textLine(maxWidth: line.maxWidth))
             .frame(maxWidth: line.maxWidth, alignment: configuration.role == .user ? .trailing : .leading)
     }
 }

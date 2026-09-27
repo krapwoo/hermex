@@ -74,13 +74,13 @@ struct UsageChartCard: View {
             .accessibilityElement(children: .combine)
 
             if showsMetricToggle {
-                Picker(String(localized: "Metric"), selection: $metric) {
-                    ForEach(UsageMetric.allCases) { option in
-                        Text(option.title).tag(option)
+                SegmentedControl(
+                    String(localized: "Metric"),
+                    selection: $metric,
+                    options: UsageMetric.allCases.map { option in
+                        SegmentedControlOption(value: option, title: option.title)
                     }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                )
                 .fixedSize()
             }
         }
