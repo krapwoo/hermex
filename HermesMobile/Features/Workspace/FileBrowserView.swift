@@ -102,7 +102,7 @@ struct FileBrowserView: View {
                     }
                     .appFont(.footnote)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .padding(.vertical, HermesSpacing.s12)
                     .background(Color(.secondarySystemBackground))
                 } else if let errorMessage = viewModel.errorMessage {
@@ -122,7 +122,7 @@ struct FileBrowserView: View {
                         }
                         .appFont(.footnote, weight: .semibold)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .padding(.vertical, HermesSpacing.s12)
                     .background(Color(.secondarySystemBackground))
                 }
@@ -156,7 +156,7 @@ struct FileBrowserView: View {
         .padding(.horizontal, HermesSpacing.s12)
         .frame(height: 40)
         .background(Color(.tertiarySystemFill).opacity(0.5), in: RoundedRectangle(cornerRadius: HermesRadius.r16, style: .continuous))
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s12)
         .background(Color(.systemBackground))
         .overlay(alignment: .bottom) {

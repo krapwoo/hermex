@@ -86,7 +86,7 @@ struct OnboardingWelcomePage: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, HermesSpacing.s32)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .padding(.bottom, HermesSpacing.s16)
             }
         }

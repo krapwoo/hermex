@@ -418,7 +418,7 @@ struct SessionListView: View {
                 .appFont(.subheadline, weight: .semibold)
                 .buttonStyle(.bordered)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s12)
         .background(Color(.secondarySystemBackground))
         .overlay(alignment: .bottom) {
@@ -696,7 +696,7 @@ struct SessionListView: View {
             searchChrome
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.top, HermesSpacing.s32)
         .animation(SessionListMotion.searchChromeAnimation(reduceMotion: reduceMotion), value: searchChromeIsExpanded)
         .animation(SessionListMotion.searchFocusAnimation(reduceMotion: reduceMotion), value: showsSearchClearButton)
@@ -941,7 +941,7 @@ struct SessionListView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, HermesSpacing.s24)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
@@ -1865,7 +1865,7 @@ private struct PendingNewChatView: View {
 
                 pendingComposer
             }
-            .padding(.horizontal)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.bottom, HermesSpacing.s12)
         }
         .navigationTitle("New Chat")

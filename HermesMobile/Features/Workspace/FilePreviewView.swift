@@ -211,7 +211,7 @@ struct FilePreviewView: View {
         VStack(spacing: HermesSpacing.s0) {
             fileHeader
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .padding(.vertical, HermesSpacing.s8)
             Divider()
             SourceFileSurface(

@@ -4,6 +4,16 @@ import XCTest
 final class DisclosureRowBodyWindowTests: XCTestCase {
     private let cap = DisclosureRowMetrics.bodyWindowHeight
 
+    private func disclosureRowSource() throws -> String {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        return try String(
+            contentsOf: repositoryRoot.appendingPathComponent("HermesMobile/Features/Chat/DisclosureRow.swift"),
+            encoding: .utf8
+        )
+    }
+
     func testUnmeasuredContentStartsClosed() {
         let layout = DisclosureRowBodyWindowLayout.resolve(contentHeight: nil, cap: cap)
 
@@ -34,5 +44,14 @@ final class DisclosureRowBodyWindowTests: XCTestCase {
 
     func testTheCapIsTwoHundredFortyPoints() {
         XCTAssertEqual(cap, 240)
+    }
+
+    func testDisclosureIndicatorAlwaysPointsDownAndUsesIconTokens() throws {
+        let source = try disclosureRowSource()
+
+        XCTAssertTrue(source.contains("Image(systemName: \"chevron.down\")"))
+        XCTAssertFalse(source.contains("chevron.up"))
+        XCTAssertTrue(source.contains("HermesIconSize.xs"))
+        XCTAssertTrue(source.contains("HermesIconSize.small"))
     }
 }

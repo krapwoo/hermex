@@ -593,7 +593,7 @@ private struct ChatCodeBlock: View {
                 .padding(.bottom, 13)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.chatTactile(.compactControl))
+            .buttonStyle(.hermesPressOnly(.compactControl))
             .foregroundStyle(.tint)
             .overlay(alignment: .top) { Divider() }
             .accessibilityHint("Copy includes every line.")

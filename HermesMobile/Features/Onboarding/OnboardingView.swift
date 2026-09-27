@@ -127,7 +127,7 @@ struct OnboardingView: View {
                 }
             }
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.top, HermesSpacing.s12)
         .padding(.bottom, HermesSpacing.s12)
         .background(
@@ -146,7 +146,7 @@ struct OnboardingView: View {
         VStack(spacing: HermesSpacing.s12) {
             connectActionButtons
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.top, HermesSpacing.s12)
         .padding(.bottom, HermesSpacing.s8)
     }

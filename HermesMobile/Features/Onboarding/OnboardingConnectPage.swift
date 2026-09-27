@@ -111,7 +111,7 @@ struct OnboardingConnectPage: View {
                     )
                 }
             }
-            .padding(.horizontal, HermesSpacing.s24)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.top, dynamicTypeSize.isAccessibilitySize ? 18 : 24)
             .padding(.bottom, HermesSpacing.s24)
         }

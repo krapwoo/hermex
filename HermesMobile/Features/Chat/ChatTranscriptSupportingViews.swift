@@ -1019,7 +1019,7 @@ struct ChatTranscriptLoadingSkeletonView: View {
                     .frame(height: 1)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.top, HermesSpacing.s16)
         }
         .scrollDisabled(true)

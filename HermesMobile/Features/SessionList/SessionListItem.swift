@@ -504,7 +504,7 @@ private struct SessionSourceBadge: View {
     let label: String
 
     var body: some View {
-        Tag(label: label, tint: .accentColor, size: .micro, isDecorative: true)
+        Tag(label: label, tint: .accentColor, size: .compact, isDecorative: true)
     }
 }
 
@@ -512,7 +512,7 @@ private struct SessionRowStateBadge: View {
     let badge: SessionRowStateBadgeKind
 
     var body: some View {
-        Tag(label: badge.title, tint: badge.tint, size: .micro, isDecorative: true)
+        Tag(label: badge.title, tint: badge.tint, size: .compact, isDecorative: true)
     }
 }
 

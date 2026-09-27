@@ -93,7 +93,7 @@ import SwiftUI
                 }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
                 .disabled(!creator.canCreate && creator.phase != .created)
-                .padding(.horizontal, HermesSpacing.s24).padding(.vertical, HermesSpacing.s12)
+                .padding(.horizontal, HermesSpacing.screenHorizontal).padding(.vertical, HermesSpacing.s12)
                 .background(.bar)
             }
             .navigationTitle(creator.isDuplicate ? "Duplicate Bot" : "New Bot")

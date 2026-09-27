@@ -3,7 +3,6 @@ import UIKit
 
 struct ChatTranscriptView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var scrollPositionController = ChatScrollPositionController()
 
     let isLoading: Bool
@@ -386,7 +385,7 @@ struct ChatTranscriptView: View {
     }
 
     private var transcriptHorizontalPadding: CGFloat {
-        dynamicTypeSize.isAccessibilitySize ? 20 : 16
+        HermesSpacing.screenHorizontal
     }
 
     private func transcriptContentWidth(for viewportWidth: CGFloat) -> CGFloat {

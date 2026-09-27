@@ -13,4 +13,14 @@ enum HermesSpacing {
     static let s40: CGFloat = 40
     static let s48: CGFloat = 48
     static let s64: CGFloat = 64
+
+    /// Standard left/right inset owned by app-level screens and surfaces.
+    static let screenHorizontal: CGFloat = s16
+}
+
+enum HermesIconSize {
+    static let xs: CGFloat = 12
+    static let small: CGFloat = 16
+    static let medium: CGFloat = 20
+    static let large: CGFloat = 24
 }

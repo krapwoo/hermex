@@ -22,7 +22,7 @@ struct ApprovalRequestOverlay: View {
             .frame(maxWidth: 520, alignment: .leading)
             .requestCardSurface(cornerRadius: HermesRadius.r16, material: .translucentOverScrim)
             .hermesShadow(.overlay)
-            .padding(.horizontal, HermesSpacing.s20)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
         }
         .accessibilityElement(children: .contain)
     }

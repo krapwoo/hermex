@@ -150,10 +150,10 @@ struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
                         .padding(.trailing, HermesSpacing.s4)
                 }
 
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 11, weight: .semibold))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: HermesIconSize.xs, weight: .semibold))
                     .foregroundStyle(.secondary)
-                    .frame(width: 16, height: 16)
+                    .frame(width: HermesIconSize.small, height: HermesIconSize.small)
 
                 status()
                     .frame(width: 16, height: 16)

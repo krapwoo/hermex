@@ -416,7 +416,7 @@ struct MessageComposerView: View {
                             },
                             onSelect: applyFileCompletion
                         )
-                        .padding(.horizontal)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
                         .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
                     } else if let slashQuery {
                         SlashCommandAutocompleteView(
@@ -449,7 +449,7 @@ struct MessageComposerView: View {
                                 applyCompletion("")
                             }
                         )
-                        .padding(.horizontal)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
                         .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
                     }
                 }
@@ -457,11 +457,11 @@ struct MessageComposerView: View {
                 .animation(ChatMotion.quickState(reduceMotion: reduceMotion), value: showsFileAutocomplete)
 
                 composerSurface
-                    .padding(.horizontal)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
 
                 if isExpanded {
                     toolbarRow
-                        .padding(.horizontal)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
                         .padding(.top, HermesSpacing.s8)
                         .frame(maxWidth: .infinity)
                         // Solid chat background behind the controls: the card

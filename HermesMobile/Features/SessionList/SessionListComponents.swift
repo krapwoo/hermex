@@ -264,7 +264,7 @@ struct SessionSidebarUtilityRows: View {
 
     private func disclosureSubrow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(.horizontal, HermesSpacing.s24)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.top, Self.rowSpacing)
             .sessionsScreenListRow()
             .transition(SessionListMotion.disclosureContentTransition(reduceMotion: reduceMotion))
@@ -308,7 +308,7 @@ struct SessionSidebarUtilityRows: View {
                 }
             }
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
     }
 
     private var activeProfileHeader: some View {
@@ -325,7 +325,7 @@ struct SessionSidebarUtilityRows: View {
                     .controlSize(.small)
             }
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .accessibilityLabel(profilesAreExpanded ? "Collapse active profile picker" : "Expand active profile picker")
     }
 
@@ -412,7 +412,7 @@ struct SessionSidebarUtilityRows: View {
                 .accessibilityHint("Clears the selected project filter.")
             }
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
     }
 
     private var addProjectButton: some View {
@@ -514,7 +514,7 @@ struct SessionListRowsSection: View {
                 description: emptyDescription,
                 systemImage: "bubble.left"
             )
-                .padding(.horizontal, HermesSpacing.s24)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .sessionsScreenListRow()
         } else {
             ForEach(sessions) { session in
@@ -549,7 +549,7 @@ struct SessionListRowsSection: View {
                 }
             }
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.bottom, HermesSpacing.s12)
     }
 
@@ -588,7 +588,7 @@ struct SessionListRowsSection: View {
                 .accessibilityLabel("Retry loading sessions")
                 .accessibilityHint("Attempts to reconnect to the server and reload sessions.")
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
     }
 
     private func sessionsErrorContent(fallbackMessage: String) -> (title: String, description: String) {
@@ -741,7 +741,7 @@ struct ScheduledSessionsDisclosure: View {
                 .padding(.vertical, HermesSpacing.s2)
                 .background(.thinMaterial, in: Capsule())
         }
-        .padding(.horizontal, HermesSpacing.s24)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.top, isSearchActive ? 16 : 12)
         .sessionsScreenListRow()
         .accessibilityLabel(
@@ -778,7 +778,7 @@ struct ScheduledSessionsDisclosure: View {
                             .font(.caption.weight(.semibold))
                     }
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, HermesSpacing.s24)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .frame(minHeight: 44)
                     .contentShape(Rectangle())
                 }
@@ -812,7 +812,7 @@ struct ScheduledSessionsView: View {
                         : String(localized: "Try another search or project filter."),
                     systemImage: "calendar.badge.clock"
                 )
-                .padding(.horizontal, HermesSpacing.s24)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .sessionsScreenListRow()
             } else {
                 ForEach(sessions) { session in

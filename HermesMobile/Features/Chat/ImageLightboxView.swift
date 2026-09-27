@@ -205,7 +205,7 @@ struct ImageLightboxView<Actions: View>: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, HermesSpacing.s20)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.top, HermesSpacing.s32)
         .padding(.bottom, HermesSpacing.s16)
         .background(

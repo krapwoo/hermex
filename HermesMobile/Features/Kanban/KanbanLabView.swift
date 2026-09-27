@@ -621,7 +621,7 @@ struct KanbanStatusFocusView: View {
                 .appFont(.footnote)
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s12)
         .background(.secondary.opacity(0.1))
         .accessibilityElement(children: .combine)
@@ -693,7 +693,7 @@ struct KanbanStatusFocusView: View {
                 .frame(minHeight: 44)
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(summary.needsAttention.isEmpty ? Color.green.opacity(0.1) : Color.orange.opacity(0.12))
         .accessibilityElement(children: .contain)
@@ -727,7 +727,7 @@ struct KanbanStatusFocusView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(.secondary.opacity(0.08))
         .accessibilityElement(children: .contain)
@@ -776,7 +776,7 @@ struct KanbanStatusFocusView: View {
             }
         }
         .appFont(.footnote)
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(.secondary.opacity(0.1))
         .accessibilityElement(children: .contain)
@@ -796,7 +796,7 @@ struct KanbanStatusFocusView: View {
         Label("Offline—showing previously loaded data", systemImage: "wifi.slash")
             .appFont(.footnote)
             .foregroundStyle(.orange)
-            .padding(.horizontal)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.vertical, HermesSpacing.s8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.orange.opacity(0.12))
@@ -807,7 +807,7 @@ struct KanbanStatusFocusView: View {
         Label("Live updates delayed", systemImage: "arrow.clockwise.circle")
             .appFont(.footnote)
             .foregroundStyle(.secondary)
-            .padding(.horizontal)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.vertical, HermesSpacing.s8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.secondary.opacity(0.08))
@@ -829,7 +829,7 @@ struct KanbanStatusFocusView: View {
             Image(systemName: "exclamationmark.triangle.fill")
         }
         .foregroundStyle(.orange)
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.orange.opacity(0.12))
@@ -850,7 +850,7 @@ struct KanbanStatusFocusView: View {
             Button("Try Again") { Task { await model.refresh() } }
                 .appFont(.footnote, weight: .semibold)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(.red.opacity(0.1))
     }
@@ -1129,10 +1129,10 @@ struct KanbanStatusFocusView: View {
                 activateCard(card)
             } label: {
                 HStack(spacing: HermesSpacing.s12) {
-                    Image(systemName: model.selectedCardIDs.contains(card.cardID ?? "")
-                          ? "checkmark.circle.fill"
-                          : "circle")
-                        .font(.title3)
+                    HermesCheckbox(
+                        isChecked: model.selectedCardIDs.contains(card.cardID ?? ""),
+                        isEnabled: model.bulkActionPhase == nil
+                    )
                     KanbanCardSummaryView(card: card)
                 }
                 .contentShape(Rectangle())

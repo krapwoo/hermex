@@ -164,7 +164,7 @@ struct TasksView: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal)
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .padding(.vertical, HermesSpacing.s8)
         .background(.bar)
     }

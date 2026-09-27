@@ -35,7 +35,7 @@ struct OnboardingTailscalePage: View {
                     .accessibilityHint("Opens the Tailscale page in the App Store.")
                 }
             }
-            .padding(.horizontal, HermesSpacing.s32)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.top, HermesSpacing.s24)
             .padding(.bottom, HermesSpacing.s16)
         }

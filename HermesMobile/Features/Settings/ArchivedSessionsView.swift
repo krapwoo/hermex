@@ -58,7 +58,7 @@ struct ArchivedSessionsView: View {
             LazyVStack(alignment: .leading, spacing: HermesSpacing.s0) {
                 if viewModel.isLoading && viewModel.sessions.isEmpty {
                     ArchivedStatusRow(title: String(localized: "Loading archived sessions..."), systemImage: "archivebox")
-                        .padding(.horizontal, HermesSpacing.s24)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
                 } else if let errorMessage = viewModel.errorMessage, viewModel.sessions.isEmpty {
                     VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                         ArchivedStatusRow(title: String(localized: "Could not load archived sessions"), systemImage: "exclamationmark.triangle")
@@ -74,17 +74,17 @@ struct ArchivedSessionsView: View {
                         .appFont(.subheadline, weight: .medium)
                         .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, HermesSpacing.s24)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                 } else if viewModel.sessions.isEmpty {
                     ArchivedStatusRow(title: String(localized: "No archived sessions"), systemImage: "archivebox")
-                        .padding(.horizontal, HermesSpacing.s24)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
                 } else {
                     VStack(spacing: HermesSpacing.s2) {
                         ForEach(visibleSessions) { session in
                             archivedSessionRow(for: session)
                         }
                     }
-                    .padding(.horizontal, HermesSpacing.s12)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                 }
             }
             .padding(.top, HermesSpacing.s32)

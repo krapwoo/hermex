@@ -10,11 +10,9 @@ import SwiftUI
 /// tappable by accident. A tappable file or resource reference is an Inline Reference Link, not a
 /// Tag styled to look interactive.
 struct Tag: View {
-    /// Every horizontal/vertical padding pair actually used by a production call site today.
+    /// The retained display-only sizes used by production call sites.
     enum Size: Equatable {
-        /// Sessions' Cached/Read-only/source badges — the most compact instance.
-        case micro
-        /// Workspace/Git's change-kind chip.
+        /// Sessions and Workspace/Git's compact status chips.
         case compact
         /// Tasks' status badge and Settings' profile "Selected"/"Server Default" badge.
         case regular
@@ -23,8 +21,6 @@ struct Tag: View {
 
         var horizontalPadding: CGFloat {
             switch self {
-            case .micro:
-                HermesSpacing.s4
             case .compact, .regular:
                 HermesSpacing.s8
             case .prominent:
@@ -34,7 +30,7 @@ struct Tag: View {
 
         var verticalPadding: CGFloat {
             switch self {
-            case .micro, .compact:
+            case .compact:
                 HermesSpacing.s2
             case .regular:
                 HermesSpacing.s4

@@ -283,9 +283,16 @@ private struct BotQuestionRequestBody: View {
         } label: {
             HStack(spacing: HermesSpacing.s8) {
                 if !submitsOnTap {
-                    Image(systemName: selectionSymbol(isPicked: isPicked, item: item))
-                        .foregroundStyle(isPicked ? Color.accentColor : .secondary)
-                        .accessibilityHidden(true)
+                    if item.allowsMultipleChoices {
+                        HermesCheckbox(
+                            isChecked: isPicked,
+                            isEnabled: isEnabled && !isAnswering
+                        )
+                    } else {
+                        Image(systemName: isPicked ? "largecircle.fill.circle" : "circle")
+                            .foregroundStyle(isPicked ? Color.accentColor : .secondary)
+                            .accessibilityHidden(true)
+                    }
                 }
                 Text(choice.label)
                     .appFont(.body, weight: .semibold)
@@ -326,10 +333,6 @@ private struct BotQuestionRequestBody: View {
         }
     }
 
-    private func selectionSymbol(isPicked: Bool, item: BotQuestionRequest.Question) -> String {
-        if item.allowsMultipleChoices { return isPicked ? "checkmark.square.fill" : "square" }
-        return isPicked ? "largecircle.fill.circle" : "circle"
-    }
 
     private func binding(for item: BotQuestionRequest.Question) -> Binding<String> {
         Binding(get: { typed[item.id] ?? "" }, set: { typed[item.id] = $0 })
@@ -510,7 +513,7 @@ private struct BotConnectionRequestBody: View {
         Button { onConnection(.continueWithout) } label: {
             Text("Continue without").frame(maxWidth: .infinity)
         }
-        .buttonStyle(.chatDecision(.secondary))
+        .buttonStyle(.hermes(.medium, emphasis: .secondary))
         .disabled(!isEnabled || isAnswering)
         Text("Releases the bot now. Apps not connected stay off for this reply.")
             .font(.caption)
@@ -641,14 +644,14 @@ private struct BotConnectionTargetRow: View {
                 Button { openURL(url) } label: {
                     Label("Open link", systemImage: "safari").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.chatDecision(.primary))
+                .buttonStyle(.hermes(.medium, emphasis: .primary))
                 .disabled(!isEnabled)
                 .accessibilityLabel(Text("Open link for \(target.name)"))
             } else if target.canConnect {
                 Button(action: connect) {
                     Text("Connect").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.chatDecision(.primary))
+                .buttonStyle(.hermes(.medium, emphasis: .primary))
                 .disabled(!canConnect)
                 .accessibilityLabel(Text("Connect \(target.name)"))
             }
@@ -656,7 +659,7 @@ private struct BotConnectionTargetRow: View {
                 Button { onConnection(.skip(target: target.name)) } label: {
                     Text("Skip").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.chatDecision(.secondary))
+                .buttonStyle(.hermes(.medium, emphasis: .secondary))
                 .disabled(!canAct)
                 .accessibilityLabel(Text("Skip \(target.name)"))
             }

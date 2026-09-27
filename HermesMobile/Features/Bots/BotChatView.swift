@@ -30,7 +30,6 @@ import SwiftUI
     /// Measured composer height; sizes the material fade behind it, as the main chat does.
     @State private var composerHeight: CGFloat = 52
     @State private var composerFocused = false
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var window = BotTranscriptWindow()
     /// When the title face's current 15 fps beat began; see `titleFaceMotion`.
     @State private var workingBeat = BotWorkingBeat()
@@ -137,7 +136,7 @@ import SwiftUI
                         }
                         Color.clear.frame(height: 1).id("bot-transcript-bottom")
                     }
-                    .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 20 : 16)
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .padding(.top, HermesSpacing.s16)
                     .padding(.bottom, HermesSpacing.s48)
                     // A tapped row must stay under the finger: stop following so

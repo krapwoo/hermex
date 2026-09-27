@@ -38,7 +38,7 @@ struct OnboardingFeaturesPage: View {
                     }
                 }
             }
-            .padding(.horizontal, HermesSpacing.s32)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.bottom, HermesSpacing.s24)
         }
         .scrollBounceBehavior(.basedOnSize)

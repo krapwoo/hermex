@@ -3,10 +3,7 @@ import SwiftUI
 @testable import HermesMobile
 
 final class TagTests: XCTestCase {
-    func testSizePaddingMatchesEveryMigratedCallSitesExistingMetrics() {
-        XCTAssertEqual(Tag.Size.micro.horizontalPadding, HermesSpacing.s4)
-        XCTAssertEqual(Tag.Size.micro.verticalPadding, HermesSpacing.s2)
-
+    func testRetainedSizePaddingMatchesApprovedMetrics() {
         XCTAssertEqual(Tag.Size.compact.horizontalPadding, HermesSpacing.s8)
         XCTAssertEqual(Tag.Size.compact.verticalPadding, HermesSpacing.s2)
 
@@ -71,5 +68,6 @@ final class TagTests: XCTestCase {
         )
         XCTAssertFalse(src.contains("action:"), "Tag must stay display-only: no action closure")
         XCTAssertFalse(src.contains("onTapGesture"), "Tag must stay display-only: no tap gesture")
+        XCTAssertFalse(src.contains("case micro"), "Tag no longer supports a micro size")
     }
 }

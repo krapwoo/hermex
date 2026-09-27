@@ -84,7 +84,7 @@ struct SkillsView: View {
                         )
                     }
                 }
-                .padding(.horizontal, HermesSpacing.s20)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .padding(.top, HermesSpacing.s20)
                 .padding(.bottom, HermesSpacing.s32)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -336,7 +336,7 @@ struct SkillDetailView: View {
                 VStack(alignment: .leading, spacing: HermesSpacing.s16) {
                     if let content = detail.content, !content.isEmpty {
                         MarkdownRenderer(content: content)
-                            .padding(.horizontal)
+                            .padding(.horizontal, HermesSpacing.screenHorizontal)
                     }
 
                     if let linkedFiles = detail.linkedFiles, !linkedFiles.isEmpty {
@@ -398,7 +398,7 @@ private struct SkillLinkedFilesSection: View {
             Text("Linked Files")
                 .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, HermesSpacing.s20)
+                .padding(.horizontal, HermesSpacing.screenHorizontal)
 
             VStack(spacing: HermesSpacing.s0) {
                 ForEach(Array(fileNames.enumerated()), id: \.element) { index, fileName in
@@ -434,7 +434,7 @@ private struct SkillLinkedFilesSection: View {
                     }
                 }
             }
-            .padding(.horizontal, HermesSpacing.s20)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
         }
     }
 }

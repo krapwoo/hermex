@@ -57,6 +57,8 @@
 		C0CE1F00000000000000B2 /* HermesContentUnavailableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */; };
 		C0B00700000000000000A2 /* HermesButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B00700000000000000A1 /* HermesButton.swift */; };
 		C0B00700000000000000B2 /* HermesButtonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B00700000000000000B1 /* HermesButtonTests.swift */; };
+		C0C4EC0000000000000000A2 /* HermesCheckbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C4EC0000000000000000A1 /* HermesCheckbox.swift */; };
+		C0C4EC0000000000000000B2 /* HermesCheckboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C4EC0000000000000000B1 /* HermesCheckboxTests.swift */; };
 		C0DE512E00000000000002206 /* UsageChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002205 /* UsageChartData.swift */; };
 		C0DE512E00000000000002208 /* UsageChartCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002207 /* UsageChartCard.swift */; };
 		C0DE512E0000000000000220A /* UsageTotalsGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE512E00000000000002209 /* UsageTotalsGrid.swift */; };
@@ -1022,6 +1024,8 @@
 		C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesContentUnavailableTests.swift; sourceTree = "<group>"; };
 		C0B00700000000000000A1 /* HermesButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesButton.swift; sourceTree = "<group>"; };
 		C0B00700000000000000B1 /* HermesButtonTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesButtonTests.swift; sourceTree = "<group>"; };
+		C0C4EC0000000000000000A1 /* HermesCheckbox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesCheckbox.swift; sourceTree = "<group>"; };
+		C0C4EC0000000000000000B1 /* HermesCheckboxTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HermesCheckboxTests.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002205 /* UsageChartData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageChartData.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002207 /* UsageChartCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageChartCard.swift; sourceTree = "<group>"; };
 		C0DE512E00000000000002209 /* UsageTotalsGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UsageTotalsGrid.swift; sourceTree = "<group>"; };
@@ -1452,6 +1456,7 @@
 				C0117E00000000000000B1 /* ListItemTests.swift */,
 				C0CE1F00000000000000B1 /* HermesContentUnavailableTests.swift */,
 				C0B00700000000000000B1 /* HermesButtonTests.swift */,
+				C0C4EC0000000000000000B1 /* HermesCheckboxTests.swift */,
 				1A2B3C4D5E6F70000000122 /* ContextWindowIndicatorTests.swift */,
 				1A2B3C4D5E6F70000000143 /* ModelFavoritesStoreTests.swift */,
 				105050000000000000000004 /* ComposerModelPickerSectionExpansionStateTests.swift */,
@@ -1704,6 +1709,7 @@
 				C0117E00000000000000A1 /* ListItem.swift */,
 				C0CE1F00000000000000A1 /* HermesContentUnavailable.swift */,
 				C0B00700000000000000A1 /* HermesButton.swift */,
+				C0C4EC0000000000000000A1 /* HermesCheckbox.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -2633,6 +2639,7 @@
 				C0117E00000000000000A2 /* ListItem.swift in Sources */,
 				C0CE1F00000000000000A2 /* HermesContentUnavailable.swift in Sources */,
 				C0B00700000000000000A2 /* HermesButton.swift in Sources */,
+				C0C4EC0000000000000000A2 /* HermesCheckbox.swift in Sources */,
 				C0DE512E00000000000002206 /* UsageChartData.swift in Sources */,
 				C0DE512E00000000000002208 /* UsageChartCard.swift in Sources */,
 				C0DE512E0000000000000220A /* UsageTotalsGrid.swift in Sources */,
@@ -2803,6 +2810,7 @@
 				C0117E00000000000000B2 /* ListItemTests.swift in Sources */,
 				C0CE1F00000000000000B2 /* HermesContentUnavailableTests.swift in Sources */,
 				C0B00700000000000000B2 /* HermesButtonTests.swift in Sources */,
+				C0C4EC0000000000000000B2 /* HermesCheckboxTests.swift in Sources */,
 					1A2B3C4D5E6F70000000132 /* ContextWindowIndicatorTests.swift in Sources */,
 					1A2B3C4D5E6F70000000141 /* ModelFavoritesStoreTests.swift in Sources */,
 					105050000000000000000003 /* ComposerModelPickerSectionExpansionStateTests.swift in Sources */,

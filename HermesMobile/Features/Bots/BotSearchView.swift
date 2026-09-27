@@ -75,7 +75,7 @@ import SwiftUI
                             searchFocused = false; onSelectRoom(room, nil); dismiss()
                         } label: {
                             BotRoomInboxRow(room: room, roster: inbox.profiles, avatars: inbox.avatars)
-                                .padding(.horizontal, HermesSpacing.s20)
+                                .padding(.horizontal, HermesSpacing.screenHorizontal)
                         }
                         .buttonStyle(.plain)
                     }
@@ -87,7 +87,7 @@ import SwiftUI
                     Text("Messages saved on this iPhone")
                         .appFont(.footnote).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, HermesSpacing.s20).padding(.top, HermesSpacing.s16)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal).padding(.top, HermesSpacing.s16)
                     if !request.query.isEmpty {
                         ForEach(visibleHits) { hit in
                             if let room = inbox.roomForSearch(hit) {
@@ -187,7 +187,9 @@ import SwiftUI
 
     private func status(_ text: LocalizedStringKey) -> some View {
         Text(text).appFont(.body).foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading).padding(HermesSpacing.s20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
+            .padding(.vertical, HermesSpacing.s20)
     }
 
     private func profile(for hit: BotHistoryCache.Hit) -> BotProfile? {
@@ -213,7 +215,7 @@ import SwiftUI
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
             }
         }
-        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
+        .padding(.horizontal, HermesSpacing.screenHorizontal).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -233,7 +235,7 @@ import SwiftUI
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
             }
         }
-        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
+        .padding(.horizontal, HermesSpacing.screenHorizontal).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle()).accessibilityElement(children: .combine)
     }
 
@@ -272,7 +274,7 @@ import SwiftUI
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, HermesSpacing.s20).padding(.vertical, HermesSpacing.s16)
+        .padding(.horizontal, HermesSpacing.screenHorizontal).padding(.vertical, HermesSpacing.s16)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }

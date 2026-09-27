@@ -1354,7 +1354,7 @@ struct ChatView: View {
                         .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.bottom, composerHeight + 8 + clarificationFootprintHeight)
             .allowsHitTesting(false)
             .zIndex(8)
