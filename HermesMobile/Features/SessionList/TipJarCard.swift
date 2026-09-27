@@ -14,10 +14,8 @@ struct TipJarCard: View {
         isVisible && scenePhase == .active && !reduceMotion && !dismissed
     }
 
-    private let accent = HermesColorRamp.Gold.s400.color
-
     var body: some View {
-        SectionCard {
+        SectionCard(surface: .outlined) {
             VStack(alignment: .leading, spacing: HermesSpacing.s12) {
                 HStack(spacing: HermesSpacing.s12) {
                     companion
@@ -75,7 +73,7 @@ struct TipJarCard: View {
             fallbackTitle: "Hermex"
         )
         return BotAvatarMarkView(name: "Hermex", appearance: appearance,
-                                 size: dynamicTypeSize.isAccessibilitySize ? 36 : 50,
+                                 size: HermesAvatarSize.large.rawValue,
                                  pose: pose)
             .animation(canAnimate ? .easeInOut(duration: HermesMotion.Duration.d200) : nil, value: phase)
             .accessibilityHidden(true)
@@ -85,12 +83,10 @@ struct TipJarCard: View {
     private var actions: some View {
         Link(destination: AppConfig.tipURL) {
             Text("Buy Uzi a coffee")
-                .foregroundStyle(.black)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .appFont(.subheadline, weight: .semibold)
-        .buttonStyle(.hermes(.medium, emphasis: .primary))
-        .tint(accent)
+        .buttonStyle(.hermes(.medium, emphasis: .brandPrimary))
         .accessibilityLabel("Buy Uzi a coffee, opens in browser")
         .environment(\.openURL, OpenURLAction { url in
             TipJarPromptState(defaults: .standard).recordLinkOpened()
@@ -100,6 +96,5 @@ struct TipJarCard: View {
             TipJarPromptState(defaults: .standard).dismiss()
         }
         .buttonStyle(.hermes(.medium, emphasis: .neutral))
-        .foregroundStyle(.secondary)
     }
 }

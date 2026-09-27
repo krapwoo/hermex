@@ -8,6 +8,59 @@ enum HermesCardMetrics {
     static let contentPadding: CGFloat = HermesSpacing.s16
 }
 
+/// Canonical Card surface choices. Any Card described as outlined uses this exact semantic
+/// background-and-border treatment rather than reconstructing white fill and grey stroke locally.
+enum HermesCardSurface {
+    case glass
+    case outlined
+}
+
+extension View {
+    func hermesCardSurface(
+        _ surface: HermesCardSurface,
+        cornerRadius: CGFloat = HermesRadius.card
+    ) -> some View {
+        modifier(HermesCardSurfaceModifier(surface: surface, cornerRadius: cornerRadius))
+    }
+}
+
+private struct HermesCardSurfaceModifier: ViewModifier {
+    let surface: HermesCardSurface
+    let cornerRadius: CGFloat
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+        switch surface {
+        case .glass:
+            content
+                .background {
+                    shape.fill(Color(.secondarySystemBackground).opacity(reduceTransparency ? 1 : 0.34))
+                }
+                .adaptiveGlass(.regular, fallbackMaterial: .regularMaterial, in: shape)
+                .clipShape(shape)
+                .overlay {
+                    shape
+                        .stroke(Color.primary.opacity(colorSchemeContrast == .increased ? 0.16 : 0.06), lineWidth: 0.7)
+                        .allowsHitTesting(false)
+                }
+        case .outlined:
+            content
+                .background(Color(.systemBackground), in: shape)
+                .clipShape(shape)
+                .overlay {
+                    shape
+                        .stroke(Color(.separator), lineWidth: 1)
+                        .allowsHitTesting(false)
+                }
+        }
+    }
+}
+
 /// Compact Card: the explicit, documented compact-density surface for component compositions —
 /// today, the composer and message Attachment file tiles' outer surface. It is not Card's 16-point
 /// default; a component owns its own compact geometry, and this only unifies the fill-plus-hairline

@@ -34,7 +34,7 @@ enum HermesButtonSize: CaseIterable {
 }
 
 enum HermesButtonEmphasis: CaseIterable {
-    case neutral, primary, secondary, destructive
+    case neutral, brandPrimary, primary, secondary, destructive
 }
 
 /// Press Feedback: `.standard` is Hermex Buttons' default — a slight scale and opacity response,
@@ -106,7 +106,7 @@ struct HermesButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let isPressed = isEnabled && configuration.isPressed
-        let shape = RoundedRectangle(cornerRadius: HermesRadius.control, style: .continuous)
+        let shape = Capsule()
 
         configuration.label
             .appFont(size.font, weight: .semibold)
@@ -141,6 +141,7 @@ struct HermesButtonStyle: ButtonStyle {
     private var tint: Color? {
         switch emphasis {
         case .neutral, .secondary: nil
+        case .brandPrimary: HermesColorRamp.Gold.s500.color
         case .primary: .accentColor
         case .destructive: .red
         }
@@ -151,6 +152,7 @@ struct HermesButtonStyle: ButtonStyle {
 
         switch emphasis {
         case .neutral, .secondary: return .primary
+        case .brandPrimary: return .black
         case .primary: return colorScheme == .dark ? .black : .white
         case .destructive: return .red
         }
@@ -164,6 +166,8 @@ struct HermesButtonStyle: ButtonStyle {
         switch emphasis {
         case .neutral:
             return colorScheme == .dark ? Color.white.opacity(isPressed ? 0.14 : 0.10) : Color.black.opacity(isPressed ? 0.08 : 0.05)
+        case .brandPrimary:
+            return isPressed ? HermesColorRamp.Gold.s600.color : HermesColorRamp.Gold.s500.color
         case .primary:
             return colorScheme == .dark ? .white : .black
         case .secondary:

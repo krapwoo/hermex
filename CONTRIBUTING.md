@@ -74,6 +74,41 @@ architecture overhauls will be closed without detailed review.
 Keep each PR to **one logical change** with a reviewable diff. If a change is
 independently useful, it deserves its own PR.
 
+## Hermex Design System
+
+Hermex has one versioned design-system implementation in this repository. Shared
+foundations live in `HermesMobile/Config/`; reusable components and patterns live
+in `HermesMobile/Features/Shared/`. Feature screens consume those APIs instead of
+recreating their visual treatment locally.
+
+For frontend contributions:
+
+- Use the existing Hermex typography, color, spacing, radius, motion, shadow, and
+  component APIs before introducing a literal or feature-local lookalike.
+- Keep native platform behavior where it owns the interaction — for example
+  `.searchable`, navigation/toolbars, system lists, menus, and alerts — and layer
+  Hermex styling around those semantics rather than replacing them.
+- Use `Tag` only for display-only metadata. Tappable choices use Button,
+  Segmented Control, Checkbox, or another semantic control.
+- `HermesCard` owns Card chrome. `SectionCard` is a section-content composition
+  that delegates its surface to `HermesCard`; feature Cards must not draw their
+  own background, border, radius, or default padding.
+- Update the hosted Hermex Design System catalog whenever a shared token,
+  component, variant, state, or ownership classification changes. Describe the
+  catalog impact in the PR when the catalog source is maintained separately.
+
+Run the enforceable adoption contract before opening a PR:
+
+```zsh
+python3 scripts/hermex_design_system_adoption_audit.py
+python3 -m unittest discover -s scripts/tests -p 'test_hermex_design_system_adoption_audit.py' -v
+```
+
+CI runs the same checks for every PR. Do not suppress a failure with a local
+workaround. A genuine exception requires a maintainer-approved issue, a named
+owner, a removal condition, and a focused checker update in the same PR so the
+exception remains explicit and reviewable.
+
 ## App bug or server bug?
 
 Hermex is a thin client over [hermes-webui](https://github.com/nesquena/hermes-webui),

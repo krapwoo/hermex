@@ -4,7 +4,8 @@
 # full suite too: PRs need not be up to date to merge, so two green PRs can
 # still break master together. PRs limited to docs
 # (markdown, docs/, community files) and local tooling (scripts/) skip the
-# macOS runner entirely and pass via the cheap gate job.
+# macOS runner. The lightweight Design System Contract job still runs on every
+# PR, including script-only changes, before the final gate.
 #
 # The required branch-protection check is "CI Gate", not "Build and Test":
 # a skipped required check would block merges forever, so the gate always
@@ -59,9 +60,8 @@ jobs:
           echo "Changed files:"
           echo "${files}"
           # Fail closed: anything NOT on the allowlist triggers the full suite
-          # (including workflow, project, and config changes). scripts/ is
-          # local tooling that no workflow or build phase calls; take it off
-          # the allowlist if that ever changes.
+          # (including workflow, project, and config changes). scripts/ remains
+          # off the macOS path because script checks run in their own Ubuntu job.
           app_changes=$(echo "${files}" | grep -vE '^(docs/.*|scripts/.*|LICENSE|\.gitignore|\.github/ISSUE_TEMPLATE/.*|\.github/CODEOWNERS|\.github/dependabot\.yml|\.github/FUNDING\.yml|.*\.md)$' || true)
           if [[ -n "${app_changes}" ]]; then
             echo "App-affecting changes detected — running the full suite:"
@@ -71,6 +71,20 @@ jobs:
             echo "Docs or scripts only — skipping the macOS runner."
             echo "run_ios=false" >> "$GITHUB_OUTPUT"
           fi
+
+  design_system:
+    name: Design System Contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Check Hermex Design System adoption
+        run: |
+          set -euo pipefail
+          python3 scripts/hermex_design_system_adoption_audit.py
+          python3 -m unittest discover -s scripts/tests -p 'test_hermex_design_system_adoption_audit.py' -v
 
   test:
     name: Build and Test
@@ -201,7 +215,7 @@ jobs:
 
   gate:
     name: CI Gate
-    needs: [changes, test]
+    needs: [changes, design_system, test]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -210,9 +224,14 @@ jobs:
         run: |
           set -euo pipefail
           echo "changes: ${{ needs.changes.result }}"
+          echo "design_system: ${{ needs.design_system.result }}"
           echo "test: ${{ needs.test.result }}"
           if [[ "${{ needs.changes.result }}" != "success" ]]; then
             echo "Path detection failed — failing the gate." >&2
+            exit 1
+          fi
+          if [[ "${{ needs.design_system.result }}" != "success" ]]; then
+            echo "Design System Contract did not pass — failing the gate." >&2
             exit 1
           fi
           case "${{ needs.test.result }}" in

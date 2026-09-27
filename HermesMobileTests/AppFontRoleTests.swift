@@ -7,11 +7,17 @@ final class AppFontRoleTests: XCTestCase {
     func testRoleMetadataMatchesApprovedTable() {
         let expectations: [(AppFont.Role, CGFloat, Font.TextStyle, UIFont.TextStyle, Font.Weight)] = [
             (.caption, 12, .caption, .caption1, .regular),
+            (.captionSemibold, 12, .caption, .caption1, .semibold),
             (.footnote, 12, .caption, .caption1, .regular),
             (.caption2, 12, .caption, .caption1, .regular),
+            (.mono12, 12, .caption, .caption1, .regular),
             (.subheadline, 14, .subheadline, .subheadline, .regular),
+            (.subheadlineSemibold, 14, .subheadline, .subheadline, .semibold),
+            (.mono14, 14, .subheadline, .subheadline, .regular),
             (.body, 16, .body, .body, .regular),
+            (.label, 16, .body, .body, .semibold),
             (.headline, 18, .headline, .headline, .regular),
+            (.headlineSemibold, 18, .headline, .headline, .semibold),
             (.title3, 20, .title3, .title3, .bold),
             (.title2, 22, .title2, .title2, .bold),
             (.title, 28, .title, .title1, .bold),
@@ -25,7 +31,15 @@ final class AppFontRoleTests: XCTestCase {
     }
 
     func testAllCasesCovered() {
-        XCTAssertEqual(AppFont.Role.allCases.count, 9)
+        XCTAssertEqual(AppFont.Role.allCases.count, 15)
+    }
+
+    func testNamedMonoRolesUseMonospacedDesign() {
+        XCTAssertEqual(AppFont.Role.mono12.defaultDesign, .monospaced)
+        XCTAssertEqual(AppFont.Role.mono14.defaultDesign, .monospaced)
+        for role in AppFont.Role.allCases where role != .mono12 && role != .mono14 {
+            XCTAssertEqual(role.defaultDesign, .default, "\(role)")
+        }
     }
 
     func testTitle2FactoryExistsAndCompiles() {

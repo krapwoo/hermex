@@ -82,6 +82,24 @@ final class HermesButtonTests: XCTestCase {
         XCTAssertTrue(src.contains(".adaptiveGlass("))
     }
 
+    func testFullChromeButtonUsesTheCatalogPillShape() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains("let shape = Capsule()"))
+        XCTAssertFalse(src.contains("let shape = RoundedRectangle(cornerRadius: HermesRadius.control"))
+    }
+
+    func testBrandPrimaryUsesTheHermexGoldRamp() throws {
+        XCTAssertTrue(HermesButtonEmphasis.allCases.contains(.brandPrimary))
+        let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
+        XCTAssertTrue(src.contains("HermesColorRamp.Gold.s500.color"))
+        XCTAssertTrue(src.contains("HermesColorRamp.Gold.s600.color"))
+    }
+
+    func testTipJarUsesBrandPrimaryButtonChrome() throws {
+        let src = try source("HermesMobile/Features/SessionList/TipJarCard.swift")
+        XCTAssertTrue(src.contains("emphasis: .brandPrimary"))
+    }
+
     func testHapticsStayOptionalAndSeparateFromPressFeedback() throws {
         let src = try source("HermesMobile/Features/Shared/HermesButton.swift")
         XCTAssertTrue(src.contains("var haptic: (() -> Void)?"))

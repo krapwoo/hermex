@@ -38,7 +38,6 @@ struct SessionListItem: View {
 
             rowContent
         }
-        .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, verticalPadding)
         .frame(minHeight: rowMinimumHeight, alignment: .center)
         .contentShape(Rectangle())
@@ -225,7 +224,7 @@ struct SessionListItem: View {
 
     private func attentionStateText(_ state: SessionRowAttentionState) -> some View {
         Text(state.title)
-            .appFont(.caption, weight: .semibold)
+            .appFont(.captionSemibold)
             .monospacedDigit()
             .foregroundStyle(state.tint)
             .lineLimit(1)
@@ -236,7 +235,7 @@ struct SessionListItem: View {
     private var titleAndPin: some View {
         HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             Text(displayTitle)
-                .appFont(.headline, weight: .semibold)
+                .appFont(.body, weight: .semibold)
                 .foregroundStyle(.primary)
                 .lineLimit(titleLineLimit)
                 .truncationMode(.tail)

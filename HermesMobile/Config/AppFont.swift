@@ -62,14 +62,16 @@ enum AppFont {
 
 extension AppFont {
     enum Role: CaseIterable {
-        case caption, footnote, caption2, subheadline, body, headline, title3, title2, title
+        case caption, captionSemibold, footnote, caption2, mono12
+        case subheadline, subheadlineSemibold, mono14
+        case body, label, headline, headlineSemibold, title3, title2, title
 
         var baseSize: CGFloat {
             switch self {
-            case .caption, .footnote, .caption2: return 12
-            case .subheadline: return 14
-            case .body: return 16
-            case .headline: return 18
+            case .caption, .captionSemibold, .footnote, .caption2, .mono12: return 12
+            case .subheadline, .subheadlineSemibold, .mono14: return 14
+            case .body, .label: return 16
+            case .headline, .headlineSemibold: return 18
             case .title3: return 20
             case .title2: return 22
             case .title: return 28
@@ -78,10 +80,10 @@ extension AppFont {
 
         var swiftUIAnchor: Font.TextStyle {
             switch self {
-            case .caption, .footnote, .caption2: return .caption
-            case .subheadline: return .subheadline
-            case .body: return .body
-            case .headline: return .headline
+            case .caption, .captionSemibold, .footnote, .caption2, .mono12: return .caption
+            case .subheadline, .subheadlineSemibold, .mono14: return .subheadline
+            case .body, .label: return .body
+            case .headline, .headlineSemibold: return .headline
             case .title3: return .title3
             case .title2: return .title2
             case .title: return .title
@@ -90,10 +92,10 @@ extension AppFont {
 
         var uiKitAnchor: UIFont.TextStyle {
             switch self {
-            case .caption, .footnote, .caption2: return .caption1
-            case .subheadline: return .subheadline
-            case .body: return .body
-            case .headline: return .headline
+            case .caption, .captionSemibold, .footnote, .caption2, .mono12: return .caption1
+            case .subheadline, .subheadlineSemibold, .mono14: return .subheadline
+            case .body, .label: return .body
+            case .headline, .headlineSemibold: return .headline
             case .title3: return .title3
             case .title2: return .title2
             case .title: return .title1
@@ -102,15 +104,28 @@ extension AppFont {
 
         var defaultWeight: Font.Weight {
             switch self {
-            case .caption, .footnote, .caption2, .subheadline, .body, .headline: return .regular
+            case .caption, .footnote, .caption2, .mono12, .subheadline, .mono14, .body, .headline:
+                return .regular
+            case .captionSemibold, .subheadlineSemibold, .label, .headlineSemibold:
+                return .semibold
             case .title3, .title2, .title: return .bold
             }
         }
 
         var defaultUIKitWeight: UIFont.Weight {
             switch self {
-            case .caption, .footnote, .caption2, .subheadline, .body, .headline: return .regular
+            case .caption, .footnote, .caption2, .mono12, .subheadline, .mono14, .body, .headline:
+                return .regular
+            case .captionSemibold, .subheadlineSemibold, .label, .headlineSemibold:
+                return .semibold
             case .title3, .title2, .title: return .bold
+            }
+        }
+
+        var defaultDesign: Font.Design {
+            switch self {
+            case .mono12, .mono14: return .monospaced
+            default: return .default
             }
         }
     }
@@ -129,10 +144,10 @@ private struct AppFontModifier: ViewModifier {
     let design: Font.Design
     @ScaledMetric private var scaledSize: CGFloat
 
-    init(role: AppFont.Role, weight: Font.Weight?, design: Font.Design) {
+    init(role: AppFont.Role, weight: Font.Weight?, design: Font.Design?) {
         self.role = role
         self.weight = weight
-        self.design = design
+        self.design = design ?? role.defaultDesign
         _scaledSize = ScaledMetric(wrappedValue: role.baseSize, relativeTo: role.swiftUIAnchor)
     }
 
@@ -142,7 +157,7 @@ private struct AppFontModifier: ViewModifier {
 }
 
 extension View {
-    func appFont(_ role: AppFont.Role, weight: Font.Weight? = nil, design: Font.Design = .default) -> some View {
+    func appFont(_ role: AppFont.Role, weight: Font.Weight? = nil, design: Font.Design? = nil) -> some View {
         modifier(AppFontModifier(role: role, weight: weight, design: design))
     }
 }
@@ -201,10 +216,10 @@ extension Text {
         _ role: AppFont.Role,
         dynamicTypeSize: DynamicTypeSize,
         weight: Font.Weight? = nil,
-        design: Font.Design = .default
+        design: Font.Design? = nil
     ) -> Text {
         let traitCollection = UITraitCollection(preferredContentSizeCategory: dynamicTypeSize.appFontContentSizeCategory)
         let scaledSize = AppFont.scaledFont(role: role, traitCollection: traitCollection).pointSize
-        return font(.system(size: scaledSize, weight: weight ?? role.defaultWeight, design: design))
+        return font(.system(size: scaledSize, weight: weight ?? role.defaultWeight, design: design ?? role.defaultDesign))
     }
 }

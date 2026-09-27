@@ -226,9 +226,15 @@ struct ProductionTokenEvidenceLabView: View {
         (.title, "title"),
         (.title2, "title2"),
         (.title3, "title3"),
+        (.headlineSemibold, "headlineSemibold"),
         (.headline, "headline"),
+        (.label, "label"),
         (.body, "body"),
+        (.mono14, "mono14"),
+        (.subheadlineSemibold, "subheadlineSemibold"),
         (.subheadline, "subheadline"),
+        (.mono12, "mono12"),
+        (.captionSemibold, "captionSemibold"),
         (.footnote, "footnote"),
         (.caption, "caption"),
         (.caption2, "caption2"),
@@ -279,7 +285,7 @@ struct ProductionTokenEvidenceLabView: View {
     private var fontRoleMatrix: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text("AppFont.Role matrix")
-                .appFont(.headline, weight: .semibold)
+                .appFont(.headlineSemibold)
 
             ForEach(Self.fontRoleSamples, id: \.role) { sample in
                 Text(sample.label)
@@ -296,7 +302,7 @@ struct ProductionTokenEvidenceLabView: View {
     private var chatControlSpecimen: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text("Elevated Chat control (resting shadow)")
-                .appFont(.headline, weight: .semibold)
+                .appFont(.headlineSemibold)
 
             HapticButton(feedbackStyle: .medium) {} label: {
                 HStack(spacing: HermesSpacing.s12) {
@@ -304,7 +310,7 @@ struct ProductionTokenEvidenceLabView: View {
                         .font(.title3.weight(.semibold))
 
                     Text("Chat")
-                        .appFont(.headline, weight: .semibold)
+                        .appFont(.headlineSemibold)
                 }
                 .foregroundStyle(colorScheme == .dark ? .black : .white)
                 .padding(.horizontal, HermesSpacing.s24)
@@ -330,7 +336,7 @@ struct ProductionTokenEvidenceLabView: View {
     private var attachmentSpecimen: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s16) {
             Text("Attachment family")
-                .appFont(.headline, weight: .semibold)
+                .appFont(.headlineSemibold)
 
             HStack(alignment: .top, spacing: HermesSpacing.s24) {
                 VStack(alignment: .leading, spacing: HermesSpacing.s8) {

@@ -79,7 +79,14 @@ final class DesignSystemAdoptionCompletionTests: XCTestCase {
         XCTAssertTrue(component.contains("struct SegmentedControl"))
         XCTAssertTrue(component.contains("case fixed"))
         XCTAssertTrue(component.contains("case scrolling"))
-        XCTAssertTrue(component.contains(".pickerStyle(.segmented)"))
+        XCTAssertFalse(component.contains("Picker("))
+        XCTAssertFalse(component.contains(".pickerStyle(.segmented)"))
+        XCTAssertTrue(component.contains("matchedGeometryEffect"))
+        XCTAssertTrue(component.contains("SegmentedControlMetrics.visualHeight"))
+        XCTAssertTrue(component.contains("SegmentedControlMetrics.minimumTouchHeight"))
+        XCTAssertTrue(component.contains("HermesMotion.Bundle.contentReposition"))
+        XCTAssertTrue(component.contains(".subheadlineSemibold"))
+        XCTAssertTrue(component.contains(".appFont(.mono12)"))
         XCTAssertTrue(component.contains("ScrollView(.horizontal"))
         XCTAssertFalse(component.contains("HermesSegmentedControl"))
     }
@@ -129,6 +136,7 @@ final class DesignSystemAdoptionCompletionTests: XCTestCase {
         let skills = try source("HermesMobile/Features/Skills/SkillsView.swift")
         let memory = try source("HermesMobile/Features/Memory/MemoryView.swift")
         let tipJar = try source("HermesMobile/Features/SessionList/TipJarCard.swift")
+        let sessionList = try source("HermesMobile/Features/SessionList/SessionListView.swift")
 
         XCTAssertTrue(kanban.contains("Banner("))
         XCTAssertTrue(kanban.contains("HermesDivider()"))
@@ -137,8 +145,16 @@ final class DesignSystemAdoptionCompletionTests: XCTestCase {
         XCTAssertTrue(memory.contains(".buttonStyle(.hermesPressOnly(.icon))"))
         XCTAssertTrue(tipJar.contains("SectionCard"))
         XCTAssertTrue(tipJar.contains(".buttonStyle(.hermes("))
+        XCTAssertTrue(tipJar.contains("emphasis: .brandPrimary"))
         XCTAssertTrue(tipJar.contains("HermesColorRamp.Gold.s400"))
         XCTAssertFalse(tipJar.contains("Color(red:"))
         XCTAssertFalse(tipJar.lowercased().contains("#ffe000"))
+        XCTAssertFalse(tipJar.contains(".foregroundStyle(.black)"))
+        XCTAssertFalse(tipJar.contains(".tint(accent)"))
+        XCTAssertTrue(
+            sessionList.contains(
+                "TipJarCard()\n                    .padding(.horizontal, HermesSpacing.screenHorizontal)"
+            )
+        )
     }
 }

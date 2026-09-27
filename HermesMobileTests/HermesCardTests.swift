@@ -43,6 +43,23 @@ final class HermesCardTests: XCTestCase {
         XCTAssertTrue(src.contains(".padding(.vertical, HermesCardMetrics.contentPadding)"))
     }
 
+    func testSectionCardSupportsOutlinedSurfaceAndTipJarAdoptsIt() throws {
+        let card = try source("HermesMobile/Features/Shared/HermesCard.swift")
+        let sectionCard = try source("HermesMobile/Features/Shared/SectionCard.swift")
+        let tipJar = try source("HermesMobile/Features/SessionList/TipJarCard.swift")
+
+        XCTAssertTrue(card.contains("enum HermesCardSurface"))
+        XCTAssertTrue(card.contains("case outlined"))
+        XCTAssertTrue(card.contains("func hermesCardSurface("))
+        XCTAssertTrue(card.contains("Color(.systemBackground)"))
+        XCTAssertTrue(card.contains("Color(.separator)"))
+        XCTAssertTrue(sectionCard.contains("HermesCardSurface"))
+        XCTAssertTrue(sectionCard.contains(".hermesCardSurface(surface, cornerRadius: HermesRadius.r20)"))
+        XCTAssertFalse(sectionCard.contains("Color(.systemBackground)"))
+        XCTAssertFalse(sectionCard.contains("Color(.separator)"))
+        XCTAssertTrue(tipJar.contains("SectionCard(surface: .outlined)"))
+    }
+
     func testClarificationRequestCardAdoptsTheSharedContentPadding() throws {
         let src = try source("HermesMobile/Features/Chat/ClarificationRequestCard.swift")
         XCTAssertTrue(src.contains("HermesCardMetrics.contentPadding"))

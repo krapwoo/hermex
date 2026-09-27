@@ -536,7 +536,7 @@ struct SessionListRowsSection: View {
             HStack(spacing: HermesSpacing.s12) {
                 if !isSearchActive {
                     Text("Sessions")
-                        .appFont(.title3, weight: .bold)
+                        .appFont(.label, weight: .bold)
                         .foregroundStyle(.primary)
                 }
 
@@ -560,7 +560,8 @@ struct SessionListRowsSection: View {
                 showsMessageCount: showsMessageCount,
                 showsWorkspace: showsWorkspace
             )
-            .sessionsScreenListRow(insets: EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
+            .sessionsScreenListRow()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Loading sessions")
             .accessibilityHidden(index > 0)
@@ -639,6 +640,7 @@ struct SessionInteractiveRow: View {
                 : Color.clear,
             in: RoundedRectangle(cornerRadius: HermesRadius.r12, style: .continuous)
         )
+        .padding(.horizontal, HermesSpacing.screenHorizontal)
         .transition(SessionListMotion.sessionRowTransition(reduceMotion: reduceMotion))
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             sessionLeadingSwipeActions(for: session)
@@ -661,7 +663,7 @@ struct SessionInteractiveRow: View {
                 actions: actions
             )
         }
-        .sessionsScreenListRow(insets: EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+        .sessionsScreenListRow()
     }
 
     @ViewBuilder
@@ -1198,7 +1200,7 @@ struct SidebarNavButton: View {
                 SidebarUtilityIcon(assetImage: assetImage)
 
                 Text(title)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -1227,7 +1229,7 @@ struct SidebarDisclosureButton<Accessory: View>: View {
                 SidebarUtilityIcon(assetImage: assetImage, tint: tint)
 
                 Text(title)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -1411,7 +1413,7 @@ struct ProjectFilterRow: View {
                     HStack(spacing: HermesSpacing.s8) {
                         if count > 0 {
                             Text("\(count)")
-                                .appFont(.caption, weight: .semibold)
+                                .appFont(.captionSemibold)
                                 .foregroundStyle(.secondary)
                         }
 
@@ -1578,7 +1580,7 @@ private struct SessionListStatusRow: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .accessibilityAddTraits(.isHeader)
@@ -1618,7 +1620,6 @@ struct SessionRowSkeletonView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, verticalPadding)
         .frame(minHeight: metadataLabel == nil ? 46 : 54)
         .skeletonPlaceholder()
@@ -1644,7 +1645,7 @@ struct SessionRowSkeletonView: View {
 
     private var titleText: some View {
         Text(verbatim: configuration.title)
-            .appFont(.headline, weight: .semibold)
+            .appFont(.headlineSemibold)
             .foregroundStyle(.primary)
             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 2)
             .truncationMode(.tail)

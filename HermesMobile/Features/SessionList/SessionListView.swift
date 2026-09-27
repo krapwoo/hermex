@@ -406,7 +406,7 @@ struct SessionListView: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("Another shared item is waiting")
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                 Text("Open it when you are done with this draft.")
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
@@ -415,7 +415,7 @@ struct SessionListView: View {
             Spacer(minLength: 0)
 
             Button("Open Next", action: openNextSharedImport)
-                .appFont(.subheadline, weight: .semibold)
+                .appFont(.subheadlineSemibold)
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal, HermesSpacing.screenHorizontal)
@@ -589,6 +589,7 @@ struct SessionListView: View {
 
             if showsTipCard {
                 TipJarCard()
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .sessionsScreenListRow()
             }
 
@@ -786,7 +787,7 @@ struct SessionListView: View {
         } label: {
             ZStack {
                 Text(settingsInitials)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(initialsAvatarForegroundColor)
                     .frame(width: Self.searchChromeIconVisualSize, height: Self.searchChromeIconVisualSize)
                     .background(selectedHeaderLogoColor, in: Circle())
@@ -843,7 +844,7 @@ struct SessionListView: View {
                     .font(.title3.weight(.semibold))
 
                 Text("Chat")
-                    .appFont(.headline, weight: .semibold)
+                    .appFont(.headlineSemibold)
             }
             .foregroundStyle(newSessionButtonForegroundColor)
             .padding(.horizontal, HermesSpacing.s24)

@@ -1,11 +1,18 @@
 import SwiftUI
 
-/// Shared mutually-exclusive selection control. The fixed variant preserves the native iOS
-/// segmented Picker; the scrolling variant uses the same selection semantics when the options no
-/// longer fit in an equal-width control.
+/// Shared mutually-exclusive selection control. Both variants use Hermex-owned presentation and
+/// native Button semantics: fixed divides the available width equally, while scrolling preserves
+/// each option's intrinsic width when the set no longer fits.
 enum SegmentedControlStyle {
     case fixed
     case scrolling
+}
+
+private enum SegmentedControlMetrics {
+    /// Compact visible pill height. The surrounding Button retains the full minimum touch target.
+    static let visualHeight: CGFloat = 36
+    static let minimumTouchHeight: CGFloat = 44
+    static let trackInset: CGFloat = HermesSpacing.s4
 }
 
 struct SegmentedControlOption<Value: Hashable>: Identifiable {
@@ -24,6 +31,7 @@ struct SegmentedControl<Value: Hashable>: View {
     var style: SegmentedControlStyle = .fixed
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var selectionNamespace
 
     init(
         _ title: String,
@@ -41,64 +49,93 @@ struct SegmentedControl<Value: Hashable>: View {
     var body: some View {
         switch style {
         case .fixed:
-            Picker(title, selection: $selection) {
+            HStack(spacing: HermesSpacing.s4) {
                 ForEach(options) { option in
-                    Text(option.title).tag(option.value)
+                    optionButton(option, expandsToFill: true)
                 }
             }
-            .pickerStyle(.segmented)
+            .padding(.horizontal, SegmentedControlMetrics.trackInset)
+            .background(Color(.secondarySystemFill), in: Capsule(style: .continuous))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text(title))
         case .scrolling:
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: HermesSpacing.s8) {
                     ForEach(options) { option in
-                        scrollingOption(option)
+                        optionButton(option, expandsToFill: false)
                     }
                 }
                 .padding(.horizontal, HermesSpacing.screenHorizontal)
-                .padding(.vertical, HermesSpacing.s8)
+                .padding(.vertical, HermesSpacing.s4)
             }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text(title))
         }
     }
 
-    private func scrollingOption(_ option: SegmentedControlOption<Value>) -> some View {
+    private func optionButton(
+        _ option: SegmentedControlOption<Value>,
+        expandsToFill: Bool
+    ) -> some View {
         let isSelected = selection == option.value
 
         return Button {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d150)) {
+            withAnimation(selectionAnimation) {
                 selection = option.value
             }
         } label: {
-            HStack(spacing: HermesSpacing.s8) {
-                if let tint = option.tint {
-                    Circle()
-                        .fill(tint)
-                        .frame(width: HermesIconSize.xs, height: HermesIconSize.xs)
-                        .accessibilityHidden(true)
+            ZStack {
+                if isSelected {
+                    Capsule(style: .continuous)
+                        .fill(Color(.systemBackground))
+                        .hermesShadow(.controlElevatedResting)
+                        .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
+                        .frame(height: SegmentedControlMetrics.visualHeight)
+                        .allowsHitTesting(false)
                 }
 
-                Text(option.title)
-                    .appFont(.subheadline, weight: isSelected ? .semibold : .regular)
+                optionLabel(option, isSelected: isSelected)
 
-                if let count = option.count {
-                    Text(verbatim: "\(count)")
-                        .appFont(.caption, design: .monospaced)
-                        .foregroundStyle(.secondary)
-                }
+                .padding(.horizontal, HermesSpacing.s12)
+                .frame(
+                    maxWidth: expandsToFill ? .infinity : nil,
+                    minHeight: SegmentedControlMetrics.minimumTouchHeight
+                )
+                .contentShape(Rectangle())
             }
-            .foregroundStyle(isSelected ? .primary : .secondary)
-            .padding(.horizontal, HermesSpacing.s12)
-            .frame(minHeight: 44)
-            .background(
-                isSelected ? Color(.secondarySystemFill) : Color.clear,
-                in: Capsule(style: .continuous)
-            )
-            .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.hermesPressOnly(.capsule))
         .accessibilityLabel(accessibilityLabel(for: option))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private func optionLabel(
+        _ option: SegmentedControlOption<Value>,
+        isSelected: Bool
+    ) -> some View {
+        HStack(spacing: HermesSpacing.s8) {
+            if let tint = option.tint {
+                Circle()
+                    .fill(tint)
+                    .frame(width: HermesIconSize.xs, height: HermesIconSize.xs)
+                    .accessibilityHidden(true)
+            }
+
+            Text(option.title)
+                .appFont(isSelected ? .subheadlineSemibold : .subheadline)
+
+            if let count = option.count {
+                Text(verbatim: "\(count)")
+                    .appFont(.mono12)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .foregroundStyle(isSelected ? .primary : .secondary)
+    }
+
+    private var selectionAnimation: Animation? {
+        guard !reduceMotion else { return nil }
+        return HermesMotion.animation(for: HermesMotion.Bundle.contentReposition)
     }
 
     private func accessibilityLabel(for option: SegmentedControlOption<Value>) -> Text {

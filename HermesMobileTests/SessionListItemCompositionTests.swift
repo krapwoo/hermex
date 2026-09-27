@@ -73,4 +73,50 @@ final class SessionListItemCompositionTests: XCTestCase {
         XCTAssertTrue(src.contains(".swipeActions(edge: .trailing"))
         XCTAssertTrue(src.contains(".contextMenu {"))
     }
+
+    func testSessionRowsUseOneScreenLevelHorizontalInset() throws {
+        let component = try source("HermesMobile/Features/SessionList/SessionListItem.swift")
+        let caller = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
+
+        XCTAssertFalse(component.contains(".padding(.horizontal, HermesSpacing.s12)"))
+        XCTAssertFalse(
+            caller.contains(
+                ".sessionsScreenListRow(insets: EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))"
+            )
+        )
+        XCTAssertTrue(caller.contains(".padding(.horizontal, HermesSpacing.screenHorizontal)"))
+    }
+
+    func testSessionHeaderAndTitlesUseTheSixteenPointLabelAndBodyRoles() throws {
+        let component = try source("HermesMobile/Features/SessionList/SessionListItem.swift")
+        let caller = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
+
+        XCTAssertTrue(component.contains(".appFont(.body, weight: .semibold)"))
+        XCTAssertFalse(component.contains(".appFont(.headline, weight: .semibold)"))
+        XCTAssertTrue(caller.contains(".appFont(.label, weight: .bold)"))
+        XCTAssertFalse(caller.contains(".appFont(.title3, weight: .bold)"))
+    }
+
+    func testMainMenuAndSessionRowsUseHermexTypography() throws {
+        let component = try source("HermesMobile/Features/SessionList/SessionListItem.swift")
+        let caller = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
+
+        XCTAssertTrue(component.contains(".appFont(.captionSemibold)"))
+        XCTAssertTrue(component.contains(".appFont(.body, weight: .semibold)"))
+        XCTAssertGreaterThanOrEqual(caller.components(separatedBy: ".appFont(.label)").count - 1, 2)
+        XCTAssertTrue(caller.contains(".appFont(.subheadlineSemibold)"))
+        XCTAssertTrue(caller.contains(".appFont(.headlineSemibold)"))
+    }
+
+    func testTipJarUsesNamedAvatarSizingAndSharedComponents() throws {
+        let src = try source("HermesMobile/Features/SessionList/TipJarCard.swift")
+
+        XCTAssertTrue(src.contains("SectionCard(surface: .outlined)"))
+        XCTAssertTrue(src.contains("HermesAvatarSize.large.rawValue"))
+        XCTAssertTrue(src.contains(".buttonStyle(.hermes("))
+        XCTAssertTrue(src.contains("HermesSpacing."))
+        XCTAssertTrue(src.contains("HermesColorRamp.Gold.s400"))
+        XCTAssertTrue(src.contains("HermesMotion.Duration.d200"))
+        XCTAssertFalse(src.contains("size: dynamicTypeSize.isAccessibilitySize ? 36 : 50"))
+    }
 }

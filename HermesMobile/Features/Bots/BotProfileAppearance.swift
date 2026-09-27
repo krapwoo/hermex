@@ -92,6 +92,13 @@ enum BotAvatarShape: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// Named Avatar diameters shared by production Avatar compositions and the design-system catalog.
+enum HermesAvatarSize: CGFloat, CaseIterable {
+    case small = 32
+    case medium = 40
+    case large = 48
+}
+
 /// The rest expression of a drawn face: eye size, lean and spacing, after Bloub's
 /// measured catalogue (MIT, jeremy-prt/bloub). Values are in Bloub's units of body
 /// radius and degrees; `BotAvatarMarkView` scales them onto the mark.
