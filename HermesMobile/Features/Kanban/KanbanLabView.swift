@@ -1091,21 +1091,22 @@ struct KanbanStatusFocusView: View {
     }
 
     private var emptyContent: some View {
-        ContentUnavailableView {
-            Label(
-                model.hasActiveFilters ? String(localized: "No matching Cards") : String(localized: "No Cards in this Status"),
-                systemImage: model.hasActiveFilters ? "line.3.horizontal.decrease.circle" : "rectangle.stack"
-            )
-        } description: {
-            Text(model.hasActiveFilters
+        HermesContentUnavailable(
+            variant: model.hasActiveFilters ? .noResults : .empty,
+            title: model.hasActiveFilters
+                ? String(localized: "No matching Cards")
+                : String(localized: "No Cards in this Status"),
+            systemImage: model.hasActiveFilters ? "line.3.horizontal.decrease.circle" : "rectangle.stack",
+            description: Text(model.hasActiveFilters
                  ? String(localized: "Change or clear the filters to see more Cards.")
-                 : String(localized: "Choose another Status or refresh the Board."))
-        } actions: {
-            if model.hasActiveFilters {
-                Button("Clear Filters") { Task { await model.clearFilters() } }
-                    .frame(minHeight: 44)
-            }
-        }
+                 : String(localized: "Choose another Status or refresh the Board.")),
+            primaryAction: model.hasActiveFilters
+                ? HermesContentUnavailable.Action(
+                    title: String(localized: "Clear Filters"),
+                    handler: { Task { await model.clearFilters() } }
+                )
+                : nil
+        )
     }
 
     private var boardTitle: String {

@@ -50,7 +50,7 @@ private struct ProviderLimitsPlaceholderCard: View {
 
                 row
 
-                Divider()
+                HermesDivider()
                     .padding(.vertical, HermesSpacing.s16)
 
                 row
@@ -101,7 +101,7 @@ struct ProviderLimitsCard: View {
 
                 ForEach(Array(card.rows.enumerated()), id: \.element.id) { index, row in
                     if index > 0 {
-                        Divider()
+                        HermesDivider()
                             .padding(.vertical, HermesSpacing.s16)
                     }
 
@@ -109,7 +109,7 @@ struct ProviderLimitsCard: View {
                 }
 
                 if let updated = providerLimitUpdatedText(card.updatedAt, now: now) {
-                    Divider()
+                    HermesDivider()
                         .padding(.vertical, HermesSpacing.s16)
 
                     Text(updated)
@@ -148,15 +148,7 @@ struct ProviderLimitsCard: View {
     @ViewBuilder
     private var planCapsule: some View {
         if let plan = card.plan {
-            Text(plan)
-                .appFont(.caption, weight: .medium)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, HermesSpacing.s12)
-                .padding(.vertical, HermesSpacing.s4)
-                .overlay {
-                    Capsule()
-                        .stroke(Color.primary.opacity(0.18), lineWidth: 0.8)
-                }
+            Tag(label: plan, tint: .secondary)
         }
     }
 }
@@ -238,9 +230,9 @@ private struct ProviderLimitRowView: View {
         case .normal:
             .accentColor
         case .warning:
-            .orange
+            HermesColorRamp.Orange.s500.color
         case .critical:
-            .red
+            HermesColorRamp.Red.s500.color
         }
     }
 
@@ -267,12 +259,17 @@ private struct ProviderLimitBar: View {
     var body: some View {
         Capsule()
             .fill(Color.primary.opacity(0.14))
-            .frame(height: 8)
+            .frame(height: HermesUsageSize.balanceBarHeight)
             .overlay(alignment: .leading) {
                 GeometryReader { proxy in
                     Capsule()
                         .fill(fillColor)
-                        .frame(width: max(proxy.size.width * min(max(fraction, 0), 1), fraction > 0 ? 8 : 0))
+                        .frame(
+                            width: max(
+                                proxy.size.width * min(max(fraction, 0), 1),
+                                fraction > 0 ? HermesUsageSize.minimumBalanceFill : 0
+                            )
+                        )
                 }
             }
             .accessibilityHidden(true)
@@ -283,9 +280,9 @@ private struct ProviderLimitBar: View {
         case .normal:
             .accentColor
         case .warning:
-            .orange
+            HermesColorRamp.Orange.s500.color
         case .critical:
-            .red
+            HermesColorRamp.Red.s500.color
         }
     }
 }

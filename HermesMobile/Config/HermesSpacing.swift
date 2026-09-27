@@ -18,6 +18,16 @@ enum HermesSpacing {
     static let screenHorizontal: CGFloat = s16
 }
 
+/// The Usage family's fixed geometry that exceeds or is not spacing-scale geometry: the chart's
+/// height, the legend swatch diameter, and the remaining-balance bar's height and minimum visible
+/// fill. Shared by `UsageChartCard` and `ProviderLimitsCard`.
+enum HermesUsageSize {
+    static let chartHeight: CGFloat = 180
+    static let legendIndicator: CGFloat = 7
+    static let balanceBarHeight: CGFloat = 8
+    static let minimumBalanceFill: CGFloat = 8
+}
+
 enum HermesIconSize {
     static let xs: CGFloat = 12
     static let small: CGFloat = 16

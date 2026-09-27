@@ -3,9 +3,11 @@
 # the String Catalog (ci/check_string_catalog.py). Pushes to master run the
 # full suite too: PRs need not be up to date to merge, so two green PRs can
 # still break master together. PRs limited to docs
-# (markdown, docs/, community files) and local tooling (scripts/) skip the
-# macOS runner. The lightweight Design System Contract job still runs on every
-# PR, including script-only changes, before the final gate.
+# (markdown, docs/, community files), local tooling (scripts/), and the
+# design-system-catalog/ (its own Node/TypeScript contracts run in the
+# Design System Contract job below, not the macOS suite) skip the macOS
+# runner. The lightweight Design System Contract job still runs on every
+# PR, including script- and catalog-only changes, before the final gate.
 #
 # The required branch-protection check is "CI Gate", not "Build and Test":
 # a skipped required check would block merges forever, so the gate always
@@ -60,9 +62,11 @@ jobs:
           echo "Changed files:"
           echo "${files}"
           # Fail closed: anything NOT on the allowlist triggers the full suite
-          # (including workflow, project, and config changes). scripts/ remains
-          # off the macOS path because script checks run in their own Ubuntu job.
-          app_changes=$(echo "${files}" | grep -vE '^(docs/.*|scripts/.*|LICENSE|\.gitignore|\.github/ISSUE_TEMPLATE/.*|\.github/CODEOWNERS|\.github/dependabot\.yml|\.github/FUNDING\.yml|.*\.md)$' || true)
+          # (including workflow, project, and config changes). scripts/ and
+          # design-system-catalog/ remain off the macOS path because their
+          # checks run in their own Ubuntu jobs (script checks; the catalog's
+          # Node contract test and TypeScript, in Design System Contract).
+          app_changes=$(echo "${files}" | grep -vE '^(docs/.*|scripts/.*|design-system-catalog/.*|LICENSE|\.gitignore|\.github/ISSUE_TEMPLATE/.*|\.github/CODEOWNERS|\.github/dependabot\.yml|\.github/FUNDING\.yml|.*\.md)$' || true)
           if [[ -n "${app_changes}" ]]; then
             echo "App-affecting changes detected — running the full suite:"
             echo "${app_changes}"
@@ -75,7 +79,10 @@ jobs:
   design_system:
     name: Design System Contract
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Raised from the original 5-minute bound: installing the catalog's Expo/
+    # React Native dependencies (native-preview/package-lock.json) needs more
+    # headroom than the Python-only checks did.
+    timeout-minutes: 10
     steps:
       - name: Check out
         uses: actions/checkout@v7
@@ -84,7 +91,30 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/hermex_design_system_adoption_audit.py
-          python3 -m unittest discover -s scripts/tests -p 'test_hermex_design_system_adoption_audit.py' -v
+          python3 -m unittest scripts.tests.test_hermex_design_system_adoption_audit -v
+          python3 -m unittest scripts.tests.test_design_system_catalog_repository -v
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: design-system-catalog/native-preview/package-lock.json
+
+      - name: Install design-system-catalog dependencies
+        run: npm ci --prefix design-system-catalog/native-preview
+
+      - name: Run design-system-catalog Node contract test
+        run: node --test design-system-catalog/test/hermes-catalog.test.mjs
+
+      - name: Typecheck design-system-catalog/native-preview
+        run: |
+          set -euo pipefail
+          # native/catalog/hermes's imports only resolve against native-preview's
+          # node_modules through this repo-root symlink; it is gitignored and
+          # created here at runtime, never committed. See design-system-catalog/README.md.
+          ln -s native-preview/node_modules design-system-catalog/node_modules
+          (cd design-system-catalog/native-preview && npx tsc --noEmit)
 
   test:
     name: Build and Test

@@ -93,9 +93,11 @@ For frontend contributions:
 - `HermesCard` owns Card chrome. `SectionCard` is a section-content composition
   that delegates its surface to `HermesCard`; feature Cards must not draw their
   own background, border, radius, or default padding.
-- Update the hosted Hermex Design System catalog whenever a shared token,
-  component, variant, state, or ownership classification changes. Describe the
-  catalog impact in the PR when the catalog source is maintained separately.
+- Update `design-system-catalog/` in the same PR whenever a shared token,
+  component, variant, state, or ownership classification changes — it is
+  versioned in this repository, not maintained separately. See
+  [`DEVELOPMENT.md`](DEVELOPMENT.md#design-system-catalog) for install/test/
+  typecheck/launch commands.
 
 Run the enforceable adoption contract before opening a PR:
 
@@ -104,10 +106,24 @@ python3 scripts/hermex_design_system_adoption_audit.py
 python3 -m unittest discover -s scripts/tests -p 'test_hermex_design_system_adoption_audit.py' -v
 ```
 
-CI runs the same checks for every PR. Do not suppress a failure with a local
-workaround. A genuine exception requires a maintainer-approved issue, a named
-owner, a removal condition, and a focused checker update in the same PR so the
-exception remains explicit and reviewable.
+CI runs the same checks for every PR. `scripts/hermex_design_system_adoption_audit.py`
+automatically blocks a fixed list of named regressions: the main menu's `HermesList`
+container, Kanban's and Usage's `HermesContentUnavailable` adoption, Provider Limits'
+`HermesDivider`/`Tag` adoption, Usage's `HermesColorRamp`/`HermesUsageSize` adoption,
+and — a global guard — any *new* file that adds a direct `ContentUnavailableView {}`
+constructor, or an *existing* retained one that grows past its counted baseline in the
+script (`ContentUnavailableView.search(text:)` is exempt everywhere). What it does
+**not** decide is a matter of contributor/reviewer judgment: whether a given screen's
+row anatomy genuinely differs enough to stay feature-local (see `SidebarNavButton`/
+`SidebarDisclosureButton` next to `HermesList`), whether a new/customized component is
+truly warranted versus extending an existing one, and general taste calls the checker
+cannot express as a text pattern.
+
+Do not suppress a failure with a local workaround. A genuine exception — including
+raising the `ContentUnavailableView` baseline for a retained legacy site — requires a
+maintainer-approved issue, a named owner, a removal condition, and a focused checker
+update (with its own before/after test) in the same PR so the exception remains
+explicit, counted, and reviewable rather than an open-ended allowance.
 
 ## App bug or server bug?
 

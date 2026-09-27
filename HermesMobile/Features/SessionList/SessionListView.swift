@@ -583,7 +583,7 @@ struct SessionListView: View {
     private var content: some View {
         // Computed once per body: grouping filters and sorts every session.
         let groups = scheduledSessionGroups
-        return List {
+        return HermesList {
             header
                 .sessionsTopChromeListRow()
 

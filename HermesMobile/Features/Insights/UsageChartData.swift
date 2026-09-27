@@ -115,15 +115,15 @@ enum UsageChartSegment: String, Identifiable, CaseIterable {
     var color: Color {
         switch self {
         case .input:
-            .blue
+            HermesColorRamp.Blue.s500.color
         case .output:
-            .orange
+            HermesColorRamp.Orange.s500.color
         case .cacheRead:
-            .teal
+            HermesColorRamp.Cyan.s500.color
         case .cost:
-            .indigo
+            HermesColorRamp.Purple.s600.color
         case .sessions:
-            .purple
+            HermesColorRamp.Purple.s500.color
         }
     }
 }

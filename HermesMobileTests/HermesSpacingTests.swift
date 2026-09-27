@@ -65,7 +65,8 @@ final class HermesSpacingTests: XCTestCase {
             "HermesMobile/Features/Skills/SkillsView.swift",
             "HermesMobile/Features/Tasks/TasksView.swift",
             "HermesMobile/Features/Workspace/FileBrowserView.swift",
-            "HermesMobile/Features/Kanban/KanbanLabView.swift"
+            "HermesMobile/Features/Kanban/KanbanLabView.swift",
+            "HermesMobile/Features/Insights/InsightsView.swift"
         ]
 
         for path in screenSources {
@@ -74,5 +75,41 @@ final class HermesSpacingTests: XCTestCase {
                 "Expected semantic 16 pt screen-edge spacing in \(path)"
             )
         }
+    }
+
+    func testUsageSizeScaleMatchesApprovedValues() {
+        XCTAssertEqual(HermesUsageSize.chartHeight, 180)
+        XCTAssertEqual(HermesUsageSize.legendIndicator, 7)
+        XCTAssertEqual(HermesUsageSize.balanceBarHeight, 8)
+        XCTAssertEqual(HermesUsageSize.minimumBalanceFill, 8)
+    }
+
+    func testUsageSurfacesDelegateToSharedDesignSystemComponentsAndTokens() throws {
+        let limits = try source("HermesMobile/Features/Insights/ProviderLimitsCard.swift")
+        let chart = try source("HermesMobile/Features/Insights/UsageChartCard.swift")
+        let chartData = try source("HermesMobile/Features/Insights/UsageChartData.swift")
+        let insights = try source("HermesMobile/Features/Insights/InsightsView.swift")
+
+        XCTAssertTrue(limits.contains("HermesDivider("))
+        XCTAssertFalse(limits.replacingOccurrences(of: "HermesDivider()", with: "").contains("Divider()"))
+        XCTAssertTrue(limits.contains("Tag(label: plan, tint: .secondary)"))
+        XCTAssertFalse(limits.contains("Color.secondary.opacity(0.12)"))
+        XCTAssertTrue(limits.contains("HermesUsageSize.balanceBarHeight"))
+        XCTAssertTrue(limits.contains("HermesUsageSize.minimumBalanceFill"))
+        XCTAssertTrue(limits.contains("HermesColorRamp.Orange"))
+        XCTAssertTrue(limits.contains("HermesColorRamp.Red"))
+
+        XCTAssertTrue(chart.contains("HermesUsageSize.chartHeight"))
+        XCTAssertTrue(chart.contains("HermesUsageSize.legendIndicator"))
+        XCTAssertTrue(chartData.contains("HermesColorRamp."))
+        for retired in [".blue\n", ".teal\n", ".indigo\n"] {
+            XCTAssertFalse(chartData.contains(retired))
+        }
+
+        XCTAssertTrue(insights.contains("HermesSpacing.screenHorizontal"))
+        XCTAssertTrue(insights.contains("HermesColorRamp.Orange"))
+        XCTAssertTrue(insights.contains("title: String(localized: \"Could Not Load Usage\")"))
+        XCTAssertTrue(insights.contains(".init(title: String(localized: \"Try Again\"),"))
+        XCTAssertTrue(insights.contains("title: String(localized: \"No Data\")"))
     }
 }

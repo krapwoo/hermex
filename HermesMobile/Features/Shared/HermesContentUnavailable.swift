@@ -10,6 +10,8 @@ struct HermesContentUnavailable: View {
         case loading
         /// Nothing exists yet — an icon plus a title, and nothing else.
         case empty
+        /// Filters or a search narrowed a non-empty list down to nothing.
+        case noResults
         /// A request failed; a warning icon, a title, the error message, and an optional retry.
         case error
         /// Any other "this screen has nothing to show" state that isn't loading or an error.
@@ -54,7 +56,7 @@ struct HermesContentUnavailable: View {
         switch variant {
         case .loading:
             ProgressView()
-        case .empty, .error, .unavailable, .custom:
+        case .empty, .noResults, .error, .unavailable, .custom:
             Label(title, systemImage: systemImage)
         }
     }

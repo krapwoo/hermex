@@ -53,23 +53,21 @@ struct InsightsView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && !viewModel.hasLoadedAnalytics {
-            ProgressView("Loading usage...")
+            HermesContentUnavailable(variant: .loading, description: Text("Loading usage..."))
         } else if let errorMessage = viewModel.errorMessage, !viewModel.hasLoadedAnalytics {
-            ContentUnavailableView {
-                Label("Could Not Load Usage", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(errorMessage)
-            } actions: {
-                Button("Try Again") {
-                    Task { await loadInsights() }
-                }
-            }
+            HermesContentUnavailable(
+                variant: .error,
+                title: String(localized: "Could Not Load Usage"),
+                description: Text(errorMessage),
+                primaryAction: .init(title: String(localized: "Try Again"), handler: { Task { await loadInsights() } })
+            )
         } else if !viewModel.hasLoadedAnalytics {
-            ContentUnavailableView {
-                Label("No Data", systemImage: "chart.bar")
-            } description: {
-                Text("Session usage data will appear here once you have conversations.")
-            }
+            HermesContentUnavailable(
+                variant: .empty,
+                title: String(localized: "No Data"),
+                systemImage: "chart.bar",
+                description: Text("Session usage data will appear here once you have conversations.")
+            )
         } else {
             loadedContent
         }
@@ -101,7 +99,7 @@ struct InsightsView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         } icon: {
                             Image(systemName: "exclamationmark.triangle")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(HermesColorRamp.Orange.s500.color)
                         }
                     }
                 }
@@ -133,7 +131,7 @@ struct InsightsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, HermesSpacing.s16)
+            .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.vertical, HermesSpacing.s12)
         }
         .refreshable {

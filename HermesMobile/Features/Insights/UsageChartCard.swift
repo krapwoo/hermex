@@ -19,8 +19,6 @@ struct UsageChartCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedBucketID: Int?
 
-    private static let chartHeight: CGFloat = 180
-
     var body: some View {
         SectionCard {
             VStack(alignment: .leading, spacing: HermesSpacing.s16) {
@@ -115,7 +113,7 @@ struct UsageChartCard: View {
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
-            .frame(height: Self.chartHeight)
+            .frame(height: HermesUsageSize.chartHeight)
             .animation(reduceMotion ? nil : .easeOut(duration: HermesMotion.Duration.d200), value: buckets)
             .chartOverlay { proxy in
                 GeometryReader { geometry in
@@ -133,7 +131,7 @@ struct UsageChartCard: View {
                 .appFont(.body)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
-                .frame(height: Self.chartHeight)
+                .frame(height: HermesUsageSize.chartHeight)
         }
     }
 
@@ -207,7 +205,7 @@ struct UsageChartCard: View {
                 HStack(spacing: HermesSpacing.s4) {
                     Circle()
                         .fill(segment.color)
-                        .frame(width: 7, height: 7)
+                        .frame(width: HermesUsageSize.legendIndicator, height: HermesUsageSize.legendIndicator)
 
                     Text(segment.title)
                         .lineLimit(1)

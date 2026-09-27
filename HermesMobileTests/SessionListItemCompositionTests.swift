@@ -108,6 +108,16 @@ final class SessionListItemCompositionTests: XCTestCase {
         XCTAssertTrue(caller.contains(".appFont(.headlineSemibold)"))
     }
 
+    func testMainMenuUsesHermesListWhileNavigationRowsRetainFeatureOwnedSemantics() throws {
+        let view = try source("HermesMobile/Features/SessionList/SessionListView.swift")
+        let rows = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
+
+        XCTAssertTrue(view.contains("return HermesList {"))
+        XCTAssertFalse(view.contains("return List {"))
+        XCTAssertTrue(rows.contains("struct SidebarNavButton"))
+        XCTAssertTrue(rows.contains("struct SidebarDisclosureButton"))
+    }
+
     func testTipJarUsesNamedAvatarSizingAndSharedComponents() throws {
         let src = try source("HermesMobile/Features/SessionList/TipJarCard.swift")
 

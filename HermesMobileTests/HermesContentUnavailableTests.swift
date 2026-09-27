@@ -32,13 +32,20 @@ final class HermesContentUnavailableTests: XCTestCase {
         )
         let unavailable = HermesContentUnavailable(variant: .unavailable, title: "Unavailable")
         let custom = HermesContentUnavailable(variant: .custom, title: "Custom", description: Text("detail"))
+        let noResults = HermesContentUnavailable(
+            variant: .noResults,
+            title: "No matching Cards",
+            systemImage: "line.3.horizontal.decrease.circle",
+            description: Text("Change or clear the filters to see more Cards.")
+        )
 
         for view in [
             String(describing: type(of: loading)),
             String(describing: type(of: empty)),
             String(describing: type(of: error)),
             String(describing: type(of: unavailable)),
-            String(describing: type(of: custom))
+            String(describing: type(of: custom)),
+            String(describing: type(of: noResults))
         ] {
             XCTAssertFalse(view.isEmpty)
         }
@@ -83,5 +90,20 @@ final class HermesContentUnavailableTests: XCTestCase {
             let src = try source(path)
             XCTAssertTrue(src.contains("ContentUnavailableView.search(text:"), "\(path) should keep the system search-empty call")
         }
+    }
+
+    // MARK: - #607 correction slice: Kanban and Usage adopt the shared pattern
+
+    func testKanbanEmptyContentAdoptsTheSharedPatternWithNoResultsWhenFiltersAreActive() throws {
+        let src = try source("HermesMobile/Features/Kanban/KanbanLabView.swift")
+        XCTAssertTrue(src.contains("HermesContentUnavailable("))
+        XCTAssertTrue(src.contains("variant: model.hasActiveFilters ? .noResults : .empty"))
+    }
+
+    func testInsightsViewAdoptsTheSharedPatternForLoadingErrorAndEmptyStates() throws {
+        let src = try source("HermesMobile/Features/Insights/InsightsView.swift")
+        XCTAssertTrue(src.contains("HermesContentUnavailable(variant: .loading"))
+        XCTAssertTrue(src.contains("variant: .error"))
+        XCTAssertTrue(src.contains("variant: .empty"))
     }
 }

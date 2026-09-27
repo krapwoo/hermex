@@ -130,6 +130,34 @@ and leaves other jobs and the simulator itself alone.
 
 Runner checks: `python3 -m unittest discover -s scripts/tests -v`.
 
+## Design System Catalog
+
+`design-system-catalog/` is the canonical, versioned Hermex Design System catalog — a React
+Native/Expo token layer, component tree, and browsable catalog documenting the SwiftUI design
+system `HermesMobile/Config/` and `HermesMobile/Features/Shared/` implement. It is not maintained
+outside this repository; see `CONTRIBUTING.md` § Hermex Design System for when a PR must update it,
+and `design-system-catalog/README.md` for the catalog's own structure and conventions.
+
+```zsh
+# Install dependencies
+npm ci --prefix design-system-catalog/native-preview
+
+# Node contract test for the Hermex catalog (no extra test dependency)
+node --test design-system-catalog/test/hermes-catalog.test.mjs
+
+# Typecheck (needs a runtime-only node_modules symlink at the catalog root — gitignored,
+# never committed, recreated on demand; see the README's "node_modules symlink" note)
+ln -s native-preview/node_modules design-system-catalog/node_modules
+(cd design-system-catalog/native-preview && npx tsc --noEmit)
+
+# Launch the catalog at http://localhost:8096
+cd design-system-catalog/native-preview && npm run web
+```
+
+PR CI's `Design System Contract` job runs the Python adoption audit plus these Node/TypeScript
+checks on every PR; a catalog-only change (`design-system-catalog/**`) skips the macOS XCTest job
+but never skips this one.
+
 ## PR CI
 
 `.github/workflows/pr-ci.yml` pins the hosted Xcode path, iOS runtime, and phone
