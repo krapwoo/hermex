@@ -20,9 +20,10 @@ import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, 
 import { Icon } from '../../../icons/Icon.native';
 import type { IconName } from '../../../icons';
 import { DS_ICON_SIZE, DS_RADIUS } from '../../../tokens';
-import { HERMES_COLOR_RAMPS } from './hermesColorCatalogData';
+import { HERMES_COLOR_RAMPS, HERMES_SEMANTIC_COLORS } from './hermesColorCatalogData';
 import { HERMES_ATTACHMENT_SIZE } from './hermesAttachmentSize';
 import { HERMES_ICON_SIZE } from './hermesIconSize';
+import { HERMES_ICON_AVATAR_PAIRING } from './hermesIconSize';
 
 const preview = StyleSheet.create({
   stack: { gap: 12 },
@@ -53,6 +54,7 @@ const preview = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6,
   },
   botEye: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' },
+  avatarSystemImageCell: { alignItems: 'center', gap: 4 },
 
   // Attachment
   // Sized from HERMES_ATTACHMENT_SIZE.messageGridCell at each call site (not a fixed width/height
@@ -188,7 +190,45 @@ const preview = StyleSheet.create({
   // SessionListItem — streaming/attention affordances beyond plain ListItem
   streamDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34C759' },
   attentionText: { fontSize: 11, color: '#FF3B30', fontWeight: '600' },
+
+  // Checkbox/Radio — adaptive Color.primary selected-fill swatch (same Light/Dark frame precedent
+  // as HermesSemanticColorReference.tsx's SampleFrame, kept local since it's a one-off two-frame
+  // pair rather than a full role gallery).
+  adaptiveSwatchCell: { alignItems: 'center', gap: 4 },
+  adaptiveSwatchFrame: {
+    width: 64, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 8,
+  },
+  adaptiveSwatchFrameLight: { backgroundColor: '#F2F2F7', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
+  adaptiveSwatchFrameDark: { backgroundColor: '#1C1C1E' },
+  adaptiveSwatchSquare: { width: 20, height: 20, borderRadius: 4 },
+  adaptiveSwatchCircle: { width: 20, height: 20, borderRadius: 10 },
+  adaptiveSwatchLabel: { fontSize: 9, fontWeight: '700', color: '#8a8a8a', fontFamily: 'Menlo' },
 });
+
+// ─── Checkbox/Radio — adaptive Color.primary selected-fill demo ────────────────
+// The approved decision is adaptive semantic black/white (Color.primary), not a fixed accent —
+// reuses `color.text.primary`'s own previewLight/previewDark facts rather than a second, hand-typed
+// pair of hex literals.
+function AdaptiveSelectedFillSwatch({ shape }: { shape: 'square' | 'circle' }) {
+  const primary = HERMES_SEMANTIC_COLORS['color.text.primary'];
+  const fill = shape === 'circle' ? preview.adaptiveSwatchCircle : preview.adaptiveSwatchSquare;
+  return (
+    <View style={preview.row}>
+      <View style={preview.adaptiveSwatchCell}>
+        <View style={[preview.adaptiveSwatchFrame, preview.adaptiveSwatchFrameLight]}>
+          <View style={[fill, { backgroundColor: primary.previewLight }]} />
+        </View>
+        <Text style={preview.adaptiveSwatchLabel}>Light · {primary.previewLight}</Text>
+      </View>
+      <View style={preview.adaptiveSwatchCell}>
+        <View style={[preview.adaptiveSwatchFrame, preview.adaptiveSwatchFrameDark]}>
+          <View style={[fill, { backgroundColor: primary.previewDark }]} />
+        </View>
+        <Text style={preview.adaptiveSwatchLabel}>Dark · {primary.previewDark}</Text>
+      </View>
+    </View>
+  );
+}
 
 // ─── Avatar umbrella — static bot mark ───────────────────────────────────────
 export function BotMarkPreview() {
@@ -202,6 +242,25 @@ export function BotMarkPreview() {
         Static illustration only — BotAnimatedFaceView's blink/idle timeline and
         BotInteractiveFaceView's drag-to-gaze/tap-to-react behavior aren't reconstructed here.
       </Text>
+    </View>
+  );
+}
+
+// ─── Avatar — system-image identity (production HermesAvatar, used inside Content Unavailable) ──
+// Driven directly off HERMES_ICON_AVATAR_PAIRING (the same source HermesIconReference's own
+// IconAvatarPairingGallery reads) so the three approved avatar/icon diameters can't drift into a
+// second, hand-typed copy here. Overrides the generic Avatar's default half-diameter icon ratio via
+// `iconSize`, matching production HermesAvatar's fixed pairing rather than the template's own
+// proportional default.
+export function AvatarSystemImageIdentityPreview() {
+  return (
+    <View style={preview.row}>
+      {Object.entries(HERMES_ICON_AVATAR_PAIRING).map(([key, { avatar, icon }]) => (
+        <View key={key} style={preview.avatarSystemImageCell}>
+          <Avatar size={avatar} iconSize={icon} iconName="menu" backgroundColor="#8E8E93" accessibilityLabel="No skills available" />
+          <Text style={preview.caption}>{avatar} · icon {icon}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -905,7 +964,10 @@ export function AccordionListFamilyGallery() {
       <AccordionListCardMultipleDemo />
       <Text style={preview.caption}>
         Header titles use label typography (semibold); session/body titles stay on the regular body
-        weight, so the project header reads visibly stronger than the sessions it discloses.
+        weight, so the project header reads visibly stronger than the sessions it discloses. The card
+        composes the shared Card component (outlined surface) for its 16pt horizontal content
+        padding; the chevron renders at the 20pt (medium) icon-size step; and body expansion/
+        collapse visibly animates (respecting Reduce Motion) instead of snapping open or shut.
       </Text>
 
       <Text style={[preview.label, { marginTop: 8 }]}>Cardless · single (interactive — opening one closes the other)</Text>
@@ -913,7 +975,10 @@ export function AccordionListFamilyGallery() {
       <Text style={preview.caption}>
         Collapsed cardless project headers share one divider between adjacent rows; expanding a
         second header collapses the first back to zero-or-one open, and tapping the open header
-        again collapses it to none.
+        again collapses it to none. Cardless adds no Accordion-level horizontal outer padding — only
+        ListItem's own row insets apply. The divider directly under an open header spans the full
+        available width; the divider between two session rows begins at their own text column
+        (avatar width + header/body gap + ListItem's own horizontal inset), not the row's outer edge.
       </Text>
 
       <Text style={[preview.label, { marginTop: 8 }]}>Separator styles: none · betweenRows · topAndBottom · all</Text>
@@ -1075,6 +1140,15 @@ export function CheckboxFamilyGallery() {
       <Text style={preview.caption}>
         Tab reaches the box and shows a focus ring around it; a tap or Space/Enter toggles it — the
         real, live generic catalog Checkbox this entry documents directly, not a static picture.
+      </Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermesCheckbox)</Text>
+      <AdaptiveSelectedFillSwatch shape="square" />
+      <Text style={preview.caption}>
+        Production HermesCheckbox fills and borders the checked box with the adaptive semantic
+        Color.primary — black in light appearance, white in dark — not a fixed accent color; the
+        checkmark stays the inverse system background so it remains legible against either. The
+        generic catalog Checkbox above (blue accent) is the reusable template's own unrelated default
+        and is not changed by this decision.
       </Text>
       <Text style={[preview.label, { marginTop: 8 }]}>Row-owned indicator (multi-select list)</Text>
       <CheckboxRowOwnedDemo />
@@ -1560,10 +1634,24 @@ export function ComposerPatternPreview() {
 }
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
+// A real control toggling the generic Toast's own `visible` prop, so the top-edge slide + opacity
+// transition is replayable in the running preview rather than only described in prose.
+function ToastMotionDemo() {
+  const [visible, setVisible] = useState(true);
+  return (
+    <View style={{ gap: 8, alignItems: 'flex-start' }}>
+      <Button label={visible ? 'Hide' : 'Show'} size="small" variant="secondary" onPress={() => setVisible((v) => !v)} />
+      <Toast message="Synced with server" variant="success" visible={visible} />
+    </View>
+  );
+}
+
 export function ToastFamilyGallery() {
   return (
     <View style={preview.stack}>
-      <Text style={preview.label}>Semantic variants (statically visible — the real animated slide-in is driven by `visible`)</Text>
+      <Text style={preview.label}>Motion (tap to replay the slide-in/out)</Text>
+      <ToastMotionDemo />
+      <Text style={[preview.label, { marginTop: 8 }]}>Semantic variants (statically visible)</Text>
       <View style={{ gap: 8 }}>
         <Toast message="Synced with server" variant="success" />
         <Toast message="Cached offline data may be stale" variant="informational" />
@@ -1576,7 +1664,10 @@ export function ToastFamilyGallery() {
         The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
         Production HermesToast is the message/icon/action card alone — animation and lifecycle live
         in the separate `hermesToast(isPresented:toast:)` presentation modifier that overlays it, left
-        entirely caller-owned rather than baked into the toast view itself.
+        entirely caller-owned rather than baked into the toast view itself. That modifier's default
+        motion enters by moving down from the top edge combined with opacity and exits back toward
+        the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
+        Reduce Motion drops the move and falls back to an opacity-only state change.
       </Text>
     </View>
   );
@@ -1643,6 +1734,14 @@ export function RadioFamilyGallery() {
       <Text style={preview.caption}>
         A group is just multiple Radio instances sharing one selected value in the caller — the same
         way a native radio group works — this component only knows its own selected state.
+      </Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermesRadio)</Text>
+      <AdaptiveSelectedFillSwatch shape="circle" />
+      <Text style={preview.caption}>
+        Production HermesRadio fills the selected ring and inner dot with the adaptive semantic
+        Color.primary — black in light appearance, white in dark — not a fixed accent color, mirroring
+        HermesCheckbox's own adaptive treatment. The generic catalog Radio above (blue accent) is the
+        reusable template's own unrelated default and is not changed by this decision.
       </Text>
     </View>
   );

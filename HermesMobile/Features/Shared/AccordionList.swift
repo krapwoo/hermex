@@ -63,6 +63,11 @@ enum AccordionListExpansionResolver {
 private enum AccordionListMetrics {
     static let groupSpacing = HermesSpacing.s8
     static let bodyLeadingInset = HermesAvatarSize.small.rawValue + HermesSpacing.s12
+    /// Where a divider between body rows begins: the same leading inset a body row's own content
+    /// carries (`bodyLeadingInset`) plus `ListItem`'s own horizontal inset
+    /// (`listItemSelectionPill`'s `HermesSpacing.s12`), so the divider starts at the row's actual
+    /// text-content column rather than the row's outer frame.
+    static let bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12
 }
 
 /// Marks a view as valid `AccordionList` header/body row content: the shared `ListItem` anatomy,
@@ -234,6 +239,7 @@ struct AccordionList<
                 HermesDivider()
             }
         }
+        .padding(.horizontal, HermesCardMetrics.contentPadding)
         .hermesCardSurface(.outlined, cornerRadius: HermesRadius.card)
     }
 
@@ -280,7 +286,7 @@ struct AccordionList<
                     )
 
                 if separatorStyle.showsInternalDividers, index < rows.index(before: rows.endIndex) {
-                    HermesDivider()
+                    HermesDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)
                 }
             }
         }
@@ -295,6 +301,7 @@ struct AccordionList<
             state: ListItemState(isDisabled: headerIsDisabled(item)),
             titleRole: .label,
             rowIndicatorSystemImage: expanded ? "chevron.up" : "chevron.down",
+            rowIndicatorSize: HermesIconSize.medium,
             action: { toggle(item) },
             leading: {
                 headerLeading(item)

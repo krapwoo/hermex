@@ -1,10 +1,16 @@
-import React, { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
-import { DS_ICON_SIZE, DS_MOTION_DURATION, DS_RADIUS, DS_SEMANTIC, DS_SPACING } from '../../../tokens';
+import React, { type ComponentProps, type ComponentType, type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { DS_ICON_SIZE, DS_MOTION_DURATION, DS_MOTION_EASING, DS_SEMANTIC, DS_SPACING } from '../../../tokens';
 import { AVATAR_SIZE } from '../Avatar';
 import { AnimatedChevron } from '../AnimatedChevron';
+import { Card } from '../Card';
 import { Divider } from '../Divider';
 import { ListItem, type ListItemProps } from '../ListItem';
+
+// Same escape-hatch convention as ListItem's own `HiddenView`: `accessibilityElementsHidden`/
+// `importantForAccessibility` cover native, but react-native-web has no case for either, so a
+// collapsed section's body needs its own explicit `aria-hidden` to leave the web accessibility tree.
+const HiddenableView = View as unknown as ComponentType<ComponentProps<typeof View> & { 'aria-hidden'?: boolean }>;
 
 /** Mandatory visual surface — every caller picks explicitly; there is no default. */
 export type AccordionListAppearance = 'card' | 'cardless';
@@ -134,7 +140,7 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
           rowIndicator={
             <AnimatedChevron
               expanded={expanded}
-              size={DS_ICON_SIZE.sm}
+              size={DS_ICON_SIZE.md}
               color={DS_SEMANTIC.text.muted}
               duration={reduceMotion ? 0 : DS_MOTION_DURATION.base}
             />
@@ -146,22 +152,32 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
           style={appearance === 'cardless' ? styles.transparentRow : undefined}
         />
 
-        {expanded && rows.map((row, index) => {
-          const renderedRow = renderBodyItem(section, row);
-          return (
-            <React.Fragment key={row.id}>
-              {showInternal && index === 0 && <Divider />}
-              {React.cloneElement(renderedRow, {
-                style: [
-                  styles.bodyRow,
-                  appearance === 'cardless' && styles.transparentRow,
-                  renderedRow.props.style,
-                ],
-              })}
-              {showInternal && index < rows.length - 1 && <Divider />}
-            </React.Fragment>
-          );
-        })}
+        {rows.length > 0 && (
+          <AccordionGroupBody expanded={expanded} reduceMotion={reduceMotion}>
+            {/* The divider directly under the header spans the full available Accordion content
+                width (no inset); only dividers *between* body rows align to body text content. */}
+            {showInternal && <Divider />}
+            {rows.map((row, index) => {
+              const renderedRow = renderBodyItem(section, row);
+              return (
+                <React.Fragment key={row.id}>
+                  {React.cloneElement(renderedRow, {
+                    style: [
+                      styles.bodyRow,
+                      appearance === 'cardless' && styles.transparentRow,
+                      renderedRow.props.style,
+                    ],
+                  })}
+                  {showInternal && index < rows.length - 1 && (
+                    <View style={styles.bodyDividerInset}>
+                      <Divider />
+                    </View>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </AccordionGroupBody>
+        )}
       </>
     );
   };
@@ -171,11 +187,11 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
       {items.map((section, index) => {
         if (appearance === 'card') {
           return (
-            <View key={section.id} style={styles.cardGroup}>
+            <Card key={section.id} surface="outlined" style={styles.cardGroup}>
               {showOuter && <Divider />}
               {renderGroupRows(section)}
               {showOuter && <Divider />}
-            </View>
+            </Card>
           );
         }
 
@@ -193,15 +209,80 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
   );
 }
 
+/**
+ * Animates one section's body (the header-adjacent divider plus its body rows) open/closed by
+ * measuring its natural height once, then tweening between 0 and that height — the same
+ * measure-once-then-animate technique Banner's own collapsible callout uses, since `LayoutAnimation`
+ * is unreliable on Fabric and a total no-op on web (this catalog's own preview target). Renders in
+ * normal flow (and thus visible instantly, unanimated) only on the very first pass while already
+ * expanded, so opening a still-unmeasured section never flashes empty before its real height is
+ * known; every other pass positions the content absolutely so it can self-measure without disturbing
+ * layout, then animates `collapseAnim` between 0 and 1.
+ */
+function AccordionGroupBody({
+  expanded,
+  reduceMotion,
+  children,
+}: {
+  expanded: boolean;
+  reduceMotion: boolean;
+  children: ReactNode;
+}) {
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+  const collapseAnim = useRef(new Animated.Value(expanded ? 1 : 0)).current;
+  const duration = reduceMotion ? 0 : DS_MOTION_DURATION.base;
+
+  useEffect(() => {
+    const anim = Animated.timing(collapseAnim, {
+      toValue: expanded ? 1 : 0,
+      duration,
+      // `standard` — an in-place expand/collapse (a toggle), per DS_MOTION_EASING_USE.
+      easing: Easing.bezier(...DS_MOTION_EASING.standard),
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [expanded, duration, collapseAnim]);
+
+  const flowMeasure = measuredHeight === 0 && expanded;
+  const onLayout = (e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 0 && h !== measuredHeight) setMeasuredHeight(h);
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.collapseClip,
+        measuredHeight === 0
+          ? expanded
+            ? null
+            : styles.collapseHidden
+          : { height: Animated.multiply(collapseAnim, measuredHeight), opacity: collapseAnim },
+      ]}
+    >
+      <HiddenableView
+        style={flowMeasure ? undefined : styles.collapseAbsolute}
+        onLayout={onLayout}
+        accessibilityElementsHidden={!expanded}
+        importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}
+        aria-hidden={!expanded}
+      >
+        {children}
+      </HiddenableView>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   cardStack: { gap: DS_SPACING[400] },
   cardlessStack: { gap: 0 },
+  // Card (surface="outlined") supplies the border/background/radius; this composition only zeroes
+  // Card's own default vertical padding (ListItem rows already own their vertical rhythm via their
+  // own paddingVertical) while keeping Card's 16pt horizontal content padding (DS_SPACING[800]).
   cardGroup: {
     overflow: 'hidden',
-    borderRadius: DS_RADIUS.medium,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: DS_SEMANTIC.element.divider,
-    backgroundColor: DS_SEMANTIC.surface.white,
+    paddingVertical: 0,
   },
   transparentRow: { backgroundColor: 'transparent' },
   headerLeading: {
@@ -212,5 +293,26 @@ const styles = StyleSheet.create({
   },
   bodyRow: {
     paddingLeft: AVATAR_SIZE.small + DS_SPACING[600],
+  },
+  // Where a divider *between* body rows begins: the body row's own leading inset (avatar width +
+  // header/body gap) plus ListItem's own horizontal inset (`row.paddingHorizontal`, DS_SPACING[400])
+  // — the row's actual text-content column, not its outer frame. A percentage-width child (Divider)
+  // sizes against its parent's content box, so insetting via paddingLeft here shrinks the divider to
+  // start at that column and still end flush with the row's own right edge.
+  bodyDividerInset: {
+    paddingLeft: AVATAR_SIZE.small + DS_SPACING[600] + DS_SPACING[400],
+  },
+  collapseClip: {
+    overflow: 'hidden',
+    width: '100%',
+  },
+  collapseHidden: {
+    height: 0,
+  },
+  collapseAbsolute: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
   },
 });

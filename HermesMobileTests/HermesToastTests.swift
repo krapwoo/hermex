@@ -7,6 +7,17 @@ import SwiftUI
 /// so a SwiftUI view tree isn't inspectable at runtime without a rendering harness and that adoption
 /// surface is a compile contract.
 final class HermesToastTests: XCTestCase {
+    private func resourceURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+    }
+
+    private func source(_ relativePath: String) throws -> String {
+        try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
+    }
+
     // MARK: - Pure contracts
 
     func testEverySemanticHasATintAndADefaultIcon() {
@@ -45,5 +56,29 @@ final class HermesToastTests: XCTestCase {
         }
         let host = Host()
         XCTAssertFalse(String(describing: type(of: host)).isEmpty)
+    }
+
+    // MARK: - Source contract: default top-edge motion, caller-owned lifecycle preserved
+
+    func testDefaultTransitionMovesFromTheTopEdgeReusingTheOverlayEnterAndExitMotionBundles() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesToast.swift")
+        XCTAssertTrue(src.contains(".move(edge: .top)"))
+        XCTAssertTrue(src.contains(".combined(with: .opacity)"))
+        XCTAssertTrue(src.contains("HermesMotion.Bundle.overlayEnter"))
+        XCTAssertTrue(src.contains("HermesMotion.Bundle.overlayExit"))
+        XCTAssertTrue(src.contains(".asymmetric("))
+    }
+
+    func testReduceMotionFallsBackToAnOpacityOnlyStateChange() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesToast.swift")
+        XCTAssertTrue(src.contains("reduceMotion"))
+        XCTAssertTrue(src.contains("return .opacity"))
+    }
+
+    func testPresentationStaysCallerOwnedWithNoInternalTimer() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesToast.swift")
+        XCTAssertFalse(src.contains("Timer"))
+        XCTAssertFalse(src.contains("DispatchQueue.main.asyncAfter"))
+        XCTAssertTrue(src.contains("@Binding var isPresented: Bool"))
     }
 }

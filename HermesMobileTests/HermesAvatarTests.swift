@@ -4,9 +4,9 @@ import SwiftUI
 
 /// Contracts for `HermesAvatar` (`HermesAvatar.swift`): a system-image identity badge sized to the
 /// shared `HermesAvatarSize` diameters, each carrying the accepted `HermesIconSize.Avatar` icon at
-/// exactly one-half that diameter. A SwiftUI view tree isn't inspectable at runtime without a
-/// rendering harness, so the size pairing is a pure contract and adoption elsewhere is a source
-/// contract.
+/// the approved pairing (32→20, 40→24, 48→32). A SwiftUI view tree isn't inspectable at runtime
+/// without a rendering harness, so the size pairing is a pure contract and adoption elsewhere is a
+/// source contract.
 final class HermesAvatarTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
@@ -19,12 +19,15 @@ final class HermesAvatarTests: XCTestCase {
         try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
     }
 
-    // MARK: - Pure contracts: the accepted 32/40/48 <-> 16/20/24 pairing
+    // MARK: - Pure contracts: the accepted 32/40/48 <-> 20/24/32 pairing
 
     func testEveryAvatarSizeCarriesTheAcceptedIconSize() {
         XCTAssertEqual(HermesAvatar.iconSize(for: .small), HermesIconSize.Avatar.small)
+        XCTAssertEqual(HermesAvatar.iconSize(for: .small), 20)
         XCTAssertEqual(HermesAvatar.iconSize(for: .medium), HermesIconSize.Avatar.medium)
+        XCTAssertEqual(HermesAvatar.iconSize(for: .medium), 24)
         XCTAssertEqual(HermesAvatar.iconSize(for: .large), HermesIconSize.Avatar.large)
+        XCTAssertEqual(HermesAvatar.iconSize(for: .large), 32)
     }
 
     func testAvatarDiametersMatchTheSharedHermesAvatarSizeScale() {

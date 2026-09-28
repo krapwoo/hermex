@@ -51,9 +51,9 @@ enum HermesIconSize {
     static let extraLarge: CGFloat = 32
 
     enum Avatar {
-        static let small = HermesIconSize.small
-        static let medium = HermesIconSize.medium
-        static let large = HermesIconSize.large
+        static let small = HermesIconSize.medium
+        static let medium = HermesIconSize.large
+        static let large = HermesIconSize.extraLarge
     }
 }
 
@@ -184,12 +184,12 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
     def test_avatar_pairing_drift_fails(self):
         build_valid_fixture_tree(self.root)
         drifted = VALID_HERMES_SPACING.replace(
-            "static let small = HermesIconSize.small", "static let small = HermesIconSize.medium"
+            "static let small = HermesIconSize.medium", "static let small = HermesIconSize.small"
         )
         write(self.root, "HermesMobile/Config/HermesSpacing.swift", drifted)
         failures = audit.run(self.root)
         self.assertTrue(
-            any("HermesAvatarSize.small" in f and "expected 16pt" in f for f in failures), failures
+            any("HermesAvatarSize.small" in f and "expected 20pt" in f for f in failures), failures
         )
 
     def test_new_native_segmented_control_path_fails(self):

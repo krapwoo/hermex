@@ -1423,10 +1423,10 @@ test('hermesIconSize.ts declares HERMES_ICON_TYPOGRAPHY_PAIRING with the exact c
   }
 });
 
-test('hermesIconSize.ts declares HERMES_ICON_AVATAR_PAIRING with small/medium/large records at exactly one-half the Avatar diameter', () => {
+test('hermesIconSize.ts declares HERMES_ICON_AVATAR_PAIRING with small/medium/large records at the approved avatar/icon pairing', () => {
   const src = read(HERMES_ICON_SIZE_PATH);
   assert.match(src, /export const HERMES_ICON_AVATAR_PAIRING = \{/);
-  for (const [name, avatar, iconKey] of [['small', 32, 'small'], ['medium', 40, 'medium'], ['large', 48, 'large']]) {
+  for (const [name, avatar, iconKey] of [['small', 32, 'medium'], ['medium', 40, 'large'], ['large', 48, 'extraLarge']]) {
     const blockMatch = src.match(new RegExp(`${name}:\\s*\\{([\\s\\S]*?)\\},`));
     assert.ok(blockMatch, `expected a HERMES_ICON_AVATAR_PAIRING.${name} entry`);
     const block = blockMatch[1];
@@ -1478,7 +1478,7 @@ test('HermesIconReference renders a five-step default icon-size scale using a re
   assert.ok(scaleIdx < searchIdx, 'expected the default icon-size scale to render before the searchable inventory');
 });
 
-test('HermesIconReference documents Typography pairing (semantic name, icon size, covered AppFont roles) and Avatar pairing (16/20/24pt glyphs in 32/40/48pt containers), plus the 44pt hit-target distinction', () => {
+test('HermesIconReference documents Typography pairing (semantic name, icon size, covered AppFont roles) and Avatar pairing (20/24/32pt glyphs in 32/40/48pt containers), plus the 44pt hit-target distinction', () => {
   const referenceSrc = read(HERMES_ICON_REFERENCE_PATH);
 
   // The pairing name, icon size, and covered AppFont roles all come from iterating
@@ -3250,6 +3250,30 @@ test('the Avatar family entry\'s specimens show the three named sizes, one inten
   assert.match(previewSrc, /<View style=\{preview\.botMarkPreview\}>/);
 });
 
+test('Avatar accepts an optional iconSize override that replaces the default half-diameter icon ratio, without changing existing callers\' default behavior', () => {
+  const src = read('native/components/Avatar/Avatar.tsx');
+  assert.match(src, /iconSize\?:\s*number/, 'expected an optional iconSize override prop');
+  assert.match(src, /const resolvedIconSize = iconSize \?\? Math\.round\(resolvedSize \* 0\.5\)/, 'expected the override to fall back to the existing default half-diameter ratio when omitted, so every existing caller keeps its current icon size');
+  assert.match(src, /<Icon name=\{iconName\} size=\{resolvedIconSize\}/, 'expected the icon to render at the resolved (possibly overridden) size');
+});
+
+test('AvatarSystemImageIdentityPreview renders the production system-image identity specimen for every HERMES_ICON_AVATAR_PAIRING entry (32→20, 40→24, 48→32), driven from the pairing data rather than duplicated literals or a stale caption', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(previewsSrc, /import \{ HERMES_ICON_AVATAR_PAIRING \} from '\.\/hermesIconSize'/, 'expected the pairing import alongside the existing icon-size import');
+  assert.match(previewsSrc, /export function AvatarSystemImageIdentityPreview/);
+  const body = extractFunctionBody(previewsSrc, 'AvatarSystemImageIdentityPreview');
+  assert.match(body, /Object\.entries\(HERMES_ICON_AVATAR_PAIRING\)/, 'expected the gallery to render every pairing entry, not a hand-duplicated list');
+  assert.match(body, /size=\{avatar\}/, 'expected each specimen to use the pairing\'s own avatar diameter');
+  assert.match(body, /iconSize=\{icon\}/, 'expected each specimen to use the pairing\'s own icon size override');
+  assert.doesNotMatch(body, /\b32\b|\b40\b|\b48\b|\b20\b|\b24\b/, 'must not duplicate a pairing diameter/icon size as a local literal');
+  assert.doesNotMatch(body, /Large \(48\)|icon 24/i, 'must not carry the stale hand-typed caption');
+
+  const avatarGallery = extractFunctionBody(sectionsSrc, 'AvatarFamilyGallery');
+  assert.match(avatarGallery, /<AvatarSystemImageIdentityPreview\s*\/>/, 'expected the live Avatar family gallery to compose the corrected production pairing specimen');
+  assert.doesNotMatch(avatarGallery, /Large \(48\) · icon 24/, 'the stale production pairing must not remain rendered beside the corrected specimen');
+});
+
 // ─── TopNav slot contract + specimens ────────────────────────────────────────────────────────────
 
 test('TopNav exposes explicit leadingPrimary/leadingSecondary/center/trailingPrimary/trailingSecondary slots, keeps leading/trailing as backward-compatible fallbacks, and reserves a symmetric per-side minimum width', () => {
@@ -3435,6 +3459,40 @@ test('Hermex Spacing catalogs every HermesUsageSize component token by semantic 
   }
 });
 
+test('Hermex Spacing renders a decision ladder choosing among the existing 12 steps by relationship, not adding new values', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const gallery = extractFunctionBody(src, 'HermesSpacingGallery');
+  assert.match(gallery, /HERMES_SPACING_LADDER/, 'expected the gallery to render a data-driven decision ladder');
+  assert.match(src, /Decision ladder/);
+
+  const ladderMatch = src.match(/const HERMES_SPACING_LADDER: SpacingLadderRung\[\] = \[([\s\S]*?)\n\];/);
+  assert.ok(ladderMatch, 'expected a HERMES_SPACING_LADDER data array');
+  const ladderSrc = ladderMatch[1];
+
+  // Every rung's step(s) must be one of the real, already-existing HermesSpacing step names —
+  // never a new numeric literal outside that scale (mirrors HERMES_SPACING_STEPS itself, asserted
+  // verbatim against hermesTokenProposal.ts elsewhere in this file).
+  const approvedSteps = [0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64];
+  const stepRefs = [...ladderSrc.matchAll(/space\.(\d+)/g)].map((m) => Number(m[1]));
+  assert.ok(stepRefs.length > 0, 'expected the ladder to cite real space.N step names');
+  for (const step of stepRefs) {
+    assert.ok(approvedSteps.includes(step), `ladder cites space.${step}, which is not one of HermesSpacing's approved steps`);
+  }
+
+  // At minimum distinguishes: micro/inline, related controls, compact component padding, default
+  // card/screen inset, major content groups, and section separation.
+  for (const relationship of [
+    /micro.*inline/i,
+    /related controls/i,
+    /compact component padding/i,
+    /card.*screen inset/i,
+    /major content groups/i,
+    /section separation/i,
+  ]) {
+    assert.match(ladderSrc, relationship, `expected the decision ladder to cover a rung matching ${relationship}`);
+  }
+});
+
 // ─── #607 follow-up: catalog framework (two-column Variants, five-line Props clamp) ─────────────
 
 test('a Variants specimen box lays out two responsive columns when width permits, falling back to one at narrow widths, but never for a wide itemsFill slot', () => {
@@ -3578,6 +3636,72 @@ test('Accordion List gallery covers both appearances, all separators, expansion 
   assert.match(body, /No sessions/);
   assert.match(body, /Show all sessions/);
   assert.match(body, /Header titles use label typography/);
+});
+
+// ─── #607 follow-up: card padding, chevron size, divider alignment, and motion ──────────────────
+
+test('AccordionList composes the shared catalog Card component for its card appearance, rather than hand-reconstructed chrome', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.match(accordion, /import\s*\{[^}]*\bCard\b[^}]*\}\s*from\s*'\.\.\/Card'/, 'expected AccordionList to import the shared Card component');
+  assert.match(accordion, /<Card[^>]*surface="outlined"/s, 'expected the card appearance to render an outlined Card');
+  assert.doesNotMatch(
+    accordion,
+    /cardGroup:\s*\{[^}]*borderWidth/s,
+    'expected card chrome (border/background/radius) to come from Card, not a hand-rolled cardGroup style',
+  );
+});
+
+test('AccordionList card appearance keeps Card\'s 16pt horizontal content padding (DS_SPACING[800]) without doubling ListItem\'s own vertical padding', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.match(
+    accordion,
+    /paddingVertical:\s*0/,
+    'expected the Card composition to zero out Card\'s own vertical padding, since ListItem rows already own their vertical rhythm',
+  );
+});
+
+test('AccordionList cardless appearance adds no Accordion-level horizontal outer padding', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.doesNotMatch(
+    accordion,
+    /cardlessStack:\s*\{[^}]*padding/s,
+    'expected the cardless stack to carry no Accordion-level horizontal outer padding',
+  );
+});
+
+test('AccordionList header chevron uses the 20pt (md) icon-size step, not the 16pt (sm) default', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  const chevronBlock = accordion.match(/<AnimatedChevron[\s\S]*?\/>/);
+  assert.ok(chevronBlock, 'expected an AnimatedChevron element');
+  assert.match(chevronBlock[0], /size=\{DS_ICON_SIZE\.md\}/, 'expected the accordion header chevron to opt into the medium icon-size step');
+});
+
+test('AccordionList body-row dividers begin at the body row\'s actual text-content alignment (avatar width + header/body gap + ListItem\'s own horizontal inset), not full width', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.match(
+    accordion,
+    /AVATAR_SIZE\.small\s*\+\s*DS_SPACING\[600\]\s*\+\s*DS_SPACING\[400\]/,
+    'expected the body-row divider inset to derive from the avatar width, the header/body gap, and ListItem\'s own horizontal inset',
+  );
+});
+
+test('AccordionList hides a collapsed section\'s body rows from the accessibility tree (native and web) even though they stay mounted for the collapse animation', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.match(accordion, /accessibilityElementsHidden=\{!expanded\}/, 'expected collapsed body content hidden from native AT');
+  assert.match(accordion, /importantForAccessibility=\{expanded \? 'auto' : 'no-hide-descendants'\}/);
+  assert.match(accordion, /aria-hidden=\{!expanded\}/, 'expected an explicit web aria-hidden, matching ListItem\'s own escape-hatch convention for react-native-web');
+});
+
+test('AccordionList body expansion/collapse visibly animates using existing catalog motion tokens and respects Reduce Motion', () => {
+  const accordion = read(ACCORDION_LIST_PATH);
+  assert.match(accordion, /Animated\.timing/, 'expected a real Animated.timing-driven expand/collapse, not an instant mount/unmount');
+  assert.match(accordion, /DS_MOTION_EASING\.standard/, 'expected the shared standard easing token, not a new one');
+  assert.match(accordion, /useNativeDriver:\s*false/, 'expected a JS-driven animation so it also animates in the web preview, matching Banner\'s own collapse');
+  assert.match(
+    accordion,
+    /reduceMotion\s*\?\s*0\s*:\s*DS_MOTION_DURATION\.base/,
+    'expected the body collapse duration to respect Reduce Motion the same way the chevron already does',
+  );
 });
 
 // ─── AI/human selection-guidance contract (#607 human/AI readiness) ─────────────────────────────
@@ -3860,6 +3984,24 @@ test('Hermes Banner and Hermes Toast never claim Toast self-dismisses; Toast\'s 
   assert.match(whenToUse, /caller dismisses/i, 'expected WHEN_TO_USE.md to state the caller owns Toast dismissal');
   // The exclusive-selection distinction (Checkbox vs Radio vs Segmented Control) must survive the edit.
   assert.match(whenToUse, /Segmented Control is also exclusive selection/);
+});
+
+test('ToastFamilyGallery adds a compact interactive motion specimen that toggles the generic catalog Toast\'s visible prop, replaying the top-edge slide + opacity transition, alongside the existing static semantic variants and trailing-action specimens', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(previewsSrc, /function ToastMotionDemo/);
+  const demoBody = extractFunctionBody(previewsSrc, 'ToastMotionDemo');
+  assert.match(demoBody, /useState/, 'expected the demo to own real toggle state, not a static prop');
+  assert.match(demoBody, /onPress=\{\(\) => setVisible/, 'expected a real control that flips the toggle state');
+  assert.match(demoBody, /visible=\{visible\}/, 'expected the demo to drive the generic Toast\'s own visible prop from that state');
+
+  const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
+  assert.match(galleryBody, /<ToastMotionDemo/, 'expected the motion demo wired into the existing Toast family gallery');
+  // Existing static specimens must survive alongside the new interactive one.
+  assert.match(galleryBody, /variant="success"/);
+  assert.match(galleryBody, /variant="informational"/);
+  assert.match(galleryBody, /variant="warning"/);
+  assert.match(galleryBody, /variant="negative"/);
+  assert.match(galleryBody, /action=\{\{ label: 'Undo'/);
 });
 
 test('Radio, Dropdown, and Segmented Control name each other as reciprocal alternatives, closing the exclusive-selection disambiguation gap WHEN_TO_USE.md already describes', () => {

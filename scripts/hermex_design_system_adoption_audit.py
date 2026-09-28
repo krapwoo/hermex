@@ -105,9 +105,9 @@ APPROVED_ICON_SIZES = {12, 16, 20, 24, 32}
 REJECTED_ICON_SIZES = {14, 18, 22, 28}
 
 # ─── Avatar/icon pairing contract ──────────────────────────────────────────────────────────────────
-# HermesAvatarSize diameter -> the HermesIconSize.Avatar pairing's icon size, which must always be
-# exactly half the avatar diameter.
-APPROVED_AVATAR_ICON_PAIRINGS = {32: 16, 40: 20, 48: 24}
+# HermesAvatarSize diameter -> the HermesIconSize.Avatar pairing's icon size. Approved design spec:
+# 32pt avatar -> 20pt icon, 40pt avatar -> 24pt icon, 48pt avatar -> 32pt icon.
+APPROVED_AVATAR_ICON_PAIRINGS = {32: 20, 40: 24, 48: 32}
 
 # ─── Frozen native segmented-control baseline ────────────────────────────────────────────────────
 # Owner: whoever lands the PR that migrates one of these three files onto the new SegmentedControl
@@ -280,7 +280,7 @@ def check_avatar_pairing() -> list[str]:
         if icon_size != expected:
             failures.append(
                 f"HermesAvatarSize.{avatar_name} ({diameter}pt) pairs with HermesIconSize.{icon_case_name} "
-                f"({icon_size}pt) — expected {expected}pt (avatar diameter must pair with exactly half itself)"
+                f"({icon_size}pt) — expected {expected}pt (see APPROVED_AVATAR_ICON_PAIRINGS)"
             )
     return failures
 

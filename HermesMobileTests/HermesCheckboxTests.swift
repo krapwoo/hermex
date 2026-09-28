@@ -21,4 +21,11 @@ final class HermesCheckboxTests: XCTestCase {
         XCTAssertTrue(component.contains(".accessibilityHidden(true)"))
     }
 
+    func testCheckedFillAndBorderUseTheAdaptiveSemanticPrimaryColorNotAFixedAccent() throws {
+        let component = try source("HermesMobile/Features/Shared/HermesCheckbox.swift")
+        XCTAssertTrue(component.contains("isChecked ? Color.primary : Color.clear"))
+        XCTAssertTrue(component.contains("isChecked ? Color.primary : Color(.separator)"))
+        XCTAssertFalse(component.contains("Color.accentColor"))
+    }
+
 }

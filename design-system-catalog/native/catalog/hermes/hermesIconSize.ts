@@ -4,9 +4,10 @@
  * Mirrors `HermesIconSize` (HermesMobile/Config/HermesSpacing.swift): the unchanged five-step base
  * scale, plus the semantic pairing aliases adopted alongside it — `HermesIconSize.Typography`
  * (which AppFont.Role text an icon size sits beside inline) and `HermesIconSize.Avatar` (which
- * Avatar diameter an icon size sits inside, at exactly one-half that diameter). The canonical
- * icon-size source of truth for this catalog — other modules (e.g. `hermesAttachmentSize.ts`)
- * import from here rather than defining their own icon-size cases.
+ * Avatar diameter an icon size sits inside, at the approved pairing: 32pt avatar → 20pt icon, 40pt
+ * avatar → 24pt icon, 48pt avatar → 32pt icon). The canonical icon-size source of truth for this
+ * catalog — other modules (e.g. `hermesAttachmentSize.ts`) import from here rather than defining
+ * their own icon-size cases.
  */
 
 export const HERMES_ICON_SIZE = {
@@ -46,9 +47,9 @@ export const HERMES_ICON_TYPOGRAPHY_PAIRING = {
 export type HermesIconTypographyPairingKey = keyof typeof HERMES_ICON_TYPOGRAPHY_PAIRING;
 
 export const HERMES_ICON_AVATAR_PAIRING = {
-  small: { avatar: 32, icon: HERMES_ICON_SIZE.small },
-  medium: { avatar: 40, icon: HERMES_ICON_SIZE.medium },
-  large: { avatar: 48, icon: HERMES_ICON_SIZE.large },
+  small: { avatar: 32, icon: HERMES_ICON_SIZE.medium },
+  medium: { avatar: 40, icon: HERMES_ICON_SIZE.large },
+  large: { avatar: 48, icon: HERMES_ICON_SIZE.extraLarge },
 } as const;
 
 export type HermesIconAvatarPairingKey = keyof typeof HERMES_ICON_AVATAR_PAIRING;

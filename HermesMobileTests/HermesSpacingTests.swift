@@ -34,10 +34,13 @@ final class HermesSpacingTests: XCTestCase {
         XCTAssertEqual(HermesIconSize.Typography.feature, HermesIconSize.extraLarge)
     }
 
-    func testIconSizeAvatarPairingAliasesMatchOneHalfAvatarDiameter() {
-        XCTAssertEqual(HermesIconSize.Avatar.small, HermesIconSize.small)
-        XCTAssertEqual(HermesIconSize.Avatar.medium, HermesIconSize.medium)
-        XCTAssertEqual(HermesIconSize.Avatar.large, HermesIconSize.large)
+    func testIconSizeAvatarPairingAliasesMatchTheApprovedPairingTable() {
+        XCTAssertEqual(HermesIconSize.Avatar.small, HermesIconSize.medium)
+        XCTAssertEqual(HermesIconSize.Avatar.small, 20)
+        XCTAssertEqual(HermesIconSize.Avatar.medium, HermesIconSize.large)
+        XCTAssertEqual(HermesIconSize.Avatar.medium, 24)
+        XCTAssertEqual(HermesIconSize.Avatar.large, HermesIconSize.extraLarge)
+        XCTAssertEqual(HermesIconSize.Avatar.large, 32)
     }
 
     func testAttachmentSizeScaleMatchesApprovedValues() {

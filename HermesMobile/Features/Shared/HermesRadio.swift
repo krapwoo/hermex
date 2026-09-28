@@ -40,13 +40,13 @@ struct HermesRadio: View {
             ZStack {
                 Circle()
                     .stroke(
-                        isSelected ? Color.accentColor : Color(.separator),
+                        isSelected ? Color.primary : Color(.separator),
                         lineWidth: HermesRadioMetrics.borderWidth
                     )
 
                 if isSelected {
                     Circle()
-                        .fill(Color.accentColor)
+                        .fill(Color.primary)
                         .frame(width: HermesRadioMetrics.innerDotSize, height: HermesRadioMetrics.innerDotSize)
                 }
             }

@@ -58,6 +58,9 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
     /// A decorative, accessibility-hidden system image shown in the trailing indicator slot once
     /// pending/selected precedence is resolved — an accordion header's chevron, for instance.
     var rowIndicatorSystemImage: String? = nil
+    /// `rowIndicatorSystemImage`'s rendered size. Defaults to the existing `HermesIconSize.small`
+    /// ListItem indicator size; an accordion header opts into `HermesIconSize.medium`.
+    var rowIndicatorSize: CGFloat = HermesIconSize.small
     let action: () -> Void
     @ViewBuilder var leading: () -> Leading
     @ViewBuilder var titleAccessory: () -> TitleAccessory
@@ -127,7 +130,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
                 .accessibilityHidden(true)
         } else if let rowIndicatorSystemImage {
             Image(systemName: rowIndicatorSystemImage)
-                .font(.system(size: HermesIconSize.small, weight: .semibold))
+                .font(.system(size: rowIndicatorSize, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: HermesIconSize.large, height: HermesIconSize.large)
                 .accessibilityHidden(true)
@@ -150,6 +153,7 @@ extension ListItem where Leading == EmptyView {
         state: ListItemState = ListItemState(),
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
+        rowIndicatorSize: CGFloat = HermesIconSize.small,
         action: @escaping () -> Void,
         @ViewBuilder titleAccessory: @escaping () -> TitleAccessory,
         @ViewBuilder trailingAccessory: @escaping () -> Trailing
@@ -164,6 +168,7 @@ extension ListItem where Leading == EmptyView {
             state: state,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
+            rowIndicatorSize: rowIndicatorSize,
             action: action,
             leading: { EmptyView() },
             titleAccessory: titleAccessory,
@@ -183,6 +188,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
         state: ListItemState = ListItemState(),
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
+        rowIndicatorSize: CGFloat = HermesIconSize.small,
         action: @escaping () -> Void,
         @ViewBuilder trailingAccessory: @escaping () -> Trailing
     ) {
@@ -196,6 +202,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
             state: state,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
+            rowIndicatorSize: rowIndicatorSize,
             action: action,
             leading: { EmptyView() },
             titleAccessory: { EmptyView() },
@@ -215,6 +222,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
         state: ListItemState = ListItemState(),
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
+        rowIndicatorSize: CGFloat = HermesIconSize.small,
         action: @escaping () -> Void
     ) {
         self.init(
@@ -227,6 +235,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
             state: state,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
+            rowIndicatorSize: rowIndicatorSize,
             action: action,
             leading: { EmptyView() },
             titleAccessory: { EmptyView() },
@@ -247,6 +256,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
         hapticFeedbackStyle: HapticButtonFeedbackStyle? = nil,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
+        rowIndicatorSize: CGFloat = HermesIconSize.small,
         action: @escaping () -> Void,
         @ViewBuilder leading: @escaping () -> Leading
     ) {
@@ -261,6 +271,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
             hapticFeedbackStyle: hapticFeedbackStyle,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
+            rowIndicatorSize: rowIndicatorSize,
             action: action,
             leading: leading,
             titleAccessory: { EmptyView() },
@@ -280,6 +291,7 @@ extension ListItem where Trailing == EmptyView {
         state: ListItemState = ListItemState(),
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
+        rowIndicatorSize: CGFloat = HermesIconSize.small,
         action: @escaping () -> Void,
         @ViewBuilder leading: @escaping () -> Leading,
         @ViewBuilder titleAccessory: @escaping () -> TitleAccessory
@@ -294,6 +306,7 @@ extension ListItem where Trailing == EmptyView {
             state: state,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
+            rowIndicatorSize: rowIndicatorSize,
             action: action,
             leading: leading,
             titleAccessory: titleAccessory,

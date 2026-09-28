@@ -83,6 +83,22 @@ final class ListItemTests: XCTestCase {
             XCTFail("Existing ListItem callers must keep the body role")
         }
         XCTAssertNil(row.rowIndicatorSystemImage)
+        XCTAssertEqual(
+            row.rowIndicatorSize,
+            HermesIconSize.small,
+            "existing ListItem callers must keep the current 16pt indicator size"
+        )
+    }
+
+    func testRowIndicatorSizeCanBeConfiguredForAnAccordionHeaderChevron() {
+        let header = ListItem(
+            title: Text("Hermex"),
+            rowIndicatorSystemImage: "chevron.down",
+            rowIndicatorSize: HermesIconSize.medium,
+            action: {},
+            leading: { Image(systemName: "folder") }
+        )
+        XCTAssertEqual(header.rowIndicatorSize, HermesIconSize.medium)
     }
 
     func testRowIndicatorLivesInsideTheRowButtonAndIsAccessibilityHidden() throws {
@@ -91,6 +107,10 @@ final class ListItemTests: XCTestCase {
         XCTAssertTrue(src.contains("Image(systemName: rowIndicatorSystemImage)"))
         XCTAssertTrue(src.contains(".accessibilityHidden(true)"))
         XCTAssertTrue(src.contains(".appFont(titleRole)"))
+        XCTAssertTrue(
+            src.contains(".font(.system(size: rowIndicatorSize, weight: .semibold))"),
+            "the indicator's rendered size must come from the configurable rowIndicatorSize seam, not a hardcoded token"
+        )
     }
 
     // MARK: - Source helpers

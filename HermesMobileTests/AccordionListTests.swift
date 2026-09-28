@@ -128,4 +128,50 @@ final class AccordionListTests: XCTestCase {
         XCTAssertFalse(src.contains("SessionSummary"))
         XCTAssertFalse(src.contains("@AppStorage"))
     }
+
+    // MARK: - Card padding, chevron size, and divider alignment (issue #607 follow-up)
+
+    func testCardAppearanceAppliesTheSharedCardContentPaddingToken() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains(".padding(.horizontal, HermesCardMetrics.contentPadding)"),
+            "card appearance must use the shared Card content padding token, not a new literal"
+        )
+    }
+
+    func testCardlessAppearanceAddsNoAccordionLevelHorizontalPadding() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        guard let range = src.range(of: "private func cardlessGroup") else {
+            return XCTFail("expected a cardlessGroup function")
+        }
+        let bodyStart = src[range.upperBound...]
+        guard let bodyEnd = bodyStart.range(of: "\n    @ViewBuilder\n    private func groupRows") else {
+            return XCTFail("expected cardlessGroup to be followed by groupRows")
+        }
+        let cardlessGroupBody = bodyStart[..<bodyEnd.lowerBound]
+        XCTAssertFalse(
+            cardlessGroupBody.contains(".padding(.horizontal"),
+            "cardless must not introduce an Accordion-level horizontal outer padding"
+        )
+    }
+
+    func testAccordionHeaderChevronUsesTheMediumIconSizeStep() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains("rowIndicatorSize: HermesIconSize.medium"),
+            "the accordion header chevron must opt into the 20pt icon step via ListItem's configurable seam"
+        )
+    }
+
+    func testBodyRowDividersAlignToBodyRowTextContentNotFullWidth() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains("bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12"),
+            "the body-row divider inset must derive from the existing avatar width + header/body gap + ListItem's own horizontal inset, not a hardcoded number"
+        )
+        XCTAssertTrue(
+            src.contains("HermesDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)"),
+            "dividers between body rows must begin at the body row's actual text-content alignment"
+        )
+    }
 }

@@ -37,6 +37,7 @@ import { HERMES_ICON_SIZE } from './hermesIconSize';
 import {
   AccordionListFamilyGallery,
   AttachmentTileGallery,
+  AvatarSystemImageIdentityPreview,
   BannerFamilyGallery,
   BotMarkPreview,
   ButtonDecisionAndTactilePreview,
@@ -425,12 +426,7 @@ function AvatarFamilyGallery() {
         <IdentityAvatarPreview label="Dark fill → light foreground" initials="CD" bg="#1c1c1e" dark />
       </View>
       <Text style={[recon.caption, { marginTop: 8 }]}>System-image identity (production HermesAvatar) — used inside Content Unavailable</Text>
-      <View style={recon.avatarPreviewRow}>
-        <View style={recon.avatarCell}>
-          <Avatar size="large" iconName="menu" backgroundColor="#8E8E93" accessibilityLabel="No skills available" />
-          <Text style={recon.caption}>Large (48) · icon 24</Text>
-        </View>
-      </View>
+      <AvatarSystemImageIdentityPreview />
     </View>
   );
 }
@@ -643,6 +639,23 @@ const GEOMETRY_FACTS: GeometryFact[] = [
   { name: 'AdaptiveReadableContentWidth.workspace', value: '1,000pt', source: 'HermesMobile/Features/Shared/AdaptiveGlassModifier.swift', use: 'Max readable content width for a workspace-class screen.' },
 ];
 
+// A concise decision ladder for choosing among HermesSpacing's existing 12 steps by relationship
+// and hierarchy — no new spacing values, just guidance for picking among the ones that already
+// exist (HERMES_SPACING_USE above documents each individual step's own note).
+interface SpacingLadderRung {
+  relationship: string;
+  steps: string;
+  guidance: string;
+}
+const HERMES_SPACING_LADDER: SpacingLadderRung[] = [
+  { relationship: 'Micro / inline spacing', steps: 'space.2 · space.4', guidance: 'Hairline-adjacent gaps and the tightest real gap between closely related elements, e.g. an icon and the label directly beside it.' },
+  { relationship: 'Between related controls', steps: 'space.8', guidance: 'Gap between controls that read as one cluster, e.g. two buttons in the same toolbar or row.' },
+  { relationship: 'Compact component padding', steps: 'space.12', guidance: 'Internal padding for a compact control, e.g. a chip, tag, or dense list row.' },
+  { relationship: 'Default card / screen inset', steps: 'space.16', guidance: "A card's own padding and the standard screen horizontal inset (HermesSpacing.screenHorizontal)." },
+  { relationship: 'Major content groups', steps: 'space.24', guidance: 'Gap between distinct content groups that still belong to the same screen or card.' },
+  { relationship: 'Section separation', steps: 'space.32 – space.64', guidance: 'Section-to-section spacing, increasing with how distinct the sections are; values above 64 remain layout or component geometry, not the spacing scale.' },
+];
+
 const HERMES_USAGE_SIZE: GeometryFact[] = [
   { name: 'HermesUsageSize.chartHeight', value: '180pt', source: 'HermesMobile/Config/HermesSpacing.swift', use: 'Fixed plot height for active and empty Usage charts.' },
   { name: 'HermesUsageSize.legendIndicator', value: '7pt', source: 'HermesMobile/Config/HermesSpacing.swift', use: 'Diameter of each Usage chart legend color indicator.' },
@@ -655,6 +668,18 @@ function HermesSpacingGallery() {
     <DividedStack>
       <VariantGroup name="HermesSpacing" desc="space.0 / 2 / 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64" align="left">
         <SpacingScaleGallery steps={HERMES_SPACING_STEPS} values={HERMES_SPACING} useNotes={HERMES_SPACING_USE} />
+      </VariantGroup>
+      <VariantGroup name="Decision ladder" desc="Which existing step to reach for, by relationship and hierarchy — not new values." align="left">
+        <View style={recon.stack}>
+          {HERMES_SPACING_LADDER.map((rung, index) => (
+            <TokenRow key={rung.relationship} use={rung.guidance} last={index === HERMES_SPACING_LADDER.length - 1}>
+              <View style={recon.row}>
+                <Text style={recon.motionName}>{rung.relationship}</Text>
+                <Text style={recon.motionValue}>{rung.steps}</Text>
+              </View>
+            </TokenRow>
+          ))}
+        </View>
       </VariantGroup>
       <VariantGroup name="HermesUsageSize" desc="Component-scoped fixed geometry for the Usage family — not additions to the global spacing scale." align="left">
         <View style={recon.stack}>
@@ -1446,7 +1471,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Checkbox',
     displayName: 'Checkbox',
     description:
-      'A reusable square multi-selection control: the box fills with the accent color and a checkmark pops in when checked. Pass an action (the generic catalog Checkbox\'s `onChange`) when the checkbox owns interaction; when a containing row owns the tap instead — a multi-select list row, for example — omit it, and the identical box/checkmark visual renders as a non-interactive, accessibility-hidden indicator so controls are never nested.',
+      'A reusable square multi-selection control: the box fills with the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent) and a checkmark pops in when checked, staying the inverse system background so it remains legible against either. Pass an action (the generic catalog Checkbox\'s `onChange`) when the checkbox owns interaction; when a containing row owns the tap instead — a multi-select list row, for example — omit it, and the identical box/checkmark visual renders as a non-interactive, accessibility-hidden indicator so controls are never nested.',
     whenToUse: 'Use it for an independent multi-select fact recorded for a future action (e.g. a form submit) — checking one has no effect on others. For a setting that takes effect immediately, use native Toggle; for one-of-many exclusive selection, use Radio; for a status or completion mark (Tag) or an ordinary picker row\'s selected checkmark (List / ListItem), use that component instead — Checkbox always means an editable multi-select choice.',
     props: [
       { name: 'checked', type: 'Bool', required: true, desc: 'Whether the box is filled and shows the checkmark.' },
@@ -1476,6 +1501,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'BotPendingRequestCard.swift and KanbanLabView.swift do not import HermesCheckbox.swift in this branch; each still draws its own selection indicator directly.',
           'The interactive configuration (passing action) renders a native Button with an .accessibilityRepresentation(Toggle(...)) so it is announced and operated as a real toggle, not a plain button; the row-owned configuration (action omitted) instead applies .accessibilityHidden(true) to the same visual.',
+          'The checked fill and border use Color.primary (an adaptive semantic black/white, not Color.accentColor or a new neutral-ramp step) — the approved decision for the Checkbox/Radio selected treatment; the checkmark itself stays the inverse system background regardless of appearance.',
         ],
       },
     },
@@ -1484,7 +1510,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Radio',
     displayName: 'Radio',
     description:
-      'A reusable circular one-of-many selection control — the selected option shows a filled center dot. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
+      'A reusable circular one-of-many selection control — the selected option shows a filled center dot, with the selected ring and dot both using the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent), mirroring HermesCheckbox\'s own selected treatment. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
     whenToUse: 'Use it for exclusive, one-of-many selection. For an independent multi-select fact, use Checkbox instead.',
     props: [
       { name: 'isSelected', type: 'Bool', required: true, desc: 'Whether the center dot is filled.' },
@@ -1508,7 +1534,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: 'Component exists (HermesRadio.swift) with no production call site yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermesRadio.swift'],
         notes: [
-          'Mirrors HermesCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity) with a circular selected/unselected treatment instead of a boolean toggle.',
+          'Mirrors HermesCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity, same adaptive Color.primary selected treatment) with a circular selected/unselected treatment instead of a boolean toggle.',
           'Report only: a single-choice (not allowsMultipleChoices) Bot pending-request question already renders its own largecircle.fill/circle glyph per choice (see Hermes Checkbox) — a plausible future HermesRadio adoption site, not migrated in this slice.',
         ],
       },
@@ -1575,7 +1601,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: 'Component exists (HermesToast.swift) with no production call site yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermesToast.swift'],
         notes: [
-          'Presentation (`hermesToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe move+opacity transition, so a new caller gets the same feel without hand-rolling it again.',
+          'Presentation (`hermesToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe transition, so a new caller gets the same feel without hand-rolling it again: it enters by moving down from the top edge combined with opacity (HermesMotion.Bundle.overlayEnter) and exits back toward the top combined with opacity (HermesMotion.Bundle.overlayExit). Reduce Motion drops the directional move and falls back to an opacity-only state change. Visibility itself stays entirely caller-owned — no internal timer.',
         ],
       },
     },
@@ -1728,11 +1754,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     whenToUse:
       'Use it when repeated ListItem groups need expandable bodies, such as a future project-to-sessions hierarchy. Use Disclosure Row for one compact status line that reveals long detail content, and List / ListItem for non-expandable rows.',
     props: [
-      { name: 'appearance', type: 'card | cardless', required: true, desc: 'Required visual surface choice; there is no default.' },
-      { name: 'separatorStyle', type: 'none | betweenRows | topAndBottom | all', required: true, desc: 'Required separator policy; topAndBottom surrounds the whole group and draws no internal lines.' },
+      { name: 'appearance', type: 'card | cardless', required: true, desc: 'Required visual surface choice; there is no default. card composes the shared Card component (outlined surface) for exactly 16pt horizontal content padding; cardless adds no Accordion-level horizontal outer padding of its own.' },
+      { name: 'separatorStyle', type: 'none | betweenRows | topAndBottom | all', required: true, desc: 'Required separator policy; topAndBottom surrounds the whole group and draws no internal lines. The divider directly under an open header always spans the full available Accordion content width; a divider between two body rows begins at those rows\' own text-content column instead.' },
       { name: 'expansion', type: 'single | multiple; controlled or local', required: true, desc: 'Single permits zero or one open item, collapsing the previously open item when a new one opens; multiple permits any number.' },
-      { name: 'header', type: 'ListItem', required: true, desc: 'Whole-row expansion button using label typography and an accessibility-hidden chevron indicator.' },
-      { name: 'bodyItems', type: 'ListItem[]', required: true, desc: 'Caller-owned body rows aligned to the header title column and rendered in the parent scroll container.' },
+      { name: 'header', type: 'ListItem', required: true, desc: 'Whole-row expansion button using label typography and a decorative chevron rendered at the 20pt (medium) icon-size step, one step up from ListItem\'s own 16pt default indicator size.' },
+      { name: 'bodyItems', type: 'ListItem[]', required: true, desc: 'Caller-owned body rows aligned to the header title column and rendered in the parent scroll container. Expand/collapse visibly animates (respecting Reduce Motion) instead of an instant mount/unmount.' },
     ],
     a11y:
       'Each header is one button exposing expanded/collapsed state. The chevron is decorative, collapsed body rows leave the focus order, body actions stay independent, and Reduce Motion removes spatial transitions.',
@@ -1757,6 +1783,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'The component is intentionally data-agnostic and contains no ProjectSummary, SessionSummary, persistence, pagination, or Sessions-list behavior — available in this branch\'s foundation layer, with no production call site.',
           'A future Sessions redesign may compose this component in a separate issue and branch.',
+          'Card appearance: exactly 16pt horizontal content padding, from the existing card/spacing token (HermesCardMetrics.contentPadding in Swift; Card\'s own DS_SPACING[800] default in the catalog). The Swift card still composes .hermesCardSurface(.outlined, cornerRadius: HermesRadius.card); the catalog card now composes the shared Card component (surface="outlined") directly, rather than a hand-reconstructed border/background, with Card\'s own default vertical padding zeroed since ListItem rows already own their vertical rhythm.',
+          'Cardless appearance: no Accordion-level horizontal outer padding is added on either platform; ListItem\'s own internal row insets are unchanged.',
+          'Chevron: the header indicator renders at the next icon-size step up — HermesIconSize.medium / DS_ICON_SIZE.md (20pt) — not ListItem\'s existing 16pt default. Swift ListItem gained a configurable rowIndicatorSize seam (default HermesIconSize.small, preserving every other existing caller) so only the accordion header opts into 20pt.',
+          'Dividers: the divider directly under an open header always spans the full available Accordion content width on both platforms. A divider between two body rows instead begins at those rows\' own text-content column — the existing avatar width + header/body gap + ListItem\'s own horizontal inset — rather than the row\'s outer frame.',
+          'Motion: expand/collapse reuses the existing HermesMotion.Bundle.contentReposition animation and Reduce Motion behavior in Swift. The catalog now visibly animates a section\'s body height/opacity with the existing DS_MOTION_DURATION.base/DS_MOTION_EASING.standard tokens (no new motion token), matching the header chevron\'s own Reduce Motion handling; a collapsed section\'s body stays hidden from the accessibility tree even though it stays mounted for the animation.',
         ],
       },
     },
@@ -2063,7 +2094,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     fullWidthLabel: 'Tokens',
     render: () => <HermesSpacingGallery />,
     hermesReference: {
-      useWhen: 'Reach for the 12-step spacing scale for gaps and padding in any new layout.',
+      useWhen: 'Reach for the 12-step spacing scale for gaps and padding in any new layout, choosing the step by relationship and hierarchy: s2/s4 for micro/inline spacing (hairline-adjacent gaps, tightest gap between closely related elements); s8 for the gap between related controls in a row or cluster; s12 for compact component padding; s16 for the default card/screen inset; s24 for the gap between major content groups; s32–s64 for section-to-section separation, increasing with how distinct the sections are.',
       avoidWhen: 'Avoid it for component-owned fixed geometry (chart heights, tile widths, icon panels) — those belong to HermesUsageSize or HermesAttachmentSize, not the spacing scale; avoid silently rounding an off-scale value — add a named exception.',
       alternatives: [],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
@@ -2126,7 +2157,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
           'The inventory is deduplicated by final SF Symbol name.',
           'Literal counts, computed expressions, source sites, and trace methods remain available from hermesIconInventory.generated.json and hermesIconComputedSiteTrace.generated.json.',
           'The browser cannot render SF Symbols faithfully without adding assets or a dependency, so tiles are explicitly unavailable instead of using substitute glyphs.',
-          'A five-step default icon-size scale (HermesIconSize, HermesMobile/Config/HermesSpacing.swift) is defined in this branch\'s foundation layer alongside two semantic pairing sets — Typography pairing (which AppFont.Role text an icon size sits beside inline) and Avatar pairing (which Avatar diameter an icon size sits inside, at exactly one-half that diameter) — but no production call site reads HermesIconSize yet; each existing SF Symbol call site still picks its own literal point size.',
+          'A five-step default icon-size scale (HermesIconSize, HermesMobile/Config/HermesSpacing.swift) is defined in this branch\'s foundation layer alongside two semantic pairing sets — Typography pairing (which AppFont.Role text an icon size sits beside inline) and Avatar pairing (which Avatar diameter an icon size sits inside, at the approved pairing: 32pt avatar → 20pt icon, 40pt avatar → 24pt icon, 48pt avatar → 32pt icon) — but no production call site reads HermesIconSize yet; each existing SF Symbol call site still picks its own literal point size.',
         ],
       },
     },

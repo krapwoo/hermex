@@ -90,7 +90,10 @@ struct HermesToast: View {
 
 /// Caller-owned visibility for a `HermesToast`: no internal timer, no auto-dismiss — the caller's
 /// `isPresented` binding is the only thing that shows or hides it. Presentation mirrors
-/// `GitActionToastOverlay`'s established top-anchored, Reduce-Motion-safe transition.
+/// `GitActionToastOverlay`'s established top-anchored, Reduce-Motion-safe transition: it enters by
+/// moving down from the top edge combined with opacity (`HermesMotion.Bundle.overlayEnter`) and
+/// exits back toward the top combined with opacity (`HermesMotion.Bundle.overlayExit`). Reduce
+/// Motion drops the directional move entirely, falling back to an opacity-only state change.
 private struct HermesToastPresentation: ViewModifier {
     @Binding var isPresented: Bool
     let toast: HermesToast
@@ -104,10 +107,20 @@ private struct HermesToastPresentation: ViewModifier {
                     toast
                         .padding(.horizontal, HermesSpacing.s16)
                         .padding(.top, HermesSpacing.s12)
-                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                        .transition(transition)
                 }
             }
-            .animation(reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d200), value: isPresented)
+            .animation(reduceMotion ? HermesMotion.animation(for: HermesMotion.Bundle.stateChange) : nil, value: isPresented)
+    }
+
+    private var transition: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        return .asymmetric(
+            insertion: .move(edge: .top).combined(with: .opacity)
+                .animation(HermesMotion.animation(for: HermesMotion.Bundle.overlayEnter)),
+            removal: .move(edge: .top).combined(with: .opacity)
+                .animation(HermesMotion.animation(for: HermesMotion.Bundle.overlayExit))
+        )
     }
 }
 

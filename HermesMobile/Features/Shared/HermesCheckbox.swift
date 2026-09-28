@@ -48,11 +48,11 @@ struct HermesCheckbox: View {
         HStack(spacing: HermesSpacing.s8) {
             ZStack {
                 RoundedRectangle(cornerRadius: HermesRadius.r4, style: .continuous)
-                    .fill(isChecked ? Color.accentColor : Color.clear)
+                    .fill(isChecked ? Color.primary : Color.clear)
                     .overlay {
                         RoundedRectangle(cornerRadius: HermesRadius.r4, style: .continuous)
                             .stroke(
-                                isChecked ? Color.accentColor : Color(.separator),
+                                isChecked ? Color.primary : Color(.separator),
                                 lineWidth: HermesCheckboxMetrics.borderWidth
                             )
                     }

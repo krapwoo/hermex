@@ -52,4 +52,11 @@ final class HermesRadioTests: XCTestCase {
         XCTAssertTrue(src.contains(".isSelected"))
         XCTAssertTrue(src.contains("Button(action:"))
     }
+
+    func testSelectedRingAndInnerDotUseTheAdaptiveSemanticPrimaryColorNotAFixedAccent() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesRadio.swift")
+        XCTAssertTrue(src.contains("isSelected ? Color.primary : Color(.separator)"))
+        XCTAssertTrue(src.contains(".fill(Color.primary)"))
+        XCTAssertFalse(src.contains("Color.accentColor"))
+    }
 }

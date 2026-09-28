@@ -44,12 +44,12 @@ enum HermesIconSize {
         static let feature = HermesIconSize.extraLarge
     }
 
-    /// Semantic pairing of an icon size with the Avatar diameter it sits inside, at exactly
-    /// one-half that diameter.
+    /// Semantic pairing of an icon size with the Avatar diameter it sits inside: 32pt avatar → 20pt
+    /// icon, 40pt avatar → 24pt icon, 48pt avatar → 32pt icon.
     enum Avatar {
-        static let small = HermesIconSize.small
-        static let medium = HermesIconSize.medium
-        static let large = HermesIconSize.large
+        static let small = HermesIconSize.medium
+        static let medium = HermesIconSize.large
+        static let large = HermesIconSize.extraLarge
     }
 }
 

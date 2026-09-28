@@ -27,6 +27,10 @@ export interface AvatarProps {
    *  or a raw number as an escape hatch for an intentional custom size a named step doesn't cover.
    *  @default 'medium' */
   size?: AvatarSizeName | number;
+  /** Icon size override — escape hatch for a production pairing that doesn't follow the default
+   *  half-diameter ratio (e.g. HermesAvatar's fixed 32→20/40→24/48→32 icon pairing). Only affects
+   *  `iconName` content; has no effect on initials. @default half the resolved diameter, rounded */
+  iconSize?: number;
   /** Fill colour behind the icon/initials. Defaults to a neutral muted surface (with dark
    *  foreground); passing a custom colour switches the icon/initials to light (inverse) text,
    *  assuming a saturated/dark fill — match that pairing if you override this. */
@@ -41,6 +45,7 @@ export function Avatar({
   iconName,
   initials,
   size = 'medium',
+  iconSize,
   backgroundColor,
   accessibilityLabel,
   style,
@@ -49,6 +54,7 @@ export function Avatar({
   const showImage = !!imageUrl && !imageFailed;
   const showIcon = !showImage && !!iconName;
   const resolvedSize = typeof size === 'number' ? size : AVATAR_SIZE[size];
+  const resolvedIconSize = iconSize ?? Math.round(resolvedSize * 0.5);
   const dimension = { width: resolvedSize, height: resolvedSize, borderRadius: resolvedSize / 2 };
   // The default fill (surface.muted) is light, so its icon/initials need dark text; a caller-supplied
   // backgroundColor is assumed saturated/dark (the existing convention — see the "Custom colour"
@@ -65,7 +71,7 @@ export function Avatar({
       {showImage ? (
         <Image source={{ uri: imageUrl }} style={dimension} onError={() => setImageFailed(true)} />
       ) : showIcon ? (
-        <Icon name={iconName} size={Math.round(resolvedSize * 0.5)} color={contentColor} />
+        <Icon name={iconName} size={resolvedIconSize} color={contentColor} />
       ) : (
         <Text style={[styles.initials, { fontSize: Math.round(resolvedSize * 0.4), color: contentColor }]} numberOfLines={1}>
           {(initials ?? '?').slice(0, 2).toUpperCase()}
