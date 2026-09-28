@@ -159,9 +159,56 @@ export interface HermesImplementationNotes {
   notes?: string[];
 }
 
-/** Reference-oriented metadata for one Hermex catalog entry — real usage guidance and
- *  destinations up front, technical provenance collapsed behind disclosures. */
+/** One alternative to reach for instead of this entry — structured so a human or AI can tell
+ *  *what* to choose instead and *under what condition*, rather than a single prose blob a reader
+ *  has to parse apart themselves. */
+export interface HermesAlternative {
+  /** The alternative entry's own display name (e.g. "Hermes Toast", "Native ContentUnavailableView"). */
+  name: string;
+  /** The deciding condition under which to reach for that alternative instead of this entry. */
+  useWhen: string;
+}
+
+/** The closed adoption-state vocabulary every Hermex reference entry's `adoptionStatus` must use —
+ *  the smallest set that still distinguishes every state this catalog actually needs to tell apart:
+ *  - `foundation-available` — implemented in this branch's foundation layer; no production screen
+ *    calls it yet.
+ *  - `production-adopted` — real, existing, verified production-adopted behavior.
+ *  - `partially-adopted` — some real production call site exists, but not the whole family/entry
+ *    (e.g. one token consumer while the rest of the scale has none, or an umbrella entry combining
+ *    one adopted piece with one unadopted candidate).
+ *  - `native-platform` — platform-native iOS behavior intentionally used instead of a Hermex
+ *    wrapper; there is no Hermex-owned component to adopt.
+ *  - `reference-only` — documentation/reference-only material (a target-architecture pattern, a
+ *    catalog-only reconstruction) with no adoption claim to make either way. */
+export type HermesAdoptionState =
+  | 'foundation-available'
+  | 'production-adopted'
+  | 'partially-adopted'
+  | 'native-platform'
+  | 'reference-only';
+
+/** One entry's adoption state, in the closed vocabulary above, plus the truthful plain-English
+ *  detail that vocabulary alone can't carry (which files, which screens, what's still missing). */
+export interface HermesAdoptionStatus {
+  state: HermesAdoptionState;
+  detail: string;
+}
+
+/** Reference-oriented metadata for one Hermex catalog entry — the decision contract (`useWhen`/
+ *  `avoidWhen`/`alternatives`/`adoptionStatus`) and real usage guidance/destinations up front,
+ *  technical provenance collapsed behind disclosures. */
 export interface HermesReferenceMeta {
+  /** The deciding condition under which a human or AI should reach for this entry. */
+  useWhen?: string;
+  /** The deciding condition under which this entry is the wrong choice, even though it might look
+   *  applicable at a glance. */
+  avoidWhen?: string;
+  /** Structured alternatives — omit or leave empty only when no other entry genuinely applies;
+   *  never populated solely to satisfy a count. */
+  alternatives?: HermesAlternative[];
+  /** This entry's adoption state in the closed vocabulary, plus truthful detail. */
+  adoptionStatus?: HermesAdoptionStatus;
   useSummary?: string;
   usedIn?: HermesReferenceDestination[];
   implementationNotes?: HermesImplementationNotes;

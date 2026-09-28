@@ -1035,7 +1035,7 @@ test('CatalogShell accepts an optional subtitle override; the Hermex route state
   const catalogSrc = read(HERMES_CATALOG_PATH);
   const subtitleMatch = catalogSrc.match(/subtitle="([^"]*)"/);
   assert.ok(subtitleMatch, 'expected a literal subtitle prop on the default route');
-  assert.equal(subtitleMatch[1], 'Hermex · 21 visual references · token coverage in overview');
+  assert.equal(subtitleMatch[1], 'Hermex · 26 visual references · token coverage in overview');
   assert.doesNotMatch(subtitleMatch[1], /template/i, 'expected the Hermex subtitle to contain only Hermex information, with no template reference count');
 
   const templateSrc = read(CATALOG_EXAMPLE_PATH);
@@ -1235,7 +1235,7 @@ test('every primary Hermex entry declares hermesReference (never the removed her
   assert.doesNotMatch(typesSrc, /HermesAudit|HermesDisposition|HermesEvidenceLevel/);
   assert.doesNotMatch(sectionBlockSrc, /HermesAuditPanel/);
 
-  assert.match(catalogSrc, /subtitle="Hermex · 21 visual references · token coverage in overview"/);
+  assert.match(catalogSrc, /subtitle="Hermex · 26 visual references · token coverage in overview"/);
 });
 
 // Pinned to specification revision 1. The 2026-09-26 revised specification explicitly supersedes
@@ -2202,7 +2202,7 @@ test('every Hermex-owned component-family section is reachable from Components �
   assert.ok(!ids.includes('Hermes TopNav'), 'native TopNav belongs in Native iOS — Hermex, not Components — Hermex');
 });
 
-test('Checkbox is a new, foundation-only Components — Hermex entry (no production call site) that reuses the real generic catalog Checkbox, documents checked/unchecked/disabled/focus/interactive/row-owned-indicator configurations, and stays distinct from Radio/Switch/status-checkmark controls', () => {
+test('Checkbox is a new, foundation-only Components — Hermex entry (no production call site) that reuses the real generic catalog Checkbox, documents checked/unchecked/disabled/focus/interactive/row-owned-indicator configurations, and stays distinct from Radio/Toggle/status-checkmark controls', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.match(sectionsSrc, /\| 'Hermes Checkbox'/, "expected 'Hermes Checkbox' in the HermesSectionId union");
   const section = extractHermesSection(sectionsSrc, 'Hermes Checkbox');
@@ -2210,7 +2210,8 @@ test('Checkbox is a new, foundation-only Components — Hermex entry (no product
   assert.match(section, /row-owned/i, 'expected the row-owned indicator configuration to be documented');
   assert.match(section, /accessibility-hidden/i, 'expected the decorative/accessibility-hidden behavior of the row-owned configuration to be documented');
   assert.match(section, /never a checkbox nested inside another control|controls are never nested/i);
-  assert.match(section, /\bSwitch\b/, 'expected Checkbox to be distinguished from Switch');
+  assert.match(section, /\bToggle\b/, 'expected Checkbox to be distinguished from native Toggle (not the nonexistent "Switch")');
+  assert.doesNotMatch(section, /use Switch/, 'Switch is not a Hermex entry or a SwiftUI control');
   assert.match(section, /\bRadio\b/, 'expected Checkbox to be distinguished from Radio');
   assert.match(section, /Tag/, 'expected Checkbox to be distinguished from a Tag-style status/completion mark');
   assert.match(section, /HermesMobile\/Features\/Shared\/HermesCheckbox\.swift/);
@@ -3577,4 +3578,473 @@ test('Accordion List gallery covers both appearances, all separators, expansion 
   assert.match(body, /No sessions/);
   assert.match(body, /Show all sessions/);
   assert.match(body, /Header titles use label typography/);
+});
+
+// ─── AI/human selection-guidance contract (#607 human/AI readiness) ─────────────────────────────
+// Every current Hermex reference (token group, material, native-iOS pattern, component, pattern)
+// must declare four exact structured fields — useWhen, avoidWhen, alternatives, adoptionStatus —
+// visible under the exact human labels "Use when" / "Avoid when" / "Alternatives" / "Adoption
+// status", and those same facts must survive into the plain-JSON manifest for AI/tool use.
+
+test('types.ts declares the structured Hermex decision-contract fields: HermesAdoptionState (a closed vocabulary), HermesAlternative, HermesAdoptionStatus, and their presence on HermesReferenceMeta', () => {
+  const typesSrc = read(TYPES_PATH);
+  assert.match(typesSrc, /export type HermesAdoptionState\s*=/, 'expected an exported HermesAdoptionState union');
+  for (const state of ['foundation-available', 'production-adopted', 'partially-adopted', 'native-platform', 'reference-only']) {
+    assert.ok(typesSrc.includes(`'${state}'`), `expected HermesAdoptionState to include '${state}'`);
+  }
+  assert.match(typesSrc, /export interface HermesAlternative\s*\{/);
+  assert.match(typesSrc, /export interface HermesAlternative[^}]*name:\s*string/s);
+  assert.match(typesSrc, /export interface HermesAlternative[^}]*useWhen:\s*string/s);
+  assert.match(typesSrc, /export interface HermesAdoptionStatus\s*\{/);
+  assert.match(typesSrc, /export interface HermesAdoptionStatus[^}]*state:\s*HermesAdoptionState/s);
+  assert.match(typesSrc, /export interface HermesAdoptionStatus[^}]*detail:\s*string/s);
+
+  const metaMatch = typesSrc.match(/export interface HermesReferenceMeta\s*\{[\s\S]*?\n\}/);
+  assert.ok(metaMatch, 'expected an exported HermesReferenceMeta interface');
+  const meta = metaMatch[0];
+  assert.match(meta, /useWhen\?:\s*string/);
+  assert.match(meta, /avoidWhen\?:\s*string/);
+  assert.match(meta, /alternatives\?:\s*HermesAlternative\[\]/);
+  assert.match(meta, /adoptionStatus\?:\s*HermesAdoptionStatus/);
+});
+
+test('HermesReferenceDetails renders the four decision fields under their exact human labels, in the primary reading flow (never behind a Disclosure)', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(detailsSrc, /Use when/);
+  assert.match(detailsSrc, /Avoid when/);
+  assert.match(detailsSrc, /Alternatives/);
+  assert.match(detailsSrc, /Adoption status/);
+  // "Primary reading flow" means outside any <Disclosure>...</Disclosure> pair — approximated here
+  // by requiring the four labels to appear textually before the file's first Disclosure usage,
+  // since both existing disclosures ("Where it appears", "Implementation notes") are rendered later.
+  const firstDisclosureIdx = detailsSrc.indexOf('<Disclosure label=');
+  assert.ok(firstDisclosureIdx > -1, 'expected at least one <Disclosure> in HermesReferenceDetails');
+  for (const label of ['Use when', 'Avoid when', 'Alternatives', 'Adoption status']) {
+    const idx = detailsSrc.indexOf(label);
+    assert.ok(idx > -1 && idx < firstDisclosureIdx, `expected "${label}" to render before the first Disclosure, not gated behind one`);
+  }
+});
+
+test('HermesReferenceDetails always renders the Alternatives field, falling back to a truthful "No direct alternative." note when an entry intentionally has an empty alternatives array, instead of hiding the field entirely', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(
+    detailsSrc,
+    /No direct alternative\./,
+    'expected a truthful fallback string for entries with an empty alternatives array',
+  );
+  assert.doesNotMatch(
+    detailsSrc,
+    /\{alternatives\.length > 0 \? \(\s*<DecisionField label="Alternatives">/,
+    'expected the whole Alternatives DecisionField to no longer be gated behind alternatives.length > 0 — it must render unconditionally, with the fallback covering the empty case',
+  );
+});
+
+test('SectionBlock no longer renders the superseded def.whenToUse "VS" note for a Hermex reference entry once it has migrated to the new useWhen/avoidWhen decision contract, avoiding rendering the same fact twice', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  assert.match(
+    sectionBlockSrc,
+    /def\.whenToUse\s*&&\s*!def\.hermesReference\?\.useWhen/,
+    'expected the Hermex supporting-content block to suppress the legacy whenToUse note once hermesReference.useWhen covers the same decision',
+  );
+});
+
+test('manifest.ts supports an includeTokenGalleries option (default off, preserving the template catalog\'s existing component-only manifest) and carries the structured hermesReference decision fields through to plain JSON', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  assert.match(manifestSrc, /includeTokenGalleries/, 'expected an includeTokenGalleries option on buildComponentManifest');
+  assert.match(manifestSrc, /tokenGallery\?:\s*boolean/, 'expected ComponentManifestEntry to expose its own tokenGallery flag');
+  assert.match(manifestSrc, /hermesReference\?:/, 'expected ComponentManifestEntry to expose a hermesReference field');
+  assert.match(manifestSrc, /useWhen\?:\s*string/);
+  assert.match(manifestSrc, /avoidWhen\?:\s*string/);
+  assert.match(manifestSrc, /alternatives:\s*HermesAlternative\[\]/);
+  assert.match(manifestSrc, /adoptionStatus\?:\s*HermesAdoptionStatus/);
+});
+
+test('the Hermex catalog builds and exposes its own manifest (including Foundations token galleries, unlike the filtered-out default) directly inside the catalog, discoverable without leaving the default route', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /import\s*\{\s*buildComponentManifest\s*\}\s*from\s*'\.\.\/manifest'/, 'expected hermesSections.tsx to import buildComponentManifest');
+  assert.match(sectionsSrc, /buildComponentManifest\(\s*hermesSections,\s*hermesNav,\s*\{\s*includeTokenGalleries:\s*true\s*\}\s*\)/, 'expected the Hermex manifest to be built with token galleries included');
+  assert.match(sectionsSrc, /export function HermesManifest/, 'expected an exported HermesManifest component rendering the built manifest');
+
+  const catalogSrc = hermesCatalogSource();
+  assert.match(catalogSrc, /HermesManifest/, 'expected the manifest surface to actually be wired into the rendered Hermex catalog (e.g. inside the Overview), not just defined and unused');
+});
+
+// adoptionStatus is declared either inline ({ state: '...', detail: '...' }) or via one of the two
+// shared shorthand constants (FOUNDATION_AVAILABLE_ADOPTION / PRODUCTION_ADOPTED_ADOPTION) that
+// hermesSections.tsx defines for its two most common cases — both are read here.
+const ADOPTION_SHORTHAND_STATE = {
+  FOUNDATION_AVAILABLE_ADOPTION: 'foundation-available',
+  PRODUCTION_ADOPTED_ADOPTION: 'production-adopted',
+};
+function extractAdoptionState(block) {
+  const inlineMatch = block.match(/adoptionStatus:\s*\{\s*state:\s*'([^']+)',\s*detail:\s*'[^']+'/);
+  if (inlineMatch) return inlineMatch[1];
+  const shorthandMatch = block.match(/adoptionStatus:\s*(FOUNDATION_AVAILABLE_ADOPTION|PRODUCTION_ADOPTED_ADOPTION)/);
+  if (shorthandMatch) return ADOPTION_SHORTHAND_STATE[shorthandMatch[1]];
+  return undefined;
+}
+
+test('every current Hermex reference entry (Foundations token groups, Materials, Native iOS patterns, Components, and Patterns) declares useWhen, avoidWhen, a structured alternatives array, and an adoptionStatus with a closed-vocabulary state plus truthful detail', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = [...src.matchAll(/^ {4}id: '([^']+)',/gm)].map((m) => m[1]);
+  assert.ok(ids.length >= 30, `expected the full set of Hermex section ids, found ${ids.length}`);
+
+  const ALLOWED_STATES = ['foundation-available', 'production-adopted', 'partially-adopted', 'native-platform', 'reference-only'];
+
+  for (const id of ids) {
+    const block = extractHermesSection(src, id);
+    assert.match(block, /hermesReference:\s*\{/, `expected "${id}" to declare hermesReference`);
+    assert.match(block, /useWhen:\s*'[^']+'/, `expected "${id}" to declare a non-empty hermesReference.useWhen`);
+    assert.match(block, /avoidWhen:\s*'[^']+'/, `expected "${id}" to declare a non-empty hermesReference.avoidWhen`);
+    assert.match(block, /alternatives:\s*\[/, `expected "${id}" to declare a structured hermesReference.alternatives array`);
+    const state = extractAdoptionState(block);
+    assert.ok(state, `expected "${id}" to declare adoptionStatus with a state and a non-empty detail`);
+    assert.ok(
+      ALLOWED_STATES.includes(state),
+      `expected "${id}"'s adoptionStatus.state ("${state}") to be one of ${ALLOWED_STATES.join(', ')}`,
+    );
+  }
+});
+
+test('every declared alternatives entry is structured as { name, useWhen } rather than a single prose blob', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  // Non-greedy up to the *first* closing bracket — safe because no alternatives entry itself
+  // contains a nested array, unlike the broader SectionDef object these are found inside.
+  const alternativesBlocks = [...src.matchAll(/alternatives:\s*\[([\s\S]*?)\]/g)].map((m) => m[1]);
+  assert.ok(alternativesBlocks.length > 0, 'expected at least one alternatives array in hermesSections.tsx');
+  const nonEmptyBlocks = alternativesBlocks.filter((block) => block.trim().length > 0);
+  assert.ok(nonEmptyBlocks.length > 0, 'expected at least one non-empty alternatives array (a real alternative exists for some entry)');
+  for (const block of nonEmptyBlocks) {
+    const entryCount = [...block.matchAll(/\{\s*name:/g)].length;
+    assert.ok(entryCount > 0, `expected each non-empty alternatives array to contain at least one { name: ... } entry, got: ${block.slice(0, 120)}`);
+    assert.match(block, /name:\s*'[^']+'/, 'expected each alternative entry to declare a name');
+    assert.match(block, /useWhen:\s*'[^']+'/, 'expected each alternative entry to declare its own useWhen condition');
+  }
+});
+
+test('the known Hermes Avatar and Pending Request decision-guidance gaps are closed with real useWhen/avoidWhen content, not merely present-but-empty fields', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const avatar = extractHermesSection(src, 'Hermes Avatar');
+  assert.match(avatar, /useWhen:\s*'[^']{20,}'/);
+  assert.match(avatar, /avoidWhen:\s*'[^']{20,}'/);
+  assert.equal(extractAdoptionState(avatar), 'partially-adopted', 'expected Hermes Avatar to truthfully report a mixed adopted/foundation-only status, not a single blanket claim');
+
+  const pendingRequest = extractHermesSection(src, 'Pending Request');
+  assert.match(pendingRequest, /useWhen:\s*'[^']{20,}'/);
+  assert.match(pendingRequest, /avoidWhen:\s*'[^']{20,}'/);
+  assert.equal(extractAdoptionState(pendingRequest), 'production-adopted', 'expected Pending Request to keep its genuine, already-adopted production status');
+});
+
+test('adoptionStatus wording preserves the truthful availability-vs-adoption boundary — a foundation-only entry\'s adoptionStatus must never claim production adoption', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = [...src.matchAll(/^ {4}id: '([^']+)',/gm)].map((m) => m[1]);
+  for (const id of ids) {
+    const block = extractHermesSection(src, id);
+    if (/status:\s*FOUNDATION_ONLY_STATUS/.test(block)) {
+      const state = extractAdoptionState(block);
+      assert.ok(state, `expected "${id}" to declare adoptionStatus`);
+      assert.notEqual(state, 'production-adopted', `"${id}" is foundation-only (no production call site) and must not declare adoptionStatus.state 'production-adopted'`);
+    }
+  }
+});
+
+test('AGENTS.md points agents to the canonical Design System guidance: the shared Swift foundation/component sources, the Hermex catalog, and its machine-readable manifest, and states catalog metadata changes travel with the shared API change', () => {
+  const agentsSrc = read('../AGENTS.md');
+  assert.match(agentsSrc, /## Design System/);
+  assert.match(agentsSrc, /HermesMobile\/Config\//);
+  assert.match(agentsSrc, /HermesMobile\/Features\/Shared\//);
+  assert.match(agentsSrc, /design-system-catalog\//);
+  assert.match(agentsSrc, /manifest/i);
+  assert.match(agentsSrc, /same PR/i);
+});
+
+test('README.md no longer claims the default Hermex route uses the stale template-heavy main navigation, obsolete section names/counts, or a Manifest page that isn\'t actually on that route', () => {
+  const readme = read('README.md');
+  assert.doesNotMatch(readme, /Components — Hermex/, 'the two-top-level-prefix ("Components —" / "Tokens —") navigation is retired; README must not still describe it as the default route\'s nav');
+  assert.doesNotMatch(readme, /Tokens — Hermex/);
+
+  const hermesSectionIdx = readme.indexOf('## Hermex Design System catalog');
+  assert.ok(hermesSectionIdx > -1, 'expected a "Hermex Design System catalog" section in README.md');
+  const nextSectionIdx = readme.indexOf('\n## ', hermesSectionIdx + 1);
+  const hermesSection = readme.slice(hermesSectionIdx, nextSectionIdx === -1 ? readme.length : nextSectionIdx);
+  assert.doesNotMatch(
+    hermesSection,
+    /"Manifest" page/i,
+    'the default Hermex route has no sidebar Manifest page; README\'s own Hermex section must not claim one (the template\'s separate ?catalog=template Manifest page is a different, still-accurate claim outside this section)',
+  );
+});
+
+test('WHEN_TO_USE.md is a truthful Hermex decision guide: it explains the decision model and points to the structured source of truth rather than re-describing generic template-only components Hermex does not own', () => {
+  const whenToUse = read('WHEN_TO_USE.md');
+  assert.match(whenToUse, /Hermex/);
+  assert.match(whenToUse, /hermesSections\.tsx|hermesReference/, 'expected WHEN_TO_USE.md to point at the structured Hermex source of truth');
+  for (const templateOnly of ['SearchField', 'FieldContainer', 'PillRow', 'UnderlineTabs']) {
+    assert.doesNotMatch(whenToUse, new RegExp(templateOnly), `WHEN_TO_USE.md must not still describe the generic template-only component "${templateOnly}", which Hermex does not own`);
+  }
+});
+
+// ─── Semantic-guidance correction (Claude Fable review edd81c9d, 0 Critical / 10 Important /
+// 14 Minor) ───────────────────────────────────────────────────────────────────────────────────
+// Every test below pins one or more of that review's findings so the corrected useWhen/avoidWhen/
+// alternatives content can never silently regress back to the reviewed defects.
+
+// Generic brace-depth extractor for a nested object literal reachable only by a start pattern
+// (e.g. `hermesReference: {`), unlike extractFunctionBody (which expects a `function name(...) {`
+// header) or extractHermesSection (which is already scoped to one whole SectionDef).
+function extractBraceBlock(src, startPattern) {
+  const match = src.match(startPattern);
+  assert.ok(match, `expected to find a block starting with ${startPattern}`);
+  const start = match.index + match[0].length - 1;
+  let depth = 0;
+  for (let i = start; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return src.slice(start, i + 1);
+    }
+  }
+  throw new Error('unterminated block');
+}
+
+const extractHermesReferenceBlock = (sectionSrc) => extractBraceBlock(sectionSrc, /hermesReference:\s*\{/);
+
+const extractAlternativeNames = (referenceBlockSrc) => {
+  const match = referenceBlockSrc.match(/alternatives:\s*\[([\s\S]*?)\]/);
+  assert.ok(match, 'expected an alternatives array');
+  return [...match[1].matchAll(/name:\s*'([^']+)'/g)].map((m) => m[1]);
+};
+
+test('Hermex Colors routes semantic roles to their bound Apple Color, restricts non-500 ramp steps to contrast-validated pairings, and classifies semantic roles as documentation-only bindings rather than a fabricated Hermex Swift API', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermex Colors');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.match(ref, /Color\(\.label\)|Color\(\.secondarySystemBackground\)/, 'expected useWhen to route to a real bound Apple Color, not an invented semantic-color type');
+  assert.match(ref, /500 step/, 'expected useWhen to name the 500 step for a brand/accent tint');
+  assert.match(ref, /non-500/, 'expected avoidWhen to state the non-500 ramp-step restriction');
+  assert.match(ref, /contrast validation|contrast-validated/i, 'expected avoidWhen to require contrast validation before consuming a non-500 step');
+  assert.match(ref, /no Hermex semantic-color type exists|not a Swift API/, 'expected avoidWhen to disclaim a fabricated Hermex semantic-color Swift API');
+  assert.doesNotMatch(ref, /semantic roles.{0,80}foundation-only/is, 'must not classify the semantic roles as an unshipped foundation-only Swift API — they are documentation-only platform-color bindings');
+  assert.match(ref, /documentation-only/, 'expected the adoption detail to classify semantic roles as documentation-only bindings');
+});
+
+test('Adaptive Glass, Hermes Card, and Pending Request agree on one opaque approval/clarification surface: Pending Request\'s adopted pendingRequestCardSurface, never HermesCard\'s uncalled requestCardSurface', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const glass = extractHermesSection(src, 'Adaptive Glass');
+  const glassRef = extractHermesReferenceBlock(glass);
+  assert.ok(extractAlternativeNames(glassRef).includes('Pending Request'), 'expected Adaptive Glass to point an unconditionally-opaque approval surface at Pending Request, not at Hermes Card');
+  assert.match(glassRef, /pendingRequestCardSurface|unconditionally opaque/, 'expected the Pending Request alternative to explain why (its adopted opaque surface)');
+
+  const card = extractHermesSection(src, 'Hermes Card');
+  const cardRef = extractHermesReferenceBlock(card);
+  assert.doesNotMatch(cardRef, /Request Card for an approval/i, 'Hermes Card\'s own requestCardSurface has zero call sites — useWhen must not steer readers to it for approval/clarification work');
+  assert.doesNotMatch(card, /Request Card for an approval/i, 'the top-level whenToUse prose duplicates useWhen and must be corrected the same way');
+  assert.ok(extractAlternativeNames(cardRef).includes('Pending Request'), 'expected Hermes Card to point approval/clarification work at Pending Request');
+  assert.match(cardRef, /Pending Request/, 'expected useWhen to route approval/clarification surfaces to the Pending Request pattern');
+});
+
+test('Hermes Banner and Hermes Toast never claim Toast self-dismisses; Toast\'s guidance and WHEN_TO_USE.md both state caller-owned dismissal', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const banner = extractHermesSection(src, 'Hermes Banner');
+  assert.doesNotMatch(banner, /self-dismiss/i, 'HermesToast has no internal timer or auto-dismiss (HermesToast.swift); Banner must not describe it as self-dismissing');
+
+  const toast = extractHermesSection(src, 'Hermes Toast');
+  const toastRef = extractHermesReferenceBlock(toast);
+  assert.doesNotMatch(toast, /self-dismiss/i);
+  assert.match(toastRef, /caller owns|no auto-dismiss|clear it yourself/i, 'expected Toast\'s useWhen to state caller-owned dismissal');
+
+  const whenToUse = read('WHEN_TO_USE.md');
+  assert.doesNotMatch(whenToUse, /self-dismiss/i, 'WHEN_TO_USE.md must not claim Toast self-dismisses');
+  assert.match(whenToUse, /caller dismisses/i, 'expected WHEN_TO_USE.md to state the caller owns Toast dismissal');
+  // The exclusive-selection distinction (Checkbox vs Radio vs Segmented Control) must survive the edit.
+  assert.match(whenToUse, /Segmented Control is also exclusive selection/);
+});
+
+test('Radio, Dropdown, and Segmented Control name each other as reciprocal alternatives, closing the exclusive-selection disambiguation gap WHEN_TO_USE.md already describes', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const radio = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Radio')));
+  assert.ok(radio.includes('Segmented Control'), 'expected Radio to name Segmented Control');
+  assert.ok(radio.includes('Hermes Dropdown'), 'expected Radio to name Hermes Dropdown');
+
+  const dropdown = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Dropdown')));
+  assert.ok(dropdown.includes('Hermes Radio'), 'expected Dropdown to name Hermes Radio');
+  assert.ok(dropdown.includes('Segmented Control'), 'expected Dropdown to name Segmented Control');
+
+  const segmented = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Segmented Control')));
+  assert.ok(segmented.includes('Hermes Radio'), 'expected Segmented Control to name Hermes Radio');
+  assert.ok(segmented.includes('Hermes Dropdown'), 'expected Segmented Control to name Hermes Dropdown');
+});
+
+test('List/ListItem, Row Divider, and Skeleton Loading state real selection boundaries instead of adoption disclaimers, and name their real neighbors (Card, Accordion List, native containers, Content Unavailable\'s spinner)', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const listItem = extractHermesSection(src, 'List / ListItem');
+  const listItemRef = extractHermesReferenceBlock(listItem);
+  assert.doesNotMatch(listItemRef, /avoidWhen:\s*'Avoid claiming it replaces/, 'avoidWhen must no longer be a pure adoption disclaimer');
+  assert.match(listItemRef, /Card|Accordion List/, 'expected avoidWhen to state the real Card/Accordion List selection boundary');
+  const listItemAlts = extractAlternativeNames(listItemRef);
+  assert.ok(listItemAlts.includes('Hermes Card'), 'expected List/ListItem to name Hermes Card as an alternative');
+  assert.ok(listItemAlts.includes('Accordion List'), 'expected List/ListItem to name Accordion List as an alternative');
+
+  const divider = extractHermesSection(src, 'Row Divider');
+  const dividerRef = extractHermesReferenceBlock(divider);
+  assert.match(dividerRef, /HermesList|Accordion List/, 'expected avoidWhen to prohibit use inside a container that already owns separators');
+  assert.ok(extractAlternativeNames(dividerRef).includes('List / ListItem'), 'expected Row Divider to name List / ListItem as an alternative');
+
+  const skeleton = extractHermesSection(src, 'Skeleton Loading');
+  const skeletonRef = extractHermesReferenceBlock(skeleton);
+  assert.doesNotMatch(skeletonRef, /Catalog Shimmer/, 'Catalog Shimmer is not a choosable Hermex entry and must no longer be the sole alternative');
+  assert.match(skeletonRef, /ProgressView|spinner|indeterminate/i, 'expected Skeleton Loading to route an indeterminate fetch to a spinner alternative');
+});
+
+test('Content Unavailable documents its real Swift .loading variant end-to-end: the variant prop type, a rendered Loading specimen, and a useWhen/avoidWhen that includes it and states the partial/transient-failure boundary', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Content Unavailable');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.match(section, /type:\s*"'loading' \|/, 'expected the variant prop type union to lead with \'loading\'');
+  assert.match(section, /key: 'loading'/, 'expected a rendered Loading variant specimen in the variants gallery');
+  assert.match(ref, /loading/i, 'expected useWhen to mention the loading state');
+  assert.match(ref, /Toast or Banner/, 'expected avoidWhen to route a transient failure while content remains visible to Toast/Banner, not this pattern');
+
+  assert.match(src, /'loading'\s*\|\s*'empty'\s*\|\s*'noResults'/, 'expected CONTENT_UNAVAILABLE_COPY (or its type) to include a loading key');
+  assert.match(src, /variant === 'loading'/, 'expected the ContentUnavailablePreview reconstruction to render a distinct loading (spinner-only) branch');
+});
+
+test('Buttons states a real component-owned-chrome/file-link avoidWhen (not adoption-only), names its production/Inline-Reference-Link alternatives, and its whenToUse sentence about Yes/No/Approve/Deny no longer contradicts itself', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Buttons');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.match(ref, /Inline Reference Link/, 'expected avoidWhen or alternatives to name Inline Reference Link for a tappable file reference');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.some((n) => /ChatTactileButtonStyle|ChatDecisionButtonStyle/.test(n)), 'expected Buttons to name its real production analog as an alternative');
+  assert.ok(alts.includes('Inline Reference Link'), 'expected Inline Reference Link as a structured alternative');
+
+  assert.doesNotMatch(
+    section,
+    /only needs Reduce-Motion-safe press feedback, including for a Yes\/No\/Approve\/Deny-style choice, which uses \.hermes\(_:emphasis:\) directly/,
+    'the whenToUse sentence must no longer contradict itself about which style a Yes/No/Approve/Deny choice uses',
+  );
+  assert.match(section, /Yes\/No\/Approve\/Deny choice uses \.hermes\(_:emphasis:\)/, 'expected a standalone, non-contradictory sentence stating which style a decision choice uses');
+});
+
+test('Checkbox names native Toggle (never the nonexistent "Switch"), and its alternatives cover every control avoidWhen names', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Checkbox');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.doesNotMatch(section, /use Switch/, 'Switch is not a Hermex entry or a SwiftUI control');
+  assert.match(section, /native Toggle/, 'expected Checkbox to name the real SwiftUI control, Toggle');
+
+  const alts = extractAlternativeNames(ref);
+  for (const expected of ['Native Toggle', 'List / ListItem', 'Segmented Control', 'Hermes Radio', 'Tag']) {
+    assert.ok(alts.includes(expected), `expected Checkbox alternatives to include "${expected}"`);
+  }
+});
+
+test('Disclosure Row, Search, and Attachment name the design-time neighbors their own avoidWhen/description already implies', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const disclosure = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Disclosure Row')));
+  assert.ok(disclosure.includes('Accordion List'), 'expected Disclosure Row to name Accordion List (Accordion List already names Disclosure Row)');
+  assert.ok(disclosure.some((n) => /TranscriptLogRowView/.test(n)), 'expected Disclosure Row to name its adopted production analog');
+
+  const search = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Search')));
+  assert.ok(search.includes('Text Input'), 'expected Search to name Text Input for an inline filter field');
+
+  const attachment = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Attachment')));
+  assert.ok(attachment.includes('Inline Reference Link'), 'expected Attachment to name Inline Reference Link for a tappable file name');
+});
+
+test('Pending Request, Transcript Activity, Composer, and Hermex Font state real boundaries/conditions instead of an adoption note, a cross-reference, or a circular restatement', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const pendingRequest = extractHermesReferenceBlock(extractHermesSection(src, 'Pending Request'));
+  assert.doesNotMatch(pendingRequest, /avoidWhen:\s*'Avoid reaching for the new, unadopted Buttons family/, 'avoidWhen must state a boundary on the surfaces themselves, not a Buttons-adoption note');
+  assert.match(pendingRequest, /needs no user response/i, 'expected avoidWhen to state the real boundary: content needing no user response belongs on a general card');
+
+  const transcript = extractHermesSection(src, 'Transcript Activity');
+  const transcriptRef = extractHermesReferenceBlock(transcript);
+  assert.doesNotMatch(transcriptRef, /useWhen:\s*'Use it to understand how a transcript turn\\'s collapsible pieces relate to one another\.'/, 'useWhen must become an actionable rule, not "understand how ... relate"');
+  assert.match(transcriptRef, /TranscriptLogRowView/, 'expected useWhen to point implementers at TranscriptLogRowView for any individual row');
+  assert.match(transcriptRef, /one collapsible row/i, 'expected the Disclosure Row alternative to state a real condition, not a bare cross-reference');
+
+  const composer = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Composer')));
+  assert.ok(composer.includes('Text Input'), 'expected Composer to name Text Input for a field outside the chat composer');
+
+  const font = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Font'));
+  assert.doesNotMatch(font, /useWhen:\s*'Reach for a named Hermex Typography role — the role alone decides weight and design\.'/, 'useWhen must stop restating Typography\'s own rule');
+  assert.ok(extractAlternativeNames(font).includes('Hermex Typography'), 'expected Font to point to Typography for choosing a role');
+});
+
+test('The five foundation token groups (Spacing, Radius & Geometry, Motion, Shadow, Iconography) state a real avoidWhen boundary instead of only an adoption disclaimer', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  const spacing = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Spacing'));
+  assert.match(spacing, /HermesUsageSize|HermesAttachmentSize/, 'expected Spacing avoidWhen to route component-owned fixed geometry away from the spacing scale');
+  assert.match(spacing, /named exception/i, 'expected Spacing avoidWhen to require a named exception for an off-scale value');
+
+  const radius = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Radius & Geometry'));
+  assert.match(radius, /Capsule\(\)/, 'expected Radius & Geometry avoidWhen to route a fully rounded edge to Capsule()');
+  assert.match(radius, /ChatComposerMetrics|TranscriptLogRowMetrics|AdaptiveReadableContentWidth/, 'expected avoidWhen to name the feature-scoped geometry that stays outside the scale');
+
+  const motion = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Motion'));
+  assert.match(motion, /feedbackPress/, 'expected Motion avoidWhen to point at a real named Bundle case');
+  assert.match(motion, /one-off spring/i, 'expected Motion avoidWhen to prohibit a one-off spring literal');
+
+  const shadow = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Shadow'));
+  assert.match(shadow, /eight roles/i, 'expected Shadow avoidWhen to point at the named-role scale');
+  assert.match(shadow, /Outlined Card/, 'expected Shadow avoidWhen to prohibit a shadow on the no-elevation Outlined Card');
+
+  const icon = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Iconography'));
+  assert.match(icon, /literal point size/i, 'expected Iconography avoidWhen to prohibit a literal point size on a new SF Symbol');
+  assert.match(icon, /HermesIconSize/, 'expected Iconography avoidWhen to route to the named HermesIconSize scale instead');
+});
+
+test('every alternative name across every Hermex catalog entry resolves to a real entry id/displayName or an explicit reviewed native/platform/production allowlist — never a nonexistent control or a non-choosable catalog artifact', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = [...src.matchAll(/^ {4}id: '([^']+)',/gm)].map((m) => m[1]);
+  assert.ok(ids.length >= 34, 'expected at least the 34 known Hermex entries');
+
+  const validNames = new Set();
+  for (const id of ids) {
+    validNames.add(id);
+    const block = extractHermesSection(src, id);
+    const displayNameMatch = block.match(/displayName:\s*'([^']+)'/);
+    if (displayNameMatch) validNames.add(displayNameMatch[1]);
+  }
+
+  // Explicit, reviewed allowlist: real native/platform/production analogs that are intentionally
+  // not their own catalog entry (see WHEN_TO_USE.md's adoptionStatus guidance) — never grown to
+  // launder a name that should instead resolve to a real entry.
+  const EXTERNAL_ALTERNATIVE_ALLOWLIST = new Set([
+    'SectionCard / SettingsCard (production)',
+    'MessageBubbleView / ChatComposerAttachmentStripView (production)',
+    'Native Divider (production)',
+    'Native List row (production)',
+    'Native Toggle',
+    'Native navigation title',
+    'ChatTactileButtonStyle / ChatDecisionButtonStyle (production)',
+    'TranscriptLogRowView (production)',
+    'Native ContentUnavailableView',
+  ]);
+
+  let checkedCount = 0;
+  for (const id of ids) {
+    const block = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(block);
+    const names = extractAlternativeNames(ref);
+    for (const name of names) {
+      checkedCount += 1;
+      assert.ok(
+        validNames.has(name) || EXTERNAL_ALTERNATIVE_ALLOWLIST.has(name),
+        `alternative "${name}" in "${id}" does not resolve to a real catalog entry id/displayName, nor is it on the reviewed native/production allowlist`,
+      );
+    }
+  }
+  assert.ok(checkedCount > 15, 'expected the majority of Hermex entries to carry at least one alternative to validate');
 });

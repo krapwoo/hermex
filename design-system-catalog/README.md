@@ -33,12 +33,13 @@ design-system-template/
 
 ## Picking the right component
 
-Several components look alike but solve different problems (InputField vs. SearchField vs.
-Dropdown, Toast vs. Banner, Dialog vs. BottomSheet, …). See **[WHEN_TO_USE.md](./WHEN_TO_USE.md)**
-for the deciding question behind each pair before reaching for the closest-looking one. For a
-component's exact props/variants/states as structured data (not prose), see
-`native/catalog/manifest.ts`'s `buildComponentManifest()`, also rendered live at the catalog's
-"Manifest" page.
+Several template components look alike but solve different problems (InputField vs. SearchField vs.
+Dropdown, Toast vs. Banner, Dialog vs. BottomSheet, …). Each one's own `whenToUse` field (rendered
+as its "VS" disambiguation note in the catalog header) names the deciding question against its
+closest look-alike. For a component's exact props/variants/states as structured data (not prose),
+see `native/catalog/manifest.ts`'s `buildComponentManifest()`, also rendered live at the template
+catalog's (`?catalog=template`) own "Manifest" page. **[WHEN_TO_USE.md](./WHEN_TO_USE.md)** is the
+Hermex catalog's own decision guide — see the section below.
 
 ## The one rule
 
@@ -115,50 +116,53 @@ shell (not part of the reusable template) that renders all three catalogs via `n
 ## Hermex Design System catalog
 
 `native/catalog/hermes/` documents the SwiftUI production app in this same repository
-(`HermesMobile/`) — it is **not** part of the reusable template above. It reuses the catalog's
-React Native framework purely as a documentation shell:
+(`HermesMobile/`) — it is **not** part of the reusable template above, and it is the catalog's
+**default route** (`http://localhost:8096/`). It reuses the catalog's React Native framework purely
+as a documentation shell:
 
-- `native/catalog/hermes/hermesSections.tsx` — the actual audit data: `HermesOverview` (the
-  intro/status callout — see below) plus one `SectionDef` per Hermex-sourced finding, each carrying
-  `hermes` audit metadata (disposition, production callers, source paths, known variants, evidence
-  level) that `SectionBlock` renders as a visible audit panel (see the `hermes?: HermesAudit` field
-  on `SectionDef` in `native/catalog/types.ts`, and `native/catalog/hermes/HermesAuditPanel.tsx`).
-  It keeps every source-backed fact this audit actually found (AppFont, HeaderLogoColor/
-  ProjectCreationPalette, ChatMotion/SessionListMotion, the named geometry constants).
+- `native/catalog/hermes/hermesSections.tsx` — the source of truth: `HermesOverview` (the
+  intro/status callout, including the machine-readable manifest disclosure — see below) plus one
+  `SectionDef` per Hermex-sourced entry (token group, material, native-iOS pattern, component, or
+  pattern). Every entry carries `hermesReference` metadata (`native/catalog/types.ts`) — a
+  structured decision contract (`useWhen`, `avoidWhen`, a structured `alternatives` list, and a
+  closed-vocabulary `adoptionStatus`), rendered by `HermesReferenceDetails` under the exact labels
+  "Use when" / "Avoid when" / "Alternatives" / "Adoption status" in the primary reading flow — plus
+  real destinations (`usedIn`) and technical provenance (`implementationNotes`: status, source
+  paths, notes) collapsed behind its own disclosures.
 - `native/catalog/hermes/hermesTokenProposal.ts` — a separate, catalog-only **normalized token
-  proposal** (approved 2026-09-18): a strict primitive/semantic color system, a 12/14/16/18
-  typography ladder, consolidated motion primitives/bundles, and spacing/radius/icon/control/
-  stroke/layout scales. Every exported value is a proposal Hermex's production Swift has not
-  adopted — nothing here is imported by, or claims to describe, production Swift. Plain typed data
-  only, no React UI.
+  proposal** (approved 2026-09-18): consolidated motion primitives/bundles and spacing/radius/icon/
+  control/stroke/layout scales Hermex's production Swift has not adopted — nothing here is imported
+  by, or claims to describe, production Swift. Plain typed data only, no React UI.
 - `native/catalog/hermes/HermesTokenProposalGalleries.tsx` — renders that proposal data through the
-  same original template building blocks as the retained catalog's own token pages —
-  `TypeScaleGallery`, `Swatch`, `TokenRow`, `VariantGroup`, `DividedStack`, `SpacingScaleGallery` —
-  via the existing `tokenGallery`/`fullWidthLabel` seams on `SectionDef`. Its output is composed
-  into `hermesSections.tsx`'s existing Tokens — Hermex entries (AppFont, Hermex Colors, Hermex
-  Motion, Hermex Radius & Geometry) alongside their retained source evidence, plus one new entry,
-  **Hermex Spacing**, that is entirely proposal (production has no spacing scale to evidence). Every
-  proposed value is visibly labeled "Proposed — not yet adopted"; **Hermex Token Coverage** states
-  the current-production-vs-catalog-proposal boundary explicitly. The seven Tokens — Hermex entries,
-  in sidebar order, are: AppFont, Hermex Colors, Hermex Motion, Adaptive Glass, Hermex Radius &
-  Geometry, Hermex Spacing, Hermex Token Coverage.
-- `native/catalog/hermes/HermesDesignSystemCatalog.tsx` — combines that audit data with the
-  **unmodified** template catalog (`sections`/`nav` exported from `native/catalog/CatalogExample.tsx`)
-  under exactly two top-level sidebar prefixes, "Components —" and "Tokens —", in this order:
-  "Components — Hermex" → "Components — Template library (not adopted) · &lt;original label&gt;"
-  (one per retained template component group, including "Reference", which holds the Manifest page)
-  → "Tokens — Hermex" → "Tokens — Template library (not adopted)" (the template's own Colors/
-  Spacing/Typography/Font/Motion/Radius/Shadow/Icons group). There is no separate Overview or
-  disposition-named ("Verified foundations" / "Migration candidates" / "Conditional / retained")
-  sidebar group; `HermesOverview` renders once, above the first group, via `CatalogShell`'s optional
-  `intro` slot instead.
+  same original template building blocks as the catalog's own token pages — `TypeScaleGallery`,
+  `Swatch`, `TokenRow`, `VariantGroup`, `DividedStack`, `SpacingScaleGallery` — via the existing
+  `tokenGallery`/`fullWidthLabel` seams on `SectionDef`. Every still-proposed value is visibly
+  labeled "Proposed — not yet adopted".
+- `native/catalog/hermes/HermesDesignSystemCatalog.tsx` — renders `hermesSections`/`hermesNav`
+  directly through `CatalogShell`, under the five approved sidebar groups, in order: **Foundations**
+  (the token galleries — Colors, Spacing, Typography, Font, Motion, Radius & Geometry, Shadow,
+  Iconography), **Materials** (Adaptive Glass), **Native iOS** (Search, Text Input, TopNav),
+  **Components** (alphabetized by display name), and **Patterns** (Content Unavailable, Pending
+  Request, Transcript Activity, Composer). It never imports or merges the retained template
+  catalog's own `sections`/`nav` — those stay fully intact on the separate `?catalog=template` route.
+  There is no separate Overview or disposition-named sidebar group; `HermesOverview` renders once,
+  above the first group, via `CatalogShell`'s optional `intro` slot instead. The default route has
+  no sidebar Manifest entry — the machine-readable manifest lives inside `HermesOverview`'s own
+  "Machine-readable manifest" disclosure instead (see below).
+- **Machine-readable manifest** — every entry above, including every Foundations token gallery, is
+  also available as plain JSON: `buildComponentManifest(hermesSections, hermesNav,
+  { includeTokenGalleries: true })` in `native/catalog/manifest.ts`, rendered live (so it can't drift
+  out of sync) behind `HermesOverview`'s own "Machine-readable manifest" disclosure. Each entry
+  carries its `useWhen`/`avoidWhen`/`alternatives`/`adoptionStatus`, so a tool or agent gets the same
+  decision contract a human reader sees, without guessing from prose. The template route's own
+  Manifest entry (`?catalog=template` → "Reference" group) keeps its separate, component-only,
+  token-galleries-excluded default — `includeTokenGalleries` is opt-in, so that entry's existing
+  shape never changed.
 
-**Every template component and token page below that line is retained for reference only — none of
-it has been adopted by Hermex, which ships no React Native code.** Hermex is SwiftUI; every live
-example under a "— Hermex" group is an explicitly-captioned RN documentation reconstruction of that
-SwiftUI source, not the production runtime. See the catalog's intro callout (above the first
-sidebar group) for the full evidence-level breakdown (source-backed vs. rendered) and the
-rejected/non-family list.
+Hermex is SwiftUI; every live example in this catalog is an explicitly-captioned RN documentation
+reconstruction of that SwiftUI source, not the production runtime. See the catalog's intro callout
+(above the first sidebar group) for the branch-status summary, and each entry's own `adoptionStatus`
+for that entry's specific, truthful adoption state.
 
 ### Running it locally
 

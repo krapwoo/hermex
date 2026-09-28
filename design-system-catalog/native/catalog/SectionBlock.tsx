@@ -191,9 +191,13 @@ export function SectionBlock<TId extends string>({ def, groupLabel }: { def: Sec
     </>
   );
 
+  // Once a Hermex entry declares the new useWhen/avoidWhen decision contract, HermesReferenceDetails
+  // itself renders "Use when" — showing the legacy def.whenToUse "VS" note here too would render the
+  // same fact twice. def.whenToUse still falls back to rendering here for the rare/future entry that
+  // hasn't migrated yet, keeping this branch backward-compatible rather than a hard requirement.
   const hermexSupportingContent = isHermexReference ? (
     <View style={styles.supportingContent}>
-      {def.whenToUse ? <WhenToUse text={def.whenToUse} /> : null}
+      {def.whenToUse && !def.hermesReference?.useWhen ? <WhenToUse text={def.whenToUse} /> : null}
       <HermesReferenceDetails meta={def.hermesReference!} />
     </View>
   ) : null;

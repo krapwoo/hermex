@@ -21,9 +21,9 @@ export function HermesDesignSystemCatalog() {
       sections={hermesSections}
       intro={() => <HermesOverview />}
       // Token Coverage moved from its own entry into the overview's Implementation notes, so it is
-      // counted separately from the 21 visual references (Materials + Native iOS + Components +
+      // counted separately from the 26 visual references (Materials + Native iOS + Components +
       // Patterns, excluding the Foundations token galleries).
-      subtitle="Hermex · 21 visual references · token coverage in overview"
+      subtitle="Hermex · 26 visual references · token coverage in overview"
     />
   );
 }

@@ -79,6 +79,25 @@ The most common defect in this repo is a change that works on the path you teste
 - **Native quality.** Dynamic Type, VoiceOver labels, Reduce Motion, light and dark appearance, keyboard focus, and localization. Read `docs/agents/i18n.md` before touching the String Catalog, plurals, casing, or RTL.
 - **Docs.** Agent conventions live in `docs/agents/`; new vocabulary in `CONTEXT.md`; build and simulator mechanics in `DEVELOPMENT.md`; upstream parity status in `docs/agents/feature-gap-index.md`; Kanban contract and behavior rules in `docs/agents/kanban.md`. Push components, keys, and relay data in `docs/agents/push.md`. `CHANGELOG.md` is written at release time, not per PR.
 
+## Design System
+
+Existing tokens/components come first: check `HermesMobile/Config/` (shared foundations — typography,
+color, spacing, radius, motion, shadow) and `HermesMobile/Features/Shared/` (reusable components and
+patterns) before adding a literal or feature-local lookalike, in either the production app or the
+catalog. `design-system-catalog/` is the canonical, versioned, in-repository catalog documenting that
+Swift source — its default route is the Hermex Design System catalog (`native/catalog/hermes/`), with
+`?catalog=template` and `?catalog=framework` preserved as separate, unmerged reference routes. Every
+current Hermex entry (a token group, material, native-iOS pattern, component, or pattern) carries a
+structured decision contract — `useWhen`, `avoidWhen`, `alternatives`, and a closed-vocabulary
+`adoptionStatus` — rendered under the exact labels "Use when" / "Avoid when" / "Alternatives" /
+"Adoption status" in `HermesReferenceDetails`, and the same facts are available as plain JSON from the
+catalog's own machine-readable manifest (`HermesOverview` → "Machine-readable manifest", built via
+`buildComponentManifest()` in `native/catalog/manifest.ts`) for a tool or agent instead of a human.
+`design-system-catalog/WHEN_TO_USE.md` explains the decision model itself; the structured source of
+truth lives in `native/catalog/hermes/hermesSections.tsx`, not duplicated prose. Catalog metadata
+(useWhen/avoidWhen/alternatives/adoptionStatus, props, variants, states) must change in the same PR as
+the shared Swift API it documents — see `CONTRIBUTING.md` § Hermex Design System.
+
 ## Working with the server
 
 - There is no in-repo dev server. Hermex is developed against a self-hosted `hermes-webui` reachable over real HTTPS; `curl https://<your-server>/health` before debugging the client. For simulator-only work `http://localhost:8787` works when the server runs on the same Mac. Setup options live in `DEVELOPMENT.md`.

@@ -10,7 +10,7 @@ import React, { useState, type ComponentProps, type ComponentType } from 'react'
 import { View, Text, StyleSheet, Pressable, type TextStyle } from 'react-native';
 import { AnimatedChevron } from '../../components';
 import { CATALOG_TYPE, CATALOG_COLOR, CATALOG_SPACE, CATALOG_RADIUS } from '../tokens';
-import type { HermesReferenceDestination, HermesReferenceMeta } from '../types';
+import type { HermesAdoptionState, HermesAlternative, HermesReferenceDestination, HermesReferenceMeta } from '../types';
 
 // Same web-only word-break/overflow-wrap escape hatch used throughout the catalog (SectionBlock's
 // own `pathWrapStyle`) — a long, unbroken source-path token has no RN `TextStyle` equivalent to
@@ -62,12 +62,43 @@ function DestinationRow({ destination }: { destination: HermesReferenceDestinati
   );
 }
 
+// One "Use when" / "Avoid when" / "Alternatives" / "Adoption status" row — the exact human labels
+// the catalog contract requires. Always rendered in the primary reading flow, never behind a
+// Disclosure: this is the decision guidance a reader (human or AI) needs first, not provenance.
+function DecisionField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.decisionField}>
+      <Text style={styles.decisionLabel}>{label}</Text>
+      {children}
+    </View>
+  );
+}
+
+function AlternativeRow({ alternative }: { alternative: HermesAlternative }) {
+  return (
+    <View style={styles.alternativeRow}>
+      <Text style={styles.alternativeName}>{alternative.name}</Text>
+      <Text style={styles.alternativeUseWhen}>{alternative.useWhen}</Text>
+    </View>
+  );
+}
+
+const ADOPTION_STATE_LABEL: Record<HermesAdoptionState, string> = {
+  'foundation-available': 'Foundation available',
+  'production-adopted': 'Production adopted',
+  'partially-adopted': 'Partially adopted',
+  'native-platform': 'Native platform',
+  'reference-only': 'Reference only',
+};
+
 interface HermesReferenceDetailsProps {
   meta: HermesReferenceMeta;
   implementationContent?: React.ReactNode;
 }
 
 export function HermesReferenceDetails({ meta, implementationContent }: HermesReferenceDetailsProps) {
+  const alternatives = meta.alternatives ?? [];
+  const hasDecisionGuidance = Boolean(meta.useWhen || meta.avoidWhen || alternatives.length > 0 || meta.adoptionStatus);
   const hasWhereItAppears = Boolean(meta.useSummary && meta.usedIn?.length);
   const inlineDestinations = meta.useSummary ? [] : (meta.usedIn ?? []).slice(0, 3);
   const hasInlineUsage = Boolean(meta.useSummary || inlineDestinations.length > 0);
@@ -78,10 +109,44 @@ export function HermesReferenceDetails({ meta, implementationContent }: HermesRe
       implementationContent,
   );
 
-  if (!hasInlineUsage && !hasImplementationNotes) return null;
+  if (!hasDecisionGuidance && !hasInlineUsage && !hasImplementationNotes) return null;
 
   return (
     <View style={styles.root}>
+      {hasDecisionGuidance && (
+        <View style={styles.decisionBlock}>
+          {meta.useWhen ? (
+            <DecisionField label="Use when">
+              <Text style={styles.decisionText}>{meta.useWhen}</Text>
+            </DecisionField>
+          ) : null}
+          {meta.avoidWhen ? (
+            <DecisionField label="Avoid when">
+              <Text style={styles.decisionText}>{meta.avoidWhen}</Text>
+            </DecisionField>
+          ) : null}
+          <DecisionField label="Alternatives">
+            {alternatives.length > 0 ? (
+              <View style={styles.alternativesList}>
+                {alternatives.map((alternative, i) => (
+                  <AlternativeRow key={`${alternative.name}-${i}`} alternative={alternative} />
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.decisionText}>No direct alternative.</Text>
+            )}
+          </DecisionField>
+          {meta.adoptionStatus ? (
+            <DecisionField label="Adoption status">
+              <Text style={styles.decisionText}>
+                <Text style={styles.adoptionStateTag}>{ADOPTION_STATE_LABEL[meta.adoptionStatus.state]}</Text>
+                {' — '}
+                {meta.adoptionStatus.detail}
+              </Text>
+            </DecisionField>
+          ) : null}
+        </View>
+      )}
       {hasInlineUsage && (
         <View style={styles.usageBlock}>
           <Text style={styles.usageHeading}>Product context</Text>
@@ -139,6 +204,21 @@ export function HermesReferenceDetails({ meta, implementationContent }: HermesRe
 
 const styles = StyleSheet.create({
   root: { gap: CATALOG_SPACE.md, maxWidth: '100%' },
+  decisionBlock: { gap: CATALOG_SPACE.sm, maxWidth: '100%' },
+  decisionField: { gap: 2, maxWidth: '100%' },
+  decisionLabel: {
+    fontSize: CATALOG_TYPE.xs, fontWeight: '700', color: CATALOG_COLOR.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.5,
+  },
+  decisionText: { fontSize: CATALOG_TYPE.sm, color: CATALOG_COLOR.text, lineHeight: 18, maxWidth: '100%' },
+  alternativesList: { gap: CATALOG_SPACE.sm },
+  alternativeRow: { gap: 2, maxWidth: '100%' },
+  alternativeName: { fontSize: CATALOG_TYPE.sm, fontWeight: '700', color: CATALOG_COLOR.text },
+  alternativeUseWhen: { fontSize: CATALOG_TYPE.sm, color: CATALOG_COLOR.textMuted, lineHeight: 17 },
+  adoptionStateTag: {
+    fontSize: CATALOG_TYPE.xs, fontWeight: '800', color: CATALOG_COLOR.accent,
+    textTransform: 'uppercase', letterSpacing: 0.4,
+  },
   usageBlock: { gap: CATALOG_SPACE.xs },
   usageHeading: {
     fontSize: CATALOG_TYPE.xs, fontWeight: '700', color: CATALOG_COLOR.textMuted,
