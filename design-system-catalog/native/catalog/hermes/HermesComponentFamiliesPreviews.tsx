@@ -151,7 +151,6 @@ const preview = StyleSheet.create({
     minHeight: 44, fontSize: 16, color: '#1c1c1e', paddingHorizontal: 12, paddingVertical: 10,
     borderRadius: 10, backgroundColor: '#efeff4',
   },
-  nativeFieldMultiline: { minHeight: 72, textAlignVertical: 'top' },
   composerTextInputRow: {
     minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(120,120,128,0.16)',
@@ -572,16 +571,15 @@ export function SearchFamilyGallery() {
   );
 }
 
-// ─── Native iOS patterns ────────────────────────────────────────────────────
-export function NativeTextInputPreview() {
+// ─── Text Input — Hermex-owned HermesTextField/HermesSecureField/HermesNumberField wrappers ─
+export function HermesTextInputFamilyGallery() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [notes, setNotes] = useState('');
-  const [query, setQuery] = useState('');
+  const [quantity, setQuantity] = useState('');
   return (
     <View style={preview.stack}>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Single-line — TextField</Text>
+        <Text style={preview.label}>Single-line — HermesTextField</Text>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -591,7 +589,7 @@ export function NativeTextInputPreview() {
         />
       </View>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Secure entry — SecureField</Text>
+        <Text style={preview.label}>Secure entry — HermesSecureField</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
@@ -602,34 +600,22 @@ export function NativeTextInputPreview() {
         />
       </View>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Multiline — TextEditor</Text>
+        <Text style={preview.label}>Number — HermesNumberField</Text>
         <TextInput
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Add a note…"
-          accessibilityLabel="Note"
-          multiline
-          numberOfLines={3}
-          style={[preview.nativeFieldInput, preview.nativeFieldMultiline]}
+          value={quantity}
+          onChangeText={setQuantity}
+          placeholder="Quantity"
+          accessibilityLabel="Quantity"
+          style={preview.nativeFieldInput}
         />
       </View>
-      <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Search — .searchable</Text>
-        <View style={preview.nativeSearch} accessibilityRole="search">
-          <Icon name="search" size={DS_ICON_SIZE.sm} color="#6d6d72" />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search skills"
-            accessibilityLabel="Search skills"
-            style={preview.nativeSearchInput}
-          />
-        </View>
-      </View>
       <Text style={preview.caption}>
-        Native reconstructions of TextField, SecureField, TextEditor, and `.searchable`. Production owns
-        focus, keyboard, clear behavior, dictation, Dynamic Type, and VoiceOver through these native
-        controls, not through a Hermex-owned field component.
+        Native reconstructions of `HermesTextField`, `HermesSecureField`, and `HermesNumberField` —
+        three thin wrappers that forward straight to native TextField, SecureField, and the typed
+        TextField(value:format:) path. Production owns focus, keyboard, autocorrection,
+        capitalization, content type, and locale-aware number parsing/formatting through these native
+        controls, not through custom Hermex field chrome. TextEditor (long-form body text) and Search
+        stay outside this family — see their own entries.
       </Text>
     </View>
   );

@@ -288,6 +288,7 @@
 		8FC4BA5460CF44C89700B750 /* HermesDivider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132F980E1B3F46BDB20C3777 /* HermesDivider.swift */; };
 		8102DD9283BB40E09A97B002 /* HermesDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2696A8C321643D18191FA61 /* HermesDropdown.swift */; };
 		99E0617B41FD4C80A0401B91 /* HermesSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC19C6015215428687DFABC9 /* HermesSearch.swift */; };
+		5DE792B0525A4B738798EA07 /* HermesTextInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6849C0CA584B51926EB15F /* HermesTextInput.swift */; };
 		1C40C77044CE497793FCB1FA /* HermesList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 971BA849BAA64C368C754FE5 /* HermesList.swift */; };
 		FC7A279644E64A94B1196804 /* HermesRadio.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A35B8D34824068B7A5CE24 /* HermesRadio.swift */; };
 		15FBA75A1A274E10AD4DD7F2 /* HermesToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8559499EF9EC4ED68BE34353 /* HermesToast.swift */; };
@@ -316,6 +317,7 @@
 		0C680D025A3B44828E1CDA4F /* HermesContentUnavailableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85689855C3914E0E9280E5A7 /* HermesContentUnavailableTests.swift */; };
 		F68756A9F4434510AB8B05FA /* HermesDropdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC476231E144E0BBE57B9FB /* HermesDropdownTests.swift */; };
 		A06D678D7AFE4C8593BF33F4 /* HermesSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0943A5FC924FB182F0EE5C /* HermesSearchTests.swift */; };
+		ACD8C07AABB843819193E30B /* HermesTextInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD4288E7CCC4FE69412E2FF /* HermesTextInputTests.swift */; };
 		A6F1D7BCD00F42F8A1A6721E /* HermesListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40BFB2AEDAE488795E892B7 /* HermesListTests.swift */; };
 		1577F53602D54A8483966CDF /* HermesMotionBuildProofTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30A7DA5B44E469697783BD5 /* HermesMotionBuildProofTests.swift */; };
 		8C0FFB3EC98C4CCC9E82BE3F /* HermesMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53172D96F0B943EF881E7B86 /* HermesMotionTests.swift */; };
@@ -921,6 +923,7 @@
 		132F980E1B3F46BDB20C3777 /* HermesDivider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesDivider.swift; sourceTree = "<group>"; };
 		F2696A8C321643D18191FA61 /* HermesDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesDropdown.swift; sourceTree = "<group>"; };
 		EC19C6015215428687DFABC9 /* HermesSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesSearch.swift; sourceTree = "<group>"; };
+		1A6849C0CA584B51926EB15F /* HermesTextInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesTextInput.swift; sourceTree = "<group>"; };
 		971BA849BAA64C368C754FE5 /* HermesList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesList.swift; sourceTree = "<group>"; };
 		C7A35B8D34824068B7A5CE24 /* HermesRadio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesRadio.swift; sourceTree = "<group>"; };
 		8559499EF9EC4ED68BE34353 /* HermesToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesToast.swift; sourceTree = "<group>"; };
@@ -949,6 +952,7 @@
 		85689855C3914E0E9280E5A7 /* HermesContentUnavailableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesContentUnavailableTests.swift; sourceTree = "<group>"; };
 		BDC476231E144E0BBE57B9FB /* HermesDropdownTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesDropdownTests.swift; sourceTree = "<group>"; };
 		FF0943A5FC924FB182F0EE5C /* HermesSearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesSearchTests.swift; sourceTree = "<group>"; };
+		CDD4288E7CCC4FE69412E2FF /* HermesTextInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesTextInputTests.swift; sourceTree = "<group>"; };
 		B40BFB2AEDAE488795E892B7 /* HermesListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesListTests.swift; sourceTree = "<group>"; };
 		D30A7DA5B44E469697783BD5 /* HermesMotionBuildProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesMotionBuildProofTests.swift; sourceTree = "<group>"; };
 		53172D96F0B943EF881E7B86 /* HermesMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesMotionTests.swift; sourceTree = "<group>"; };
@@ -1534,6 +1538,7 @@
 				85689855C3914E0E9280E5A7 /* HermesContentUnavailableTests.swift */,
 				BDC476231E144E0BBE57B9FB /* HermesDropdownTests.swift */,
 				FF0943A5FC924FB182F0EE5C /* HermesSearchTests.swift */,
+				CDD4288E7CCC4FE69412E2FF /* HermesTextInputTests.swift */,
 				B40BFB2AEDAE488795E892B7 /* HermesListTests.swift */,
 				D30A7DA5B44E469697783BD5 /* HermesMotionBuildProofTests.swift */,
 				53172D96F0B943EF881E7B86 /* HermesMotionTests.swift */,
@@ -1768,6 +1773,7 @@
 				132F980E1B3F46BDB20C3777 /* HermesDivider.swift */,
 				F2696A8C321643D18191FA61 /* HermesDropdown.swift */,
 				EC19C6015215428687DFABC9 /* HermesSearch.swift */,
+				1A6849C0CA584B51926EB15F /* HermesTextInput.swift */,
 				971BA849BAA64C368C754FE5 /* HermesList.swift */,
 				C7A35B8D34824068B7A5CE24 /* HermesRadio.swift */,
 				8559499EF9EC4ED68BE34353 /* HermesToast.swift */,
@@ -2712,6 +2718,7 @@
 				8FC4BA5460CF44C89700B750 /* HermesDivider.swift in Sources */,
 				8102DD9283BB40E09A97B002 /* HermesDropdown.swift in Sources */,
 				99E0617B41FD4C80A0401B91 /* HermesSearch.swift in Sources */,
+				5DE792B0525A4B738798EA07 /* HermesTextInput.swift in Sources */,
 				1C40C77044CE497793FCB1FA /* HermesList.swift in Sources */,
 				FC7A279644E64A94B1196804 /* HermesRadio.swift in Sources */,
 				15FBA75A1A274E10AD4DD7F2 /* HermesToast.swift in Sources */,
@@ -2757,6 +2764,7 @@
 				0C680D025A3B44828E1CDA4F /* HermesContentUnavailableTests.swift in Sources */,
 				F68756A9F4434510AB8B05FA /* HermesDropdownTests.swift in Sources */,
 				A06D678D7AFE4C8593BF33F4 /* HermesSearchTests.swift in Sources */,
+				ACD8C07AABB843819193E30B /* HermesTextInputTests.swift in Sources */,
 				A6F1D7BCD00F42F8A1A6721E /* HermesListTests.swift in Sources */,
 				1577F53602D54A8483966CDF /* HermesMotionBuildProofTests.swift in Sources */,
 				8C0FFB3EC98C4CCC9E82BE3F /* HermesMotionTests.swift in Sources */,

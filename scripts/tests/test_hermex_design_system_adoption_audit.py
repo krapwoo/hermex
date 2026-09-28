@@ -97,6 +97,12 @@ SIMPLE_SNIPPETS = {
         "    }\n"
         "}"
     ),
+    "HermesMobile/Features/Shared/HermesTextInput.swift": (
+        "struct HermesTextField: View {}\n"
+        "struct HermesSecureField: View {}\n"
+        "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+        "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+    ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
     "HermesMobile/Config/HermesMotion.swift": "enum HermesMotion {}",
     "HermesMobile/Config/HermesRadius.swift": "enum HermesRadius {}",
@@ -135,6 +141,16 @@ def build_valid_fixture_tree(root: pathlib.Path) -> None:
         "HermesMobile/Features/SessionList/SessionListComponents.swift",
         "struct SessionListComponents: View {\n    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n}",
     )
+    write(
+        root,
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift",
+        (
+            "struct OnboardingConnectPage: View {\n"
+            "    var body: some View { TextField(\"Server\", text: .constant(\"\")) }\n"
+            "    var body2: some View { SecureField(\"Password\", text: .constant(\"\")) }\n"
+            "}"
+        ),
+    )
 
 
 class RequiredFilesAndSnippetsTests(unittest.TestCase):
@@ -147,6 +163,8 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         self._orig_segmented = audit.SEGMENTED_CONTROL_BASELINE
         self._orig_content_unavailable = audit.CONTENT_UNAVAILABLE_BASELINE
         self._orig_searchable = audit.SEARCHABLE_BASELINE
+        self._orig_text_field = audit.TEXT_FIELD_BASELINE
+        self._orig_secure_field = audit.SECURE_FIELD_BASELINE
         audit.SEGMENTED_CONTROL_BASELINE = {
             "HermesMobile/Features/Insights/InsightsView.swift": 1,
             "HermesMobile/Features/Tasks/TasksView.swift": 1,
@@ -157,22 +175,30 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         audit.SEARCHABLE_BASELINE = {
             "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
         }
+        audit.TEXT_FIELD_BASELINE = {
+            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
+        }
+        audit.SECURE_FIELD_BASELINE = {
+            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
+        }
         self.addCleanup(self._restore_baselines)
 
     def _restore_baselines(self):
         audit.SEGMENTED_CONTROL_BASELINE = self._orig_segmented
         audit.CONTENT_UNAVAILABLE_BASELINE = self._orig_content_unavailable
         audit.SEARCHABLE_BASELINE = self._orig_searchable
+        audit.TEXT_FIELD_BASELINE = self._orig_text_field
+        audit.SECURE_FIELD_BASELINE = self._orig_secure_field
 
     def test_valid_foundation_passes(self):
         build_valid_fixture_tree(self.root)
         self.assertEqual(audit.run(self.root), [])
 
-    def test_scope_documentation_names_all_three_frozen_baselines(self):
+    def test_scope_documentation_names_all_five_frozen_baselines(self):
         source = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("three pre-existing production baselines", source)
-        self.assertIn("Only the three explicitly frozen baselines below are enforced", source)
-        self.assertNotIn("Only the two explicitly frozen baselines below are enforced", source)
+        self.assertIn("five pre-existing production baselines", source)
+        self.assertIn("Only the five explicitly frozen baselines below are enforced", source)
+        self.assertNotIn("Only the three explicitly frozen baselines below are enforced", source)
 
     def test_missing_required_file_fails(self):
         build_valid_fixture_tree(self.root)
@@ -308,6 +334,122 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
             failures,
         )
 
+    def test_new_direct_text_field_path_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Kanban/KanbanLabView.swift",
+            "struct KanbanLabView: View {\n    var body: some View { TextField(\"Title\", text: .constant(\"\")) }\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct TextField" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_increased_direct_text_field_count_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift",
+            (
+                "struct OnboardingConnectPage: View {\n"
+                "    var body: some View { TextField(\"Server\", text: .constant(\"\")) }\n"
+                "    var body2: some View { TextField(\"Username\", text: .constant(\"\")) }\n"
+                "    var body3: some View { SecureField(\"Password\", text: .constant(\"\")) }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct TextField" in f and "increased from 1 to 2" in f and "OnboardingConnectPage.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_text_field_baseline_ignores_the_shared_hermes_text_input_wrapper_itself(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermesTextInput.swift",
+            (
+                "struct HermesTextField: View {\n"
+                "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
+                "}\n"
+                "struct HermesSecureField: View {}\n"
+                "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+                "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertFalse(
+            any("HermesTextInput.swift" in f for f in failures),
+            failures,
+        )
+
+    def test_new_direct_secure_field_path_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Kanban/KanbanLabView.swift",
+            "struct KanbanLabView: View {\n    var body: some View { SecureField(\"Token\", text: .constant(\"\")) }\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct SecureField" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_increased_direct_secure_field_count_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift",
+            (
+                "struct OnboardingConnectPage: View {\n"
+                "    var body: some View { TextField(\"Server\", text: .constant(\"\")) }\n"
+                "    var body2: some View { SecureField(\"Password\", text: .constant(\"\")) }\n"
+                "    var body3: some View { SecureField(\"PIN\", text: .constant(\"\")) }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct SecureField" in f and "increased from 1 to 2" in f and "OnboardingConnectPage.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_secure_field_baseline_ignores_the_shared_hermes_text_input_wrapper_itself(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermesTextInput.swift",
+            (
+                "struct HermesTextField: View {}\n"
+                "struct HermesSecureField: View {\n"
+                "    var body: some View { SecureField(\"x\", text: .constant(\"\")) }\n"
+                "}\n"
+                "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+                "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertFalse(
+            any("HermesTextInput.swift" in f for f in failures),
+            failures,
+        )
+
     def test_new_direct_content_unavailable_path_fails(self):
         build_valid_fixture_tree(self.root)
         write(
@@ -366,9 +508,13 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         segmented_failures = [f for f in failures if "segmented" in f]
         content_unavailable_failures = [f for f in failures if "ContentUnavailableView" in f]
         searchable_failures = [f for f in failures if "direct .searchable" in f]
+        text_field_failures = [f for f in failures if "direct TextField" in f]
+        secure_field_failures = [f for f in failures if "direct SecureField" in f]
         self.assertEqual(segmented_failures, [])
         self.assertEqual(content_unavailable_failures, [])
         self.assertEqual(searchable_failures, [])
+        self.assertEqual(text_field_failures, [])
+        self.assertEqual(secure_field_failures, [])
 
     def test_a_baseline_path_that_disappears_entirely_is_not_a_failure(self):
         # Migrating a call site away entirely (fewer files matching) is allowed without updating the

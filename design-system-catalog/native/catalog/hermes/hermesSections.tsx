@@ -47,9 +47,9 @@ import {
   DropdownFamilyGallery,
   HermexDividerPreview,
   HermesSkeletonGallery,
+  HermesTextInputFamilyGallery,
   InlineReferenceLinkPreview,
   ListItemFamilyGallery,
-  NativeTextInputPreview,
   RadioFamilyGallery,
   SearchFamilyGallery,
   SegmentedControlGallery,
@@ -1360,41 +1360,36 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Text Input',
     description:
-      'Native iOS text entry, not a Hermex-owned field component. Production composes SwiftUI TextField, SecureField, TextEditor, and (still directly) `.searchable` at every call site; Form groups related fields and Picker covers fixed-option selection alongside them, but neither is a text-entry control itself.',
-    whenToUse: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and the Search family (`.hermesSearch`, or today\'s direct `.searchable`) for search placement — never a bespoke field. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
+      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermesTextField`, `HermesSecureField`, and `HermesNumberField` (HermesTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (`.hermesSearch` over `.searchable`) stays its own separate entry rather than a Text Input variant.',
+    whenToUse: 'Reach for HermesTextField for an ordinary single-line value, HermesSecureField for a credential, and HermesNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
     props: [
-      { name: 'TextField(_:text:)', type: 'Binding<String>', desc: 'Single-line entry; `axis: .vertical` lets a response field grow a few lines without adopting TextEditor.' },
-      { name: 'SecureField(_:text:)', type: 'Binding<String>', desc: 'Masked single-line entry for a credential such as a password.' },
-      { name: 'TextEditor(text:)', type: 'Binding<String>', desc: 'Multiline body text with no built-in placeholder — callers overlay their own hint text.' },
-      { name: '.searchable(text:placement:prompt:)', type: 'Binding<String>', desc: 'The native search field pattern, now fronted by the Hermex-owned Search family (`.hermesSearch`); see the separate Search entry for placement and no-results guidance.' },
+      { name: 'HermesTextField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `TextField` for ordinary single-line entry, including an optional native `Text` prompt; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
+      { name: 'HermesSecureField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `SecureField` for masked single-line entry, such as a password, including an optional native `Text` prompt.' },
+      { name: 'HermesNumberField(_:value:format:prompt:)', type: 'Binding<Value>, F: ParseableFormatStyle, Text?', desc: 'Forwards straight to native `TextField(value:format:)` with a caller-supplied `ParseableFormatStyle` and optional native `Text` prompt — locale-aware native parsing/formatting, never a `Binding<String>` or a forced numeric keyboard.' },
     ],
-    a11y: 'Each native control owns its own focus, keyboard, clear button (`.searchable`), dictation, Dynamic Type, and VoiceOver behavior — production adds no custom accessibility layer on top of any of them.',
-    render: () => <NativeTextInputPreview />,
+    a11y: 'Each wrapper forwards straight to its native control, so production keeps native focus, keyboard, clear behavior, dictation, Dynamic Type, and VoiceOver — none of the three add a custom accessibility layer of their own.',
+    render: () => <HermesTextInputFamilyGallery />,
     hermesReference: {
-      useWhen: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and the Search family for search placement.',
-      avoidWhen: 'Avoid inventing a bespoke field component — no custom Hermex text field exists or is proposed. For a fixed-option single-selection field, avoid free text — use Hermes Dropdown instead.',
+      useWhen: 'Reach for HermesTextField for an ordinary single-line value, HermesSecureField for a credential, and HermesNumberField for a locale-aware numeric value with a caller-supplied ParseableFormatStyle.',
+      avoidWhen: 'Avoid HermesNumberField with a Binding<String>, manual parsing, or a forced numeric keyboard — supply a native ParseableFormatStyle instead. Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant.',
       alternatives: [
         { name: 'Hermes Dropdown', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
-        { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare TextField.' },
+        { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare text field.' },
       ],
-      adoptionStatus: { state: 'native-platform', detail: 'Native iOS pattern retained intentionally; no Hermex-owned Text Input component exists or is proposed.' },
-      useSummary: 'Documented as native iOS controls only; no custom Hermex text field exists or is proposed.',
-      usedIn: [
-        { screen: 'Bots', path: 'Bots → connect a server', effect: 'A Form groups TextField address/username fields and a SecureField password field.' },
-        { screen: 'Conversation, Workspace', path: 'Sessions → open a conversation → answer a clarification; Chat → attach a workspace file', effect: 'A short freeform response and a workspace path both use TextField.' },
-        { screen: 'Memory, Bots', path: 'Memory → edit an entry; Bots → create a bot', effect: 'Multi-line body text uses TextEditor.' },
-        { screen: 'Sessions, Bots, Skills, Memory, Tasks, and pickers', effect: 'Search stays attached through direct `.searchable` calls today; see the Search entry for the Hermex-owned `.hermesSearch` wrapper those screens have not yet adopted.' },
-      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'The three wrappers exist (HermesTextInput.swift) and are foundation-available on this branch; zero production screens use them. Production\'s existing direct TextField and SecureField call sites remain unchanged — migrating them onto the wrappers is deferred to a separate adoption issue.',
+      },
+      useSummary: 'New foundation wrappers; no screen has adopted them yet in this slice. Production keeps its existing direct TextField/SecureField call sites unchanged.',
       implementationNotes: {
-        status: 'Native iOS pattern retained intentionally; no Hermex-owned Text Input component exists or is proposed.',
-        sourcePaths: [
-          'HermesMobile/Features/Bots/BotConnectionView.swift',
-          'HermesMobile/Features/Chat/ClarificationRequestCard.swift',
-          'HermesMobile/Features/Memory/MemoryView.swift',
-        ],
+        status: 'Component exists (HermesTextInput.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermesTextInput.swift'],
         notes: [
-          'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/TextEditor — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
-          'This reconstruction uses plain React Native TextInput to approximate TextField/SecureField/TextEditor visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
+          'Deliberately thin: `HermesTextField` forwards to native `TextField`, `HermesSecureField` to native `SecureField`, and `HermesNumberField` to the typed `TextField(value:format:)` path — none of the three own chrome, validation, helper/error text, a clear button, or their own focus, keyboard, autocorrection, capitalization, or content-type policy; the caller keeps those exactly as it would calling the native control directly.',
+          'Report only: production\'s existing direct TextField and SecureField call sites (see the Design System Contract\'s frozen TextField/SecureField baselines) are unchanged by this branch and continue to call TextField/SecureField directly; migrating them onto the three wrappers is scoped to a separate issue, not this slice.',
+          'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/HermesTextField — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
+          'TextEditor remains a native iOS control for multiline body text; this slice does not add a Hermex-owned multiline wrapper.',
+          'This reconstruction uses plain React Native TextInput to approximate HermesTextField/HermesSecureField/HermesNumberField visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
         ],
       },
     },
@@ -2211,7 +2206,7 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
   },
   {
     label: 'Native iOS',
-    ids: ['Text Input', 'Hermes TopNav'],
+    ids: ['Hermes TopNav'],
   },
   {
     label: 'Components',
@@ -2220,11 +2215,14 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
     // only (see the nav-order test in hermes-catalog.test.mjs), not the rendered order. Search
     // joined this group once its `.hermesSearch` foundation wrapper shipped over native
     // `.searchable` — it moved out of Native iOS even though production hasn't adopted the wrapper
-    // yet (see Search's own adoptionStatus for the truthful, zero-adoption detail).
+    // yet (see Search's own adoptionStatus for the truthful, zero-adoption detail). Text Input
+    // joined the same way once its three HermesTextField/HermesSecureField/HermesNumberField
+    // foundation wrappers shipped over native TextField/SecureField/TextField(value:format:) — see
+    // Text Input's own adoptionStatus for the same truthful, zero-adoption detail.
     alphabetizeByLabel: true,
     ids: [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-      'Inline Reference Link', 'Search', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
+      'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
     ],
   },
