@@ -518,14 +518,22 @@ export function HermesSkeletonGallery() {
   );
 }
 
-// ─── Native iOS patterns ────────────────────────────────────────────────────
-export function NativeSearchPreview() {
+// ─── Search — Hermex-owned `.hermesSearch` wrapper over native `.searchable` ─
+const SEARCH_FAMILY_SAMPLE_SESSIONS = ['Refactor auth module', 'Investigate flaky test', 'Update onboarding copy'];
+
+export function SearchFamilyGallery() {
   const [query, setQuery] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
+  const trimmed = query.trim().toLowerCase();
+  const results = trimmed.length === 0
+    ? SEARCH_FAMILY_SAMPLE_SESSIONS
+    : SEARCH_FAMILY_SAMPLE_SESSIONS.filter((session) => session.toLowerCase().includes(trimmed));
   return (
     <View style={preview.stack}>
       <View style={preview.nativeSearch} accessibilityRole="search">
         <Icon name="search" size={DS_ICON_SIZE.sm} color="#6d6d72" />
         <TextInput
+          ref={searchInputRef}
           value={query}
           onChangeText={setQuery}
           placeholder="Search sessions"
@@ -533,22 +541,38 @@ export function NativeSearchPreview() {
           style={preview.nativeSearchInput}
         />
         {query.length > 0 && (
-          <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setQuery('')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            onPress={() => {
+              setQuery('');
+              searchInputRef.current?.focus();
+            }}
+          >
             <Icon name="clear" size={DS_ICON_SIZE.sm} color="#6d6d72" />
           </Pressable>
         )}
       </View>
-      <Text style={preview.caption}>
-        Production uses SwiftUI's native `.searchable` modifier. This reconstruction documents prompt,
-        focus, clear, and no-results behavior without introducing a Hermex-owned Search field.
-      </Text>
-      {query.length > 0 && query.toLowerCase() === 'none' && (
+      {results.length > 0 ? (
+        <View style={preview.stack}>
+          {results.map((session) => (
+            <Text key={session} style={preview.label}>{session}</Text>
+          ))}
+        </View>
+      ) : (
         <Text style={preview.caption}>No results for “{query}”.</Text>
       )}
+      <Text style={preview.caption}>
+        `.hermesSearch(text:placement:prompt:)` is a thin Hermex-owned wrapper that forwards straight
+        to SwiftUI's native `.searchable` modifier — this reconstruction documents its prompt, focus,
+        clear, and no-results behavior. Native iOS still owns placement, focus, keyboard, clear,
+        dictation, VoiceOver, and Dynamic Type; this preview introduces no custom Hermex field chrome.
+      </Text>
     </View>
   );
 }
 
+// ─── Native iOS patterns ────────────────────────────────────────────────────
 export function NativeTextInputPreview() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');

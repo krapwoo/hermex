@@ -49,9 +49,9 @@ import {
   HermesSkeletonGallery,
   InlineReferenceLinkPreview,
   ListItemFamilyGallery,
-  NativeSearchPreview,
   NativeTextInputPreview,
   RadioFamilyGallery,
+  SearchFamilyGallery,
   SegmentedControlGallery,
   TagGallery,
   ToastFamilyGallery,
@@ -1360,21 +1360,22 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Text Input',
     description:
-      'Native iOS text entry, not a Hermex-owned field component. Production composes SwiftUI TextField, SecureField, TextEditor, and `.searchable` directly at every call site; Form groups related fields and Picker covers fixed-option selection alongside them, but neither is a text-entry control itself.',
-    whenToUse: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and `.searchable` for search placement — never a bespoke field. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
+      'Native iOS text entry, not a Hermex-owned field component. Production composes SwiftUI TextField, SecureField, TextEditor, and (still directly) `.searchable` at every call site; Form groups related fields and Picker covers fixed-option selection alongside them, but neither is a text-entry control itself.',
+    whenToUse: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and the Search family (`.hermesSearch`, or today\'s direct `.searchable`) for search placement — never a bespoke field. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
     props: [
       { name: 'TextField(_:text:)', type: 'Binding<String>', desc: 'Single-line entry; `axis: .vertical` lets a response field grow a few lines without adopting TextEditor.' },
       { name: 'SecureField(_:text:)', type: 'Binding<String>', desc: 'Masked single-line entry for a credential such as a password.' },
       { name: 'TextEditor(text:)', type: 'Binding<String>', desc: 'Multiline body text with no built-in placeholder — callers overlay their own hint text.' },
-      { name: '.searchable(text:placement:prompt:)', type: 'Binding<String>', desc: 'The native search field pattern; see the separate Search entry for placement and no-results guidance.' },
+      { name: '.searchable(text:placement:prompt:)', type: 'Binding<String>', desc: 'The native search field pattern, now fronted by the Hermex-owned Search family (`.hermesSearch`); see the separate Search entry for placement and no-results guidance.' },
     ],
     a11y: 'Each native control owns its own focus, keyboard, clear button (`.searchable`), dictation, Dynamic Type, and VoiceOver behavior — production adds no custom accessibility layer on top of any of them.',
     render: () => <NativeTextInputPreview />,
     hermesReference: {
-      useWhen: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and `.searchable` for search placement.',
+      useWhen: 'Reach for TextField for a single-line value, SecureField for a credential, TextEditor for multiline body text, and the Search family for search placement.',
       avoidWhen: 'Avoid inventing a bespoke field component — no custom Hermex text field exists or is proposed. For a fixed-option single-selection field, avoid free text — use Hermes Dropdown instead.',
       alternatives: [
         { name: 'Hermes Dropdown', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
+        { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare TextField.' },
       ],
       adoptionStatus: { state: 'native-platform', detail: 'Native iOS pattern retained intentionally; no Hermex-owned Text Input component exists or is proposed.' },
       useSummary: 'Documented as native iOS controls only; no custom Hermex text field exists or is proposed.',
@@ -1382,7 +1383,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { screen: 'Bots', path: 'Bots → connect a server', effect: 'A Form groups TextField address/username fields and a SecureField password field.' },
         { screen: 'Conversation, Workspace', path: 'Sessions → open a conversation → answer a clarification; Chat → attach a workspace file', effect: 'A short freeform response and a workspace path both use TextField.' },
         { screen: 'Memory, Bots', path: 'Memory → edit an entry; Bots → create a bot', effect: 'Multi-line body text uses TextEditor.' },
-        { screen: 'Sessions, Bots, Skills, Memory, Tasks, and pickers', effect: 'Search stays attached through SwiftUI `.searchable`; see the Search entry.' },
+        { screen: 'Sessions, Bots, Skills, Memory, Tasks, and pickers', effect: 'Search stays attached through direct `.searchable` calls today; see the Search entry for the Hermex-owned `.hermesSearch` wrapper those screens have not yet adopted.' },
       ],
       implementationNotes: {
         status: 'Native iOS pattern retained intentionally; no Hermex-owned Text Input component exists or is proposed.',
@@ -1401,32 +1402,32 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Search',
     description:
-      'A native iOS search pattern, not a Hermex-owned field component. Production keeps SwiftUI `.searchable` so placement, focus, clear behavior, keyboard integration, and platform accessibility remain system-owned.',
-    whenToUse: 'Attach native `.searchable` to a searchable list or navigation surface. Write a concise prompt, preserve the system clear/focus behavior, and pair filtered emptiness with a specific no-results state rather than replacing the field with custom chrome.',
+      'A thin Hermex-owned wrapper — `.hermesSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
+    whenToUse: 'Reach for `.hermesSearch` on a searchable list or navigation surface once a screen migrates (tracked as a separate issue); until then, a direct `.searchable` call is still correct. Either way, write a concise prompt, preserve the system clear/focus behavior, and pair filtered emptiness with a specific no-results state rather than replacing the field with custom chrome.',
     props: [
-      { name: 'placement', type: 'SearchFieldPlacement', default: 'platform default', desc: 'Choose a native placement appropriate to the navigation surface; do not hand-position a replacement field.' },
-      { name: 'prompt', type: 'Text?', desc: 'Short task-specific guidance such as “Search sessions” or “Search skills”.' },
-      { name: 'query', type: 'Binding<String>', required: true, desc: 'The native field owns editing, focus, clear, and keyboard behavior while the screen owns filtering.' },
+      { name: 'text', type: 'Binding<String>', required: true, desc: 'The native field owns editing, focus, clear, and keyboard behavior while the screen owns filtering.' },
+      { name: 'placement', type: 'SearchFieldPlacement', default: '.automatic (native default)', desc: 'Forwarded straight to `.searchable`; choose a native placement appropriate to the navigation surface, or omit it to keep the platform\'s own automatic choice.' },
+      { name: 'prompt', type: 'Text? / LocalizedStringKey', desc: 'Short task-specific guidance such as "Search sessions" or "Search skills"; omit for no synthetic copy.' },
     ],
-    a11y: 'Native Search keeps platform focus, keyboard, clear-button, dictation, VoiceOver, and Dynamic Type behavior. A no-results view names the active query and remains distinct from the unfiltered empty state.',
-    render: () => <NativeSearchPreview />,
+    a11y: 'Forwards straight to native `.searchable`, so it keeps platform focus, keyboard, clear-button, dictation, VoiceOver, and Dynamic Type behavior. A no-results view names the active query and remains distinct from the unfiltered empty state.',
+    render: () => <SearchFamilyGallery />,
     hermesReference: {
-      useWhen: 'Attach native `.searchable` to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
-      avoidWhen: 'Avoid replacing the field with custom chrome or hand-positioning a substitute search field.',
+      useWhen: 'Attach `.hermesSearch` (or, until a screen migrates, native `.searchable` directly) to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
+      avoidWhen: 'Avoid replacing the field with custom chrome or hand-positioning a substitute search field. The wrapper itself must stay thin — do not add scopes, suggestions, submit handling, or debounce to it; the screen keeps owning filtering and result presentation.',
       alternatives: [
         { name: 'Text Input', useWhen: 'For an inline filter or lookup field that is not attached to a navigation surface — a plain TextField.' },
       ],
-      adoptionStatus: { state: 'native-platform', detail: 'Native iOS pattern retained intentionally; no Hermex-owned Search field exists or is proposed.' },
-      useSummary: 'Documented as a native pattern only; no custom Search component is introduced.',
-      usedIn: [
-        { screen: 'Sessions, Bots, Skills, Memory, Tasks, and pickers', effect: 'Search stays attached through SwiftUI `.searchable`; each screen owns filtering and its no-results content.' },
-      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'Component exists (HermesSearch.swift) with no production call site yet. Production\'s eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call SwiftUI `.searchable` directly; migrating them onto `.hermesSearch` is deferred to a separate issue.',
+      },
+      useSummary: 'New foundation wrapper; no screen has adopted it yet in this slice. Production keeps its existing direct `.searchable` call sites unchanged.',
       implementationNotes: {
-        status: 'Native iOS pattern retained intentionally; no Hermex-owned Search field exists or is proposed.',
-        sourcePaths: [
-          'HermesMobile/Features/SessionList/SessionListView.swift',
-          'HermesMobile/Features/Bots/BotSearchView.swift',
-          'HermesMobile/Features/Skills/SkillsView.swift',
+        status: 'Component exists (HermesSearch.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermesSearch.swift'],
+        notes: [
+          'Deliberately thin: `.hermesSearch(text:placement:prompt:)` forwards straight to SwiftUI\'s native `.searchable(text:placement:prompt:)` — it owns no field chrome, focus, keyboard, clear, dictation, or accessibility behavior of its own, and the default placement stays `.automatic` so omitting it preserves native automatic placement.',
+          'Report only: production\'s eight direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermesSearch` is scoped to a separate issue, not this slice.',
         ],
       },
     },
@@ -2210,17 +2211,20 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
   },
   {
     label: 'Native iOS',
-    ids: ['Search', 'Text Input', 'Hermes TopNav'],
+    ids: ['Text Input', 'Hermes TopNav'],
   },
   {
     label: 'Components',
     // Alphabetized in the sidebar and main column by each entry's own visible display name (see
     // `alphabetizeByLabel` on `NavGroup`) — this declared order is the Hermes-owned family grouping
-    // only (see the nav-order test in hermes-catalog.test.mjs), not the rendered order.
+    // only (see the nav-order test in hermes-catalog.test.mjs), not the rendered order. Search
+    // joined this group once its `.hermesSearch` foundation wrapper shipped over native
+    // `.searchable` — it moved out of Native iOS even though production hasn't adopted the wrapper
+    // yet (see Search's own adoptionStatus for the truthful, zero-adoption detail).
     alphabetizeByLabel: true,
     ids: [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-      'Inline Reference Link', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
+      'Inline Reference Link', 'Search', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
     ],
   },

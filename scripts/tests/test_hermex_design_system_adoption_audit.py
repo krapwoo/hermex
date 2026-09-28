@@ -86,6 +86,17 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/AttachmentFileType.swift": "enum AttachmentFileType {}",
     "HermesMobile/Features/Shared/AttachmentTile.swift": "struct AttachmentTile: View {}",
     "HermesMobile/Features/Shared/SkeletonPlaceholder.swift": "struct SkeletonPlaceholder: View {}",
+    "HermesMobile/Features/Shared/HermesSearch.swift": (
+        "extension View {\n"
+        "    func hermesSearch(\n"
+        "        text: Binding<String>,\n"
+        "        placement: SearchFieldPlacement = .automatic,\n"
+        "        prompt: Text? = nil\n"
+        "    ) -> some View {\n"
+        "        searchable(text: text, placement: placement, prompt: prompt)\n"
+        "    }\n"
+        "}"
+    ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
     "HermesMobile/Config/HermesMotion.swift": "enum HermesMotion {}",
     "HermesMobile/Config/HermesRadius.swift": "enum HermesRadius {}",
@@ -119,6 +130,11 @@ def build_valid_fixture_tree(root: pathlib.Path) -> None:
         "HermesMobile/Features/Skills/SkillsView.swift",
         "struct SkillsView: View {\n    var body: some View { ContentUnavailableView(\"Empty\", systemImage: \"tray\") }\n}",
     )
+    write(
+        root,
+        "HermesMobile/Features/SessionList/SessionListComponents.swift",
+        "struct SessionListComponents: View {\n    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n}",
+    )
 
 
 class RequiredFilesAndSnippetsTests(unittest.TestCase):
@@ -126,10 +142,11 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = pathlib.Path(self.temp.name)
-        # Reduce the two frozen baselines to what this fixture tree actually contains, so these
+        # Reduce the three frozen baselines to what this fixture tree actually contains, so these
         # tests are isolated from the real repository's exact counts.
         self._orig_segmented = audit.SEGMENTED_CONTROL_BASELINE
         self._orig_content_unavailable = audit.CONTENT_UNAVAILABLE_BASELINE
+        self._orig_searchable = audit.SEARCHABLE_BASELINE
         audit.SEGMENTED_CONTROL_BASELINE = {
             "HermesMobile/Features/Insights/InsightsView.swift": 1,
             "HermesMobile/Features/Tasks/TasksView.swift": 1,
@@ -137,15 +154,25 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         audit.CONTENT_UNAVAILABLE_BASELINE = {
             "HermesMobile/Features/Skills/SkillsView.swift": 1,
         }
+        audit.SEARCHABLE_BASELINE = {
+            "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
+        }
         self.addCleanup(self._restore_baselines)
 
     def _restore_baselines(self):
         audit.SEGMENTED_CONTROL_BASELINE = self._orig_segmented
         audit.CONTENT_UNAVAILABLE_BASELINE = self._orig_content_unavailable
+        audit.SEARCHABLE_BASELINE = self._orig_searchable
 
     def test_valid_foundation_passes(self):
         build_valid_fixture_tree(self.root)
         self.assertEqual(audit.run(self.root), [])
+
+    def test_scope_documentation_names_all_three_frozen_baselines(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("three pre-existing production baselines", source)
+        self.assertIn("Only the three explicitly frozen baselines below are enforced", source)
+        self.assertNotIn("Only the two explicitly frozen baselines below are enforced", source)
 
     def test_missing_required_file_fails(self):
         build_valid_fixture_tree(self.root)
@@ -229,6 +256,58 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
             failures,
         )
 
+    def test_new_direct_searchable_path_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Kanban/KanbanLabView.swift",
+            "struct KanbanLabView: View {\n    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search Cards\") }\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct .searchable" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_increased_direct_searchable_count_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/SessionList/SessionListComponents.swift",
+            (
+                "struct SessionListComponents: View {\n"
+                "    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n"
+                "    var body2: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "direct .searchable" in f and "increased from 1 to 2" in f and "SessionListComponents.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_searchable_baseline_ignores_the_shared_hermes_search_wrapper_itself(self):
+        build_valid_fixture_tree(self.root)
+        # HermesSearch.swift forwards to native `.searchable` without a leading dot (an implicit
+        # `self` call inside the View extension), but exercise the exclusion directly regardless.
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermesSearch.swift",
+            "extension View {\n    func hermesSearch(text: Binding<String>) -> some View { self.searchable(text: text) }\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertFalse(
+            any("HermesSearch.swift" in f for f in failures),
+            failures,
+        )
+
     def test_new_direct_content_unavailable_path_fails(self):
         build_valid_fixture_tree(self.root)
         write(
@@ -286,8 +365,10 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         failures = audit.run(self.root)
         segmented_failures = [f for f in failures if "segmented" in f]
         content_unavailable_failures = [f for f in failures if "ContentUnavailableView" in f]
+        searchable_failures = [f for f in failures if "direct .searchable" in f]
         self.assertEqual(segmented_failures, [])
         self.assertEqual(content_unavailable_failures, [])
+        self.assertEqual(searchable_failures, [])
 
     def test_a_baseline_path_that_disappears_entirely_is_not_a_failure(self):
         # Migrating a call site away entirely (fewer files matching) is allowed without updating the

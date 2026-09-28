@@ -5,23 +5,24 @@ Scope (read this before extending the contract): this branch adds Hermex Design 
 foundation/token/component source files to the repository, but does not migrate any production
 screen onto them. This audit protects that foundation layer — it fails closed when a required
 foundation file, or one of its small set of load-bearing API snippets, goes missing or drifts — and
-freezes two pre-existing production baselines (native segmented controls, direct ContentUnavailableView
-calls) so a *new* untracked site or an *increased* count fails, without requiring any existing screen
-to migrate. It does not require, assert, or check production-screen adoption of any new component.
+freezes three pre-existing production baselines (native segmented controls, direct
+ContentUnavailableView calls, direct `.searchable` calls) so a *new* untracked site or an *increased*
+count fails, without requiring any existing screen to migrate. It does not require, assert, or check
+production-screen adoption of any new component.
 
 It also intentionally does NOT ban `.font`, other typography modifiers, literal colors, or literal
 spacing across production generally — there is no sound, ownership-aware contract for banning those
-globally yet. Only the two explicitly frozen baselines below are enforced, and only because their
+globally yet. Only the three explicitly frozen baselines below are enforced, and only because their
 exact current-state counts were verified against this branch's own source before being written here.
 
-Baseline ownership and removal condition: both frozen baselines (SEGMENTED_CONTROL_BASELINE,
-CONTENT_UNAVAILABLE_BASELINE) are owned by whoever lands the next PR that changes one of their call
-sites — adding, removing, or migrating one. That PR must update the baseline dict in the same PR to
-match the new verified state; this script deliberately fails otherwise, rather than silently drifting.
-A baseline count may only ever move down (migration) or a path disappear entirely in the same PR that
-performs the migration — never move up, and a path may never appear that was not already in the
-baseline, without maintainer review of why a new direct call site was added instead of using the
-foundation component that already exists for it.
+Baseline ownership and removal condition: all three frozen baselines (SEGMENTED_CONTROL_BASELINE,
+CONTENT_UNAVAILABLE_BASELINE, SEARCHABLE_BASELINE) are owned by whoever lands the next PR that
+changes one of their call sites — adding, removing, or migrating one. That PR must update the
+baseline dict in the same PR to match the new verified state; this script deliberately fails
+otherwise, rather than silently drifting. A baseline count may only ever move down (migration) or a
+path disappear entirely in the same PR that performs the migration — never move up, and a path may
+never appear that was not already in the baseline, without maintainer review of why a new direct
+call site was added instead of using the foundation component that already exists for it.
 """
 from __future__ import annotations
 
@@ -52,6 +53,7 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermesAvatar.swift",
     "HermesMobile/Features/Shared/HermesDivider.swift",
     "HermesMobile/Features/Shared/HermesContentUnavailable.swift",
+    "HermesMobile/Features/Shared/HermesSearch.swift",
     "HermesMobile/Features/Shared/ListItem.swift",
     "HermesMobile/Features/Shared/HermesList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
@@ -94,6 +96,10 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ]),
     ("HermesMobile/Features/Shared/HermesContentUnavailable.swift", [
         r"struct HermesContentUnavailable\s*:\s*View",
+    ]),
+    ("HermesMobile/Features/Shared/HermesSearch.swift", [
+        r"func hermesSearch\(",
+        r"searchable\(text:",
     ]),
 ]
 
@@ -160,6 +166,27 @@ CONTENT_UNAVAILABLE_BASELINE = {
 }
 CONTENT_UNAVAILABLE_PATTERN = re.compile(r"\bContentUnavailableView\b")
 CONTENT_UNAVAILABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesContentUnavailable.swift"
+
+# ─── Frozen direct .searchable baseline ──────────────────────────────────────────────────────────
+# This branch adds a Hermex-owned `.hermesSearch(text:placement:prompt:)` foundation wrapper
+# (HermesSearch.swift) over native `.searchable`, but does not migrate any production screen onto
+# it — every current search field keeps calling `.searchable` directly. Owner: whoever lands the PR
+# that migrates one of these eight call sites onto `.hermesSearch` (or adds a new direct
+# `.searchable` call site). Removal condition: delete a file's entry here (or lower its count) in
+# the same PR that migrates/removes that call site. Verified against this branch's own source
+# (2026-09-28); HermesSearch.swift itself is excluded from this accounting.
+SEARCHABLE_BASELINE = {
+    "HermesMobile/Features/Kanban/KanbanLabView.swift": 1,
+    "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
+    "HermesMobile/Features/Settings/DefaultProfilePickerView.swift": 1,
+    "HermesMobile/Features/Shared/ModelPickerSheet.swift": 1,
+    "HermesMobile/Features/Skills/SkillsView.swift": 1,
+    "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift": 1,
+    "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift": 1,
+    "HermesMobile/Features/Workspace/GitBranchPickerView.swift": 1,
+}
+SEARCHABLE_PATTERN = re.compile(r"\.searchable\(")
+SEARCHABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesSearch.swift"
 
 
 def read(rel_path: str) -> str:
@@ -330,6 +357,11 @@ def check_content_unavailable_baseline() -> list[str]:
     return _check_frozen_baseline("direct ContentUnavailableView", CONTENT_UNAVAILABLE_BASELINE, live)
 
 
+def check_searchable_baseline() -> list[str]:
+    live = _count_pattern_per_file(SEARCHABLE_PATTERN, exclude={SEARCHABLE_EXCLUDED_FILE})
+    return _check_frozen_baseline("direct .searchable", SEARCHABLE_BASELINE, live)
+
+
 CHECKS = [
     ("required foundation files", check_required_files),
     ("load-bearing API snippets", check_required_snippets),
@@ -337,6 +369,7 @@ CHECKS = [
     ("avatar/icon pairing", check_avatar_pairing),
     ("native segmented-control baseline", check_segmented_control_baseline),
     ("direct ContentUnavailableView baseline", check_content_unavailable_baseline),
+    ("direct .searchable baseline", check_searchable_baseline),
 ]
 
 

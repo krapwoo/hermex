@@ -137,13 +137,14 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
     [...navBlock.matchAll(/label:\s*'([^']+)'/g)].map((match) => match[1]),
     ['Foundations', 'Materials', 'Native iOS', 'Components', 'Patterns'],
   );
-  assert.match(navBlock, /ids: \['Search', 'Text Input', 'Hermes TopNav'\]/);
+  assert.match(navBlock, /ids: \['Text Input', 'Hermes TopNav'\]/);
   assert.match(navBlock, /label: 'Components'[\s\S]*'Segmented Control'/);
   assert.doesNotMatch(src, /Hermex Segmented Control|Hermes Segmented Control/);
 
   const search = extractHermesSection(src, 'Search');
   assert.match(search, /\.searchable/);
   assert.match(search, /native/i);
+  assert.match(search, /`\.hermesSearch/, 'expected the Search entry to document the Hermex-owned .hermesSearch wrapper');
 
   const segmented = extractHermesSection(src, 'Segmented Control');
   assert.match(segmented, /fixed/);
@@ -2217,7 +2218,7 @@ test('every Hermex-owned component-family section is reachable from Components �
 
   for (const id of [
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Row Divider', 'Tag',
-    'Inline Reference Link', 'Buttons', 'Hermes Checkbox', 'Skeleton Loading',
+    'Inline Reference Link', 'Search', 'Buttons', 'Hermes Checkbox', 'Skeleton Loading',
     'List / ListItem', 'Disclosure Row',
   ]) {
     assert.ok(ids.includes(id), `expected "${id}" in the Components — Hermex nav group`);
@@ -2278,9 +2279,11 @@ test('the generic catalog Checkbox supports an omittable onChange for a row-owne
 // Correction (#607 follow-up 2): the previous "Input Field" entry mis-registered production's native
 // text entry as a Components — Hermex entry that reused the generic template InputField's
 // floating-label visual — production never adopts that look. It is replaced by a "Text Input" entry
-// under Native iOS — Hermex, alongside Search and TopNav, documenting the real native SwiftUI
+// under Native iOS — Hermex, alongside Hermes TopNav, documenting the real native SwiftUI
 // controls (TextField, SecureField, TextEditor, `.searchable`) with an honest native-style
-// reconstruction instead.
+// reconstruction instead. Search itself later moved to Components — Hermex once a Hermex-owned
+// `.hermesSearch` foundation wrapper shipped over the same native `.searchable` (see the Search
+// family ownership-flip tests below).
 test('Correction (#607 follow-up 2): Text Input replaces Input Field as a Native iOS — Hermex entry documenting TextField, SecureField, TextEditor, and .searchable with an honest native-style reconstruction, not the generic template InputField', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /\| 'Input Field'/, "the retired 'Input Field' id must no longer appear in the HermesSectionId union");
@@ -2302,8 +2305,8 @@ test('Correction (#607 follow-up 2): Text Input replaces Input Field as a Native
   assert.ok(nativeIOSGroupMatch, 'expected the Native iOS — Hermex nav group');
   assert.deepEqual(
     [...nativeIOSGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]),
-    ['Search', 'Text Input', 'Hermes TopNav'],
-    'expected Text Input alongside Search and Hermes TopNav',
+    ['Text Input', 'Hermes TopNav'],
+    'expected Text Input alongside Hermes TopNav; Search moved to Components — Hermex once its foundation wrapper shipped',
   );
 
   const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
@@ -2311,6 +2314,7 @@ test('Correction (#607 follow-up 2): Text Input replaces Input Field as a Native
   const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   assert.ok(!componentIds.includes('Input Field'), 'Input Field must no longer live in Components — Hermex');
   assert.ok(!componentIds.includes('Text Input'), 'Text Input is a Native iOS entry, not a Components — Hermex entry');
+  assert.ok(componentIds.includes('Search'), 'Search is a Components — Hermex entry, not a Native iOS entry');
 
   assert.doesNotMatch(
     sectionsSrc,
@@ -2324,6 +2328,41 @@ test('Correction (#607 follow-up 2): Text Input replaces Input Field as a Native
   assert.match(body, /secureTextEntry/, 'expected a secure-entry example');
   assert.match(body, /multiline/, 'expected a multiline example');
   assert.match(body, /accessibilityRole="search"/, 'expected a search example');
+});
+
+// Search becomes a Hermex-owned shared foundation API (`.hermesSearch`, a thin wrapper over native
+// `.searchable`) while production screens stay on their existing direct `.searchable` call sites —
+// migration is a separate issue. This is the ownership-flip transaction: Search moves from Native
+// iOS — Hermex into Components — Hermex, its preview becomes an interactive Hermex Search family
+// demonstration (not a bare native reconstruction), and its adoptionStatus truthfully reports zero
+// production adoption.
+test('Search moves to Components — Hermex as a Hermex-owned foundation wrapper (.hermesSearch) over native .searchable, with a truthful zero-adoption status and an interactive family preview', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const search = extractHermesSection(sectionsSrc, 'Search');
+
+  assert.match(search, /`\.hermesSearch/, 'expected the Search entry to name the Hermex-owned .hermesSearch wrapper');
+  assert.match(search, /`\.searchable`|\.searchable\(/, 'expected the Search entry to still name the native .searchable it wraps');
+  assert.match(search, /avoidWhen:\s*'[^']*custom chrome[^']*'/i, 'expected avoidWhen to still forbid custom search-field chrome');
+
+  const state = extractAdoptionState(search);
+  assert.equal(state, 'foundation-available', 'expected Search to report foundation-available, not native-platform, once the wrapper ships');
+  assert.match(search, /adoptionStatus:\s*\{[\s\S]*?HermesSearch\.swift[\s\S]*?no production call site yet/, 'expected the adoptionStatus detail to name HermesSearch.swift and truthfully report zero production call sites');
+  assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue/i, 'expected the adoptionStatus/notes to state migration is deferred to another issue');
+  assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim production adoption');
+
+  assert.match(search, /HermesMobile\/Features\/Shared\/HermesSearch\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermesSearch.swift wrapper');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.doesNotMatch(previewsSrc, /export function NativeSearchPreview/, 'expected the retired native-only preview name to be gone');
+  assert.match(search, /<SearchFamilyGallery/, 'expected Search to render the renamed Hermex Search family preview');
+  assert.match(previewsSrc, /export function SearchFamilyGallery/);
+  const gallery = extractFunctionBody(previewsSrc, 'SearchFamilyGallery');
+  assert.match(gallery, /onChangeText=\{setQuery\}|onChangeText=\{[^}]*setQuery[^}]*\}/, 'expected interactive query entry');
+  assert.match(gallery, /accessibilityLabel="Clear search"/, 'expected a native-style clear action, not custom chrome');
+  assert.match(gallery, /ref=\{searchInputRef\}/, 'expected the native-style search input to expose a focus target');
+  assert.match(gallery, /searchInputRef\.current\?\.focus\(\)/, 'expected clearing search to restore focus to the input after the clear control unmounts');
+  assert.match(gallery, /No results for/, 'expected a specific no-results demonstration, not a generic empty state');
+  assert.doesNotMatch(gallery, /struct HermesSearchField|HermesSearchBar/, 'must not imply a custom Hermex search-field component');
 });
 
 test('Materials — Hermex holds exactly Adaptive Glass, and Patterns — Hermex holds Content Unavailable, Pending Request, Transcript Activity, and Composer', () => {
@@ -3227,7 +3266,7 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
   const ids = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(ids, [
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-    'Inline Reference Link', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
+    'Inline Reference Link', 'Search', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
     'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
   ]);
 });
@@ -3278,7 +3317,7 @@ test('the Components — Hermex group\'s computed render order is actually alpha
 
   assert.deepEqual(computedOrder.map(labelFor), [
     'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Buttons', 'Card', 'Checkbox', 'Disclosure Row', 'Dropdown',
-    'Inline Reference Link', 'List / ListItem', 'Radio', 'Row Divider',
+    'Inline Reference Link', 'List / ListItem', 'Radio', 'Row Divider', 'Search',
     'Segmented Control', 'Skeleton Loading', 'Tag', 'Toast', 'Tooltip',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');
 });
