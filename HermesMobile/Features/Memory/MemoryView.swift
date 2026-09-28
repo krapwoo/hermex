@@ -185,7 +185,7 @@ private struct MemorySectionContent: View {
         if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             Text(section.emptyMessage)
                 .foregroundStyle(.secondary)
-                .italic()
+                .appFont(.body)
         } else {
             MarkdownRenderer(content: content)
         }
@@ -220,7 +220,7 @@ private struct MemoryEditSheet: View {
             Form {
                 Section(section.title) {
                     TextEditor(text: $content)
-                        .appFont(.body, design: .monospaced)
+                        .appFont(.mono14)
                         .frame(minHeight: 320)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

@@ -86,14 +86,13 @@ struct Banner: View {
             }
 
             message
-                .appFont(.subheadline)
-                .fontWeight(.semibold)
+                .appFont(.subheadlineSemibold)
 
             Spacer(minLength: HermesSpacing.s8)
 
             if let action {
                 Button(action.title, action: action.handler)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .buttonStyle(.plain)
             }
         }

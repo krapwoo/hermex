@@ -206,7 +206,6 @@ private struct ListenPlaybackBar: View {
             Spacer(minLength: 0)
         }
         .appFont(.caption2)
-        .monospacedDigit()
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(String(localized: "\(AudioDurationFormatter.string(from: boundedDisplayTime)) of \(AudioDurationFormatter.string(from: duration))"))
@@ -228,8 +227,7 @@ private struct ListenPlaybackBar: View {
             }
         } label: {
             Text(speed.title)
-                .appFont(.caption, weight: .semibold)
-                .monospacedDigit()
+                .appFont(.captionSemibold)
                 .frame(minWidth: 36, minHeight: 30)
                 .padding(.horizontal, HermesSpacing.s8)
                 .background(Color(.secondarySystemBackground), in: Capsule())
@@ -3054,7 +3052,7 @@ struct ChatToolbarTitleLabel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(title)
-                .appFont(.subheadline, weight: .semibold)
+                .appFont(.subheadlineSemibold)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -3145,7 +3143,7 @@ struct ChatToolbarActionSlot<Content: View>: View {
         content
             .labelStyle(.iconOnly)
             // Icon sizing: .iconOnly hides the label's text, so this sizes the SF Symbol.
-            .font(.body)
+            .appFont(.body)
             .frame(width: 44, height: 44)
             .contentShape(Rectangle())
     }

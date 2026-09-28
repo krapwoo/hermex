@@ -430,7 +430,7 @@ private struct TranscriptMediaFileExportView: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(reference.displayName)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -543,7 +543,7 @@ private struct TranscriptMediaVideoTile: View {
                     .foregroundStyle(Color.accentColor)
 
                 Text(reference.displayName)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -569,7 +569,7 @@ private struct TranscriptMediaUnavailableChip: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(reference.displayName)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -854,8 +854,7 @@ struct TranscriptMediaPreviewView: View {
             VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(item.reference.rawReference)
-                    .appFont(.footnote)
-                    .fontDesign(.monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
             }
@@ -878,8 +877,7 @@ struct TranscriptMediaPreviewView: View {
     private var mediaHeader: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(item.reference.rawReference)
-                .appFont(.caption)
-                .fontDesign(.monospaced)
+                .appFont(.mono12)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 

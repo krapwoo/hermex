@@ -1442,7 +1442,7 @@ private struct SessionIdentitySettingsEditor: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             HStack(spacing: HermesSpacing.s12) {
                 Text(previewInitials)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(previewForeground)
                     .frame(width: avatarPreviewSize, height: avatarPreviewSize)
                     .background(previewColor, in: Circle())
@@ -1451,7 +1451,7 @@ private struct SessionIdentitySettingsEditor: View {
 
                 VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text("Sessions Avatar")
-                        .appFont(.subheadline, weight: .medium)
+                        .appFont(.subheadlineSemibold)
 
                     Text("Stored on this device only.")
                         .appFont(.caption)
@@ -1543,7 +1543,7 @@ private struct HeaderLogoColorSettings: View {
                 Spacer(minLength: 12)
 
                 Text(selectedColorName)
-                    .appFont(.caption, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
             }
             .appFont(.subheadline)
@@ -1626,7 +1626,7 @@ private struct SettingsCard<Content: View>: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             Text(title)
                 .textCase(.uppercase)
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, HermesSpacing.s4)
                 .padding(.bottom, HermesSpacing.s8)
@@ -1729,7 +1729,7 @@ private struct SettingsRowLabel: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .appFont(.subheadline, weight: .medium)
+                .appFont(.subheadlineSemibold)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1855,7 +1855,7 @@ private struct SettingsAccessoryRow: View {
                     }
 
                     Text(value)
-                        .appFont(.caption, weight: .medium)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
                         .multilineTextAlignment(.leading)
@@ -1869,7 +1869,7 @@ private struct SettingsAccessoryRow: View {
 
                     if let value {
                         Text(value)
-                            .appFont(.caption, weight: .medium)
+                            .appFont(.captionSemibold)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -1896,7 +1896,7 @@ private struct SettingsAccessoryRow: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .appFont(.subheadline, weight: .medium)
+                .appFont(.subheadlineSemibold)
                 .layoutPriority(1)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1989,7 +1989,7 @@ private struct SettingsButton: View {
                     Text(title)
                 }
             }
-            .appFont(.subheadline, weight: .medium)
+            .appFont(.subheadlineSemibold)
             .foregroundStyle(role == .destructive ? .red : .primary)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 46)
@@ -2023,7 +2023,7 @@ private struct SettingsStatusPill: View {
     var tint: Color = .secondary
 
     var body: some View {
-        Tag(label: label, tint: tint, size: .prominent, font: .caption, minimumScaleFactor: 0.8)
+        Tag(label: label, tint: tint, size: .prominent, font: .captionSemibold, minimumScaleFactor: 0.8)
     }
 }
 
@@ -2045,7 +2045,7 @@ private struct ServerAvatarBadge: View {
 
     var body: some View {
         Text(initials)
-            .appFont(.caption, weight: .semibold)
+            .appFont(.captionSemibold)
             .foregroundStyle(HeaderLogoColor.prefersDarkForeground(for: colorHex) ? Color.black : Color.white)
             .frame(width: size, height: size)
             .background(HeaderLogoColor.color(for: colorHex), in: Circle())
@@ -2081,7 +2081,7 @@ private struct SettingsServerRow: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(name)
-                    .appFont(.subheadline, weight: .medium)
+                    .appFont(.subheadlineSemibold)
                     .lineLimit(1)
 
                 Text(account.urlString)
@@ -2149,7 +2149,7 @@ private struct ServerIdentityEditor: View {
 
                 VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text("Server Avatar")
-                        .appFont(.subheadline, weight: .medium)
+                        .appFont(.subheadlineSemibold)
 
                     Text("Stored on this device only.")
                         .appFont(.caption)

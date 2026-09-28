@@ -118,7 +118,7 @@ struct ClarificationRequestBar: View {
 
                     VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text("Input needed")
-                            .appFont(.caption, weight: .semibold)
+                            .appFont(.captionSemibold)
                             .foregroundStyle(.secondary)
 
                         Text(Self.summary(for: prompt.question))
@@ -336,7 +336,7 @@ struct ClarificationRequestCard: View {
 
         return VStack(alignment: .trailing, spacing: HermesSpacing.s4) {
             Text(expirationText(remaining: remaining))
-                .appFont(.caption2, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
 
             if !reduceMotion {
@@ -408,7 +408,7 @@ struct ClarificationRequestCard: View {
             onSubmit(choice)
         } label: {
             Text(choice)
-                .appFont(.body, weight: .semibold)
+                .appFont(.label)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, HermesSpacing.s12)

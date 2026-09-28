@@ -140,7 +140,7 @@ import SwiftUI
         HStack(spacing: HermesSpacing.s8) {
             Button("Close search", systemImage: "xmark") { dismiss() }
                 .labelStyle(.iconOnly)
-                .font(.title3)
+                .appFont(.title3)
                 .frame(width: 44, height: 44)
                 .adaptiveGlass(isInteractive: true, in: Circle())
                 .keyboardShortcut(.cancelAction)

@@ -288,7 +288,7 @@ private struct KanbanCardDetailContent: View {
                 ForEach(ids, id: \.self) { prerequisiteID in
                     HStack {
                         Text(verbatim: prerequisiteID)
-                            .appFont(.body, design: .monospaced)
+                            .appFont(.mono14)
                             .textSelection(.enabled)
                         Spacer()
                         Button("Remove", systemImage: "minus.circle", role: .destructive) {
@@ -461,7 +461,7 @@ private struct KanbanCardDetailContent: View {
             if !ids.isEmpty {
                 ForEach(ids, id: \.self) { id in
                     Text(verbatim: id)
-                        .appFont(.body, design: .monospaced)
+                        .appFont(.mono14)
                         .textSelection(.enabled)
                 }
             }
@@ -521,7 +521,7 @@ private struct KanbanCardDetailContent: View {
                         }
                         if let error = nonEmpty(run.error) {
                             Text(verbatim: error)
-                                .appFont(.body, design: .monospaced)
+                                .appFont(.mono14)
                                 .textSelection(.enabled)
                         }
                         if let range = runDateRange(run) {
@@ -537,7 +537,7 @@ private struct KanbanCardDetailContent: View {
                         }
                         if let tail = nonEmpty(run.logTail) {
                             Text(verbatim: tail)
-                                .appFont(.body, design: .monospaced)
+                                .appFont(.mono14)
                                 .textSelection(.enabled)
                         }
                     }
@@ -591,7 +591,7 @@ private struct KanbanCardDetailContent: View {
                         .foregroundStyle(.orange)
                 }
                 Text(verbatim: log.content ?? "")
-                    .appFont(.body, design: .monospaced)
+                    .appFont(.mono14)
                     .textSelection(.enabled)
                 Button("Refresh") { Task { await state.loadWorkerLog() } }
             case .failed:

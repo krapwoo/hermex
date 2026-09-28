@@ -171,7 +171,7 @@ struct GitCommitView: View {
                 }
                 Text(title)
             }
-            .appFont(.caption, weight: .semibold)
+            .appFont(.captionSemibold)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
@@ -188,7 +188,7 @@ struct GitCommitView: View {
 
             HStack(alignment: .top, spacing: HermesSpacing.s8) {
                 TextField("Commit message", text: $viewModel.message, axis: .vertical)
-                    .appFont(.subheadline, design: .monospaced)
+                    .appFont(.mono14)
                     .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
 
@@ -293,12 +293,12 @@ private struct GitCommitFileRow: View {
 
                 VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                     Text(file.fileName)
-                        .appFont(.subheadline, weight: .semibold)
+                        .appFont(.subheadlineSemibold)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     if let parent = file.parentDirectory {
                         Text(parent)
-                            .appFont(.caption2, design: .monospaced)
+                            .appFont(.mono12)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -309,7 +309,7 @@ private struct GitCommitFileRow: View {
 
                 if file.staged == true {
                     Text("Staged")
-                        .appFont(.caption2, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .padding(.horizontal, HermesSpacing.s8)
                         .padding(.vertical, HermesSpacing.s2)
                         .background(Color.green.opacity(0.18), in: Capsule())

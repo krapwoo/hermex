@@ -112,7 +112,7 @@ struct ProviderGlyphGalleryView: View {
 
                         VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                             Text(verbatim: provider.id)
-                                .font(.system(size: 14, weight: .semibold))
+                                .appFont(.subheadlineSemibold)
                                 .textCase(.uppercase)
                             Text(verbatim: provider.name)
                                 .appFont(.footnote)
@@ -122,7 +122,7 @@ struct ProviderGlyphGalleryView: View {
                         Spacer(minLength: 0)
 
                         Text(verbatim: ProviderGlyphKind.resolve(providerID: provider.id)?.rawValue ?? "no glyph")
-                            .appFont(.caption, design: .monospaced)
+                            .appFont(.mono12)
                             .foregroundStyle(.tertiary)
                     }
                 }

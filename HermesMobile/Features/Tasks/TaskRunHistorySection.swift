@@ -88,7 +88,7 @@ struct TaskRunHistorySection: View {
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
             Button("Try Again", action: retry)
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .buttonStyle(.plain)
                 .foregroundStyle(.tint)
         }
@@ -103,7 +103,7 @@ struct TaskRunHistorySection: View {
                     ProgressView()
                 }
                 Text(remainingCount > 0 ? String(localized: "Load \(remainingCount) more") : String(localized: "Load more"))
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                 Spacer(minLength: 0)
             }
             .padding(.vertical, HermesSpacing.s12)

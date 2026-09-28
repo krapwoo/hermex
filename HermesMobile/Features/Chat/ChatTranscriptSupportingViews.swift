@@ -902,8 +902,7 @@ struct ChatWorkingRowView: View {
                 dots
 
                 Text("Working for \(ChatWorkingElapsedFormatter.label(startedAt: startedAt, now: context.date))")
-                    .monospacedDigit()
-                    .appFont(.caption, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .ignore)
@@ -977,7 +976,7 @@ struct StreamRecoveryStatusView: View {
                 .accessibilityHidden(true)
 
             Text(label)
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.88)

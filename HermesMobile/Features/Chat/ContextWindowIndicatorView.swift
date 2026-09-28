@@ -22,8 +22,8 @@ struct ContextWindowIndicatorView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var showPopover = false
-    private let ringSize: CGFloat = 30
-    private let tapTargetSize: CGFloat = 44
+    @ScaledMetric(relativeTo: .caption) private var ringSize: CGFloat = 30
+    @ScaledMetric(relativeTo: .caption) private var tapTargetSize: CGFloat = 44
 
     var body: some View {
         Button(action: showContextDetails) {
@@ -44,7 +44,8 @@ struct ContextWindowIndicatorView: View {
                 }
 
                 Text(presentation.percentageLabel)
-                    .font(.system(size: 9, weight: .semibold))
+                    .appFont(.captionSemibold)
+                    .lineLimit(1)
                     .foregroundStyle(presentation.isInteractive ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
             }
             .frame(width: ringSize, height: ringSize)
@@ -98,8 +99,7 @@ private struct ContextWindowPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text(ContextWindowFormatter.tokensLabel(from: snapshot))
-                .appFont(.subheadline)
-                .fontWeight(.semibold)
+                .appFont(.subheadlineSemibold)
 
             Divider()
 
@@ -142,8 +142,7 @@ private struct ContextWindowInfoRow: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .appFont(.caption)
-                .fontWeight(.medium)
+                .appFont(.captionSemibold)
         }
     }
 }

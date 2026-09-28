@@ -88,7 +88,7 @@ struct FilePathRow: View {
                     .frame(width: 20)
 
                 Text(match.name)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.middle)

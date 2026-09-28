@@ -83,7 +83,7 @@ struct BotAtAutocompleteView: View {
 
     private func header(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .appFont(.caption2, weight: .semibold)
+            .appFont(.captionSemibold)
             .textCase(.uppercase)
             .foregroundStyle(.secondary)
             .padding(.horizontal, HermesSpacing.s16)

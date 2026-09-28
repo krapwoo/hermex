@@ -200,8 +200,7 @@ struct FilePreviewView: View {
             VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(displayPath)
-                    .appFont(.footnote)
-                    .fontDesign(.monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.secondary)
             }
         }
@@ -305,8 +304,7 @@ struct FilePreviewView: View {
     private var fileHeader: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(displayPath)
-                .appFont(.caption)
-                .fontDesign(.monospaced)
+                .appFont(.mono12)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 

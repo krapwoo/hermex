@@ -251,7 +251,7 @@ private struct BotReactionChip: View {
                               size: faceSize, motion: .still)
             }
         }
-        .font(AppFont.caption())
+        .appFont(.caption)
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(isMine ? Color.accentColor.opacity(0.16) : Color(.tertiarySystemFill), in: Capsule())

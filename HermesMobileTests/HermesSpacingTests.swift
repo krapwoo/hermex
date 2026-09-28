@@ -112,4 +112,19 @@ final class HermesSpacingTests: XCTestCase {
         XCTAssertTrue(insights.contains(".init(title: String(localized: \"Try Again\"),"))
         XCTAssertTrue(insights.contains("title: String(localized: \"No Data\")"))
     }
+
+    func testKanbanStalenessIconKeepsCaptionGeometryBesideMonoAgeText() throws {
+        let kanban = try source("HermesMobile/Features/Kanban/KanbanLabView.swift")
+        let expected = """
+                    HStack(spacing: HermesSpacing.s4) {
+                        Image(systemName: stalenessImage)
+                            .frame(width: stalenessIconSlot)
+                        Text(KanbanAgeFormatter.abbreviated(age))
+                            .appFont(.mono12)
+                    }
+                        .appFont(.caption)
+"""
+
+        XCTAssertTrue(kanban.contains(expected))
+    }
 }

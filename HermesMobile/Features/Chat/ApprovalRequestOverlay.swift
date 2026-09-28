@@ -55,7 +55,7 @@ struct ApprovalRequestOverlay: View {
             if let command = nonEmpty(prompt.pending.command) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     Text(command)
-                        .appFont(.footnote, design: .monospaced)
+                        .appFont(.mono12)
                         .textSelection(.enabled)
                         .padding(HermesSpacing.s12)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -72,7 +72,7 @@ struct ApprovalRequestOverlay: View {
                     VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                         ForEach(prompt.patternKeys, id: \.self) { key in
                             Text(key)
-                                .appFont(.caption2, design: .monospaced)
+                                .appFont(.mono12)
                                 .padding(.horizontal, HermesSpacing.s8)
                                 .padding(.vertical, HermesSpacing.s4)
                                 .background(Color(uiColor: .tertiarySystemBackground), in: Capsule())
@@ -156,7 +156,7 @@ struct ApprovalRequestOverlay: View {
 struct ApprovalBypassStatusPill: View {
     var body: some View {
         Label("Approval bypass active", systemImage: "bolt.slash.fill")
-            .appFont(.caption, weight: .semibold)
+            .appFont(.captionSemibold)
             .padding(.horizontal, HermesSpacing.s12)
             .padding(.vertical, HermesSpacing.s8)
             .background(.regularMaterial, in: Capsule())

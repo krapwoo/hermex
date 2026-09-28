@@ -116,7 +116,7 @@ struct GitActionToastOverlay: View {
             icon().frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                Text(title).appFont(.subheadline, weight: .semibold)
+                Text(title).appFont(.subheadlineSemibold)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle).appFont(.caption).foregroundStyle(.secondary)
                 }

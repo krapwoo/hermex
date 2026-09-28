@@ -120,7 +120,7 @@ struct FileBrowserView: View {
                                 handleLastError()
                             }
                         }
-                        .appFont(.footnote, weight: .semibold)
+                        .appFont(.captionSemibold)
                     }
                     .padding(.horizontal, HermesSpacing.screenHorizontal)
                     .padding(.vertical, HermesSpacing.s12)
@@ -215,7 +215,7 @@ private struct FileTreeRowView: View {
                     .frame(width: 22)
 
                 Text(node.name)
-                    .appFont(.subheadline, weight: isSelected ? .semibold : .medium)
+                    .appFont(isSelected ? .subheadlineSemibold : .subheadline)
                     .foregroundStyle(isSelected || node.isDirectory ? .primary : .secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -252,9 +252,8 @@ private struct FileTreeRowView: View {
                     .foregroundStyle(.orange)
             } else if let childCount {
                 Text(childCount, format: .number)
-                    .appFont(.caption2, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.tertiary)
-                    .monospacedDigit()
             }
         }
     }

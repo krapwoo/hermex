@@ -16,7 +16,7 @@ struct OnboardingFeaturesPage: View {
             VStack(spacing: dynamicTypeSize.isAccessibilitySize ? 28 : 36) {
                 VStack(spacing: HermesSpacing.s12) {
                     Text("What you get")
-                        .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 26 : 28, weight: .bold))
+                        .appFont(.title)
                         .foregroundStyle(.white)
 
                     Text("Your Hermes agent, reachable from iPhone over Tailscale.")
@@ -64,7 +64,7 @@ struct OnboardingFeatureRow: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(title)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
 

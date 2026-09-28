@@ -11,7 +11,7 @@ struct ChatActiveRunStatusView: View {
             progressIndicator
 
             Text(presentation.label)
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 .minimumScaleFactor(0.88)

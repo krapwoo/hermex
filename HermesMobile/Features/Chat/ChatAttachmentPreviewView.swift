@@ -175,7 +175,7 @@ struct ChatAttachmentPreviewView: View {
                 fileHeader
 
                 Text(file.content ?? "")
-                    .appFont(.body, design: .monospaced)
+                    .appFont(.mono14)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -212,8 +212,7 @@ struct ChatAttachmentPreviewView: View {
             VStack(spacing: HermesSpacing.s8) {
                 Text(message)
                 Text(item.displayPath)
-                    .appFont(.footnote)
-                    .fontDesign(.monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
             }
@@ -223,8 +222,7 @@ struct ChatAttachmentPreviewView: View {
     private var fileHeader: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(item.displayPath)
-                .appFont(.caption)
-                .fontDesign(.monospaced)
+                .appFont(.mono12)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
 

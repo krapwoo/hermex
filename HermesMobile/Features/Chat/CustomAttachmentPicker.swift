@@ -650,7 +650,7 @@ struct HermexAttachmentPickerView: View {
                             Text(confirmLabel)
                         }
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(model.selectionCount == 0 ? .white.opacity(0.58) : .white)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 46)
@@ -668,7 +668,7 @@ struct HermexAttachmentPickerView: View {
 
             if model.hasLimitedAccess {
                 Button("Manage Access", action: openSettings)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .frame(height: 36)
@@ -732,9 +732,9 @@ struct HermexAttachmentPickerView: View {
         case .denied:
             placeholder {
                 Image(systemName: "photo.badge.exclamationmark").font(.title2)
-                Text("Photo access is off").font(.headline)
+                Text("Photo access is off").appFont(.headline)
                 Text("Allow access in Settings to browse recent photos here.")
-                    .font(.caption)
+                    .appFont(.caption)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
                 Button("Open Settings", action: openSettings)
@@ -754,8 +754,7 @@ struct HermexAttachmentPickerView: View {
                 .overlay(alignment: .bottomTrailing) {
                     if let order {
                         Text("\(order)")
-                            .font(.caption.weight(.bold))
-                            .monospacedDigit()
+                            .appFont(.captionSemibold)
                             .foregroundStyle(.white)
                             .frame(width: 24, height: 24)
                             .background(Color.accentColor, in: Circle())
@@ -1011,7 +1010,7 @@ struct HermexAttachmentMenuRow: View {
                     .frame(width: 42, height: 42)
                     .background(.primary.opacity(0.08), in: Circle())
                 title
-                    .font(.title3.weight(.regular))
+                    .appFont(.title3)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 0)
             }

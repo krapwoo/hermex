@@ -47,7 +47,7 @@ import SwiftUI
         let toasted = list
             .overlay(alignment: .bottom) {
                 if let toast {
-                    Text(toast).font(.callout).padding()
+                    Text(toast).appFont(.body).padding()
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                         .padding().accessibilityAddTraits(.updatesFrequently)
                 }
@@ -216,7 +216,7 @@ import SwiftUI
                     Group {
                         if let name = section.name { Text(verbatim: name) } else { Text("Other chats") }
                     }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                    .appFont(.subheadlineSemibold).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.tail).textCase(nil)
                     .accessibilityAddTraits(.isHeader)
                 }
@@ -611,7 +611,7 @@ private struct BotHeroTile: View {
                 }
                 if let status {
                     // Two lines, so a long translation at a large size still reads whole.
-                    BotLiveStatusLabel(status: status, font: .footnote.weight(.semibold))
+                    BotLiveStatusLabel(status: status, font: .captionSemibold)
                         .lineLimit(2).multilineTextAlignment(.center)
                 }
             }
@@ -629,7 +629,7 @@ private struct BotRoomHeroTile: View {
     var body: some View {
         VStack(spacing: 14) {
             BotRoomAvatars(room: room, roster: roster, avatars: avatars, size: 60).frame(height: 84)
-            Text(room.name).font(.body).foregroundStyle(.secondary).lineLimit(1)
+            Text(room.name).appFont(.body).foregroundStyle(.secondary).lineLimit(1)
         }
         .frame(maxWidth: 132)
         .accessibilityElement(children: .combine)
@@ -684,9 +684,9 @@ private struct BotInboxRow: View {
     }
 
     @ViewBuilder private var nameAndChip: some View {
-        Text(profile.name).font(.headline).lineLimit(1)
+        Text(profile.name).appFont(.headline).lineLimit(1)
         if let chip {
-            Text(chip).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+            Text(chip).appFont(.footnote).foregroundStyle(.secondary).lineLimit(1)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 6))
                 .layoutPriority(-1)
@@ -697,10 +697,10 @@ private struct BotInboxRow: View {
     /// otherwise the last activity.
     @ViewBuilder private var trailingSlot: some View {
         if let status {
-            BotLiveStatusLabel(status: status, font: .subheadline.weight(.semibold))
+            BotLiveStatusLabel(status: status, font: .subheadlineSemibold)
                 .fixedSize(horizontal: !dynamicTypeSize.isAccessibilitySize, vertical: false)
         } else if let date = profile.lastActive {
-            Text(BotInboxDateLabel.text(for: date)).font(.subheadline).foregroundStyle(.secondary)
+            Text(BotInboxDateLabel.text(for: date)).appFont(.subheadline).foregroundStyle(.secondary)
         }
     }
 }
@@ -710,11 +710,11 @@ private struct BotInboxRow: View {
 /// animates; the word carries the meaning without the color.
 private struct BotLiveStatusLabel: View {
     let status: BotLiveStatus
-    let font: Font
+    let font: AppFont.Role
     var body: some View {
         switch status {
-        case .working: Text("Working").font(font).foregroundStyle(Color("AttentionWorking"))
-        case .waiting: Text("Waiting for you").font(font).foregroundStyle(Color("AttentionApproval"))
+        case .working: Text("Working").appFont(font).foregroundStyle(Color("AttentionWorking"))
+        case .waiting: Text("Waiting for you").appFont(font).foregroundStyle(Color("AttentionApproval"))
         }
     }
 }
@@ -727,11 +727,11 @@ private struct BotInboxSkeletonRow: View {
             Circle().fill(.fill.tertiary).frame(width: 44, height: 44)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(verbatim: "Chief of Staff").font(.headline)
+                    Text(verbatim: "Chief of Staff").appFont(.headline)
                     Spacer(minLength: 8)
-                    Text(verbatim: "Saturday").font(.subheadline)
+                    Text(verbatim: "Saturday").appFont(.subheadline)
                 }
-                Text(verbatim: "Reading the latest conversation").font(.body)
+                Text(verbatim: "Reading the latest conversation").appFont(.body)
             }
             .redacted(reason: .placeholder)
         }

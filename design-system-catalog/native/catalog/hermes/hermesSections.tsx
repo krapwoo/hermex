@@ -497,7 +497,7 @@ function HermesFontGallery() {
       <VariantGroup name="Typeface identity" desc="San Francisco (system default), plus a monospaced design for code/log content" align="left">
         <Text style={recon.note}>No custom typeface is used anywhere in this surface.</Text>
       </VariantGroup>
-      <VariantGroup name="Weight scale" desc="Regular/bold defaults, with medium/semibold reserved as documented exceptions" align="left">
+      <VariantGroup name="Weight scale" desc="Each role owns one fixed weight; callers choose a named role and never override weight directly" align="left">
         <TypeScaleGallery
           steps={HERMES_FONT_WEIGHT_STEPS}
           sampleStyle={(step) => HERMES_FONT_WEIGHT_SAMPLE_STYLE[step]}
@@ -876,7 +876,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'Every role resolves through the adopted .appFont(role:) SwiftUI modifier (or the equivalent UIKit resolver), anchored on AppFont.Role\'s own base size and Font.TextStyle.',
           'Named emphasis roles are headlineSemibold, subheadlineSemibold, and captionSemibold; mono14 is 14pt monospaced and mono12 is 12pt monospaced.',
-          'Sessions uses label for main-menu rows and section headers, body for session titles, and the named semibold roles for compact status emphasis.',
+          'Sessions uses label for main-menu rows, section headers, and session titles, and the named semibold roles for compact status emphasis.',
         ],
       },
     },
@@ -884,7 +884,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Hermex Font',
     description:
-      'Hermex uses San Francisco. Text roles choose regular or bold by default, with medium and semibold reserved for specific emphasis.',
+      'Hermex uses San Francisco. Callers choose a named Hermex Typography role; the role alone decides weight and design, so a caller never passes weight or design directly.',
     tokenGallery: true,
     fullWidthLabel: 'Tokens',
     render: () => <HermesFontGallery />,
@@ -894,7 +894,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: ADOPTED_STATUS,
         sourcePaths: ['HermesMobile/Config/AppFont.swift'],
         notes: [
-          '55 documented call sites across 21 files override a role\'s default weight with an explicit medium/semibold/bold, audited by scripts/hermex_typography_weight_exception_audit.py.',
+          '.appFont(role:) takes only a named AppFont.Role (and, on the Text overload, a required dynamicTypeSize); it no longer accepts weight or design arguments, and scripts/hermex_design_system_adoption_audit.py fails closed on any customized call.',
         ],
       },
     },

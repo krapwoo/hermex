@@ -226,7 +226,7 @@ private extension TranscriptLinkPreviewView {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(displayTitle)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .lineLimit(2)
 
                 Text(displaySubtitle)

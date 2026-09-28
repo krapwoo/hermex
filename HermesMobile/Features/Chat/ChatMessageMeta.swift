@@ -95,8 +95,7 @@ struct ChatMessageMetaRow<Accessory: View>: View {
     private var time: some View {
         if let timeText {
             Text(timeText)
-                .monospacedDigit()
-                .appFont(.caption, weight: .medium)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
         }
     }
@@ -322,7 +321,7 @@ struct TranscriptTimeSeparator: View {
             HStack(spacing: 8) {
                 hairline
                 Text(text)
-                    .font(AppFont.caption(weight: .medium))
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .layoutPriority(1)

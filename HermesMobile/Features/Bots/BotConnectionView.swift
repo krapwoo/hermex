@@ -16,7 +16,7 @@ import Observation
         Form {
             if let saved = setup.saved { statusSection(saved) }
             Section {
-                Text("Connect to your dashboard").font(.title3.bold())
+                Text("Connect to your dashboard").appFont(.title3)
                 Text("Use your Hermes dashboard sign-in.").foregroundStyle(.secondary)
             }
             .listRowBackground(Color.clear)
@@ -55,7 +55,7 @@ import Observation
             }
             Section("Need your connection details?") {
                 Text("Copy a prompt for your Hermes agent. It will check your setup and help you find the right address and sign-in details.")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .appFont(.subheadline).foregroundStyle(.secondary)
                 Button(copiedPrompt ? String(localized: "Copied") : String(localized: "Copy setup prompt"), systemImage: "doc.on.doc") {
                     UIPasteboard.general.string = BotConnectionSetup.prompt
                     copiedPrompt = true
@@ -140,7 +140,7 @@ import Observation
     private func statusRow(_ label: LocalizedStringKey, value: String, note: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             LabeledContent(label, value: value)
-            if let note { Text(note).font(.footnote).foregroundStyle(.secondary) }
+            if let note { Text(note).appFont(.footnote).foregroundStyle(.secondary) }
         }
         .accessibilityElement(children: .combine)
     }
@@ -399,13 +399,13 @@ struct BotConnectionWelcomeView: View {
             }
             .accessibilityHidden(true)
             VStack(spacing: 12) {
-                Text("Your bots, together.").font(.title2.bold())
+                Text("Your bots, together.").appFont(.title2)
                 Text("Bots live in your Hermes dashboard. WebUI uses a separate connection, so sign in once here to bring them to Hermex.")
                     .foregroundStyle(.secondary)
             }
             .multilineTextAlignment(.center)
             Button("Connect", action: onConnect)
-                .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 14)
+                .appFont(.headline).frame(maxWidth: .infinity).padding(.vertical, 14)
                 .foregroundStyle(Color(uiColor: .systemBackground))
                 .background(Color(uiColor: .label), in: Capsule()).buttonStyle(.plain)
         }

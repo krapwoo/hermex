@@ -119,7 +119,7 @@ struct GitWorkspaceView: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             HStack {
                 Text("\(status.changedCount) files changed")
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                 Spacer()
                 DiffCountsLabel(additions: status.totalAdditions, deletions: status.totalDeletions)
             }
@@ -127,7 +127,7 @@ struct GitWorkspaceView: View {
             HStack(spacing: HermesSpacing.s8) {
                 Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
                 Text(status.branch ?? "HEAD")
-                    .appFont(.subheadline, design: .monospaced)
+                    .appFont(.mono14)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
@@ -169,9 +169,8 @@ struct GitAheadBehindBadges: View {
     var body: some View {
         if ahead > 0 || behind > 0 {
             Text(verbatim: "↑\(ahead) ↓\(behind)")
-                .appFont(.caption, weight: .semibold, design: .monospaced)
+                .appFont(.mono12)
                 .foregroundStyle(.secondary)
-                .monospacedDigit()
         }
     }
 }
@@ -185,8 +184,7 @@ struct DiffCountsLabel: View {
             Text(verbatim: "+\(additions)").foregroundStyle(.green)
             Text(verbatim: "−\(deletions)").foregroundStyle(.red)
         }
-        .appFont(.caption, weight: .semibold, design: .monospaced)
-        .monospacedDigit()
+        .appFont(.mono12)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             Text("\(additions) added") + Text(verbatim: ", ") + Text("\(deletions) removed")
@@ -201,12 +199,12 @@ struct GitFileCard: View {
         HStack(spacing: HermesSpacing.s12) {
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(file.fileName)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let parent = file.parentDirectory {
                     Text(parent)
-                        .appFont(.caption2, design: .monospaced)
+                        .appFont(.mono12)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)

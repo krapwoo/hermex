@@ -44,7 +44,7 @@ struct GitInlineCommitButton: View {
                 .frame(width: 18, height: 18)
 
                 Text(title)
-                    .appFont(.subheadline, design: .monospaced)
+                    .appFont(.mono14)
                     .lineLimit(1)
             }
             .foregroundStyle(.secondary)

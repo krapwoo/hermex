@@ -35,7 +35,7 @@ struct SectionCard<Content: View, Footer: View>: View {
             if let title {
                 Text(title)
                     .textCase(.uppercase)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, HermesSpacing.s4)
                     .padding(.bottom, HermesSpacing.s8)

@@ -87,6 +87,181 @@ CONTENT_UNAVAILABLE_LEGACY_BASELINE = {
 }
 
 
+# The #607 correction retired the file/count `DIRECT_FONT_BASELINE` allowlist: a
+# textual direct-font call could replace an allowed icon-only Image call at the same
+# per-file count and still pass. Direct `.font(...)` is now classified by the identity
+# of the expression that owns the modifier chain (see `classify_font_call_owner`
+# below) and is permitted only when that owner is an `Image(...)` construction — SF
+# Symbol/icon sizing. Every other owner (`Text`, `Label`, `Button`, a stack/container,
+# or a generic `content` slot) fails unconditionally; there is no baseline to raise.
+DIRECT_FONT_CALL = re.compile(r"\.font\(")
+ALLOWED_DIRECT_FONT_OWNER = "Image"
+_IDENTIFIER_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+)
+
+
+def _skip_whitespace_backward(source: str, index: int) -> int:
+    """Skip whitespace and whole-line `//` comments walking backward, so an
+    explanatory comment between two modifier-chain hops (e.g. an icon-sizing
+    exception note above `.font(...)`) never breaks owner classification."""
+    while True:
+        while index >= 0 and source[index] in " \t\r\n":
+            index -= 1
+        if index < 0:
+            return index
+        line_start = source.rfind("\n", 0, index + 1) + 1
+        if source[line_start : index + 1].lstrip().startswith("//"):
+            index = line_start - 1
+            continue
+        return index
+
+
+def _find_matching_open(source: str, close_index: int, open_char: str, close_char: str):
+    depth = 0
+    index = close_index
+    while index >= 0:
+        character = source[index]
+        if character == close_char:
+            depth += 1
+        elif character == open_char:
+            depth -= 1
+            if depth == 0:
+                return index
+        index -= 1
+    return None
+
+
+def classify_font_call_owner(source: str, dot_index: int):
+    """Classify the root expression that owns the postfix modifier chain ending in
+    the `.font(` call whose leading `.` is at `dot_index`.
+
+    Walks backward across the chain one `.segment(...)`/`.segment`/trailing-closure
+    hop at a time until it reaches the chain's root: either a call (`Image(...)`,
+    `Text(...)`, `Button(...) { ... }`, a stack, ...) or a bare identifier (e.g. a
+    generic `content` slot). Returns the root's identifier name, or `None` when it
+    cannot be classified.
+    """
+    position = dot_index
+    while True:
+        index = _skip_whitespace_backward(source, position - 1)
+        if index < 0:
+            return None
+        character = source[index]
+
+        if character == ")":
+            open_paren = _find_matching_open(source, index, "(", ")")
+            if open_paren is None:
+                return None
+            before_paren = _skip_whitespace_backward(source, open_paren - 1)
+            ident_end = before_paren + 1
+            cursor = before_paren
+            while cursor >= 0 and source[cursor] in _IDENTIFIER_CHARS:
+                cursor -= 1
+            ident_start = cursor + 1
+            identifier = source[ident_start:ident_end]
+            before_identifier = _skip_whitespace_backward(source, ident_start - 1)
+            if before_identifier >= 0 and source[before_identifier] == ".":
+                position = before_identifier
+                continue
+            return identifier or None
+
+        if character == "}":
+            open_brace = _find_matching_open(source, index, "{", "}")
+            if open_brace is None:
+                return None
+            before_brace = _skip_whitespace_backward(source, open_brace - 1)
+            if before_brace >= 0 and source[before_brace] == ":":
+                # An argument-label-style trailing closure, e.g. `label: { ... }`;
+                # skip the label identifier too and keep peeling backward.
+                before_colon = _skip_whitespace_backward(source, before_brace - 1)
+                cursor = before_colon
+                while cursor >= 0 and source[cursor] in _IDENTIFIER_CHARS:
+                    cursor -= 1
+                before_brace = cursor
+            position = before_brace + 1
+            continue
+
+        if character in _IDENTIFIER_CHARS:
+            cursor = index
+            while cursor >= 0 and source[cursor] in _IDENTIFIER_CHARS:
+                cursor -= 1
+            ident_start = cursor + 1
+            identifier = source[ident_start : index + 1]
+            before_identifier = _skip_whitespace_backward(source, ident_start - 1)
+            if before_identifier >= 0 and source[before_identifier] == ".":
+                position = before_identifier
+                continue
+            return identifier or None
+
+        return None
+
+
+def iter_balanced_calls_with_start(source: str, prefix: str):
+    """Like `iter_balanced_calls`, but also yields the start index of each call."""
+    search_from = 0
+    while True:
+        start = source.find(prefix, search_from)
+        if start == -1:
+            return
+        depth = 0
+        end = None
+        for index in range(start + len(prefix) - 1, len(source)):
+            character = source[index]
+            if character == "(":
+                depth += 1
+            elif character == ")":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+        if end is None:
+            return
+        yield start, source[start : end + 1]
+        search_from = end + 1
+
+
+# Customization modifiers that #607 retires everywhere in production content: Hermex
+# Typography roles own weight, design, and case/spacing treatment, so none of these
+# ad hoc SwiftUI modifiers may appear outside `AppFont.swift` itself. This is not a
+# role-preserving exception list — `.monospacedDigit()` included: remove the modifier
+# and keep the closest existing named role, never re-add a customization escape hatch.
+RESIDUAL_TYPOGRAPHY_CUSTOMIZATION_MODIFIERS = (
+    (re.compile(r"\.fontWeight\("), "fontWeight"),
+    (re.compile(r"\.fontDesign\("), "fontDesign"),
+    (re.compile(r"\.bold\(\)"), "bold"),
+    (re.compile(r"\.italic\(\)"), "italic"),
+    (re.compile(r"\.monospaced\(\)"), "monospaced"),
+    (re.compile(r"\.monospacedDigit\(\)"), "monospacedDigit"),
+    (re.compile(r"\.kerning\("), "kerning"),
+    (re.compile(r"\.tracking\("), "tracking"),
+)
+
+
+def iter_balanced_calls(source: str, prefix: str):
+    """Yield the full text of each balanced `prefix...)` call in source."""
+    search_from = 0
+    while True:
+        start = source.find(prefix, search_from)
+        if start == -1:
+            return
+        depth = 0
+        end = None
+        for index in range(start + len(prefix) - 1, len(source)):
+            character = source[index]
+            if character == "(":
+                depth += 1
+            elif character == ")":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+        if end is None:
+            return
+        yield source[start : end + 1]
+        search_from = end + 1
+
+
 def extract_named_block(source: str, declaration: str):
     start = source.find(declaration)
     if start == -1:
@@ -184,9 +359,13 @@ def audit_contract(files: Mapping[str, str]):
 
     require(
         SESSION_ITEM_PATH,
-        ".appFont(.body, weight: .semibold)",
-        "Session title must use the 16-point Hermex body role with semibold emphasis",
+        ".appFont(.label)",
+        "Session title must use the named Hermex label role (16-point, semibold)",
     )
+    if ".appFont(.label, weight:" in source(SESSION_ITEM_PATH):
+        failures.append(
+            f"{SESSION_ITEM_PATH}: Session title must not customize `.appFont(.label)` with `weight:`"
+        )
     require(
         SESSION_ITEM_PATH,
         ".appFont(.captionSemibold)",
@@ -321,6 +500,65 @@ def audit_contract(files: Mapping[str, str]):
                 "the new site to HermesContentUnavailable, or raise the owned baseline (with a removal "
                 "condition) in scripts/hermex_design_system_adoption_audit.py"
             )
+
+    # --- #607 role-only typography enforcement ----------------------------------------------
+
+    for path, text in files.items():
+        if not (path.startswith("HermesMobile/") and path.endswith(".swift")):
+            continue
+        for call in iter_balanced_calls(text, ".appFont("):
+            if "weight:" in call:
+                failures.append(
+                    f"{path}: `.appFont` call customizes `weight:`; callers must use a named "
+                    f"role only ({call.strip()})"
+                )
+            if "design:" in call:
+                failures.append(
+                    f"{path}: `.appFont` call customizes `design:`; callers must use a named "
+                    f"role only ({call.strip()})"
+                )
+
+    for path, text in files.items():
+        if not (path.startswith("HermesMobile/") and path.endswith(".swift")):
+            continue
+        if path == APP_FONT_PATH:
+            continue
+        for start, call_text in iter_balanced_calls_with_start(text, ".font("):
+            owner = classify_font_call_owner(text, start)
+            if owner == ALLOWED_DIRECT_FONT_OWNER:
+                continue
+            owner_description = f"`{owner}`" if owner else "an unclassified expression"
+            failures.append(
+                f"{path}: direct `.font(...)` call is chained on {owner_description}, not "
+                "`Image(...)`; textual and container content must use `.appFont(role)` "
+                f"instead ({call_text.strip()})"
+            )
+
+    # --- #607 correction: residual typography customization modifiers ----------------------
+
+    for path, text in files.items():
+        if not (path.startswith("HermesMobile/") and path.endswith(".swift")):
+            continue
+        if path == APP_FONT_PATH:
+            continue
+        for pattern, name in RESIDUAL_TYPOGRAPHY_CUSTOMIZATION_MODIFIERS:
+            for _ in pattern.finditer(text):
+                failures.append(
+                    f"{path}: `.{name}` customizes typography outside a named Hermex "
+                    "Typography role; remove it and use the closest existing `.appFont(role)`"
+                )
+
+    app_font_source = source(APP_FONT_PATH)
+    if re.search(r"static func scaledFont\([^)]*weight:", app_font_source):
+        failures.append(
+            f"{APP_FONT_PATH}: `scaledFont(role:weight:...)` must not accept a caller-supplied "
+            "weight; the role must own UIKit weight too"
+        )
+    require(
+        APP_FONT_PATH,
+        "func scaledFont(role: Role, traitCollection:",
+        "scaledFont must be role-only (role-owned UIKit weight)",
+    )
 
     return failures
 

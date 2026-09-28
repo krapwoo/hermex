@@ -165,7 +165,6 @@ struct ComposerVoiceRecordingBar: View {
                 .opacity(isCancelArmed ? 0.4 : 1)
 
             Text(AudioDurationFormatter.string(from: elapsed))
-                .monospacedDigit()
                 .appFont(.body)
                 .foregroundStyle(.primary)
 

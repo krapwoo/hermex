@@ -41,7 +41,7 @@ struct BotCachedHistoryView: View {
                         } else {
                             VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                                 Text(message.role == "user" ? String(localized: "You") : profile.name)
-                                    .appFont(.subheadline, weight: .semibold).foregroundStyle(.secondary)
+                                    .appFont(.subheadlineSemibold).foregroundStyle(.secondary)
                                 Text(message.text).textSelection(.enabled)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)

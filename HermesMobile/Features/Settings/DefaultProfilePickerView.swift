@@ -118,7 +118,7 @@ struct DefaultProfilePickerView: View {
             showsCreateProfile = true
         } label: {
             Label("New Profile", systemImage: "plus")
-                .appFont(.body, weight: .semibold)
+                .appFont(.label)
                 .frame(maxWidth: .infinity, minHeight: ListItemMetrics.minHeight, alignment: .leading)
                 .contentShape(Rectangle())
         }

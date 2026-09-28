@@ -448,7 +448,7 @@ struct KanbanStatusFocusView: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(dispatchModeTitle(dispatch.mode))
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                 if let completedAt = dispatch.completedAt {
                     Text(completedAt, style: .time)
                         .appFont(.caption)
@@ -473,7 +473,7 @@ struct KanbanStatusFocusView: View {
                 } icon: {
                     Image(systemName: dispatchStatusIcon(dispatch))
                 }
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(dispatchStatusColor(dispatch))
             }
 
@@ -495,13 +495,13 @@ struct KanbanStatusFocusView: View {
                     Button("I Reviewed the Board") {
                         model.dismissDispatchResult()
                     }
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .frame(minHeight: 44)
                 }
                 Button("Refresh") {
                     Task { await model.refreshUncertainDispatchOutcome() }
                 }
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .frame(minHeight: 44)
             } else if dispatch.phase == .refused {
                 Text("The server refused this Dispatcher request. Hermex did not retry it.")
@@ -547,7 +547,7 @@ struct KanbanStatusFocusView: View {
         HStack(spacing: HermesSpacing.s4) {
             Text(label)
             Text(count.map(String.init) ?? String(localized: "Unknown"))
-                .fontWeight(.semibold)
+                .appFont(.captionSemibold)
         }
     }
 
@@ -634,7 +634,7 @@ struct KanbanStatusFocusView: View {
                     summary.needsAttention.isEmpty ? "Complete" : "Needs Attention",
                     systemImage: summary.needsAttention.isEmpty ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
                 )
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 Spacer()
                 Button("Dismiss") { model.dismissBulkActionSummary() }
                     .appFont(.footnote)
@@ -686,7 +686,7 @@ struct KanbanStatusFocusView: View {
                         bulkSummaryIsFocused = true
                     }
                 }
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .frame(minHeight: 44)
             }
         }
@@ -702,7 +702,7 @@ struct KanbanStatusFocusView: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             HStack {
                 Text(KanbanCountFormatter.cards(model.selectedCardCount))
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .accessibilityLabel(
                         Text(KanbanCountFormatter.cards(model.selectedCardCount))
                         + Text(", ")
@@ -711,7 +711,7 @@ struct KanbanStatusFocusView: View {
                 Spacer()
                 Button("Bulk Actions") { showsBulkActions = true }
                     .disabled(model.bulkActionsAvailability != .available)
-                    .fontWeight(.semibold)
+                    .appFont(.subheadlineSemibold)
                     .frame(minHeight: 44)
                 Button("Done") {
                     model.clearCardSelection()
@@ -764,12 +764,12 @@ struct KanbanStatusFocusView: View {
                 Button("Refresh") {
                     Task { await model.checkUncertainMutation(for: undo.card) }
                 }
-                .fontWeight(.semibold)
+                .appFont(.captionSemibold)
             } else {
                 Button(recoveryPhase == .failed ? "Try Again" : "Undo") {
                     Task { await model.undoArchive() }
                 }
-                .fontWeight(.semibold)
+                .appFont(.captionSemibold)
             }
         }
         .appFont(.footnote)
@@ -1419,7 +1419,7 @@ private struct KanbanBoardManagementView: View {
                         .appFont(.headline)
                     if let slug = board.slug {
                         Text(slug)
-                            .appFont(.caption, design: .monospaced)
+                            .appFont(.mono12)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -1852,13 +1852,13 @@ struct KanbanCardSummaryView: View {
             HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 if let priority = card.priority {
                     Text(verbatim: "P\(priority)")
-                        .appFont(.caption, weight: .semibold, design: .monospaced)
+                        .appFont(.mono12)
                         .padding(.horizontal, HermesSpacing.s8)
                         .padding(.vertical, HermesSpacing.s2)
                         .background(.secondary.opacity(0.12), in: Capsule())
                 }
                 Text(card.cardID ?? String(localized: "Unknown Card"))
-                    .appFont(.caption, design: .monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 4)
                 if let age = card.ageSeconds {
@@ -1866,7 +1866,7 @@ struct KanbanCardSummaryView: View {
                         Image(systemName: stalenessImage)
                             .frame(width: stalenessIconSlot)
                         Text(KanbanAgeFormatter.abbreviated(age))
-                            .monospaced()
+                            .appFont(.mono12)
                     }
                         .appFont(.caption)
                         .foregroundStyle(stalenessColor)

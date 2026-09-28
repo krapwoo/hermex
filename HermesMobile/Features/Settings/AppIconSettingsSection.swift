@@ -104,7 +104,7 @@ private struct AppIconDisclosureLabel: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("App Icon")
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
 
                 Text(selectedAppIcon.title)
@@ -131,7 +131,7 @@ private struct AppIconChoiceRow: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(icon.title)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
 
                 Text(icon.subtitle)

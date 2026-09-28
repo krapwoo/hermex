@@ -7,7 +7,7 @@ struct HeroBadge: View {
 
     var body: some View {
         Label(title, systemImage: systemImage)
-            .appFont(.caption, weight: .medium)
+            .appFont(.captionSemibold)
             .foregroundStyle(.white.opacity(0.68))
             .padding(.horizontal, HermesSpacing.s12)
             .padding(.vertical, HermesSpacing.s8)
@@ -27,7 +27,7 @@ struct SetupStepRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: HermesSpacing.s12) {
             Text(number)
-                .appFont(.caption, weight: .bold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.black)
                 .frame(width: 23, height: 23)
                 .background(Color(red: 1.0, green: 0.74, blue: 0.10), in: Circle())
@@ -35,7 +35,7 @@ struct SetupStepRow: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                 Text(title)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.white)
 
                 Text(subtitle)
@@ -89,7 +89,7 @@ struct OnboardingCommandPill: View {
                 .accessibilityLabel(didCopy ? String(localized: "Copied Web UI repository link") : String(localized: "Copy Web UI repository link"))
             }
         }
-        .appFont(.caption, weight: .medium, design: .monospaced)
+        .appFont(.mono12)
         .padding(.horizontal, HermesSpacing.s12)
         .padding(.vertical, HermesSpacing.s8)
         .background(
@@ -117,11 +117,11 @@ struct OnboardingField<Content: View>: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.white.opacity(0.5))
 
                 content
-                    .appFont(.body, weight: .medium)
+                    .appFont(.label)
                     .foregroundStyle(.white)
             }
         }
@@ -154,7 +154,7 @@ struct OnboardingStatusBanner: View {
             }
 
             Text(text)
-                .appFont(.footnote, weight: .medium)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.white.opacity(0.76))
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -172,7 +172,7 @@ struct OnboardingStatusBanner: View {
 struct OnboardingPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .appFont(.subheadline, weight: .semibold)
+            .appFont(.subheadlineSemibold)
             .foregroundStyle(.black)
             .lineLimit(1)
             .minimumScaleFactor(0.78)
@@ -210,12 +210,11 @@ struct OnboardingStepHeader: View {
 
             VStack(spacing: HermesSpacing.s12) {
                 Text("STEP \(stepNumber)")
-                    .appFont(.caption2, weight: .bold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(accent.opacity(0.8))
-                    .kerning(1.5)
 
                 Text(title)
-                    .font(.system(size: 28, weight: .bold))
+                    .appFont(.title)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -241,7 +240,7 @@ struct OnboardingAgentPromptCard: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             ScrollView(.vertical, showsIndicators: true) {
                 Text(prompt)
-                    .appFont(.footnote, design: .monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.white.opacity(0.82))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
@@ -257,7 +256,7 @@ struct OnboardingAgentPromptCard: View {
                 }
             } label: {
                 Label(didCopyRecently ? String(localized: "Copied") : String(localized: "Copy prompt"), systemImage: didCopyRecently ? "checkmark" : "doc.on.doc")
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(OnboardingPrimaryButtonStyle())
@@ -298,7 +297,7 @@ struct OnboardingPageIndicator: View {
 struct OnboardingSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .appFont(.subheadline, weight: .semibold)
+            .appFont(.subheadlineSemibold)
             .foregroundStyle(.white.opacity(0.84))
             .lineLimit(1)
             .minimumScaleFactor(0.78)

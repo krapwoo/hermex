@@ -123,7 +123,7 @@ private struct SkillCategorySection: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text(category)
                 .textCase(.uppercase)
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, HermesSpacing.s4)
 
@@ -187,7 +187,7 @@ private struct SkillRow: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(displayName)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
@@ -394,7 +394,7 @@ private struct SkillLinkedFilesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             Text("Linked Files")
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, HermesSpacing.screenHorizontal)
 

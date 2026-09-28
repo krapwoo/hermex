@@ -225,7 +225,6 @@ struct SessionListItem: View {
     private func attentionStateText(_ state: SessionRowAttentionState) -> some View {
         Text(state.title)
             .appFont(.captionSemibold)
-            .monospacedDigit()
             .foregroundStyle(state.tint)
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
@@ -235,7 +234,7 @@ struct SessionListItem: View {
     private var titleAndPin: some View {
         HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             Text(displayTitle)
-                .appFont(.body, weight: .semibold)
+                .appFont(.label)
                 .foregroundStyle(.primary)
                 .lineLimit(titleLineLimit)
                 .truncationMode(.tail)

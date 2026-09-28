@@ -76,7 +76,7 @@ struct SourceFileSurface: View {
         HStack {
             Spacer()
             Text("Plain text")
-                .appFont(.caption2, weight: .medium)
+                .appFont(.captionSemibold)
                 .textCase(.uppercase)
                 .foregroundStyle(.secondary)
         }
@@ -88,7 +88,7 @@ struct SourceFileSurface: View {
     private func selectionBar(count: Int) -> some View {
         HStack(spacing: HermesSpacing.s12) {
             Text(count == 1 ? String(localized: "1 line selected") : String(localized: "\(count) lines selected"))
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
             Button("Clear") { selection.clear() }
@@ -97,7 +97,7 @@ struct SourceFileSurface: View {
             // draws white on white.
             Button(action: copySelection) {
                 Text("Copy")
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(Color(.systemBackground))
             }
             .buttonStyle(.borderedProminent)

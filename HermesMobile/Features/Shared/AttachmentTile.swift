@@ -24,7 +24,7 @@ struct AttachmentExtensionLabel: View {
 
     var body: some View {
         Text(fileType.extensionLabel)
-            .appFont(.caption2, weight: .bold)
+            .appFont(.captionSemibold)
             .foregroundStyle(fileType.tintColor)
             .lineLimit(1)
     }

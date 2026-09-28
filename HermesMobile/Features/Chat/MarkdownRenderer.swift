@@ -473,7 +473,7 @@ private struct ChatCodeBlock: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s0) {
             HStack {
                 Text(displayLanguage)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
 
                 if let diff {
                     DiffCountsLabel(additions: diff.additions, deletions: diff.deletions)
@@ -587,7 +587,7 @@ private struct ChatCodeBlock: View {
                     Image(systemName: showsAllDiffLines ? "chevron.up" : "chevron.down")
                         .accessibilityHidden(true)
                 }
-                .font(.subheadline.weight(.semibold))
+                .appFont(.subheadlineSemibold)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 11)
                 .padding(.bottom, 13)
@@ -720,7 +720,7 @@ private struct PlainCodeBlockText: View {
                 }
             }
         }
-        .font(.system(size: 13, weight: .regular, design: .monospaced))
+        .appFont(.mono14)
         .foregroundStyle(.primary)
     }
 

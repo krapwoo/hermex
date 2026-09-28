@@ -20,7 +20,7 @@ struct OnboardingTailscalePage: View {
 
                     Button(action: openTailscaleInAppStore) {
                         Label("Get Tailscale on the App Store", systemImage: "arrow.up.forward.square")
-                            .appFont(.subheadline, weight: .semibold)
+                            .appFont(.subheadlineSemibold)
                             .foregroundStyle(Color(red: 1.0, green: 0.74, blue: 0.10))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, HermesSpacing.s16)
@@ -52,7 +52,7 @@ struct OnboardingTailscalePage: View {
     private func tailscaleStep(number: String, text: String) -> some View {
         HStack(alignment: .top, spacing: HermesSpacing.s12) {
             Text(number)
-                .appFont(.caption, weight: .bold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.black)
                 .frame(width: 23, height: 23)
                 .background(Color(red: 1.0, green: 0.74, blue: 0.10), in: Circle())

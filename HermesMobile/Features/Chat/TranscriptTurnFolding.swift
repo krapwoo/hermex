@@ -241,8 +241,7 @@ struct TranscriptTurnFoldRowView: View {
         Button(action: onToggle) {
             HStack(spacing: HermesSpacing.s8) {
                 Text(fold.label.title)
-                    .appFont(.subheadline, weight: .medium)
-                    .monospacedDigit()
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 

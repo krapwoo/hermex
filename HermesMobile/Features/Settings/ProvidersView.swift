@@ -111,7 +111,7 @@ struct ProvidersView: View {
                     .accessibilityHidden(true)
 
                 Text("Couldn't refresh. Showing previously loaded providers.")
-                    .appFont(.footnote, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
             }
@@ -182,14 +182,14 @@ private struct ProviderDisclosure: View {
                 }
 
                 Text(ProvidersViewModel.displayName(for: provider))
-                    .font(.system(size: 14, weight: .semibold))
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .textCase(.uppercase)
 
                 if let count = ProvidersViewModel.modelCountLabel(for: provider) {
                     Text(verbatim: count)
-                        .font(.system(size: 12, weight: .medium))
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.secondary)
                         .accessibilityLabel(modelCountAccessibilityLabel)
                 }
@@ -244,7 +244,7 @@ private struct ProviderDisclosure: View {
 
                 if isActive {
                     Text("Active")
-                        .appFont(.caption2, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .padding(.horizontal, HermesSpacing.s8)
                         .padding(.vertical, HermesSpacing.s4)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -255,7 +255,7 @@ private struct ProviderDisclosure: View {
                 if let badge {
                     // Technical token (env / OAuth / config) — deliberately not localized.
                     Text(verbatim: badge)
-                        .appFont(.caption2, weight: .medium)
+                        .appFont(.captionSemibold)
                         .padding(.horizontal, HermesSpacing.s8)
                         .padding(.vertical, HermesSpacing.s4)
                         .background(Capsule().fill(Color(.tertiarySystemFill)))

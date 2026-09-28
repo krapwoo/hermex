@@ -22,7 +22,7 @@ struct BotSlashAutocompleteView: View {
                                 .foregroundStyle(Color.accentColor)
                                 .accessibilityHidden(true)
                             Text(verbatim: "/" + skill.name)
-                                .appFont(.subheadline, weight: .semibold, design: .monospaced)
+                                .appFont(.mono14)
                                 .foregroundStyle(.primary).lineLimit(1).layoutPriority(2)
                             if let category = skill.category {
                                 Text(verbatim: category)

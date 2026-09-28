@@ -21,6 +21,7 @@ USAGE_CHART_DATA_PATH = "HermesMobile/Features/Insights/UsageChartData.swift"
 USAGE_CHART_CARD_PATH = "HermesMobile/Features/Insights/UsageChartCard.swift"
 HERMES_SPACING_PATH = "HermesMobile/Config/HermesSpacing.swift"
 CONTENT_UNAVAILABLE_PATH = "HermesMobile/Features/Shared/HermesContentUnavailable.swift"
+DIRECT_FONT_ICON_ONLY_PATH = "HermesMobile/Features/Bots/BotActivityViews.swift"
 
 
 def passing_files():
@@ -43,6 +44,7 @@ case subheadlineSemibold
 case captionSemibold
 case mono14
 case mono12
+static func scaledFont(role: Role, traitCollection: UITraitCollection = .current) -> UIFont {
 """,
         CARD_PATH: """
 struct HermesCard<Content: View>: View {
@@ -74,7 +76,7 @@ struct SidebarDisclosureButton: View {
 """,
         SESSION_ITEM_PATH: """
 Text(title)
-    .appFont(.body, weight: .semibold)
+    .appFont(.label)
 Text(attentionStateText)
     .appFont(.captionSemibold)
 """,
@@ -190,6 +192,15 @@ struct HermesContentUnavailable: View {
         case error
         case unavailable
         case custom
+    }
+}
+""",
+        DIRECT_FONT_ICON_ONLY_PATH: """
+struct BotActivityViews: View {
+    var body: some View {
+        Image(systemName: "checklist")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.secondary)
     }
 }
 """,
@@ -404,6 +415,308 @@ struct NewFeatureView: View {
         failures = audit_contract(files)
 
         self.assertFalse(any("SomeSearchSheet.swift" in failure for failure in failures))
+
+    # MARK: - #607 role-only typography enforcement
+
+    def test_appfont_weight_customization_is_rejected(self):
+        files = passing_files()
+        files[SESSION_ITEM_PATH] = files[SESSION_ITEM_PATH].replace(
+            ".appFont(.label)", ".appFont(.label, weight: .bold)"
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(any("weight:" in failure and SESSION_ITEM_PATH in failure for failure in failures))
+
+    def test_appfont_design_customization_is_rejected(self):
+        files = passing_files()
+        files[SESSION_ITEM_PATH] = files[SESSION_ITEM_PATH].replace(
+            ".appFont(.captionSemibold)", ".appFont(.captionSemibold, design: .monospaced)"
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(any("design:" in failure and SESSION_ITEM_PATH in failure for failure in failures))
+
+    def test_direct_font_on_new_textual_content_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureBanner.swift"] = """
+struct NewFeatureBanner: View {
+    var body: some View {
+        Text("New feature").font(.headline)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                "NewFeatureBanner.swift" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_icon_only_image_font_is_allowed(self):
+        files = passing_files()
+
+        failures = audit_contract(files)
+
+        self.assertFalse(any(DIRECT_FONT_ICON_ONLY_PATH in failure for failure in failures))
+
+    def test_multiline_icon_only_image_font_chain_is_allowed(self):
+        files = passing_files()
+        files[DIRECT_FONT_ICON_ONLY_PATH] = """
+struct BotActivityViews: View {
+    var body: some View {
+        Image(systemName: "checklist")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 24, height: 24)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertFalse(any(DIRECT_FONT_ICON_ONLY_PATH in failure for failure in failures))
+
+    def test_new_direct_font_call_on_a_stray_text_is_rejected(self):
+        files = passing_files()
+        files[DIRECT_FONT_ICON_ONLY_PATH] += '\nText("stray").font(.body)'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                DIRECT_FONT_ICON_ONLY_PATH in failure and "Text" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_direct_font_on_label_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureLabel.swift"] = """
+struct NewFeatureLabel: View {
+    var body: some View {
+        Label("Settings", systemImage: "gear")
+            .labelStyle(.iconOnly)
+            .font(.body)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                "NewFeatureLabel.swift" in failure and "Label" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_direct_font_on_string_button_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureCloseButton.swift"] = """
+struct NewFeatureCloseButton: View {
+    var body: some View {
+        Button("Close search", systemImage: "xmark") { dismiss() }
+            .labelStyle(.iconOnly)
+            .font(.title3)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                "NewFeatureCloseButton.swift" in failure and "Button" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_direct_font_on_stack_container_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureCodeBlock.swift"] = """
+struct NewFeatureCodeBlock: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(lines) { line in
+                rowText(for: line)
+            }
+        }
+        .font(.system(size: 13, weight: .regular, design: .monospaced))
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                "NewFeatureCodeBlock.swift" in failure and "VStack" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_direct_font_on_generic_content_container_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureSlot.swift"] = """
+struct NewFeatureSlot<Content: View>: View {
+    private let content: Content
+
+    var body: some View {
+        content
+            .labelStyle(.iconOnly)
+            .font(.body)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                "NewFeatureSlot.swift" in failure and "content" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_textual_font_call_replacing_an_allowed_image_font_call_at_the_same_count_is_rejected(self):
+        # Regression guard for the #607 controller finding: a file/count baseline could not tell a
+        # textual direct-font call from an icon-only Image one at the same total `.font` count.
+        files = passing_files()
+        files[DIRECT_FONT_ICON_ONLY_PATH] = """
+struct BotActivityViews: View {
+    var body: some View {
+        Text("checklist")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.secondary)
+    }
+}
+"""
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any(
+                DIRECT_FONT_ICON_ONLY_PATH in failure and "Text" in failure and "direct `.font(...)`" in failure
+                for failure in failures
+            )
+        )
+
+    def test_scaled_font_weight_customization_support_is_rejected(self):
+        files = passing_files()
+        files[APP_FONT_PATH] = files[APP_FONT_PATH].replace(
+            "static func scaledFont(role: Role, traitCollection: UITraitCollection = .current) -> UIFont {",
+            "static func scaledFont(role: Role, weight: UIFont.Weight? = nil, traitCollection: UITraitCollection = .current) -> UIFont {",
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("scaledFont" in failure and "weight" in failure for failure in failures)
+        )
+
+    def test_scaled_font_must_stay_role_only(self):
+        files = passing_files()
+        files[APP_FONT_PATH] = files[APP_FONT_PATH].replace(
+            "static func scaledFont(role: Role, traitCollection: UITraitCollection = .current) -> UIFont {\n",
+            "",
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(any("scaledFont must be role-only" in failure for failure in failures))
+
+    # MARK: - #607 correction: residual typography customization modifiers
+
+    def test_fontweight_customization_is_rejected_anywhere(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureWeight.swift"] = (
+            'Text("hi").fontWeight(.semibold)'
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureWeight.swift" in failure and "fontWeight" in failure for failure in failures)
+        )
+
+    def test_fontdesign_customization_is_rejected_anywhere(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureDesign.swift"] = (
+            'Text("hi").appFont(.caption).fontDesign(.monospaced)'
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureDesign.swift" in failure and "fontDesign" in failure for failure in failures)
+        )
+
+    def test_bold_customization_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureBold.swift"] = 'Text("hi").bold()'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureBold.swift" in failure and "bold" in failure for failure in failures)
+        )
+
+    def test_italic_customization_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureItalic.swift"] = 'Text("hi").italic()'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureItalic.swift" in failure and "italic" in failure for failure in failures)
+        )
+
+    def test_monospaced_customization_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureMonospaced.swift"] = 'Text("hi").monospaced()'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureMonospaced.swift" in failure and "monospaced" in failure for failure in failures)
+        )
+
+    def test_monospaceddigit_customization_is_rejected_and_not_a_role_preserving_exception(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureDigit.swift"] = (
+            'Text("42").appFont(.caption).monospacedDigit()'
+        )
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureDigit.swift" in failure and "monospacedDigit" in failure for failure in failures)
+        )
+
+    def test_kerning_customization_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureKerning.swift"] = 'Text("hi").kerning(1.5)'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureKerning.swift" in failure and "kerning" in failure for failure in failures)
+        )
+
+    def test_tracking_customization_is_rejected(self):
+        files = passing_files()
+        files["HermesMobile/Features/NewFeature/NewFeatureTracking.swift"] = 'Text("hi").tracking(1.5)'
+
+        failures = audit_contract(files)
+
+        self.assertTrue(
+            any("NewFeatureTracking.swift" in failure and "tracking" in failure for failure in failures)
+        )
 
 
 if __name__ == "__main__":

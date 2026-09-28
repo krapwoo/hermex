@@ -108,7 +108,7 @@ import SwiftUI
                 BotRoomAvatars(room: creator.preview, roster: creator.roster, avatars: avatars, size: 84)
                     .padding(.top, HermesSpacing.s48)
                 TextField("Group name", text: $creator.name)
-                    .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
+                    .appFont(.title2).multilineTextAlignment(.center)
                     .padding(HermesSpacing.s20).background(.quaternary, in: RoundedRectangle(cornerRadius: HermesRadius.r20))
                     .focused($focused, equals: .name).disabled(creator.locked)
                     .submitLabel(.done)

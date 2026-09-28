@@ -151,7 +151,7 @@ import SwiftUI
 
     /// Footnote under a card, leading-aligned however short it is.
     private func caption(_ text: LocalizedStringKey) -> some View {
-        Text(text).font(.caption2).foregroundStyle(.tertiary)
+        Text(text).appFont(.caption2).foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12).padding(.top, 7)
     }
@@ -205,7 +205,7 @@ import SwiftUI
                 HStack(alignment: .top, spacing: HermesSpacing.s12) {
                     Image(systemName: icon(creator.outcomes[step]!)).foregroundStyle(color(creator.outcomes[step]!)).frame(width: 20)
                     VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                        Text(step.title).appFont(.subheadline, weight: .semibold)
+                        Text(step.title).appFont(.subheadlineSemibold)
                         Text(text(creator.outcomes[step]!)).appFont(.caption).foregroundStyle(.secondary)
                     }
                 }

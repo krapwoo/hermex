@@ -119,7 +119,7 @@ struct ToolCallDetailBodyView: View {
     private func statusDetail(_ value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             Text("Status")
-                .appFont(.caption2, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
 
             Text(value)
@@ -132,7 +132,7 @@ struct ToolCallDetailBodyView: View {
     private func argumentsSection(_ rows: [ToolCallArgumentDisplay]) -> some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             Text("Arguments")
-                .appFont(.caption2, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
@@ -148,11 +148,11 @@ struct ToolCallDetailBodyView: View {
     private func resultSection(_ result: ToolCallResultDisplay) -> some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s4) {
             Text(result.title)
-                .appFont(.caption2, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
 
             Text(result.text)
-                .appFont(.caption, design: result.isMonospaced ? .monospaced : .default)
+                .appFont(result.isMonospaced ? .mono12 : .caption)
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,14 +181,14 @@ struct ToolCallDetailBodyView: View {
 
     private func argumentKey(_ value: String) -> some View {
         Text(value)
-            .appFont(.caption2, weight: .semibold, design: .monospaced)
+            .appFont(.mono12)
             .foregroundStyle(.secondary)
             .lineLimit(1)
     }
 
     private func argumentValue(_ value: String) -> some View {
         Text(value)
-            .appFont(.caption, design: .monospaced)
+            .appFont(.mono12)
             .foregroundStyle(.primary)
             .textSelection(.enabled)
     }

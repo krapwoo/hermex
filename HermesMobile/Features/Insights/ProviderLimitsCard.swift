@@ -17,7 +17,7 @@ struct ProviderLimitsSection: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s12) {
             Text("Limits")
                 .textCase(.uppercase)
-                .appFont(.caption, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, HermesSpacing.s4)
 
@@ -71,7 +71,7 @@ private struct ProviderLimitsPlaceholderCard: View {
                 Spacer(minLength: 8)
 
                 Text(verbatim: "100% left")
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
             }
 
             ProviderLimitBar(fraction: 0, tint: .normal)
@@ -201,9 +201,8 @@ private struct ProviderLimitRowView: View {
         let amount = Group {
             if let amount = row.amount {
                 Text(amount)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(tintColor)
-                    .monospacedDigit()
             }
         }
 

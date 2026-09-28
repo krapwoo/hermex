@@ -192,7 +192,7 @@ final class AttachmentTileTests: XCTestCase {
 
         XCTAssertFalse(composerSource.contains(".font(.system(size: 11"))
         XCTAssertFalse(composerSource.contains(".font(.system(size: 13"))
-        XCTAssertTrue(composerSource.contains(".appFont(.caption2, weight: .bold)"))
+        XCTAssertTrue(composerSource.contains(".appFont(.captionSemibold)"))
         XCTAssertTrue(composerSource.contains("HermesIconSize.xs"))
     }
 

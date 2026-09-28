@@ -85,7 +85,7 @@ struct TipJarCard: View {
             Text("Buy Uzi a coffee")
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .appFont(.subheadline, weight: .semibold)
+        .appFont(.subheadlineSemibold)
         .buttonStyle(.hermes(.medium, emphasis: .brandPrimary))
         .accessibilityLabel("Buy Uzi a coffee, opens in browser")
         .environment(\.openURL, OpenURLAction { url in

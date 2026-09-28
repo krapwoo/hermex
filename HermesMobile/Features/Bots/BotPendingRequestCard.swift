@@ -130,7 +130,7 @@ private struct BotApprovalRequestBody: View {
             // readable in full before it is approved.
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(command)
-                    .appFont(.footnote, design: .monospaced)
+                    .appFont(.mono12)
                     .textSelection(.enabled)
             }
             .pendingRequestBlockSurface()
@@ -295,12 +295,12 @@ private struct BotQuestionRequestBody: View {
                     }
                 }
                 Text(choice.label)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 if choice.isRecommended {
                     Text("Recommended")
-                        .appFont(.caption2, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -393,7 +393,7 @@ private struct BotCredentialRequestBody: View {
             // The name the host will store it under, so the user knows which of
             // their keys to paste before they paste one.
             Text(envVar)
-                .appFont(.footnote, design: .monospaced)
+                .appFont(.mono12)
                 .textSelection(.enabled)
                 .pendingRequestBlockSurface()
         }
@@ -499,10 +499,10 @@ private struct BotConnectionRequestBody: View {
                 // The system's own unit wording, so every language gets its plural right.
                 let left = Duration.seconds(minutes * 60).formatted(.units(allowed: [.minutes], width: .abbreviated))
                 Text("Waiting · \(left) left")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadlineSemibold)
             }
             Text("The bot is paused until each app is connected or skipped.")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -516,7 +516,7 @@ private struct BotConnectionRequestBody: View {
         .buttonStyle(.hermes(.medium, emphasis: .secondary))
         .disabled(!isEnabled || isAnswering)
         Text("Releases the bot now. Apps not connected stay off for this reply.")
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -548,16 +548,16 @@ private struct BotConnectionTargetRow: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(target.name)
-                        .font(.callout.weight(.semibold))
+                        .appFont(.label)
                         .fixedSize(horizontal: false, vertical: true)
-                    if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.secondary) }
+                    if let subtitle { Text(subtitle).appFont(.caption).foregroundStyle(.secondary) }
                 }
                 Spacer(minLength: 8)
                 stateLabel
             }
             ForEach(notes, id: \.self) { note in
                 Text(note)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -605,7 +605,7 @@ private struct BotConnectionTargetRow: View {
             if let symbol { Image(systemName: symbol).accessibilityHidden(true) }
             Text(title)
         }
-        .font(.caption.weight(.semibold))
+        .appFont(.captionSemibold)
         .foregroundStyle(tint)
         .fixedSize()
     }
@@ -614,21 +614,21 @@ private struct BotConnectionTargetRow: View {
     @ViewBuilder private var guidance: some View {
         if target.finishesOnTheMac {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Finish on the Mac.").font(.caption.weight(.semibold))
+                Text("Finish on the Mac.").appFont(.captionSemibold)
                 Text("This sign-in returns to a browser on the Mac, so it can’t complete on iPhone.")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } else if target.linkToOpen != nil {
             Text("Opens in your browser. Hermes notices when you finish.")
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         } else if target.canSkip, !target.canConnect, target.state == .failed || target.state == .expired {
             // Trying again from here is deferred; asking the bot covers it.
             Text("Skip it and ask the bot to try again.")
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -674,17 +674,17 @@ private struct BotConnectionTargetRow: View {
         return VStack(alignment: .leading, spacing: 6) {
             header {
                 Text(verbatim: field.name)
-                    .font(.system(.caption, design: .monospaced))
+                    .appFont(.mono12)
                     .textSelection(.enabled)
                 if field.isSecret {
-                    Text("secret").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    Text("secret").appFont(.captionSemibold).foregroundStyle(.secondary)
                 } else if !field.isRequired {
-                    Text("optional").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    Text("optional").appFont(.captionSemibold).foregroundStyle(.secondary)
                 }
             }
             if let prompt = field.prompt {
                 Text(prompt)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

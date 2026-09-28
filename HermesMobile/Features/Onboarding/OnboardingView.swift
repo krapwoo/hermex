@@ -102,7 +102,7 @@ struct OnboardingView: View {
             } else {
                 Button(action: handlePrimaryAction) {
                     Text(OnboardingFlowPolicy.primaryButtonTitle(for: currentPage))
-                        .appFont(.subheadline, weight: .semibold)
+                        .appFont(.subheadlineSemibold)
                         .foregroundStyle(.black)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
@@ -120,7 +120,7 @@ struct OnboardingView: View {
                     Button("Already have a server?") {
                         jumpToConnectPage()
                     }
-                    .appFont(.footnote, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.white.opacity(0.55))
                     .buttonStyle(.plain)
                     .accessibilityHint("Skips setup and opens the connect screen.")

@@ -21,7 +21,7 @@ struct TaskRunOutputSheet: View {
                 if let text = matchingText, !text.isEmpty {
                     ScrollView {
                         Text(text)
-                            .appFont(.footnote, design: .monospaced)
+                            .appFont(.mono12)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(HermesSpacing.s16)

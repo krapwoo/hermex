@@ -8,13 +8,13 @@ final class AppFontModifierBuildProofTests: XCTestCase {
         XCTAssertNotNil(view)
     }
 
-    func testAppFontModifierAcceptsExplicitWeightAndMonospacedDesign() {
-        let view: some View = Text("proof").appFont(.caption, weight: .semibold, design: .monospaced)
+    func testAppFontModifierAcceptsTheNamedMonospacedRole() {
+        let view: some View = Text("proof").appFont(.mono12)
         XCTAssertNotNil(view)
     }
 
     func testTextAppFontOverloadConcatenatesAsText() {
-        let fragment: Text = Text("summary").appFont(.caption, dynamicTypeSize: .large, weight: .semibold)
+        let fragment: Text = Text("summary").appFont(.captionSemibold, dynamicTypeSize: .large)
             + Text(" ")
             + Text("detail").appFont(.caption, dynamicTypeSize: .large)
         XCTAssertNotNil(fragment)

@@ -622,12 +622,12 @@ struct BotComposerPillView: View {
             case .uploading:
                 HStack(spacing: 12) {
                     Label("Uploading…", systemImage: "arrow.up.doc")
-                    Button("Cancel", action: onCancelUpload).fontWeight(.semibold)
+                    Button("Cancel", action: onCancelUpload).appFont(.captionSemibold)
                 }
             }
         }
         .buttonStyle(.plain)
-        .font(AppFont.footnote())
+        .appFont(.footnote)
         .lineLimit(3)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)

@@ -45,7 +45,7 @@ import SwiftUI
         .toolbar {
             TopNav(trailingPrimary: {
                 Button("Save") { Task { await editor.save() } }
-                    .fontWeight(.semibold)
+                    .appFont(.label)
                     .disabled(!editor.canSave)
             })
         }
@@ -164,7 +164,7 @@ import SwiftUI
             }
             VStack(spacing: HermesSpacing.s12) {
                 Text(editor.draft.appearance.title.isEmpty ? editor.profile.name : editor.draft.appearance.title)
-                    .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
+                    .appFont(.title2).multilineTextAlignment(.center)
                 if !editor.draft.description.isEmpty {
                     Text(editor.draft.description).appFont(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center).lineLimit(3)
@@ -252,10 +252,10 @@ import SwiftUI
                     Image(systemName: resultIcon(editor.outcomes[field]!))
                         .foregroundStyle(resultColor(editor.outcomes[field]!)).frame(width: 20)
                     VStack(alignment: .leading, spacing: HermesSpacing.s4) {
-                        Text(field.title).appFont(.subheadline, weight: .semibold)
+                        Text(field.title).appFont(.subheadlineSemibold)
                         Text(resultText(editor.outcomes[field]!)).appFont(.caption).foregroundStyle(.secondary)
                         if editor.outcomes[field] == .conflict {
-                            Button("Reload") { Task { await editor.reloadAppearance() } }.appFont(.caption, weight: .semibold)
+                            Button("Reload") { Task { await editor.reloadAppearance() } }.appFont(.captionSemibold)
                         }
                     }
                 }

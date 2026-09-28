@@ -133,12 +133,11 @@ struct StreamingLabView: View {
         VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             HStack {
                 Text(title)
-                    .appFont(.subheadline, weight: .medium)
+                    .appFont(.subheadlineSemibold)
 
                 Spacer()
 
                 Text(display)
-                    .monospacedDigit()
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -157,7 +156,7 @@ struct StreamingLabView: View {
             static let maxStampLead: TimeInterval = \(String(format: "%.3f", maxStampLead))
             """
         )
-        .appFont(.caption, design: .monospaced)
+        .appFont(.mono12)
         .foregroundStyle(.secondary)
         .textSelection(.enabled)
         .padding(HermesSpacing.s12)

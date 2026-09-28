@@ -27,7 +27,7 @@ struct OnboardingConnectPage: View {
             VStack(alignment: .leading, spacing: HermesSpacing.s20) {
                 VStack(alignment: .leading, spacing: HermesSpacing.s8) {
                     Text("Connect")
-                        .appFont(.title3, weight: .bold)
+                        .appFont(.title3)
                         .foregroundStyle(.white)
 
                     Text("Enter the exact HTTPS Tailscale Serve URL your agent returned, for example `https://server.tailnet-name.ts.net`.")
@@ -81,7 +81,7 @@ struct OnboardingConnectPage: View {
                         .padding(.top, HermesSpacing.s12)
                 } label: {
                     Label("Advanced", systemImage: "slider.horizontal.3")
-                        .appFont(.subheadline, weight: .semibold)
+                        .appFont(.subheadlineSemibold)
                         .foregroundStyle(.white.opacity(0.85))
                 }
                 .tint(.white.opacity(0.6))

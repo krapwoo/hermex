@@ -63,7 +63,7 @@ struct ToolActivityGroupView: View {
                     .frame(width: 20, height: 18)
 
                 Text(previousRowsToggleTitle(hiddenCount: hiddenCount))
-                    .appFont(.caption, weight: .medium)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.primary.opacity(0.8))
                     .lineLimit(1)
 

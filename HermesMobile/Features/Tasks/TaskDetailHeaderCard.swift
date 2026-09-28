@@ -36,7 +36,7 @@ struct TaskDetailHeaderCard: View {
         HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(job.displayName)
-                    .appFont(.title3, weight: .bold)
+                    .appFont(.title3)
                     .lineLimit(3)
 
                 Text(scheduleSentence)
@@ -61,7 +61,7 @@ struct TaskDetailHeaderCard: View {
         if let running = runningElapsed {
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(CronJobRowView.elapsedText(running))
-                    .appFont(.title2, weight: .semibold)
+                    .appFont(.title2)
                     .foregroundStyle(.blue)
                 Text("Running now")
                     .appFont(.footnote)
@@ -71,7 +71,7 @@ struct TaskDetailHeaderCard: View {
         } else if let next = job.nextRunAt?.date {
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(CronScheduleHumanizer.countdown(to: next))
-                    .appFont(.title2, weight: .semibold)
+                    .appFont(.title2)
                 Text("Next run · \(next.formatted(date: .abbreviated, time: .shortened))")
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
@@ -80,7 +80,7 @@ struct TaskDetailHeaderCard: View {
         } else if let last = job.lastRunAt?.date {
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text("Not scheduled")
-                    .appFont(.title3, weight: .semibold)
+                    .appFont(.title3)
                     .foregroundStyle(.secondary)
                 Text("Last run · \(last.formatted(date: .abbreviated, time: .shortened))")
                     .appFont(.footnote)
@@ -107,7 +107,7 @@ struct TaskDetailHeaderCard: View {
 
             if canSeeFullOutput {
                 Button("See full output", action: seeFullOutput)
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(.tint)
             }
@@ -167,7 +167,7 @@ struct TaskDetailHeaderCard: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(title)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
             }
             .frame(maxWidth: .infinity, minHeight: 46)
             .contentShape(Rectangle())

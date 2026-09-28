@@ -44,7 +44,7 @@ struct CustomHeadersEditor: View {
                 headers.append(CustomHeader())
             } label: {
                 Label("Add Header", systemImage: "plus.circle.fill")
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(style.accent)
             }
             .buttonStyle(.plain)

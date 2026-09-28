@@ -117,7 +117,7 @@ struct MessageBubbleView: View {
         VStack(alignment: .trailing, spacing: 4) {
             Label {
                 Text("Steer")
-                    .font(.caption.weight(.semibold))
+                    .appFont(.captionSemibold)
             } icon: {
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 11, weight: .semibold))
@@ -126,7 +126,7 @@ struct MessageBubbleView: View {
 
             if !message.steerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(message.steerText)
-                    .font(.callout)
+                    .appFont(.body)
                     .textSelection(.enabled)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -610,7 +610,7 @@ private struct GridAttachmentCell: View {
             AttachmentFileGlyph(fileType: fileType, size: HermesIconSize.extraLarge)
 
             Text(fileDisplayName)
-                .appFont(.caption2, weight: .medium)
+                .appFont(.captionSemibold)
                 .foregroundStyle(Color(.label))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)

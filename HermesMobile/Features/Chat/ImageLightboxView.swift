@@ -164,7 +164,7 @@ struct ImageLightboxView<Actions: View>: View {
     private var topBar: some View {
         ZStack {
             Text(title)
-                .appFont(.subheadline, weight: .semibold)
+                .appFont(.subheadlineSemibold)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .foregroundStyle(.white)
@@ -192,8 +192,7 @@ struct ImageLightboxView<Actions: View>: View {
     private func caption(path: String) -> some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s2) {
             Text(path)
-                .appFont(.caption2)
-                .fontDesign(.monospaced)
+                .appFont(.mono12)
                 .foregroundStyle(.white.opacity(0.75))
                 .lineLimit(2)
                 .truncationMode(.head)

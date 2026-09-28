@@ -113,7 +113,6 @@ struct InlineAudioPlayerView: View {
             Text(AudioDurationFormatter.string(from: model.duration))
         }
         .appFont(.caption2)
-        .monospacedDigit()
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
     }

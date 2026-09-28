@@ -45,7 +45,7 @@ struct CronJobSkillsRow: View {
                 Spacer(minLength: 0)
 
                 Button("Try Again", action: onRetry)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
             }
@@ -183,7 +183,7 @@ struct CronJobSkillsPickerSheet: View {
             } label: {
                 HStack {
                     Label("Add skill", systemImage: "plus")
-                        .appFont(.body, weight: .semibold)
+                        .appFont(.label)
 
                     Spacer(minLength: 0)
                 }

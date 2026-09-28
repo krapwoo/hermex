@@ -2,6 +2,21 @@ import XCTest
 @testable import HermesMobile
 
 final class ContextWindowIndicatorTests: XCTestCase {
+    private func source(_ relativePath: String) throws -> String {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        return try String(contentsOf: repositoryRoot.appendingPathComponent(relativePath), encoding: .utf8)
+    }
+
+    func testPercentageLabelScalesWithItsRingWithoutCustomizingTypography() throws {
+        let source = try source("HermesMobile/Features/Chat/ContextWindowIndicatorView.swift")
+
+        XCTAssertTrue(source.contains("@ScaledMetric(relativeTo: .caption) private var ringSize: CGFloat = 30"))
+        XCTAssertTrue(source.contains("@ScaledMetric(relativeTo: .caption) private var tapTargetSize: CGFloat = 44"))
+        XCTAssertTrue(source.contains(".appFont(.captionSemibold)\n                    .lineLimit(1)"))
+    }
+
     func testPresentationProvidesNonInteractivePlaceholderBeforeSnapshotLoads() {
         let presentation = ContextWindowIndicatorPresentation(snapshot: nil)
 

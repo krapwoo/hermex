@@ -123,7 +123,7 @@ struct CronJobProfileRow: View {
                 Spacer(minLength: 0)
 
                 Button("Try Again", action: onRetry)
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
             }

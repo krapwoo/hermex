@@ -152,7 +152,7 @@ struct TaskDetailView: View {
            !content.isEmpty {
             SectionCard(title: String(localized: "Run Output")) {
                 Text(content.strippingANSIEscapes())
-                    .appFont(.footnote, design: .monospaced)
+                    .appFont(.mono12)
                     .textSelection(.enabled)
                     .lineLimit(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -214,7 +214,7 @@ struct TaskDetailView: View {
 
             if let detail = field.detail {
                 Text(detail)
-                    .appFont(.caption2, design: .monospaced)
+                    .appFont(.mono12)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
             }

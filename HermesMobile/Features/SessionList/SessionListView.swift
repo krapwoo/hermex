@@ -922,13 +922,13 @@ struct SessionListView: View {
                     .accessibilityHidden(true)
 
                 Text("Archived Sessions")
-                    .appFont(.subheadline, weight: .medium)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
                 if let archivedCount = viewModel.archivedCount {
                     Text("\(archivedCount)")
-                        .appFont(.footnote, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, HermesSpacing.s8)
                         .padding(.vertical, HermesSpacing.s2)
@@ -1916,7 +1916,7 @@ private struct PendingNewChatView: View {
             Button("Retry") {
                 Task { await retryCreateSession() }
             }
-            .appFont(.footnote, weight: .semibold)
+            .appFont(.captionSemibold)
             .disabled(viewModel.isCreatingSession)
         }
         .padding(.horizontal, HermesSpacing.s12)

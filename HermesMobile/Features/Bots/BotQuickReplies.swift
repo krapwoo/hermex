@@ -95,7 +95,7 @@ struct BotQuickReplyRow: View {
                 ForEach(replies) { reply in
                     Button { onPick(reply) } label: {
                         Text(verbatim: reply.text)
-                            .font(AppFont.footnote())
+                            .appFont(.footnote)
                             .lineLimit(1)
                             .foregroundStyle(.primary)
                             .padding(.horizontal, 14).padding(.vertical, 8)

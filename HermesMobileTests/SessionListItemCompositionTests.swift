@@ -87,13 +87,14 @@ final class SessionListItemCompositionTests: XCTestCase {
         XCTAssertTrue(caller.contains(".padding(.horizontal, HermesSpacing.screenHorizontal)"))
     }
 
-    func testSessionHeaderAndTitlesUseTheSixteenPointLabelAndBodyRoles() throws {
+    func testSessionHeaderAndTitlesUseTheNamedLabelRole() throws {
         let component = try source("HermesMobile/Features/SessionList/SessionListItem.swift")
         let caller = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
 
-        XCTAssertTrue(component.contains(".appFont(.body, weight: .semibold)"))
+        XCTAssertTrue(component.contains(".appFont(.label)"))
         XCTAssertFalse(component.contains(".appFont(.headline, weight: .semibold)"))
-        XCTAssertTrue(caller.contains(".appFont(.label, weight: .bold)"))
+        XCTAssertTrue(caller.contains(".appFont(.label)"))
+        XCTAssertFalse(caller.contains(".appFont(.label, weight:"))
         XCTAssertFalse(caller.contains(".appFont(.title3, weight: .bold)"))
     }
 
@@ -102,7 +103,7 @@ final class SessionListItemCompositionTests: XCTestCase {
         let caller = try source("HermesMobile/Features/SessionList/SessionListComponents.swift")
 
         XCTAssertTrue(component.contains(".appFont(.captionSemibold)"))
-        XCTAssertTrue(component.contains(".appFont(.body, weight: .semibold)"))
+        XCTAssertTrue(component.contains(".appFont(.label)"))
         XCTAssertGreaterThanOrEqual(caller.components(separatedBy: ".appFont(.label)").count - 1, 2)
         XCTAssertTrue(caller.contains(".appFont(.subheadlineSemibold)"))
         XCTAssertTrue(caller.contains(".appFont(.headlineSemibold)"))

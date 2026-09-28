@@ -221,7 +221,7 @@ struct ModelPickerSheet: View {
                                     .tint(customEntryForeground)
                             } else {
                                 Label(configuration.customActionTitle, systemImage: "plus")
-                                    .appFont(.body, weight: .semibold)
+                                    .appFont(.label)
                             }
 
                             Spacer(minLength: 0)
@@ -340,7 +340,7 @@ struct ModelPickerSheet: View {
                 }
 
                 Text(group.name)
-                    .font(.system(size: 14, weight: .semibold))
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .textCase(.uppercase)
@@ -350,7 +350,7 @@ struct ModelPickerSheet: View {
                         ? "\(displayedModels.count) / \(totalModelCount)"
                         : "\(displayedModels.count)"
                 )
-                    .font(.system(size: 12, weight: .medium))
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
                     .accessibilityLabel(
                         Text("Showing \(displayedModels.count) of \(totalModelCount) models")
@@ -391,7 +391,7 @@ struct ModelPickerSheet: View {
                         ? String(localized: "Show fewer models")
                         : String(localized: "Show all models")
                 )
-                    .font(.system(size: 13, weight: .semibold))
+                    .appFont(.subheadlineSemibold)
 
                 Spacer(minLength: 0)
 

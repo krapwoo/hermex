@@ -5,10 +5,10 @@ enum HermesButtonSize: CaseIterable {
 
     var font: AppFont.Role {
         switch self {
-        case .extraSmall: .caption2
-        case .small: .caption
-        case .medium: .subheadline
-        case .large: .body
+        case .extraSmall: .captionSemibold
+        case .small: .captionSemibold
+        case .medium: .subheadlineSemibold
+        case .large: .label
         }
     }
 
@@ -109,7 +109,7 @@ struct HermesButtonStyle: ButtonStyle {
         let shape = Capsule()
 
         configuration.label
-            .appFont(size.font, weight: .semibold)
+            .appFont(size.font)
             .padding(.horizontal, size.horizontalPadding)
             .frame(minHeight: size.minHeight)
             .foregroundStyle(foregroundColor)

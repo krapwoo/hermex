@@ -99,14 +99,14 @@ struct GitDiffView: View {
     private func selectionBar(count: Int) -> some View {
         HStack(spacing: HermesSpacing.s12) {
             Text(count == 1 ? String(localized: "1 line selected") : String(localized: "\(count) lines selected"))
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
             Button("Clear") { selection.clear() }
                 .appFont(.footnote)
             if onAddToPrompt != nil {
                 Button("Add to prompt", action: addToPrompt)
-                    .appFont(.footnote, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .buttonStyle(.borderedProminent)
             }
         }

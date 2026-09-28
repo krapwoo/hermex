@@ -176,7 +176,7 @@ private struct GitBranchPickerSheet: View {
 
                 if (branch.ahead ?? 0) > 0 || (branch.behind ?? 0) > 0 {
                     Text("↑\(branch.ahead ?? 0) ↓\(branch.behind ?? 0)")
-                        .appFont(.caption2, design: .monospaced)
+                        .appFont(.mono12)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -186,7 +186,7 @@ private struct GitBranchPickerSheet: View {
 
     private func badge(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .appFont(.caption2, design: .monospaced)
+            .appFont(.mono12)
             .padding(.horizontal, HermesSpacing.s8)
             .padding(.vertical, HermesSpacing.s4)
             .background(Color(.secondarySystemFill), in: Capsule())

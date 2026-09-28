@@ -19,7 +19,7 @@ import SwiftUI
                     BotRoomAvatars(room: reader.room, roster: roster, avatars: avatars, size: 84)
                     if reader.showsRename {
                         TextField("Group name", text: $name)
-                            .appFont(.title2, weight: .bold).multilineTextAlignment(.center)
+                            .appFont(.title2).multilineTextAlignment(.center)
                             .focused($editingName).submitLabel(.done)
                             .disabled(!reader.mayRename)
                             .onSubmit { commitName() }
@@ -30,7 +30,7 @@ import SwiftUI
                         if !BotRoomRPC.validName(name) {
                             Text("Enter a name of up to 200 characters.").appFont(.caption)
                         }
-                    } else { Text(reader.room.name).appFont(.title2, weight: .bold) }
+                    } else { Text(reader.room.name).appFont(.title2) }
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, HermesSpacing.s24)
             }

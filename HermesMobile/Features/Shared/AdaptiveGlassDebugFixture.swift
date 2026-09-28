@@ -53,7 +53,7 @@ private struct AdaptiveGlassDebugFixture: View {
             Button {
             } label: {
                 Label { Text(verbatim: "Interactive") } icon: { Image(systemName: "hand.tap") }
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, HermesSpacing.s12)
             }
@@ -85,7 +85,7 @@ private struct AdaptiveGlassDebugFixture: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(title)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                 Text(subtitle)
                     .appFont(.caption)
                     .foregroundStyle(.secondary)

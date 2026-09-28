@@ -414,9 +414,9 @@ struct HermexAttachmentCameraPanel: View {
                 Image(systemName: "camera.fill")
                     .font(.title)
                 Text("Camera access is off")
-                    .font(.headline)
+                    .appFont(.headline)
                 Text("Allow camera access in Settings to take a photo for this chat.")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.white.opacity(0.72))
                     .multilineTextAlignment(.center)
                 Button("Open Settings", action: openSettings)
@@ -434,7 +434,7 @@ struct HermexAttachmentCameraPanel: View {
         case .ready, .capturing:
             if let message = controller.captureErrorMessage {
                 Text(message)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -511,9 +511,9 @@ struct HermexAttachmentCameraPanel: View {
         VStack(spacing: 8) {
             Image(systemName: "camera.fill")
                 .font(.title)
-            Text(title).font(.headline)
+            Text(title).appFont(.headline)
             Text(detail)
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.white.opacity(0.72))
                 .multilineTextAlignment(.center)
         }

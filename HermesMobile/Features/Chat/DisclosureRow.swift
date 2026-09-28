@@ -145,7 +145,7 @@ struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
             HStack(spacing: HermesSpacing.s2) {
                 if showsCopied {
                     Text("Copied")
-                        .appFont(.caption2, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.green)
                         .padding(.trailing, HermesSpacing.s4)
                 }
@@ -211,7 +211,7 @@ struct DisclosureRow<Icon: View, Status: View, ExpandedBody: View>: View {
 
     private var summaryText: Text {
         Text(summary)
-            .appFont(.caption, dynamicTypeSize: dynamicTypeSize, weight: .semibold)
+            .appFont(.captionSemibold, dynamicTypeSize: dynamicTypeSize)
             .foregroundStyle(isFailure ? Color.red : Color.primary)
     }
 

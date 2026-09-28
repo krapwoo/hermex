@@ -60,7 +60,7 @@ struct ComposerAttachmentPillPreview: View {
 
                 if attachments.count > visibleLimit {
                     Text("+\(attachments.count - visibleLimit)")
-                        .appFont(.caption2, weight: .bold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(Color(.secondaryLabel))
                         .frame(width: tileSize, height: tileSize)
                         .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous))
@@ -172,7 +172,7 @@ private struct ComposerAttachmentThumbnailView: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 Text(attachment.name)
-                    .appFont(.subheadline, weight: .medium)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(Color(.label))
                     .lineLimit(2)
                     .truncationMode(.middle)

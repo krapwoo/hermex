@@ -245,19 +245,19 @@ struct SlashCommandAutocompleteView: View {
         case skill
         case skillName
 
-        var nameFont: Font {
+        var nameFont: AppFont.Role {
             switch self {
             case .command, .skill:
-                return .system(.subheadline, design: .monospaced).weight(.semibold)
+                return .mono14
             case .skillName:
-                return Font.subheadline.weight(.semibold)
+                return .subheadlineSemibold
             }
         }
 
-        var hintFont: Font {
+        var hintFont: AppFont.Role {
             switch self {
             case .command:
-                return .system(.footnote, design: .monospaced)
+                return .mono12
             case .skill, .skillName:
                 return .footnote
             }
@@ -282,14 +282,14 @@ struct SlashCommandAutocompleteView: View {
             }
 
             Text(name)
-                .font(style.nameFont)
+                .appFont(style.nameFont)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .layoutPriority(2)
 
             if let hint {
                 Text(hint)
-                    .font(style.hintFont)
+                    .appFont(style.hintFont)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .layoutPriority(1)

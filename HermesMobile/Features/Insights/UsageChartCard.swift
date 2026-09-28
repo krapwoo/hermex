@@ -58,8 +58,7 @@ struct UsageChartCard: View {
                     .foregroundStyle(.secondary)
 
                 Text(hero.value)
-                    .appFont(.title, weight: .bold)
-                    .monospacedDigit()
+                    .appFont(.title)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
 

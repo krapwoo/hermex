@@ -132,33 +132,29 @@ extension AppFont {
 }
 
 extension AppFont {
-    static func scaledFont(role: Role, weight: UIFont.Weight? = nil, traitCollection: UITraitCollection = .current) -> UIFont {
-        let base = UIFont.systemFont(ofSize: role.baseSize, weight: weight ?? role.defaultUIKitWeight)
+    static func scaledFont(role: Role, traitCollection: UITraitCollection = .current) -> UIFont {
+        let base = UIFont.systemFont(ofSize: role.baseSize, weight: role.defaultUIKitWeight)
         return UIFontMetrics(forTextStyle: role.uiKitAnchor).scaledFont(for: base, compatibleWith: traitCollection)
     }
 }
 
 private struct AppFontModifier: ViewModifier {
     let role: AppFont.Role
-    let weight: Font.Weight?
-    let design: Font.Design
     @ScaledMetric private var scaledSize: CGFloat
 
-    init(role: AppFont.Role, weight: Font.Weight?, design: Font.Design?) {
+    init(role: AppFont.Role) {
         self.role = role
-        self.weight = weight
-        self.design = design ?? role.defaultDesign
         _scaledSize = ScaledMetric(wrappedValue: role.baseSize, relativeTo: role.swiftUIAnchor)
     }
 
     func body(content: Content) -> some View {
-        content.font(.system(size: scaledSize, weight: weight ?? role.defaultWeight, design: design))
+        content.font(.system(size: scaledSize, weight: role.defaultWeight, design: role.defaultDesign))
     }
 }
 
 extension View {
-    func appFont(_ role: AppFont.Role, weight: Font.Weight? = nil, design: Font.Design? = nil) -> some View {
-        modifier(AppFontModifier(role: role, weight: weight, design: design))
+    func appFont(_ role: AppFont.Role) -> some View {
+        modifier(AppFontModifier(role: role))
     }
 }
 
@@ -197,9 +193,9 @@ extension DynamicTypeSize {
 }
 
 extension Text {
-    /// `Text`-returning sibling of `View.appFont(_:weight:design:)`, needed
-    /// because concatenated fragments (`text1 + text2`) require the `+`
-    /// operator's `Text`-typed operands and reject `some View`.
+    /// `Text`-returning sibling of `View.appFont(_:)`, needed because
+    /// concatenated fragments (`text1 + text2`) require the `+` operator's
+    /// `Text`-typed operands and reject `some View`.
     ///
     /// Takes `dynamicTypeSize` explicitly rather than reading
     /// `\.dynamicTypeSize` from the environment: `@ScaledMetric` (the View
@@ -212,14 +208,9 @@ extension Text {
     /// rendered widths at `.large` and `.accessibility3` under that
     /// approach). Callers pass their own `@Environment(\.dynamicTypeSize)`
     /// value explicitly, exactly as `DisclosureRow` does.
-    func appFont(
-        _ role: AppFont.Role,
-        dynamicTypeSize: DynamicTypeSize,
-        weight: Font.Weight? = nil,
-        design: Font.Design? = nil
-    ) -> Text {
+    func appFont(_ role: AppFont.Role, dynamicTypeSize: DynamicTypeSize) -> Text {
         let traitCollection = UITraitCollection(preferredContentSizeCategory: dynamicTypeSize.appFontContentSizeCategory)
         let scaledSize = AppFont.scaledFont(role: role, traitCollection: traitCollection).pointSize
-        return font(.system(size: scaledSize, weight: weight ?? role.defaultWeight, design: design ?? role.defaultDesign))
+        return font(.system(size: scaledSize, weight: role.defaultWeight, design: role.defaultDesign))
     }
 }

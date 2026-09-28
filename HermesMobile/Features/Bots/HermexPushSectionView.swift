@@ -36,7 +36,7 @@ import SwiftUI
                 Image(systemName: "bell").foregroundStyle(Color.secondary)
                     .frame(width: 24).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: HermesSpacing.s2) {
-                    Text("Notifications").appFont(.subheadline, weight: .medium)
+                    Text("Notifications").appFont(.subheadlineSemibold)
                     Text(provisioner.pairing == nil
                          ? String(localized: "Push off · Current server")
                          : String(localized: "Push on · Current server"))
@@ -150,7 +150,7 @@ import SwiftUI
                 preferenceTask = Task { await provisioner.updatePreferences(preferences) }
             }
         ))
-        .appFont(.subheadline, weight: .medium)
+        .appFont(.subheadlineSemibold)
         .toggleStyle(.switch)
         .disabled(provisioner.isWorking)
         .frame(minHeight: 44)
@@ -164,7 +164,7 @@ import SwiftUI
         return HStack(spacing: HermesSpacing.s12) {
             Image(systemName: isDone ? "checkmark.circle.fill" : (isRunning ? "circle.dashed" : "circle"))
                 .foregroundStyle(isDone ? Color.green : .secondary)
-            Text(step.title).fontWeight(isRunning ? .semibold : .regular)
+            Text(step.title).appFont(isRunning ? .captionSemibold : .footnote)
         }
         .appFont(.footnote)
         .foregroundStyle(isDone || isRunning ? Color.primary : .secondary)
@@ -182,13 +182,13 @@ import SwiftUI
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: "bell.slash").foregroundStyle(.secondary).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        if let title { Text(title).fontWeight(.semibold).foregroundStyle(Color.primary) }
+                        if let title { Text(title).appFont(.captionSemibold).foregroundStyle(Color.primary) }
                         Text(message).foregroundStyle(.secondary)
                         Text("Open Settings").foregroundStyle(.tint).padding(.top, 2)
                     }
                     Spacer(minLength: 0)
                 }
-                .font(AppFont.footnote())
+                .appFont(.footnote)
                 .padding(.vertical, 10).padding(.horizontal, 12)
                 .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 12))
             }
@@ -198,7 +198,7 @@ import SwiftUI
 
     private func failureRow(_ failure: HermexPushProvisioner.Failure) -> some View {
         VStack(alignment: .leading, spacing: HermesSpacing.s2) {
-            Text(failure.title).appFont(.footnote, weight: .semibold)
+            Text(failure.title).appFont(.captionSemibold)
             Text(failure.message).appFont(.footnote)
         }
         .foregroundStyle(.red)

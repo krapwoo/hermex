@@ -30,7 +30,7 @@ private struct UsageModelRow: View {
         HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s12) {
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(model.model ?? String(localized: "Unknown Model"))
-                    .appFont(.subheadline, weight: .medium)
+                    .appFont(.subheadlineSemibold)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
                     .truncationMode(.middle)
 
@@ -43,8 +43,7 @@ private struct UsageModelRow: View {
 
             if let cost = model.cost, cost > 0 {
                 Text(usageFormattedCost(cost))
-                    .appFont(.subheadline, weight: .medium)
-                    .monospacedDigit()
+                    .appFont(.subheadlineSemibold)
             }
         }
         .accessibilityElement(children: .combine)
@@ -81,7 +80,7 @@ struct UsageTopSessionsCard: View {
                 ForEach(sessions.prefix(10)) { session in
                     VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text(session.title ?? String(localized: "Untitled Session"))
-                            .appFont(.subheadline, weight: .medium)
+                            .appFont(.subheadlineSemibold)
                             .lineLimit(1)
 
                         Text(detail(for: session))

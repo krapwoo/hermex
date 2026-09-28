@@ -71,7 +71,7 @@ struct ArchivedSessionsView: View {
                         Button("Try Again") {
                             Task { await load() }
                         }
-                        .appFont(.subheadline, weight: .medium)
+                        .appFont(.subheadlineSemibold)
                         .foregroundStyle(.primary)
                     }
                     .padding(.horizontal, HermesSpacing.screenHorizontal)

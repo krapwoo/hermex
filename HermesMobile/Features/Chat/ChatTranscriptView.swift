@@ -917,7 +917,7 @@ struct LoadOlderMessagesButton: View {
                 }
 
                 Text(isLoading ? String(localized: "Loading older messages") : String(localized: "Load older messages"))
-                    .appFont(.caption, weight: .semibold)
+                    .appFont(.captionSemibold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.88)
             }

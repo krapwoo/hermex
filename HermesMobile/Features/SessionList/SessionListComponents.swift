@@ -405,7 +405,7 @@ struct SessionSidebarUtilityRows: View {
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
-                .appFont(.footnote, weight: .medium)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .buttonStyle(.plain)
                 .accessibilityLabel("Show all projects")
@@ -536,7 +536,7 @@ struct SessionListRowsSection: View {
             HStack(spacing: HermesSpacing.s12) {
                 if !isSearchActive {
                     Text("Sessions")
-                        .appFont(.label, weight: .bold)
+                        .appFont(.label)
                         .foregroundStyle(.primary)
                 }
 
@@ -581,7 +581,7 @@ struct SessionListRowsSection: View {
             )
 
             Button("Retry", action: actions.retryLoad)
-                .appFont(.subheadline, weight: .medium)
+                .appFont(.subheadlineSemibold)
                 .foregroundStyle(.primary)
                 .buttonStyle(.plain)
                 .frame(minHeight: 44, alignment: .leading)
@@ -737,7 +737,7 @@ struct ScheduledSessionsDisclosure: View {
             userIsExpanded.toggle()
         } accessory: {
             Text("\(totalCount)")
-                .appFont(.footnote, weight: .semibold)
+                .appFont(.captionSemibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, HermesSpacing.s8)
                 .padding(.vertical, HermesSpacing.s2)
@@ -774,7 +774,7 @@ struct ScheduledSessionsDisclosure: View {
                         Image(systemName: "magnifyingglass")
                             .frame(width: 24)
                         Text("View all")
-                            .appFont(.subheadline, weight: .medium)
+                            .appFont(.subheadlineSemibold)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.forward")
                             .font(.caption.weight(.semibold))
@@ -1448,7 +1448,7 @@ struct ProjectFilterRow: View {
             } label: {
                 Label(String(localized: "Project actions for \(displayName)"), systemImage: "ellipsis")
                     .labelStyle(.iconOnly)
-                    .font(.body.weight(.semibold))
+                    .appFont(.label)
                     .foregroundStyle(.secondary)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())

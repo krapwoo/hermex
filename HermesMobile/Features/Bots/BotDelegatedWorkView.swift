@@ -96,11 +96,11 @@ import UIKit
         VStack(alignment: .leading, spacing: HermesSpacing.s8) {
             HStack(alignment: .firstTextBaseline, spacing: HermesSpacing.s8) {
                 Text(worker.goal)
-                    .appFont(.body, weight: .semibold)
+                    .appFont(.label)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 8)
                 Text(worker.status.localizedUppercase)
-                    .appFont(.caption2, weight: .bold)
+                    .appFont(.captionSemibold)
                     .foregroundStyle(.secondary)
             }
 
@@ -141,7 +141,7 @@ import UIKit
 
                 if work.interruptedWorker == worker.identity {
                     Label("Interrupt sent", systemImage: "stop.circle")
-                        .appFont(.caption, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.secondary)
                 } else {
                     Button("Interrupt", role: .destructive) {
@@ -162,7 +162,7 @@ import UIKit
             VStack(alignment: .leading, spacing: HermesSpacing.s4) {
                 ScrollView(.vertical) {
                     Text(tail.text.isEmpty ? String(localized: "No output yet.") : tail.text)
-                        .appFont(.caption, design: .monospaced)
+                        .appFont(.mono12)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -202,12 +202,11 @@ struct BotDelegationCompletionCard: View {
 
                     VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                         Text(title)
-                            .appFont(.subheadline, weight: .semibold)
+                            .appFont(.subheadlineSemibold)
                             .foregroundStyle(.primary)
                         Text(summary)
                             .appFont(.caption)
                             .foregroundStyle(.secondary)
-                            .monospacedDigit()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -221,14 +220,14 @@ struct BotDelegationCompletionCard: View {
                 HStack(spacing: HermesSpacing.s8) {
                     if let delegationID = completion.delegationID {
                         Text(delegationID)
-                            .appFont(.caption2, design: .monospaced)
+                            .appFont(.mono12)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                     Spacer(minLength: 8)
                     Text("View results")
-                        .appFont(.caption, weight: .semibold)
+                        .appFont(.captionSemibold)
                         .foregroundStyle(.tint)
                 }
                 .padding(.top, HermesSpacing.s8)
@@ -304,11 +303,11 @@ struct BotDelegationResultsSheet: View {
                               : "checkmark.circle.fill")
                             .foregroundStyle(completion.hasFailures ? .orange : .green)
                     }
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
 
                     if let delegationID = completion.delegationID {
                         Text(delegationID)
-                            .appFont(.caption, design: .monospaced)
+                            .appFont(.mono12)
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }

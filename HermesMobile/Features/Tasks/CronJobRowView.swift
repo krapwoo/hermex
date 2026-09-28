@@ -21,7 +21,7 @@ struct CronJobRowView: View {
 
             VStack(alignment: .leading, spacing: HermesSpacing.s2) {
                 Text(job.displayName)
-                    .appFont(.subheadline, weight: .semibold)
+                    .appFont(.subheadlineSemibold)
                     .foregroundStyle(isDimmed ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
                     .lineLimit(nameLineLimit)
 

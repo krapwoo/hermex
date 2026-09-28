@@ -233,7 +233,7 @@ import SwiftUI
                             Image(systemName: "person.2")
                                 .overlay(alignment: .topTrailing) {
                                     Text("\(min(model.delegatedWork.activeCount, 99))")
-                                        .font(.system(size: 9, weight: .bold))
+                                        .appFont(.captionSemibold)
                                         .foregroundStyle(.black)
                                         .frame(minWidth: 15, minHeight: 15)
                                         .background(.green, in: Capsule())

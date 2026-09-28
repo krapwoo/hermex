@@ -92,7 +92,7 @@ struct MarkerMessageCardView: View {
 
     private var titleText: some View {
         Text(kind.title)
-            .appFont(.caption, weight: .semibold)
+            .appFont(.captionSemibold)
             .foregroundStyle(.primary)
             .lineLimit(1)
     }

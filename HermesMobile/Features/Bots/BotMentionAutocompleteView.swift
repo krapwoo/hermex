@@ -45,7 +45,7 @@ struct BotMentionRow: View {
                 avatar
                     .accessibilityHidden(true)
                 Text(verbatim: "@" + item.tag)
-                    .appFont(.subheadline, weight: .semibold, design: .monospaced)
+                    .appFont(.mono14)
                     .foregroundStyle(.primary).lineLimit(1).layoutPriority(2)
                 Spacer(minLength: 8)
                 Text(verbatim: item.profile.name)

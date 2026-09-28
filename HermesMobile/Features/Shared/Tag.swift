@@ -45,7 +45,7 @@ struct Tag: View {
     let fill: Color
     var icon: String?
     var size: Size = .regular
-    var font: AppFont.Role = .caption2
+    var font: AppFont.Role = .captionSemibold
     var minimumScaleFactor: CGFloat = 1
     /// Hides the tag from VoiceOver — Sessions' badges are decorative because the row around
     /// them already announces the same fact in its own accessibility label.
@@ -57,7 +57,7 @@ struct Tag: View {
         fill: Color,
         icon: String? = nil,
         size: Size = .regular,
-        font: AppFont.Role = .caption2,
+        font: AppFont.Role = .captionSemibold,
         minimumScaleFactor: CGFloat = 1,
         isDecorative: Bool = false
     ) {
@@ -78,7 +78,7 @@ struct Tag: View {
         fillOpacity: Double = 0.12,
         icon: String? = nil,
         size: Size = .regular,
-        font: AppFont.Role = .caption2,
+        font: AppFont.Role = .captionSemibold,
         minimumScaleFactor: CGFloat = 1,
         isDecorative: Bool = false
     ) {
@@ -98,12 +98,12 @@ struct Tag: View {
         HStack(spacing: HermesSpacing.s4) {
             if let icon {
                 Image(systemName: icon)
-                    .appFont(font, weight: .semibold)
+                    .appFont(font)
                     .accessibilityHidden(true)
             }
 
             Text(label)
-                .appFont(font, weight: .semibold)
+                .appFont(font)
                 .lineLimit(1)
                 .minimumScaleFactor(minimumScaleFactor)
         }
