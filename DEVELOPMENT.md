@@ -133,6 +133,53 @@ and leaves other jobs and the simulator itself alone.
 
 Runner checks: `python3 -m unittest discover -s scripts/tests -v`.
 
+## Design System Catalog
+
+`design-system-catalog/` is the canonical, versioned Hermex Design System catalog — a React
+Native/Expo token layer, component tree, and browsable catalog documenting the SwiftUI design
+system `HermesMobile/Config/` and `HermesMobile/Features/Shared/` implement. It is not maintained
+outside this repository; see `CONTRIBUTING.md` § Hermex Design System for when a PR must update it,
+and `design-system-catalog/README.md` for the catalog's own structure and conventions.
+
+```zsh
+# Install dependencies
+npm ci --prefix design-system-catalog/native-preview
+
+# Node contract test for the Hermex catalog (no extra test dependency)
+node --test design-system-catalog/test/hermes-catalog.test.mjs
+
+# Typecheck (needs a runtime-only node_modules symlink at the catalog root — gitignored,
+# never committed, recreated on demand; see the README's "node_modules symlink" note)
+ln -s native-preview/node_modules design-system-catalog/node_modules
+(cd design-system-catalog/native-preview && npx tsc --noEmit)
+
+# Launch the catalog at http://localhost:8096
+cd design-system-catalog/native-preview && npm run web
+```
+
+PR CI's `Design System Contract` job runs these Node/TypeScript checks and the catalog's
+repository-location contract (`scripts/tests/test_design_system_catalog_repository.py`) on every
+PR; a catalog-only change (`design-system-catalog/**`) skips the macOS XCTest job but never skips
+this one.
+
+That job also runs `scripts/hermex_design_system_adoption_audit.py` (plus its fixture suite,
+`scripts/tests/test_hermex_design_system_adoption_audit.py`) — a foundation-only contract check, not
+a production-adoption gate. It fails closed when a required Swift foundation file or a small,
+load-bearing API snippet inside it goes missing, when the approved icon-size (12/16/20/24/32pt) or
+avatar/icon-pairing (32→16, 40→20, 48→24) scale drifts, or when either of its two frozen legacy
+baselines (native `.pickerStyle(.segmented)` call sites, direct `ContentUnavailableView` call sites)
+gains a new file or an increased count. This check does not rewrite code, and it does not require or
+prove that any production screen has migrated onto a Design System component — see the script's own
+module docstring for the exact contract and the baseline owner/removal-condition rule.
+
+```zsh
+# Fixture tests for the audit script itself
+python3 -m unittest scripts.tests.test_hermex_design_system_adoption_audit -v
+
+# The audit itself, against this repository
+python3 scripts/hermex_design_system_adoption_audit.py
+```
+
 ## PR CI
 
 `.github/workflows/pr-ci.yml` pins the hosted Xcode path, iOS runtime, and phone
@@ -169,7 +216,10 @@ and `python3 -m unittest discover -s ci -p 'test_*.py'`.
 A separate Linux job, Tooling Tests, runs the `scripts/tests` and `ci/` Python
 suites and the TestFlight build-number selector test on every PR and master
 push, including docs- and scripts-only PRs that skip the macOS runner. CI Gate
-fails when it fails.
+fails when it fails. A second Linux job, Design System Contract (see § Design
+System Catalog above), runs the catalog's Node/TypeScript checks and its
+repository-location contract on every PR and master push, including
+catalog-only PRs that skip the macOS runner; CI Gate fails when it fails too.
 
 ## Build and Launch With XcodeBuildMCP
 
