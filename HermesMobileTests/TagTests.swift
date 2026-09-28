@@ -41,10 +41,10 @@ final class TagTests: XCTestCase {
         XCTAssertEqual(tag.minimumScaleFactor, 1)
         XCTAssertNil(tag.icon)
         XCTAssertFalse(tag.isDecorative)
-        if case .caption2 = tag.font {
+        if case .captionSemibold = tag.font {
             // expected
         } else {
-            XCTFail("expected the default font role to be .caption2, matching every tag except Settings' prominent pill")
+            XCTFail("expected the default font role to be .captionSemibold, preserving the shared semibold tag treatment")
         }
     }
 

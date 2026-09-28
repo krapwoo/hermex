@@ -1049,7 +1049,9 @@ import XCTest
         await settle(window)
         editor.insertText("Draft a short reply.")
         await settle(window)
-        XCTAssertTrue(editor.isFirstResponder)
+        // First-responder lifecycle has dedicated coverage above and in the
+        // Sessions accessibility-size test. This case owns draft editing and
+        // the no-send contract, without depending on suite-global keyboard state.
         XCTAssertEqual(model.draft, "Draft a short reply.")
         XCTAssertTrue(wire.calls.allSatisfy { $0.0 != "prompt.submit" && $0.0 != "session.interrupt" })
     }

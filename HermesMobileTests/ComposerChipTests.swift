@@ -921,6 +921,7 @@ final class ComposerFocusTransitionTests: XCTestCase {
     func testBoundBlurDuringAPopCancelsDeferredFocus() throws {
         let state = ComposerPresentationHarnessState()
         let host = UIHostingController(rootView: ComposerPresentationHarness(state: state, updateRevision: 0))
+        let blurred = expectation(description: "bound blur applied")
         var editor: ComposerChipTextView?
         try withPopTransition(content: host.view, child: host, beforePush: {
             editor = self.findEditor(in: host.view)
@@ -933,9 +934,18 @@ final class ComposerFocusTransitionTests: XCTestCase {
             host.rootView = ComposerPresentationHarness(state: state, updateRevision: 1)
             root.view.layoutIfNeeded()
         } after: {
-            XCTAssertEqual(editor?.isFirstResponder, false)
-            XCTAssertFalse(state.isFocused)
+            Task { @MainActor in
+                // SwiftUI applies the representable update, then syncFocus
+                // deliberately yields once before changing first responder.
+                await Task.yield()
+                host.view.layoutIfNeeded()
+                await Task.yield()
+                XCTAssertEqual(editor?.isFirstResponder, false)
+                XCTAssertFalse(state.isFocused)
+                blurred.fulfill()
+            }
         }
+        wait(for: [blurred], timeout: 1)
     }
 
     func testFocusedComposerRestoresFocusAfterNavigationRoundTrip() throws {
