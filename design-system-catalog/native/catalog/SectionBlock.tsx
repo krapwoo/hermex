@@ -158,6 +158,12 @@ function Column({ blocks, fill, kind = 'primary' }: { blocks: BlockDef[]; fill?:
  *     it fills the whole row, the same way a `tokenGallery` section does.
  * Whichever column is tallest sets the row's height (flexbox's default `alignItems: 'stretch'`), and
  * every other column's last card grows to fill the rest, so the row's bottom edge lands flush.
+ *
+ * A Hermex reference entry (`def.hermesReference`) is the one exception to that secondary column:
+ * Accessibility moves out of it entirely, down into `HermesReferenceDetails`'s own lower row of
+ * three supporting cards (Decision & product context, Implementation notes, Accessibility) rendered
+ * below the visual examples — see `isHermexReference` below. The upper secondary column keeps only
+ * Props for that case.
  */
 export function SectionBlock<TId extends string>({ def, groupLabel }: { def: SectionDef<TId>; groupLabel?: string }) {
   checkCompleteness(def);
@@ -181,6 +187,16 @@ export function SectionBlock<TId extends string>({ def, groupLabel }: { def: Sec
   // order untouched.
   const isHermexReference = Boolean(def.hermesReference);
 
+  // Computed ahead of the `def.tokenGallery` early return below (rather than alongside the other
+  // component-branch content further down) so a token-gallery Hermex entry — e.g. Hermex Colors —
+  // can still pass its own accessibility guidance into HermesReferenceDetails's lower Accessibility
+  // card, the same fallback text a non-Hermex section's upper secondary column would otherwise show.
+  const a11yContent = def.a11y ? (
+    <Text style={styles.a11yText}>{def.a11y}</Text>
+  ) : (
+    <EmptyText>No accessibility notes documented.</EmptyText>
+  );
+
   const primaryHeader = (
     <>
       {groupLabel && <Text style={styles.groupHeading}>{groupLabel}</Text>}
@@ -198,7 +214,7 @@ export function SectionBlock<TId extends string>({ def, groupLabel }: { def: Sec
   const hermexSupportingContent = isHermexReference ? (
     <View style={styles.supportingContent}>
       {def.whenToUse && !def.hermesReference?.useWhen ? <WhenToUse text={def.whenToUse} /> : null}
-      <HermesReferenceDetails meta={def.hermesReference!} />
+      <HermesReferenceDetails meta={def.hermesReference!} accessibilityContent={a11yContent} />
     </View>
   ) : null;
 
@@ -227,20 +243,17 @@ export function SectionBlock<TId extends string>({ def, groupLabel }: { def: Sec
       <EmptyText>This component takes no props.</EmptyText>
     );
 
-  const a11yContent = def.a11y ? (
-    <Text style={styles.a11yText}>{def.a11y}</Text>
-  ) : (
-    <EmptyText>No accessibility notes documented.</EmptyText>
-  );
-
   const primaryBlocks: BlockDef[] = [
     ...(hide.variants ? [] : [{ label: 'Variants', content: variantsContent }]),
     ...(hide.states ? [] : [{ label: 'States / Configurations', content: statesContent }]),
   ];
 
+  // A Hermex reference entry never shows Accessibility here — it moves down into
+  // HermesReferenceDetails's own lower Accessibility card instead (see `hermexSupportingContent`
+  // above), so the upper secondary column keeps only Props for that case.
   const secondaryBlocks: BlockDef[] = [
     ...(hide.props ? [] : [{ label: 'Props', content: propsContent }]),
-    ...(hide.accessibility ? [] : [{ label: 'Accessibility', content: a11yContent }]),
+    ...(hide.accessibility || isHermexReference ? [] : [{ label: 'Accessibility', content: a11yContent }]),
   ];
 
   const columns: { blocks: BlockDef[]; kind: ColumnKind }[] = [

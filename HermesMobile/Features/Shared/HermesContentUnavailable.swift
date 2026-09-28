@@ -25,14 +25,45 @@ struct HermesContentUnavailable: View {
         let handler: () -> Void
     }
 
+    /// Where the content cluster (icon/spinner, title, description, actions) sits within whatever
+    /// space the caller gives this view. `.intrinsic` (the default) is the original, unchanged
+    /// behavior — `ContentUnavailableView`'s own centering. `.fullScreen` is additive: it's for a
+    /// caller that gives this view an entire screen's height and wants the cluster to start near the
+    /// top third of it instead, the way a Kanban/Search "nothing to show" screen typically reads.
+    enum Layout: Equatable {
+        case intrinsic
+        case fullScreen
+    }
+
     var variant: Variant
     var title: String = ""
     var systemImage: String = "exclamationmark.triangle"
     var description: Text?
     var primaryAction: Action?
     var secondaryAction: Action?
+    var layout: Layout = .intrinsic
 
     var body: some View {
+        switch layout {
+        case .intrinsic:
+            contentUnavailableView
+        case .fullScreen:
+            // GeometryReader supplies the available height to offset by; ScrollView keeps long
+            // content/Dynamic Type readable instead of clipping it at a fixed offset.
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: proxy.size.height / 3)
+                        contentUnavailableView
+                    }
+                    .padding(.horizontal, HermesSpacing.screenHorizontal)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    private var contentUnavailableView: some View {
         ContentUnavailableView {
             label
         } description: {

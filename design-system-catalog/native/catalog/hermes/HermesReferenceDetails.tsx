@@ -1,15 +1,21 @@
 /**
- * Catalog-owned progressive-disclosure component for a Hermex reference entry's supporting
- * content: up to three destinations inline under "Product context" (a neutral heading — the
- * destinations describe relevant context, not proof of current production adoption), a "Where it
- * appears" disclosure for the complete destination list, and an "Implementation notes" disclosure
- * for technical provenance (source paths, foundation/adoption status, material-fidelity notes).
- * Replaces `HermesAuditPanel` for every entry that has migrated to `hermesReference`.
+ * Catalog-owned component for a Hermex reference entry's supporting content, rendered as a lower
+ * row of three restrained cards below the upper Variants/States/Props specimen row (see
+ * `SectionBlock`): "Decision & product context" (the useWhen/avoidWhen/alternatives/adoptionStatus
+ * decision fields, up to three destinations inline under "Product context" — a neutral heading, the
+ * destinations describe relevant context, not proof of current production adoption — and a "Where
+ * it appears" disclosure for the complete destination list), "Implementation notes" (technical
+ * provenance — source paths, foundation/adoption status, material-fidelity notes — visible directly
+ * in its own card, no longer collapsed behind a disclosure now that it has a card of its own to sit
+ * in), and "Accessibility" (the entry's accessibility guidance, passed in as `accessibilityContent`
+ * since `SectionBlock` already owns that fallback text). The three cards sit side by side above
+ * `CATALOG_NARROW_BREAKPOINT` and stack into one column, in the same order, below it. Replaces
+ * `HermesAuditPanel` for every entry that has migrated to `hermesReference`.
  */
 import React, { useState, type ComponentProps, type ComponentType } from 'react';
-import { View, Text, StyleSheet, Pressable, type TextStyle } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions, type TextStyle } from 'react-native';
 import { AnimatedChevron } from '../../components';
-import { CATALOG_TYPE, CATALOG_COLOR, CATALOG_SPACE, CATALOG_RADIUS } from '../tokens';
+import { CATALOG_TYPE, CATALOG_COLOR, CATALOG_SPACE, CATALOG_RADIUS, CATALOG_NARROW_BREAKPOINT } from '../tokens';
 import type { HermesAdoptionState, HermesAlternative, HermesReferenceDestination, HermesReferenceMeta } from '../types';
 
 // Same web-only word-break/overflow-wrap escape hatch used throughout the catalog (SectionBlock's
@@ -91,17 +97,25 @@ const ADOPTION_STATE_LABEL: Record<HermesAdoptionState, string> = {
   'reference-only': 'Reference only',
 };
 
-interface HermesReferenceDetailsProps {
-  meta: HermesReferenceMeta;
-  implementationContent?: React.ReactNode;
+/** One of the three lower supporting cards — a restrained card visually distinct from the upper
+ *  specimen cards (`SectionBlock`'s own `card` style): white surface, hairline border,
+ *  `CATALOG_RADIUS.sm`, `CATALOG_SPACE.lg` padding, all existing catalog tokens. */
+function SupportingCard({ heading, children }: { heading: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.supportingCard}>
+      <Text style={styles.supportingCardHeading}>{heading}</Text>
+      {children}
+    </View>
+  );
 }
 
-export function HermesReferenceDetails({ meta, implementationContent }: HermesReferenceDetailsProps) {
-  const alternatives = meta.alternatives ?? [];
-  const hasDecisionGuidance = Boolean(meta.useWhen || meta.avoidWhen || alternatives.length > 0 || meta.adoptionStatus);
-  const hasWhereItAppears = Boolean(meta.useSummary && meta.usedIn?.length);
-  const inlineDestinations = meta.useSummary ? [] : (meta.usedIn ?? []).slice(0, 3);
-  const hasInlineUsage = Boolean(meta.useSummary || inlineDestinations.length > 0);
+function ImplementationNotesContent({
+  meta,
+  implementationContent,
+}: {
+  meta: HermesReferenceMeta;
+  implementationContent?: React.ReactNode;
+}) {
   const hasImplementationNotes = Boolean(
     meta.implementationNotes?.status ||
       meta.implementationNotes?.sourcePaths?.length ||
@@ -109,11 +123,82 @@ export function HermesReferenceDetails({ meta, implementationContent }: HermesRe
       implementationContent,
   );
 
-  if (!hasDecisionGuidance && !hasInlineUsage && !hasImplementationNotes) return null;
+  if (!hasImplementationNotes) {
+    return <Text style={styles.emptyText}>No implementation notes documented.</Text>;
+  }
 
   return (
-    <View style={styles.root}>
-      {hasDecisionGuidance && (
+    <View style={styles.implementationBlock}>
+      {meta.implementationNotes?.status ? (
+        <Text style={styles.implementationStatus}>{meta.implementationNotes.status}</Text>
+      ) : null}
+      {meta.implementationNotes?.sourcePaths?.length ? (
+        <View style={styles.sourcePathList}>
+          {meta.implementationNotes.sourcePaths.map((sourcePath) => (
+            <Text key={sourcePath} style={[styles.sourcePath, wrapStyle]}>
+              {sourcePath}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      {meta.implementationNotes?.notes?.length ? (
+        <View style={styles.notesList}>
+          {meta.implementationNotes.notes.map((note, i) => (
+            <Text key={i} style={[styles.implementationNote, wrapStyle]}>
+              · {note}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      {implementationContent}
+    </View>
+  );
+}
+
+/** Compact implementation-only disclosure for the catalog overview's maintainer evidence. The
+ * overview is not a SectionDef reference entry, so it must not inherit empty Decision and
+ * Accessibility cards from the three-column section contract. */
+export function HermesOverviewImplementationDetails({
+  meta,
+  implementationContent,
+}: {
+  meta: HermesReferenceMeta;
+  implementationContent?: React.ReactNode;
+}) {
+  return (
+    <Disclosure label="Implementation notes">
+      <ImplementationNotesContent meta={meta} implementationContent={implementationContent} />
+    </Disclosure>
+  );
+}
+
+interface HermesReferenceDetailsProps {
+  meta: HermesReferenceMeta;
+  implementationContent?: React.ReactNode;
+  /** The entry's accessibility guidance, already resolved by `SectionBlock` (including its
+   *  truthful "No accessibility notes documented." fallback when `def.a11y` is absent) — rendered
+   *  here inside the Accessibility supporting card, the same content the upper secondary column
+   *  would otherwise show for a non-Hermex section. Optional only for `HermesOverview`'s own
+   *  maintainer-facing coverage-table usage of this component, which isn't a per-entry Accessibility
+   *  card at all — falls back to the same truthful "not documented" text SectionBlock uses. */
+  accessibilityContent?: React.ReactNode;
+}
+
+export function HermesReferenceDetails({
+  meta,
+  implementationContent,
+  accessibilityContent = <Text style={styles.emptyText}>No accessibility notes documented.</Text>,
+}: HermesReferenceDetailsProps) {
+  const { width } = useWindowDimensions();
+  const isNarrow = width < CATALOG_NARROW_BREAKPOINT;
+
+  const alternatives = meta.alternatives ?? [];
+  const hasWhereItAppears = Boolean(meta.useSummary && meta.usedIn?.length);
+  const inlineDestinations = meta.useSummary ? [] : (meta.usedIn ?? []).slice(0, 3);
+  const hasInlineUsage = Boolean(meta.useSummary || inlineDestinations.length > 0);
+  return (
+    <View style={[styles.supportingRow, isNarrow && styles.supportingRowNarrow]}>
+      <SupportingCard heading="Decision & product context">
         <View style={styles.decisionBlock}>
           {meta.useWhen ? (
             <DecisionField label="Use when">
@@ -146,64 +231,61 @@ export function HermesReferenceDetails({ meta, implementationContent }: HermesRe
             </DecisionField>
           ) : null}
         </View>
-      )}
-      {hasInlineUsage && (
-        <View style={styles.usageBlock}>
-          <Text style={styles.usageHeading}>Product context</Text>
-          {meta.useSummary ? (
-            <Text style={styles.useSummary}>{meta.useSummary}</Text>
-          ) : (
+        {hasInlineUsage && (
+          <View style={styles.usageBlock}>
+            <Text style={styles.usageHeading}>Product context</Text>
+            {meta.useSummary ? (
+              <Text style={styles.useSummary}>{meta.useSummary}</Text>
+            ) : (
+              <View style={styles.destinationList}>
+                {inlineDestinations.map((destination, i) => (
+                  <DestinationRow key={`${destination.screen}-${i}`} destination={destination} />
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+        {hasWhereItAppears && (
+          <Disclosure label="Where it appears">
             <View style={styles.destinationList}>
-              {inlineDestinations.map((destination, i) => (
+              {(meta.usedIn ?? []).map((destination, i) => (
                 <DestinationRow key={`${destination.screen}-${i}`} destination={destination} />
               ))}
             </View>
-          )}
-        </View>
-      )}
-      {hasWhereItAppears && (
-        <Disclosure label="Where it appears">
-          <View style={styles.destinationList}>
-            {(meta.usedIn ?? []).map((destination, i) => (
-              <DestinationRow key={`${destination.screen}-${i}`} destination={destination} />
-            ))}
-          </View>
-        </Disclosure>
-      )}
-      {hasImplementationNotes && (
-        <Disclosure label="Implementation notes">
-          <View style={styles.implementationBlock}>
-            {meta.implementationNotes?.status ? (
-              <Text style={styles.implementationStatus}>{meta.implementationNotes.status}</Text>
-            ) : null}
-            {meta.implementationNotes?.sourcePaths?.length ? (
-              <View style={styles.sourcePathList}>
-                {meta.implementationNotes.sourcePaths.map((sourcePath) => (
-                  <Text key={sourcePath} style={[styles.sourcePath, wrapStyle]}>
-                    {sourcePath}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
-            {meta.implementationNotes?.notes?.length ? (
-              <View style={styles.notesList}>
-                {meta.implementationNotes.notes.map((note, i) => (
-                  <Text key={i} style={[styles.implementationNote, wrapStyle]}>
-                    · {note}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
-            {implementationContent}
-          </View>
-        </Disclosure>
-      )}
+          </Disclosure>
+        )}
+      </SupportingCard>
+      <SupportingCard heading="Implementation notes">
+        <ImplementationNotesContent meta={meta} implementationContent={implementationContent} />
+      </SupportingCard>
+      <SupportingCard heading="Accessibility">{accessibilityContent}</SupportingCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { gap: CATALOG_SPACE.md, maxWidth: '100%' },
+  // Three cards side by side above CATALOG_NARROW_BREAKPOINT, stacked into one column (same
+  // semantic order) below it — matches SectionBlock's own columnsRow/columnsRowNarrow pattern.
+  supportingRow: { flexDirection: 'row', gap: CATALOG_SPACE.xl, maxWidth: '100%' },
+  supportingRowNarrow: { flexDirection: 'column' },
+  // Restrained, visually distinct from the upper specimen cards (SectionBlock's own `card` style,
+  // which uses a muted surface, a larger radius step, and roomier padding) — white surface, hairline
+  // border, CATALOG_RADIUS.sm, CATALOG_SPACE.lg padding, every value an existing catalog token.
+  supportingCard: {
+    flex: 1,
+    gap: CATALOG_SPACE.md,
+    maxWidth: '100%',
+    backgroundColor: CATALOG_COLOR.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: CATALOG_COLOR.borderHairline,
+    borderRadius: CATALOG_RADIUS.sm,
+    padding: CATALOG_SPACE.lg,
+  },
+  supportingCardHeading: {
+    fontSize: CATALOG_TYPE.xs, fontWeight: '700', color: CATALOG_COLOR.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.6,
+  },
+  emptyText: { fontSize: CATALOG_TYPE.sm, color: CATALOG_COLOR.textMuted, fontStyle: 'italic' },
   decisionBlock: { gap: CATALOG_SPACE.sm, maxWidth: '100%' },
   decisionField: { gap: 2, maxWidth: '100%' },
   decisionLabel: {

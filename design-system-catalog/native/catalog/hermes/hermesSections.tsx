@@ -7,8 +7,8 @@
  * plain-English introduction and visual examples first, then "Product context" destinations —
  * relevant screens/paths a reader can use to picture where a component fits, not proof of current
  * production adoption unless the entry's own `implementationNotes.status` says so — with technical
- * provenance (source paths, foundation/adoption status, material-fidelity notes) collapsed behind
- * `HermesReferenceDetails`'s disclosures (see `def.hermesReference`, `native/catalog/types.ts`).
+ * provenance (source paths, foundation/adoption status, material-fidelity notes) visible in the
+ * lower reference-details cards (see `def.hermesReference`, `native/catalog/types.ts`).
  * Hermex itself ships no React Native runtime — every live example on this page is a React Native
  * documentation reconstruction of SwiftUI source, not the production app.
  *
@@ -29,7 +29,7 @@ import { HERMES_COLOR_RAMPS, HERMES_COLOR_RAMP_STEPS, HERMES_COLOR_GENERATED_STE
 import { HermesSemanticColorReference } from './HermesSemanticColorReference';
 import { HermesIconReference } from './HermesIconReference';
 import { HermesMotionReference } from './HermesMotionReference';
-import { HermesReferenceDetails } from './HermesReferenceDetails';
+import { HermesOverviewImplementationDetails } from './HermesReferenceDetails';
 import { SpacingScaleGallery } from '../SpacingScaleGallery';
 import { HERMES_SPACING_STEPS, HERMES_SPACING, HERMES_SPACING_USE } from './hermesTokenProposal';
 import { HERMES_ATTACHMENT_SIZE } from './hermesAttachmentSize';
@@ -136,6 +136,17 @@ const recon = StyleSheet.create({
   cuvSpinnerGlyph: { fontSize: 26, color: '#8a8a8a' },
   cuvTitle: { fontSize: 15, fontWeight: '600', color: '#1c1c1e', textAlign: 'center' },
   cuvDesc: { fontSize: 13, color: '#6d6d72', textAlign: 'center' },
+  // A bounded, phone-like frame (fixed width/height, rounded corners) for the .fullScreen Layout
+  // specimen below — unlike cuvStack's own hug-content sizing, this needs a real finite container to
+  // demonstrate "content starts ~1/3 down the available height" against.
+  cuvFullScreenFrame: {
+    width: 220, height: 420, borderRadius: 28, borderWidth: 1, borderColor: 'rgba(0,0,0,0.14)',
+    backgroundColor: '#ffffff', overflow: 'hidden', alignItems: 'center',
+  },
+  // Reserves the top third of cuvFullScreenFrame's own height — the same fraction
+  // HermesContentUnavailable.swift's .fullScreen case computes via GeometryReader's `proxy.size.height / 3`.
+  cuvFullScreenTopSpacer: { height: 420 / 3 },
+  cuvFullScreenContent: { alignItems: 'center', gap: 8, paddingHorizontal: 16 },
   prCard: { width: 220, padding: 14, borderRadius: 24, backgroundColor: '#f2f2f7', borderWidth: 1, borderColor: 'rgba(0,0,0,0.10)' },
   prBlock: { width: 220, padding: 12, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.05)' },
   prField: { width: 220, padding: 12, borderRadius: 14, backgroundColor: '#ffffff', borderWidth: 1, borderColor: 'rgba(0,0,0,0.14)' },
@@ -225,7 +236,7 @@ export function HermesOverview() {
         Hermex is SwiftUI. Every live example below is a React Native documentation reconstruction
         built from reading that SwiftUI source, not the production SwiftUI runtime.
       </Text>
-      <HermesReferenceDetails
+      <HermesOverviewImplementationDetails
         meta={{
           implementationNotes: {
             status: 'Foundation-only: available in this branch\'s candidate; not a claim of upstream or App Store release.',
@@ -243,7 +254,7 @@ export function HermesOverview() {
         production-screen migration is not part of this slice. It is not a per-screen adoption audit;
         production source remains the authority on what each screen actually renders.
       </Text>
-      <HermesReferenceDetails
+      <HermesOverviewImplementationDetails
         meta={{
           implementationNotes: {
             status: 'Foundation-only: describes this branch\'s own candidate, not production-screen adoption.',
@@ -329,6 +340,27 @@ function ContentUnavailablePreview({
         </View>
       )}
       <Text style={recon.note}>icon slot — real SF Symbol not reproduced</Text>
+    </View>
+  );
+}
+
+/** The additive `.fullScreen` Layout, in a bounded phone-like frame: a reserved top spacer sized to
+ *  a third of the frame's own height, so the content cluster begins ~1/3 down instead of the
+ *  `.intrinsic` default's vertical centering — reconstructing HermesContentUnavailable.swift's own
+ *  `GeometryReader`-based `proxy.size.height / 3` offset. */
+function ContentUnavailableFullScreenPreview() {
+  const copy = CONTENT_UNAVAILABLE_COPY.unavailable;
+  return (
+    <View style={recon.cuvFullScreenFrame}>
+      <View style={recon.cuvFullScreenTopSpacer} />
+      <View style={recon.cuvFullScreenContent}>
+        <View style={recon.cuvIconSlot}>
+          <Text style={recon.cuvIconGlyph}>{copy.glyph}</Text>
+        </View>
+        <Text style={recon.cuvTitle}>{copy.title}</Text>
+        <Text style={recon.cuvDesc}>{copy.desc}</Text>
+      </View>
+      <Text style={recon.note}>.fullScreen — content begins ~1/3 down, not vertically centered</Text>
     </View>
   );
 }
@@ -1840,8 +1872,9 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'variant', type: "'loading' | 'empty' | 'noResults' | 'error' | 'unavailable' | 'custom'", required: true, desc: 'Selects the icon/title pairing; loading renders a plain spinner instead of an icon/title.' },
       { name: 'description', type: 'String?', desc: 'Optional secondary line under the title.' },
       { name: 'primaryAction / secondaryAction', type: '{ label: String; onPress: () -> Void }?', desc: 'One action keeps its established secondary emphasis unchanged; both together stack vertically, primary first, with the primary action promoted to the primary hierarchy.' },
+      { name: 'layout', type: "'.intrinsic' | '.fullScreen'", default: '.intrinsic', desc: 'Additive placement choice. .intrinsic (default, unchanged) lets ContentUnavailableView center its own content. .fullScreen instead positions the top of the content cluster at roughly one third of the available container height, wrapped in a ScrollView so long content/Dynamic Type can grow rather than clip.' },
     ],
-    a11y: 'Icon, title, and description combine into one accessible element; a primary/secondary action is a normal focusable Button, not part of that combined element.',
+    a11y: 'Icon, title, and description combine into one accessible element; a primary/secondary action is a normal focusable Button, not part of that combined element. The .fullScreen layout changes only placement, not this accessibility grouping.',
     variants: {
       items: [
         { key: 'loading', name: 'Loading', node: <ContentUnavailablePreview variant="loading" /> },
@@ -1856,6 +1889,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       items: [
         { key: 'no-description', name: 'Without description', node: <ContentUnavailablePreview withDescription={false} /> },
         { key: 'with-actions', name: 'With primary + secondary actions', node: <ContentUnavailablePreview primaryAction secondaryAction /> },
+        { key: 'full-screen', name: 'Full-screen placement', node: <ContentUnavailableFullScreenPreview /> },
       ],
     },
     hermesReference: {
@@ -1874,6 +1908,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'The platform ContentUnavailableView is used directly across 30 production files (68 source references) in the current working tree, including ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, CronJobConfigurationPickers.swift, KanbanLabView.swift, InsightsView.swift, TasksView.swift, SkillsView.swift, and MemoryView.swift — none imports HermesContentUnavailable.swift. scripts/hermex_design_system_adoption_audit.py freezes this file/reference-count baseline so a future migration is a deliberate, reviewed change, not silent drift.',
           'HermesAvatar (also new, unadopted) is composed by HermesContentUnavailable\'s own icon-bearing variants for their identity glyph — an internal foundation-layer composition, not a claim about any production picker sheet\'s current icon treatment.',
+          'The additive layout prop (.intrinsic default / .fullScreen) is also new and unadopted in this branch — no production screen passes layout: .fullScreen yet. .fullScreen reads the container height via GeometryReader and positions the content cluster at roughly one third of it, wrapped in a ScrollView for Dynamic Type/long-content robustness, instead of ContentUnavailableView\'s own centering.',
         ],
       },
     },
@@ -2221,7 +2256,7 @@ function HermesManifestJSON() {
 
 export function HermesManifest() {
   return (
-    <HermesReferenceDetails
+    <HermesOverviewImplementationDetails
       meta={{
         implementationNotes: {
           status:

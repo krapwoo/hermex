@@ -331,7 +331,7 @@ test('the shared catalog framework defines and applies a narrow-viewport breakpo
   );
 });
 
-test('SectionBlock uses the approved two-column documentation hierarchy: wide Variants/States primary column, narrow Props/Accessibility secondary column', () => {
+test('SectionBlock uses the approved two-column documentation hierarchy: wide Variants/States primary column, narrow Props secondary column (plus Accessibility for a non-Hermex/template section only — a Hermex reference entry moves Accessibility to its own lower supporting card instead)', () => {
   const src = read(SECTION_BLOCK_PATH);
 
   assert.match(
@@ -341,8 +341,13 @@ test('SectionBlock uses the approved two-column documentation hierarchy: wide Va
   );
   assert.match(
     src,
-    /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*label: 'Props'[\s\S]*label: 'Accessibility'/,
-    'expected Props and Accessibility to stack in the secondary column',
+    /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*label: 'Props'/,
+    'expected Props to render in the secondary column',
+  );
+  assert.match(
+    src,
+    /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*hide\.accessibility\s*\|\|\s*isHermexReference[\s\S]*label: 'Accessibility'/,
+    'expected the secondary-column Accessibility block to be skipped for a Hermex reference entry (isHermexReference), not just when explicitly hidden — it moves to the lower supporting row instead',
   );
   assert.match(
     src,
@@ -355,6 +360,24 @@ test('SectionBlock uses the approved two-column documentation hierarchy: wide Va
     'expected the reference-content secondary column to receive the narrower one-third share',
   );
   assert.doesNotMatch(src, /columnWide/, 'the superseded three-column Props-width special case should be removed');
+});
+
+test('SectionBlock computes a11yContent (with its truthful "No accessibility notes documented." fallback) before the tokenGallery early return, so a token-gallery Hermex entry (e.g. Hermex Colors) can still pass it into its lower Accessibility card', () => {
+  const src = read(SECTION_BLOCK_PATH);
+  const a11yContentIdx = src.indexOf('const a11yContent');
+  const tokenGalleryReturnIdx = src.indexOf('if (def.tokenGallery)');
+  assert.ok(a11yContentIdx > -1, 'expected a11yContent to be computed in SectionBlock');
+  assert.ok(tokenGalleryReturnIdx > -1, 'expected the def.tokenGallery early return in SectionBlock');
+  assert.ok(
+    a11yContentIdx < tokenGalleryReturnIdx,
+    'expected a11yContent to be computed before the def.tokenGallery early return, not after it',
+  );
+});
+
+test('SectionBlock passes a11yContent into HermesReferenceDetails as accessibilityContent, for both the tokenGallery and the general component branch', () => {
+  const src = read(SECTION_BLOCK_PATH);
+  const passages = [...src.matchAll(/<HermesReferenceDetails\s+meta=\{def\.hermesReference!\}\s+accessibilityContent=\{a11yContent\}\s*\/>/g)];
+  assert.ok(passages.length >= 1, 'expected <HermesReferenceDetails meta={def.hermesReference!} accessibilityContent={a11yContent} /> to appear (shared by both the tokenGallery and general-section return paths)');
 });
 
 test('native-preview/dist/index.html restores the react-native-web root height/overflow reset', () => {
@@ -2978,6 +3001,58 @@ test('Correction (design-system-foundation truthfulness pass): Content Unavailab
   assert.match(section, /68 source references/i);
 });
 
+// ─── Explicit full-screen placement (HermesContentUnavailable.Layout) ───────────────────────────
+
+test('Content Unavailable documents the additive layout prop (.intrinsic default / .fullScreen) in its Props table, truthfully, with no production adoption claim', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Content Unavailable');
+  assert.match(
+    section,
+    /name:\s*'layout'/,
+    'expected a documented "layout" prop',
+  );
+  assert.match(
+    section,
+    /'\.intrinsic'\s*\|\s*'\.fullScreen'|"'intrinsic'\s*\|\s*'fullScreen'"/,
+    'expected the layout prop\'s type to name both .intrinsic and .fullScreen',
+  );
+  assert.match(section, /one[- ]third/i, 'expected the layout prop description to name the one-third placement, truthfully');
+  assert.doesNotMatch(section, /partially adopted/i, 'the new layout API must not be described as adopted in production — it is foundation-only, same as the rest of this entry');
+});
+
+test('Content Unavailable adds a bounded, phone-like full-screen-placement catalog specimen showing content beginning around one-third down, as a new States / Configurations item', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Content Unavailable');
+  assert.match(
+    section,
+    /key:\s*'full-screen'[\s\S]{0,120}name:\s*'Full-screen placement'/,
+    'expected a "Full-screen placement" States / Configurations item',
+  );
+
+  const previewMatch = section.match(/node:\s*<(\w+)\s*\/>\s*\},\s*\n\s*\],\s*\n\s*\},\s*\n\s*hermesReference:/);
+  assert.ok(previewMatch, 'expected the full-screen states item to reference a dedicated preview component');
+  const previewName = previewMatch[1];
+
+  const previewBody = extractFunctionBody(sectionsSrc, previewName);
+  // The preview's own outer frame is a style-sheet reference (recon.<name>), not an inline literal —
+  // resolve it to its actual declaration to check the frame is "bounded, phone-like": a fixed,
+  // finite width/height, not an unbounded flex fill.
+  const frameStyleMatch = previewBody.match(/<View style=\{recon\.(\w+)\}>/);
+  assert.ok(frameStyleMatch, 'expected the preview\'s outer View to reference a recon.<name> frame style');
+  const frameStyleName = frameStyleMatch[1];
+  const frameDeclIdx = sectionsSrc.indexOf(`${frameStyleName}:`);
+  assert.ok(frameDeclIdx > -1, `expected a recon.${frameStyleName} style declaration`);
+  // Scans a window after the frame style's own declaration (covering it and its immediate sibling
+  // style(s), e.g. a top-spacer keyed off the same frame) rather than the whole multi-thousand-line
+  // file, so this doesn't accidentally match an unrelated width/height/fraction elsewhere.
+  const frameRegion = sectionsSrc.slice(frameDeclIdx, frameDeclIdx + 400);
+  assert.match(frameRegion, /width:\s*\d/, 'expected the preview frame to declare a fixed width');
+  assert.match(frameRegion, /height:\s*\d/, 'expected the preview frame to declare a fixed height');
+  // Content begins ~1/3 down: a spacer/offset sized to roughly a third of the frame's own height,
+  // the same relationship HermesContentUnavailable.swift computes via GeometryReader's `/ 3`.
+  assert.match(frameRegion, /\/\s*3\b/, 'expected the preview to reserve roughly one third of the frame height above the content cluster');
+});
+
 test('Pending Request documents Request Card composition and preserves the domain-owned request-state disclaimer', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Pending Request');
@@ -3770,6 +3845,111 @@ test('SectionBlock no longer renders the superseded def.whenToUse "VS" note for 
     /def\.whenToUse\s*&&\s*!def\.hermesReference\?\.useWhen/,
     'expected the Hermex supporting-content block to suppress the legacy whenToUse note once hermesReference.useWhen covers the same decision',
   );
+});
+
+// ─── Responsive three-column Hermex reference-details row ───────────────────────────────────────
+
+test('HermesReferenceDetails renders exactly three lower supporting cards, in semantic order Decision & product context, Implementation notes, Accessibility, each a restrained card reusing existing catalog tokens (white surface, hairline border, CATALOG_RADIUS.sm, CATALOG_SPACE.lg padding) distinct from the upper specimen cards', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+
+  const decisionIdx = detailsSrc.indexOf('Decision & product context');
+  const implementationIdx = detailsSrc.indexOf('Implementation notes');
+  const accessibilityIdx = detailsSrc.indexOf('Accessibility');
+  assert.ok(decisionIdx > -1, 'expected a "Decision & product context" supporting-card heading');
+  assert.ok(implementationIdx > -1, 'expected an "Implementation notes" supporting-card heading');
+  assert.ok(accessibilityIdx > -1, 'expected an "Accessibility" supporting-card heading');
+  assert.ok(
+    decisionIdx < implementationIdx && implementationIdx < accessibilityIdx,
+    'expected the three supporting cards in this exact order: Decision & product context, Implementation notes, Accessibility',
+  );
+
+  // Every human label the frozen scope requires stays discoverable in source.
+  for (const label of ['Use when', 'Avoid when', 'Alternatives', 'Adoption status', 'Product context', 'Implementation notes', 'Accessibility']) {
+    assert.ok(detailsSrc.includes(label), `expected the exact human label "${label}" in HermesReferenceDetails`);
+  }
+
+  assert.match(
+    detailsSrc,
+    /backgroundColor:\s*CATALOG_COLOR\.surface\b/,
+    'expected the supporting cards to use the white CATALOG_COLOR.surface token, distinct from the upper specimen cards\' surfaceMuted',
+  );
+  assert.match(
+    detailsSrc,
+    /borderRadius:\s*CATALOG_RADIUS\.sm\b/,
+    'expected the supporting cards to use CATALOG_RADIUS.sm, distinct from the upper specimen cards\' CATALOG_RADIUS.md',
+  );
+  assert.match(
+    detailsSrc,
+    /padding:\s*CATALOG_SPACE\.lg\b/,
+    'expected the supporting cards to use CATALOG_SPACE.lg padding',
+  );
+  assert.match(
+    detailsSrc,
+    /borderColor:\s*CATALOG_COLOR\.borderHairline\b/,
+    'expected the supporting cards to use a hairline border',
+  );
+  assert.doesNotMatch(detailsSrc, /CATALOG_RADIUS\.md/, 'the supporting cards must not reuse the upper specimen cards\' own radius token');
+});
+
+test('HermesReferenceDetails stacks its three supporting cards into one column, in the same semantic order, below CATALOG_NARROW_BREAKPOINT — reading the live viewport width the same way SectionBlock does', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(detailsSrc, /import\s*\{[^}]*\buseWindowDimensions\b[^}]*\}\s*from\s*'react-native'/, 'expected useWindowDimensions imported from react-native');
+  assert.match(
+    detailsSrc,
+    /import\s*\{[^}]*\bCATALOG_NARROW_BREAKPOINT\b[^}]*\}\s*from\s*'\.\.\/tokens'/,
+    'expected CATALOG_NARROW_BREAKPOINT imported from the shared tokens module',
+  );
+  assert.match(detailsSrc, /width\s*<\s*CATALOG_NARROW_BREAKPOINT/, 'expected a narrow-viewport comparison against the shared breakpoint');
+  assert.match(detailsSrc, /flexDirection:\s*'column'/, 'expected a column stack for the narrow-viewport supporting row');
+});
+
+test('HermesReferenceDetails no longer collapses Implementation notes behind a Disclosure — its status/source paths/notes/implementationContent are visible directly in their own card — while Where it appears remains an accessible disclosure (aria-expanded, focus treatment, animated chevron)', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  const referenceDetailsBody = extractFunctionBody(detailsSrc, 'HermesReferenceDetails');
+  assert.doesNotMatch(
+    referenceDetailsBody,
+    /<Disclosure label="Implementation notes"/,
+    'expected the section reference-details implementation to keep Implementation notes visible in its own card',
+  );
+  assert.match(referenceDetailsBody, /<Disclosure label="Where it appears"/, 'expected the Where it appears Disclosure to remain');
+  assert.match(detailsSrc, /accessibilityRole="button"/);
+  assert.match(detailsSrc, /accessibilityState=\{\{\s*expanded\s*\}\}/);
+  assert.match(detailsSrc, /aria-expanded=\{expanded\}/);
+  assert.match(detailsSrc, /<AnimatedChevron/);
+  assert.match(detailsSrc, /triggerFocused/, 'expected the disclosure trigger to keep its focus-ring treatment');
+});
+
+test('HermesReferenceDetails accepts an accessibilityContent prop (the entry\'s accessibility guidance, with the existing truthful fallback already computed by SectionBlock) and renders it inside the Accessibility supporting card', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(
+    detailsSrc,
+    /accessibilityContent\??:\s*React\.ReactNode/,
+    'expected HermesReferenceDetailsProps to declare an accessibilityContent: React.ReactNode prop (optionally with its own default, for the one non-SectionBlock caller)',
+  );
+  const accessibilityHeadingIdx = detailsSrc.indexOf('Accessibility');
+  const propUsageIdx = detailsSrc.indexOf('accessibilityContent', accessibilityHeadingIdx);
+  assert.ok(propUsageIdx > -1, 'expected accessibilityContent to be rendered after the Accessibility heading');
+});
+
+test('the catalog overview keeps its implementation-only evidence compact instead of inheriting empty Decision and Accessibility cards from section reference details', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const overviewBody = extractFunctionBody(sectionsSrc, 'HermesOverview');
+  assert.doesNotMatch(
+    overviewBody,
+    /<HermesReferenceDetails/,
+    'the overview is not a SectionDef reference entry and must not render the three-card section contract around implementation-only evidence',
+  );
+  assert.match(
+    overviewBody,
+    /<HermesOverviewImplementationDetails/,
+    'expected overview-only evidence to use the compact implementation-details presentation',
+  );
+
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(detailsSrc, /export function HermesOverviewImplementationDetails/);
+  const compactBody = extractFunctionBody(detailsSrc, 'HermesOverviewImplementationDetails');
+  assert.match(compactBody, /<Disclosure label="Implementation notes"/);
+  assert.doesNotMatch(compactBody, /Decision & product context|Accessibility/);
 });
 
 test('manifest.ts supports an includeTokenGalleries option (default off, preserving the template catalog\'s existing component-only manifest) and carries the structured hermesReference decision fields through to plain JSON', () => {

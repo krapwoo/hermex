@@ -88,4 +88,42 @@ final class HermesContentUnavailableTests: XCTestCase {
         XCTAssertTrue(vstackRange.lowerBound < primaryRange.lowerBound)
         XCTAssertTrue(primaryRange.lowerBound < secondaryRange.lowerBound)
     }
+
+    // MARK: - Explicit full-screen placement (Layout)
+
+    /// Every existing caller (this file's own `testEveryVariantCompiles`, and every production/catalog
+    /// call site) constructs `HermesContentUnavailable` with no `layout:` argument at all — the new
+    /// property must default to `.intrinsic` so none of them change behavior.
+    func testDefaultLayoutIsIntrinsicPreservingEveryExistingCaller() {
+        let view = HermesContentUnavailable(variant: .empty, title: "Empty")
+        XCTAssertEqual(view.layout, .intrinsic)
+    }
+
+    func testFullScreenLayoutIsExplicitlySelectable() {
+        let view = HermesContentUnavailable(variant: .unavailable, title: "Unavailable", layout: .fullScreen)
+        XCTAssertEqual(view.layout, .fullScreen)
+    }
+
+    /// A SwiftUI view tree isn't inspectable at runtime without a rendering harness (see this file's
+    /// own header note), so — same convention as `testBothActionsRenderAsAVerticalStackWithThePrimaryActionFirst`
+    /// above — the one-third-of-container-height placement is a source contract: `.fullScreen` reads
+    /// the available height via `GeometryReader` and offsets content by a `/ 3` fraction of it, rather
+    /// than falling through to `ContentUnavailableView`'s own default centering.
+    func testFullScreenLayoutPositionsContentAtOneThirdOfContainerHeightInsteadOfCentering() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesContentUnavailable.swift")
+        guard let fullScreenCaseRange = src.range(of: "case .fullScreen"),
+              let geometryRange = src.range(of: "GeometryReader"),
+              let thirdRange = src.range(of: "/ 3") else {
+            return XCTFail("Expected the .fullScreen layout to read the container height via GeometryReader and offset content by roughly one third of it")
+        }
+        XCTAssertTrue(fullScreenCaseRange.lowerBound < geometryRange.lowerBound)
+        XCTAssertTrue(geometryRange.lowerBound < thirdRange.lowerBound)
+    }
+
+    /// Dynamic Type and long content must stay readable rather than being clipped by a fixed offset —
+    /// `.fullScreen` wraps its content in a `ScrollView` so it can grow downward instead.
+    func testFullScreenLayoutScrollsInsteadOfClippingLongContent() throws {
+        let src = try source("HermesMobile/Features/Shared/HermesContentUnavailable.swift")
+        XCTAssertTrue(src.contains("ScrollView"), "Expected the .fullScreen layout to wrap its content in a ScrollView so long content/Dynamic Type can scroll instead of being clipped")
+    }
 }
