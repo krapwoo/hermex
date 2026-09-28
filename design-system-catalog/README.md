@@ -168,6 +168,33 @@ npm install
 npm run web          # expo start --web --port 8096 — the default route is the Hermex Design System catalog
 ```
 
+`npm run web` first runs the icon generator in **best-effort mode** (skipped automatically once
+the assets are already on disk — pass `--force` to re-render), which renders the "Hermex
+Iconography" page's 202-symbol grid through the real iOS SF Symbols runtime —
+`UIImage(systemName:)`, never a substitute icon library — on an iOS Simulator, via
+`icon-renderer/` (a hostless SwiftPM XCTest bundle) and `scripts/generate-icon-previews.mjs`,
+which extracts the rendered PNGs with `xcresulttool export attachments` into
+`native-preview/public/generated-icons/` (gitignored, regenerated on demand, never committed).
+Each glyph is one standardized size/weight/color for this catalog overview, not a reproduction of
+every production call site's own size, weight, palette, or effects — those remain documented in
+that component's own section.
+
+Two ways to run it:
+
+- `npm run web` (best-effort, `--optional`) — if Xcode/iOS Simulator prerequisites aren't
+  available on this machine, generation logs one warning and is skipped; Expo still starts, and
+  every icon tile falls back to its "Glyph unavailable in browser" text label instead of a PNG. A
+  real render/data failure (a compile error, a missing SF Symbol, a wrong or partial glyph count,
+  an export failure) is never swallowed by this mode — it still fails the command.
+- `npm run generate:icons` (strict, from `native-preview/`) — always requires a working
+  Xcode/Simulator toolchain and fails nonzero on any of the failures above, including missing
+  prerequisites. Use this to actually produce the PNGs.
+
+The destination Simulator is never hardcoded to one machine's device. Resolution order: an
+explicit `HERMEX_ICON_SIMULATOR_UDID` environment variable, otherwise `simctl` discovery of an
+available iPhone Simulator, preferring one named `Hermex Design System iPhone 17 Pro` and falling
+back to another available iPhone.
+
 ### Tests / typecheck / production build
 
 Run from the repo root (`design-system-catalog/`) unless noted:

@@ -31,6 +31,13 @@ const HERMES_ICON_REFERENCE_PATH = 'native/catalog/hermes/HermesIconReference.ts
 const HERMES_MOTION_REFERENCE_PATH = 'native/catalog/hermes/HermesMotionReference.tsx';
 const HERMES_ICON_INVENTORY_PATH = 'native/catalog/hermes/hermesIconInventory.generated.json';
 const HERMES_ICON_TRACE_PATH = 'native/catalog/hermes/hermesIconComputedSiteTrace.generated.json';
+const ICON_GENERATOR_SCRIPT_PATH = 'scripts/generate-icon-previews.mjs';
+const ICON_RENDERER_PACKAGE_PATH = 'icon-renderer/Package.swift';
+const ICON_RENDERER_TEST_PATH = 'icon-renderer/Tests/IconRenderTests/IconRenderTests.swift';
+const ICON_RENDERER_GITIGNORE_PATH = 'icon-renderer/.gitignore';
+const NATIVE_PREVIEW_PACKAGE_JSON_PATH = 'native-preview/package.json';
+const SIMULATOR_UDID_PATTERN = /\b[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\b/i;
+const NATIVE_PREVIEW_GITIGNORE_PATH = 'native-preview/.gitignore';
 
 // Extracts one top-level `SectionDef` block (from its `id: '<id>',` line up to the next section's
 // opening `\n  {`) out of hermesSections.tsx source text — shared by every test below that needs to
@@ -1360,7 +1367,7 @@ test('Hermex Colors renders Color ramps / Semantic roles / Product palettes thro
 
 // ─── Task 4: searchable 202-name visual icon inventory ──────────────────────────────────────────
 
-test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 202-name union, and HermesIconReference renders a searchable, honestly-unavailable grid', () => {
+test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 202-name union, and HermesIconReference renders a searchable grid of simulator-generated glyph previews with a per-tile fallback', () => {
   const iconInventory = JSON.parse(read(HERMES_ICON_INVENTORY_PATH));
   const iconTrace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
   const literalNames = new Set(iconInventory.literals.map((entry) => entry.name));
@@ -1380,14 +1387,153 @@ test('buildHermesIconNames deduplicates the generated literal/computed inventori
   assert.match(referenceSrc, /\.flatMap\(/);
   assert.match(referenceSrc, /<TextInput/);
   assert.match(referenceSrc, /toLocaleLowerCase\(\)/);
-  assert.match(referenceSrc, /Glyph unavailable in browser/);
   assert.doesNotMatch(referenceSrc, /Literal symbols/);
   assert.doesNotMatch(referenceSrc, /Computed sites/);
+
+  // Each tile now requests a real simulator-rendered PNG and only falls back to text when that
+  // specific asset is missing or fails to load — the fallback is no longer the unconditional
+  // per-tile render every name got before this change.
+  assert.match(referenceSrc, /from\s+'react-native'/);
+  assert.match(referenceSrc, /<Image\b/);
+  assert.match(referenceSrc, /onError=\{/);
+  assert.match(referenceSrc, /useState/);
+  assert.match(referenceSrc, /hasError/);
+  assert.match(referenceSrc, /generated-icons/);
+  assert.match(referenceSrc, /Glyph unavailable in browser/);
+  assert.match(referenceSrc, /rendered by the iOS SF Symbols runtime/i);
 
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /function HermesIconographyGallery|function IconComputedSiteCard|ICON_SITE_LIMITATION_NOTE/);
   const iconographySection = extractHermesSection(sectionsSrc, 'Hermex Iconography');
   assert.match(iconographySection, /render:\s*\(\)\s*=>\s*<HermesIconReference\s*\/>/);
+});
+
+test('generate-icon-previews.mjs orchestrates a real iOS-runtime render on a portable Simulator destination and fails closed on any missing symbol', () => {
+  assert.ok(existsSync(path.join(ROOT, ICON_GENERATOR_SCRIPT_PATH)), `${ICON_GENERATOR_SCRIPT_PATH} should exist`);
+  const src = read(ICON_GENERATOR_SCRIPT_PATH);
+
+  // Same dedup/sort algorithm as buildHermesIconNames, over the same two checked-in JSON files —
+  // the generator must not invent its own separate symbol list.
+  assert.match(src, /hermesIconInventory\.generated\.json/);
+  assert.match(src, /hermesIconComputedSiteTrace\.generated\.json/);
+  assert.match(src, /new Set/);
+  assert.match(src, /\.flatMap\(/);
+
+  // Portability correction (2026-09-28): no committed source may hardcode a Simulator UDID. The
+  // destination must resolve at runtime: an explicit env override first, otherwise
+  // discovery of an available iPhone Simulator via `simctl`, preferring the named Design System
+  // device and falling back to another available iPhone — never macOS/AppKit.
+  assert.doesNotMatch(src, SIMULATOR_UDID_PATTERN, 'no machine-local Simulator UDID may be hardcoded');
+  assert.match(src, /process\.env\.HERMEX_ICON_SIMULATOR_UDID/, 'expected an explicit env override for the destination UDID, checked before simctl discovery');
+  assert.match(src, /'simctl',\s*'list',\s*'devices',\s*'available'/, 'expected simctl device discovery scoped to available devices');
+  assert.match(src, /Hermex Design System iPhone 17 Pro/, 'expected the named Design System simulator to still be preferred when present');
+  assert.match(src, /iPhone/, 'expected the fallback to another available iPhone');
+  assert.match(src, /-destination',\s*`id=\$\{/, 'expected a concrete resolved id=<udid> destination passed to xcodebuild, not a name-based -destination');
+
+  assert.match(src, /xcodebuild/);
+  assert.match(src, /\btest\b/);
+  assert.match(src, /xcresulttool/);
+  assert.match(src, /export/);
+  assert.match(src, /attachments/);
+  assert.match(src, /202/, 'expected the generator to assert the authoritative 202-name count');
+  assert.match(src, /public[\\/]generated-icons/);
+
+  // Fail-closed: a short symbol count, or any renderer failure, must stop the script rather than
+  // silently writing a partial manifest.
+  assert.match(src, /process\.exit\(1\)|throw new Error/);
+});
+
+// Portability and fallback correction (2026-09-28): controller-reproduced defects — `npm run web`
+// depended on strict `generate:icons`, so it never started on a machine without Xcode/iOS Simulator,
+// hiding the existing per-tile "Glyph unavailable in browser" fallback; and the generator/test
+// hardcoded one machine-local Simulator UDID. Each test below is scoped to exactly one requirement.
+
+test('Correction (2026-09-28): generate-icon-previews.mjs distinguishes optional prerequisite unavailability (missing Xcode/Simulator) from every real render or data failure via a dedicated error type', () => {
+  const src = read(ICON_GENERATOR_SCRIPT_PATH);
+
+  assert.match(src, /class PrerequisiteUnavailableError extends Error/, 'expected a dedicated error type marking "generation unavailable" distinctly from any other failure');
+  assert.match(src, /--optional/, 'expected an --optional CLI flag for the best-effort browser-startup mode');
+
+  // The optional-mode short-circuit must be wired specifically to prerequisite resolution — not to
+  // runSimulatorRender, exportAttachments, or either count check — so a real compile/render/export
+  // failure or a wrong/partial count always propagates to the top-level catch (process.exit(1)) in
+  // both modes.
+  assert.match(
+    src,
+    /=\s*checkPrerequisites\(\);\s*\}\s*catch\s*\(error\)\s*\{\s*if\s*\(optional\s*&&\s*error instanceof PrerequisiteUnavailableError\)\s*\{/,
+    'expected the optional-mode downgrade to wrap exactly the checkPrerequisites() call',
+  );
+
+  const mainBody = extractFunctionBody(src, 'main');
+  assert.match(mainBody, /names, found/, 'expected the 202-name union count check to remain unconditional inside main()');
+  assert.match(mainBody, /rendered PNG attachments, found/, 'expected the exact-202-attachments check to remain unconditional inside main()');
+  assert.doesNotMatch(
+    mainBody,
+    /runSimulatorRender\([^)]*\)[\s\S]{0,40}catch[\s\S]{0,120}if\s*\(optional/,
+    'a real runSimulatorRender failure must never be caught and downgraded by the optional-mode branch',
+  );
+});
+
+test('Correction (2026-09-28): npm run web starts the dev server via the generator\'s best-effort mode even without Xcode/Simulator, while npm run generate:icons stays strict', () => {
+  const packageJson = JSON.parse(read(NATIVE_PREVIEW_PACKAGE_JSON_PATH));
+  assert.ok(packageJson.scripts['generate:icons'], 'expected a documented explicit "generate:icons" script');
+  assert.match(packageJson.scripts['generate:icons'], /generate-icon-previews\.mjs/);
+  assert.doesNotMatch(packageJson.scripts['generate:icons'], /--optional/, 'the explicit generate:icons command must stay strict, never best-effort');
+
+  assert.match(packageJson.scripts.web, /generate-icon-previews\.mjs/, 'expected `npm run web` to wire in generation rather than requiring a separate undocumented step');
+  assert.match(packageJson.scripts.web, /--optional\b/, "expected `npm run web` to invoke the generator's best-effort mode so a machine without Xcode can still start the dev server");
+  assert.doesNotMatch(packageJson.scripts.web, /&&\s*npm run generate:icons(?!\S)/, 'npm run web must not depend on the strict generate:icons script');
+
+  const gitignore = read(NATIVE_PREVIEW_GITIGNORE_PATH);
+  assert.match(gitignore, /public\/generated-icons|generated-icons/, 'expected generated PNGs/manifest to be gitignored, never committed');
+});
+
+test('Correction (2026-09-28): README documents strict explicit generation vs. best-effort browser startup, the destination override env var, and the honest per-tile fallback, without a machine-local UDID', () => {
+  const readme = read('README.md');
+  assert.doesNotMatch(readme, SIMULATOR_UDID_PATTERN, 'no machine-local Simulator UDID may be documented');
+  assert.match(readme, /HERMEX_ICON_SIMULATOR_UDID/, 'expected the README to document the destination override env var');
+  assert.match(readme, /--optional/, 'expected the README to name the best-effort flag npm run web uses');
+  assert.match(readme, /npm run generate:icons/, 'expected the README to still document the strict explicit generation command');
+  assert.match(readme, /Glyph unavailable in browser/, 'expected the README to name the existing per-tile fallback that best-effort mode preserves');
+});
+
+test('Correction (2026-09-28): machine-local Simulator UDID literals are absent from the generator and its documentation', () => {
+  for (const relPath of [ICON_GENERATOR_SCRIPT_PATH, 'README.md']) {
+    assert.doesNotMatch(read(relPath), SIMULATOR_UDID_PATTERN, `${relPath} must not hardcode a machine-local Simulator UDID`);
+  }
+});
+
+test('the icon-renderer SwiftPM package renders through the real iOS UIKit/SwiftUI runtime (UIImage/Image systemName), never AppKit or a substitute icon library', () => {
+  assert.ok(existsSync(path.join(ROOT, ICON_RENDERER_PACKAGE_PATH)), `${ICON_RENDERER_PACKAGE_PATH} should exist`);
+  const packageSrc = read(ICON_RENDERER_PACKAGE_PATH);
+  assert.match(packageSrc, /\.iOS\(/, 'expected the package to declare an iOS platform, not build for macOS/AppKit');
+  assert.doesNotMatch(packageSrc, /\.macOS\(/);
+
+  assert.ok(existsSync(path.join(ROOT, ICON_RENDERER_TEST_PATH)), `${ICON_RENDERER_TEST_PATH} should exist`);
+  const testSrc = read(ICON_RENDERER_TEST_PATH);
+  assert.match(testSrc, /import UIKit/);
+  assert.doesNotMatch(testSrc, /import AppKit/);
+  assert.doesNotMatch(testSrc, /NSImage/);
+  assert.match(testSrc, /UIImage\(systemName:/);
+  assert.match(testSrc, /XCTAttachment/);
+  assert.match(testSrc, /\.keepAlways/);
+  // Fail-closed: a nil UIImage(systemName:) must fail the run, not render a placeholder.
+  assert.match(testSrc, /XCTAssertTrue\(missing\.isEmpty|XCTFail/);
+
+  assert.ok(existsSync(path.join(ROOT, ICON_RENDERER_GITIGNORE_PATH)), `${ICON_RENDERER_GITIGNORE_PATH} should exist so the generated names file and build products are never committed`);
+  const rendererGitignore = read(ICON_RENDERER_GITIGNORE_PATH);
+  assert.match(rendererGitignore, /GeneratedNames\.swift|GeneratedResources/);
+  assert.match(rendererGitignore, /\.build/);
+});
+
+test('npm run web makes the generated glyph previews available without an undocumented manual step, and a documented explicit generation command also exists', () => {
+  const packageJson = JSON.parse(read(NATIVE_PREVIEW_PACKAGE_JSON_PATH));
+  assert.ok(packageJson.scripts['generate:icons'], 'expected a documented explicit "generate:icons" script');
+  assert.match(packageJson.scripts['generate:icons'], /generate-icon-previews\.mjs/);
+  assert.match(packageJson.scripts.web, /generate:icons|generate-icon-previews\.mjs/, 'expected `npm run web` to wire in generation rather than requiring a separate undocumented step');
+
+  const gitignore = read(NATIVE_PREVIEW_GITIGNORE_PATH);
+  assert.match(gitignore, /public\/generated-icons|generated-icons/, 'expected generated PNGs/manifest to be gitignored, never committed');
 });
 
 // ─── Task 5: eight replayable motion demonstrations with Reduce Motion ──────────────────────────
