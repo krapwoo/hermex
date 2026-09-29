@@ -60,7 +60,7 @@ final class AttachmentTileTests: XCTestCase {
     // MARK: - Attachment outer-surface radius derives from Card
 
     func testCompactCardSurfaceDefaultsItsCornerRadiusToTheSharedCardToken() throws {
-        let cardSource = try source("HermesMobile/Features/Shared/HermesCard.swift")
+        let cardSource = try source("HermesMobile/Features/Shared/HermexCard.swift")
 
         XCTAssertTrue(cardSource.contains("func compactCardSurface(cornerRadius: CGFloat = HermesRadius.card"))
     }

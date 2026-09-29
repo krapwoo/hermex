@@ -14,7 +14,7 @@
  * the real values — the same convention hermesSections.tsx's own local `recon` StyleSheet already
  * uses, deliberately not this repo's own template tokens.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, Dropdown, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
 import { Icon } from '../../../icons/Icon.native';
@@ -155,6 +155,26 @@ const preview = StyleSheet.create({
     minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(120,120,128,0.16)',
   },
+
+  // Bottom Sheet — a bounded, clipped frame (same reasoning as topNavShell above) so the sheet's
+  // TopNav header, unconstrained body slot, and pinned footer read as one contained specimen rather
+  // than stretching to the whole documentation column. Shown inline for inspection, never as a real
+  // overlay/backdrop — production always presents this content through native `.sheet`.
+  bottomSheetSpecimen: { width: 320, gap: 8 },
+  bottomSheetShell: {
+    width: '100%', borderRadius: 20, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+    backgroundColor: '#ffffff',
+  },
+  bottomSheetBody: { padding: 16, gap: 8 },
+  bottomSheetBodyText: { fontSize: 13, color: '#3a3a3c', lineHeight: 18 },
+  bottomSheetFooter: {
+    flexDirection: 'row', gap: 8, padding: 16,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,0.10)',
+  },
+  bottomSheetFooterVertical: { flexDirection: 'column' },
+  bottomSheetFooterButton: { flex: 1 },
+  bottomSheetFooterButtonFull: { width: '100%' },
   segmentedFixedTrack: {
     width: 280, flexDirection: 'row', gap: 4, paddingHorizontal: 4,
     borderRadius: 999, backgroundColor: 'rgba(120,120,128,0.16)',
@@ -245,11 +265,11 @@ export function BotMarkPreview() {
   );
 }
 
-// ─── Avatar — system-image identity (production HermesAvatar, used inside Content Unavailable) ──
+// ─── Avatar — system-image identity (production HermexAvatar, used inside Content Unavailable) ──
 // Driven directly off HERMES_ICON_AVATAR_PAIRING (the same source HermesIconReference's own
 // IconAvatarPairingGallery reads) so the three approved avatar/icon diameters can't drift into a
 // second, hand-typed copy here. Overrides the generic Avatar's default half-diameter icon ratio via
-// `iconSize`, matching production HermesAvatar's fixed pairing rather than the template's own
+// `iconSize`, matching production HermexAvatar's fixed pairing rather than the template's own
 // proportional default.
 export function AvatarSystemImageIdentityPreview() {
   return (
@@ -460,14 +480,14 @@ export function ButtonDecisionAndTactilePreview() {
         <Button label="Disabled" size="medium" variant="secondary" disabled onPress={() => {}} />
         <Button label="Pending" size="medium" variant="secondary" loading onPress={() => {}} />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>Press-only variants (HermesButtonPressOnlyStyle)</Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Press-only variants (HermexButtonPressOnlyStyle)</Text>
       <View style={preview.row}>
         <Button label="Send" showIcon showLabel={false} iconName="add" size="medium" onPress={() => {}} />
       </View>
       <Text style={preview.caption}>
-        icon · compactControl · capsule · card · thumbnail — HermesButtonPressOnlyStyle's Chrome cases
+        icon · compactControl · capsule · card · thumbnail — HermexButtonPressOnlyStyle's Chrome cases
         — apply press scale/opacity/shadow feedback to a native SwiftUI Button whose own shape/fill
-        stays caller-owned, through the same applyingHermesButtonPressFeedback helper HermesButtonStyle's
+        stays caller-owned, through the same applyingHermexButtonPressFeedback helper HermexButtonStyle's
         Standard Press Feedback uses (Reduce-Motion-safe; a spring/scale response drops out when
         Reduce Motion is on) — not a separate variant/label API, so they aren't reproduced as distinct
         RN examples here. Glass is a surface option composing Adaptive Glass (see that Material
@@ -517,7 +537,7 @@ export function HermesSkeletonGallery() {
   );
 }
 
-// ─── Search — Hermex-owned `.hermesSearch` wrapper over native `.searchable` ─
+// ─── Search — Hermex-owned `.hermexSearch` wrapper over native `.searchable` ─
 const SEARCH_FAMILY_SAMPLE_SESSIONS = ['Refactor auth module', 'Investigate flaky test', 'Update onboarding copy'];
 
 export function SearchFamilyGallery() {
@@ -562,7 +582,7 @@ export function SearchFamilyGallery() {
         <Text style={preview.caption}>No results for “{query}”.</Text>
       )}
       <Text style={preview.caption}>
-        `.hermesSearch(text:placement:prompt:)` is a thin Hermex-owned wrapper that forwards straight
+        `.hermexSearch(text:placement:prompt:)` is a thin Hermex-owned wrapper that forwards straight
         to SwiftUI's native `.searchable` modifier — this reconstruction documents its prompt, focus,
         clear, and no-results behavior. Native iOS still owns placement, focus, keyboard, clear,
         dictation, VoiceOver, and Dynamic Type; this preview introduces no custom Hermex field chrome.
@@ -571,15 +591,15 @@ export function SearchFamilyGallery() {
   );
 }
 
-// ─── Text Input — Hermex-owned HermesTextField/HermesSecureField/HermesNumberField wrappers ─
-export function HermesTextInputFamilyGallery() {
+// ─── Text Input — Hermex-owned HermexTextField/HermexSecureField/HermexNumberField wrappers ─
+export function HermexTextInputFamilyGallery() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [quantity, setQuantity] = useState('');
   return (
     <View style={preview.stack}>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Single-line — HermesTextField</Text>
+        <Text style={preview.label}>Single-line — HermexTextField</Text>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -589,7 +609,7 @@ export function HermesTextInputFamilyGallery() {
         />
       </View>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Secure entry — HermesSecureField</Text>
+        <Text style={preview.label}>Secure entry — HermexSecureField</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
@@ -600,7 +620,7 @@ export function HermesTextInputFamilyGallery() {
         />
       </View>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Number — HermesNumberField</Text>
+        <Text style={preview.label}>Number — HermexNumberField</Text>
         <TextInput
           value={quantity}
           onChangeText={setQuantity}
@@ -610,12 +630,100 @@ export function HermesTextInputFamilyGallery() {
         />
       </View>
       <Text style={preview.caption}>
-        Native reconstructions of `HermesTextField`, `HermesSecureField`, and `HermesNumberField` —
+        Native reconstructions of `HermexTextField`, `HermexSecureField`, and `HermexNumberField` —
         three thin wrappers that forward straight to native TextField, SecureField, and the typed
         TextField(value:format:) path. Production owns focus, keyboard, autocorrection,
         capitalization, content type, and locale-aware number parsing/formatting through these native
         controls, not through custom Hermex field chrome. TextEditor (long-form body text) and Search
         stay outside this family — see their own entries.
+      </Text>
+    </View>
+  );
+}
+
+// ─── Bottom Sheet — HermexBottomSheet: TopNav header + unconstrained body slot (arbitrary content
+// or List) + optional horizontal/vertical footer, all supplied to native `.sheet` ─────────────────
+function BottomSheetSpecimen({
+  label,
+  body,
+  footerAxis,
+  footer,
+}: {
+  label: string;
+  body: ReactNode;
+  footerAxis: 'horizontal' | 'vertical';
+  footer: ReactNode;
+}) {
+  return (
+    <View style={preview.bottomSheetSpecimen}>
+      <Text style={preview.label}>{label}</Text>
+      <View style={preview.bottomSheetShell}>
+        <TopNav
+          title="Add Attachment"
+          leadingPrimary={<Button variant="secondary" size="small" label="Cancel" onPress={() => {}} style={preview.topNavActionButton} />}
+          trailingPrimary={<Button variant="secondary" size="small" label="Done" onPress={() => {}} style={preview.topNavActionButton} />}
+        />
+        <View style={preview.bottomSheetBody}>{body}</View>
+        <View style={[preview.bottomSheetFooter, footerAxis === 'vertical' && preview.bottomSheetFooterVertical]}>
+          {footer}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function HermexBottomSheetFamilyGallery() {
+  return (
+    <View style={preview.stack}>
+      <View style={preview.row}>
+        <BottomSheetSpecimen
+          label="Arbitrary content body + horizontal footer"
+          body={
+            <Text style={preview.bottomSheetBodyText}>
+              Attach a file from Workspace, or drop one directly into this session. Files up to 25MB
+              are supported.
+            </Text>
+          }
+          footerAxis="horizontal"
+          footer={
+            <>
+              <Button variant="secondary" label="Cancel" onPress={() => {}} style={preview.bottomSheetFooterButton} />
+              <Button variant="primary" label="Attach" onPress={() => {}} style={preview.bottomSheetFooterButton} />
+            </>
+          }
+        />
+
+        <BottomSheetSpecimen
+          label="List body + vertical footer"
+          body={
+            <List>
+              <ListItem title="Workspace file" description="Browse the active workspace" onPress={() => {}} />
+              <ListItem title="Photo Library" description="Choose an image or video" onPress={() => {}} />
+              <ListItem title="Take Photo" description="Use the camera" onPress={() => {}} />
+            </List>
+          }
+          footerAxis="vertical"
+          footer={
+            <>
+              <Button variant="primary" label="Continue" onPress={() => {}} style={preview.bottomSheetFooterButtonFull} />
+              <Button variant="tertiary" label="Cancel" onPress={() => {}} style={preview.bottomSheetFooterButtonFull} />
+            </>
+          }
+        />
+      </View>
+      <Text style={preview.caption}>
+        `HermexBottomSheet` is content supplied to native SwiftUI `.sheet` — the caller keeps owning
+        `.sheet` itself: detents, the drag indicator, compact adaptation, interactive-dismiss policy,
+        focus, validation, loading state, and dismissal. The scaffold only owns a `NavigationStack`,
+        an inline title, this file's own TopNav composition (shown above using the same real TopNav
+        reconstruction as the TopNav entry) at modal-appropriate placements, an unconstrained body
+        slot — arbitrary content (left) or a native `List` (right, using the same real List/ListItem
+        reconstruction as List/ListItem's own entry) — and an optional footer pinned with
+        safe-area-aware layout, arranged horizontally (left) or vertically (right) by the caller.
+        Native SwiftUI owns the sheet's presentation motion and Reduce Motion either way; this
+        reconstruction shows the sheet surface inline for inspection rather than as a real
+        overlay/backdrop, since production's own sheet always presents through `.sheet`, never a
+        custom transition this component owns.
       </Text>
     </View>
   );
@@ -1151,10 +1259,10 @@ export function CheckboxFamilyGallery() {
         Tab reaches the box and shows a focus ring around it; a tap or Space/Enter toggles it — the
         real, live generic catalog Checkbox this entry documents directly, not a static picture.
       </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermesCheckbox)</Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermexCheckbox)</Text>
       <AdaptiveSelectedFillSwatch shape="square" />
       <Text style={preview.caption}>
-        Production HermesCheckbox fills and borders the checked box with the adaptive semantic
+        Production HermexCheckbox fills and borders the checked box with the adaptive semantic
         Color.primary — black in light appearance, white in dark — not a fixed accent color; the
         checkmark stays the inverse system background so it remains legible against either. The
         generic catalog Checkbox above (blue accent) is the reusable template's own unrelated default
@@ -1672,8 +1780,8 @@ export function ToastFamilyGallery() {
       <Toast message="Session archived" variant="neutral" action={{ label: 'Undo', onPress: () => {} }} />
       <Text style={preview.caption}>
         The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
-        Production HermesToast is the message/icon/action card alone — animation and lifecycle live
-        in the separate `hermesToast(isPresented:toast:)` presentation modifier that overlays it, left
+        Production HermexToast is the message/icon/action card alone — animation and lifecycle live
+        in the separate `hermexToast(isPresented:toast:)` presentation modifier that overlays it, left
         entirely caller-owned rather than baked into the toast view itself. That modifier's default
         motion enters by moving down from the top edge combined with opacity and exits back toward
         the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
@@ -1709,7 +1817,7 @@ export function TooltipFamilyGallery() {
       <TooltipInteractiveDemo />
       <Text style={preview.caption}>
         The generic catalog Tooltip is a fully-controlled bubble a caller drives from press
-        in/out — mobile has no hover. Production HermesTooltip anchors the same explanatory content
+        in/out — mobile has no hover. Production HermexTooltip anchors the same explanatory content
         through the native `.popover` presentation path instead of a hand-drawn bubble/arrow, behind
         an explicit tap trigger; dismissal is the popover's own native recovery path (tap outside, or
         Escape on a hardware keyboard) rather than a release gesture.
@@ -1745,12 +1853,12 @@ export function RadioFamilyGallery() {
         A group is just multiple Radio instances sharing one selected value in the caller — the same
         way a native radio group works — this component only knows its own selected state.
       </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermesRadio)</Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermexRadio)</Text>
       <AdaptiveSelectedFillSwatch shape="circle" />
       <Text style={preview.caption}>
-        Production HermesRadio fills the selected ring and inner dot with the adaptive semantic
+        Production HermexRadio fills the selected ring and inner dot with the adaptive semantic
         Color.primary — black in light appearance, white in dark — not a fixed accent color, mirroring
-        HermesCheckbox's own adaptive treatment. The generic catalog Radio above (blue accent) is the
+        HermexCheckbox's own adaptive treatment. The generic catalog Radio above (blue accent) is the
         reusable template's own unrelated default and is not changed by this decision.
       </Text>
     </View>
@@ -1780,7 +1888,7 @@ export function DropdownFamilyGallery() {
       </View>
       <Text style={preview.caption}>
         The generic catalog Dropdown opens a BottomSheet picker on tap — a custom floating sheet.
-        Production HermesDropdown deliberately does not recreate that: it is a native `.menu`-style
+        Production HermexDropdown deliberately does not recreate that: it is a native `.menu`-style
         `Picker`, the same convention SettingsView's own row pickers already use, so the checked
         selected option, label, and disclosure chrome are all platform-owned.
       </Text>

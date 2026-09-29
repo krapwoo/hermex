@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Background-agnostic divider that derives contrast from the current foreground instead of
 /// assuming a particular surface color.
-struct HermesDivider: View {
+struct HermexDivider: View {
     @Environment(\.displayScale) private var displayScale
 
     var leadingInset: CGFloat = HermesSpacing.s0

@@ -45,9 +45,10 @@ import {
   ComposerPatternPreview,
   DisclosureLogRowPreview,
   DropdownFamilyGallery,
+  HermexBottomSheetFamilyGallery,
   HermexDividerPreview,
   HermesSkeletonGallery,
-  HermesTextInputFamilyGallery,
+  HermexTextInputFamilyGallery,
   InlineReferenceLinkPreview,
   ListItemFamilyGallery,
   RadioFamilyGallery,
@@ -65,7 +66,7 @@ import {
 // already owns the bare 'Card' / 'Banner' / 'Checkbox' / 'Avatar' / 'TopNav' ids for its own
 // unrelated entries — reusing those exact strings here would silently collide in that shared
 // id-keyed lookup. Renamed Components-family entries instead keep a unique 'Hermes <Name>' id (the
-// internal engineering namespace already used throughout, e.g. HermesCard.swift) and set their own
+// internal engineering namespace already used throughout, e.g. HermexCard.swift) and set their own
 // `displayName` to the plain catalog name the sidebar/title actually show — see `SectionDef.
 // displayName` in ../types.ts. Foundations/token entries also keep their existing namespaced
 // 'Hermex …' ids for stable lookup while using plain visible names such as 'Colors' and 'Spacing'.
@@ -82,6 +83,7 @@ export type HermesSectionId =
   | 'Inline Reference Link'
   | 'Search'
   | 'Text Input'
+  | 'Bottom Sheet'
   | 'Segmented Control'
   | 'Buttons'
   | 'Hermes Checkbox'
@@ -144,7 +146,7 @@ const recon = StyleSheet.create({
     backgroundColor: '#ffffff', overflow: 'hidden', alignItems: 'center',
   },
   // Reserves the top third of cuvFullScreenFrame's own height — the same fraction
-  // HermesContentUnavailable.swift's .fullScreen case computes via GeometryReader's `proxy.size.height / 3`.
+  // HermexContentUnavailable.swift's .fullScreen case computes via GeometryReader's `proxy.size.height / 3`.
   cuvFullScreenTopSpacer: { height: 420 / 3 },
   cuvFullScreenContent: { alignItems: 'center', gap: 8, paddingHorizontal: 16 },
   prCard: { width: 220, padding: 14, borderRadius: 24, backgroundColor: '#f2f2f7', borderWidth: 1, borderColor: 'rgba(0,0,0,0.10)' },
@@ -316,7 +318,7 @@ function ContentUnavailablePreview({
 }) {
   const copy = CONTENT_UNAVAILABLE_COPY[variant];
   if (variant === 'loading') {
-    // No icon slot and no title — HermesContentUnavailable.swift's .loading variant is a plain
+    // No icon slot and no title — HermexContentUnavailable.swift's .loading variant is a plain
     // ProgressView spinner, unlike every other variant's Avatar-composed icon + title label.
     return (
       <View style={recon.cuvStack}>
@@ -346,7 +348,7 @@ function ContentUnavailablePreview({
 
 /** The additive `.fullScreen` Layout, in a bounded phone-like frame: a reserved top spacer sized to
  *  a third of the frame's own height, so the content cluster begins ~1/3 down instead of the
- *  `.intrinsic` default's vertical centering — reconstructing HermesContentUnavailable.swift's own
+ *  `.intrinsic` default's vertical centering — reconstructing HermexContentUnavailable.swift's own
  *  `GeometryReader`-based `proxy.size.height / 3` offset. */
 function ContentUnavailableFullScreenPreview() {
   const copy = CONTENT_UNAVAILABLE_COPY.unavailable;
@@ -457,7 +459,7 @@ function AvatarFamilyGallery() {
         <IdentityAvatarPreview label="Light fill → dark foreground" initials="AB" bg="#FFD60A" />
         <IdentityAvatarPreview label="Dark fill → light foreground" initials="CD" bg="#1c1c1e" dark />
       </View>
-      <Text style={[recon.caption, { marginTop: 8 }]}>System-image identity (production HermesAvatar) — used inside Content Unavailable</Text>
+      <Text style={[recon.caption, { marginTop: 8 }]}>System-image identity (production HermexAvatar) — used inside Content Unavailable</Text>
       <AvatarSystemImageIdentityPreview />
     </View>
   );
@@ -1072,13 +1074,13 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Card',
     displayName: 'Card',
     description:
-      'HermesCard.swift is a new, foundation-only Card primitive in this branch — canonical chrome (radius, padding, background, border, elevation) behind four named surfaces: Section, Outlined, Request, and Compact. It does not replace or share an implementation with the existing, already-adopted SectionCard.swift, which remains its own separate, unmodified production component in this slice.',
+      'HermexCard.swift is a new, foundation-only Card primitive in this branch — canonical chrome (radius, padding, background, border, elevation) behind four named surfaces: Section, Outlined, Request, and Compact. It does not replace or share an implementation with the existing, already-adopted SectionCard.swift, which remains its own separate, unmodified production component in this slice.',
     whenToUse: 'Reach for the default Section Card (glass) for grouped content, Outlined Card for a quiet system-background surface with a separator border, and Compact Card only where a component composition documents the reduced density — never as a silent caller-side padding override. For an approval/clarification surface, use the Pending Request pattern.',
     props: [
       { name: 'title', type: 'String?  (Section Card)  ·  String  (SettingsCard, required)', desc: 'Uppercase caption above the card.' },
       { name: 'content', type: '@ViewBuilder', required: true, desc: 'Card body — 16pt padding on every edge by default (Section Card, Request Card); Compact Card is the one explicitly-named exception.' },
       { name: 'footer', type: '@ViewBuilder  (Section Card only)', desc: 'Optional row under a Divider, outside the content padding.' },
-      { name: 'surface', type: 'HermesCardSurface.glass | .outlined', desc: 'Defaults to adaptive glass. Outlined is the canonical outlined Card treatment: semantic system background, 1pt separator-grey border, and no elevation.' },
+      { name: 'surface', type: 'HermexCardSurface.glass | .outlined', desc: 'Defaults to adaptive glass. Outlined is the canonical outlined Card treatment: semantic system background, 1pt separator-grey border, and no elevation.' },
     ],
     a11y: 'No explicit accessibility grouping in either version — relies on the default per-child announcement order of a VStack.',
     variants: {
@@ -1103,26 +1105,26 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     },
     hermesReference: {
       useWhen: 'Reach for the default Section Card (glass) for grouped content, Outlined Card for a quiet system-background surface with a separator border, and Compact Card only where a component composition documents the reduced density. For an approval/clarification surface, use the Pending Request pattern.',
-      avoidWhen: 'Avoid HermesCard.swift on a production screen today — no screen imports it yet; reach for the existing, already-adopted SectionCard/SettingsCard instead. Never use Compact Card as a silent caller-side padding override.',
+      avoidWhen: 'Avoid HermexCard.swift on a production screen today — no screen imports it yet; reach for the existing, already-adopted SectionCard/SettingsCard instead. Never use Compact Card as a silent caller-side padding override.',
       alternatives: [
         { name: 'SectionCard / SettingsCard (production)', useWhen: 'For any current production screen — these pre-existing components are what developers actually reach for today.' },
-        { name: 'Pending Request', useWhen: 'For any approval/clarification surface over live transcript text — pendingRequestCardSurface is the adopted implementation; HermesCard\'s own requestCardSurface has no caller.' },
+        { name: 'Pending Request', useWhen: 'For any approval/clarification surface over live transcript text — pendingRequestCardSurface is the adopted implementation; HermexCard\'s own requestCardSurface has no caller.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'HermesCard.swift itself has no production call site in this branch. SectionCard.swift — a separate, pre-existing, already-adopted component with its own implementation — is the one production developers actually reach for today; it is documented here as the closest production analog, not as a HermesCard.swift caller.',
+      useSummary: 'HermexCard.swift itself has no production call site in this branch. SectionCard.swift — a separate, pre-existing, already-adopted component with its own implementation — is the one production developers actually reach for today; it is documented here as the closest production analog, not as a HermexCard.swift caller.',
       usedIn: [
-        { screen: 'Tasks', path: 'Tasks → open a task', effect: 'Prompt, Run Output, Configuration, and run-history sections use the existing SectionCard, unrelated to HermesCard.swift.' },
-        { screen: 'Usage', effect: 'Totals, model, session, chart, and provider-limit cards use the existing SectionCard, unrelated to HermesCard.swift.' },
-        { screen: 'Sessions', effect: 'The “Enjoying Hermex?” prompt uses the existing SectionCard\'s outlined surface, unrelated to HermesCard.swift.' },
-        { screen: 'Settings', effect: 'Identity, Appearance, Interaction, Chat, Servers, Account, and other settings groups use the existing SettingsCard, unrelated to HermesCard.swift.' },
+        { screen: 'Tasks', path: 'Tasks → open a task', effect: 'Prompt, Run Output, Configuration, and run-history sections use the existing SectionCard, unrelated to HermexCard.swift.' },
+        { screen: 'Usage', effect: 'Totals, model, session, chart, and provider-limit cards use the existing SectionCard, unrelated to HermexCard.swift.' },
+        { screen: 'Sessions', effect: 'The “Enjoying Hermex?” prompt uses the existing SectionCard\'s outlined surface, unrelated to HermexCard.swift.' },
+        { screen: 'Settings', effect: 'Identity, Appearance, Interaction, Chat, Servers, Account, and other settings groups use the existing SettingsCard, unrelated to HermexCard.swift.' },
       ],
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
-        sourcePaths: ['HermesMobile/Features/Shared/HermesCard.swift'],
+        sourcePaths: ['HermesMobile/Features/Shared/HermexCard.swift'],
         notes: [
-          'HermesCard.swift\'s canonical chrome: HermesRadius.card, 16pt content padding on every edge, background, border, and elevation. HermesCardSurface.outlined is the canonical outlined Card treatment: semantic system background, 1pt semantic grey separator border, and no elevation. Request Card is the opaque approval/clarification surface; Compact Card is an explicit, named compact density for component compositions such as normal Attachment tiles.',
-          'SectionCard.swift and SettingsCard (both pre-existing, unmodified, and genuinely used at the screens listed above) implement their own chrome independently — this branch does not change them to delegate to HermesCard.swift, and no production file imports HermesCard.swift.',
-          'Pending-request fields, choices, command blocks, decision logic, and request lifecycle stay part of the Pending Request pattern, which also does not depend on HermesCard.swift — see that entry\'s own corrected sourcePaths.',
+          'HermexCard.swift\'s canonical chrome: HermesRadius.card, 16pt content padding on every edge, background, border, and elevation. HermexCardSurface.outlined is the canonical outlined Card treatment: semantic system background, 1pt semantic grey separator border, and no elevation. Request Card is the opaque approval/clarification surface; Compact Card is an explicit, named compact density for component compositions such as normal Attachment tiles.',
+          'SectionCard.swift and SettingsCard (both pre-existing, unmodified, and genuinely used at the screens listed above) implement their own chrome independently — this branch does not change them to delegate to HermexCard.swift, and no production file imports HermexCard.swift.',
+          'Pending-request fields, choices, command blocks, decision logic, and request lifecycle stay part of the Pending Request pattern, which also does not depend on HermexCard.swift — see that entry\'s own corrected sourcePaths.',
         ],
       },
     },
@@ -1189,7 +1191,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       useWhen: 'Use an in-flow Banner rather than a toast when the condition remains relevant until it is resolved (e.g. offline, a pending update) rather than a one-off confirmation.',
       avoidWhen: 'Avoid it for a one-off confirmation — use Hermes Toast for a transient message instead.',
       alternatives: [
-        { name: 'Hermes Toast', useWhen: 'For a transient, one-off confirmation the caller dismisses itself (HermesToast has no auto-dismiss timer) rather than a persistent in-flow condition.' },
+        { name: 'Hermes Toast', useWhen: 'For a transient, one-off confirmation the caller dismisses itself (HermexToast has no auto-dismiss timer) rather than a persistent in-flow condition.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
       useSummary: 'A new, foundation-only component; Sessions and the transcript keep their own existing, independent offline-cache notices in this branch, not this Banner.',
@@ -1213,8 +1215,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'colorHex / selectedHeaderLogoColor', type: 'String / Color', required: true, desc: 'Per-server or per-account Header Logo Color fill (production Swift).' },
       { name: 'size (ServerAvatarBadge, production Swift)', type: 'CGFloat', default: '32', desc: 'ServerAvatarBadge only — the inline header avatar uses a fixed search-chrome icon size instead.' },
       { name: 'HermesAvatarSize (production Swift)', type: '.small (32) | .medium (40) | .large (48)', default: '.medium', desc: 'Named diameter token for bot-mark and other Avatar compositions. The Tip Jar companion uses .large instead of a local raw size.' },
-      { name: 'systemImage (HermesAvatar, production Swift)', type: 'String', required: true, desc: 'An SF Symbol name, sized to HermesIconSize.Avatar at the chosen HermesAvatarSize.' },
-      { name: 'isDecorative (HermesAvatar, production Swift)', type: 'Bool', default: 'true', desc: 'Hides the badge from VoiceOver when the surrounding content already names the identity, matching Content Unavailable\'s own combined accessibility element.' },
+      { name: 'systemImage (HermexAvatar, production Swift)', type: 'String', required: true, desc: 'An SF Symbol name, sized to HermesIconSize.Avatar at the chosen HermesAvatarSize.' },
+      { name: 'isDecorative (HermexAvatar, production Swift)', type: 'Bool', default: 'true', desc: 'Hides the badge from VoiceOver when the surrounding content already names the identity, matching Content Unavailable\'s own combined accessibility element.' },
       {
         name: 'size (generic catalog Avatar)',
         type: "'small' (32) | 'medium' (40, default) | 'large' (48) | number",
@@ -1222,39 +1224,39 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         desc: 'Named steps from the exported, immutable AVATAR_SIZE map cover the common cases; pass a raw number as an intentional custom-size escape hatch (e.g. a larger hero avatar) when no named step fits.',
       },
     ],
-    a11y: 'ServerAvatarBadge is hidden from VoiceOver — the row around it supplies the accessible name instead. The inline Sessions header version shares the enclosing button\'s label. BotInteractiveFaceView is also hidden from VoiceOver — it is a decorative, non-content-bearing hero illustration. HermesAvatar defaults to decorative, matching Content Unavailable\'s combined title+icon element. The generic catalog Avatar exposes accessibilityRole="image" with a label (defaulting to its initials).',
+    a11y: 'ServerAvatarBadge is hidden from VoiceOver — the row around it supplies the accessible name instead. The inline Sessions header version shares the enclosing button\'s label. BotInteractiveFaceView is also hidden from VoiceOver — it is a decorative, non-content-bearing hero illustration. HermexAvatar defaults to decorative, matching Content Unavailable\'s combined title+icon element. The generic catalog Avatar exposes accessibilityRole="image" with a label (defaulting to its initials).',
     render: () => <AvatarFamilyGallery />,
     hermesReference: {
       useWhen: 'Use ServerAvatarBadge to show initials identity for the active server/account; use the generic catalog Avatar\'s image/icon/initials precedence when a screen needs a flexible identity badge in a new context; use the bot-face system only for the Bots hero/idle face.',
-      avoidWhen: 'Avoid the new HermesAvatar.swift system-image badge as a production dependency today — no screen composes it yet. Avoid reaching for the bot-face system outside Bots — it is a separate drawing/motion system, not a general-purpose Avatar.',
+      avoidWhen: 'Avoid the new HermexAvatar.swift system-image badge as a production dependency today — no screen composes it yet. Avoid reaching for the bot-face system outside Bots — it is a separate drawing/motion system, not a general-purpose Avatar.',
       alternatives: [
         { name: 'Content Unavailable', useWhen: 'When an identity-style icon badge belongs inside an empty/error state rather than standing alone — Content Unavailable already composes an Avatar-style icon slot for that.' },
       ],
       adoptionStatus: {
         state: 'partially-adopted',
-        detail: 'ServerAvatarBadge and the bot-face system are adopted, pre-existing production components, unchanged by this branch. HermesAvatar.swift and HermesAvatarSize are new in this branch\'s foundation layer, with no production call site yet.',
+        detail: 'ServerAvatarBadge and the bot-face system are adopted, pre-existing production components, unchanged by this branch. HermexAvatar.swift and HermesAvatarSize are new in this branch\'s foundation layer, with no production call site yet.',
       },
-      useSummary: 'Two separate stories under one umbrella section: ServerAvatarBadge and the bot-face system are pre-existing, unchanged production identity components; HermesAvatar.swift and HermesAvatarSize are new in this branch, with no production call site yet.',
+      useSummary: 'Two separate stories under one umbrella section: ServerAvatarBadge and the bot-face system are pre-existing, unchanged production identity components; HermexAvatar.swift and HermesAvatarSize are new in this branch, with no production call site yet.',
       usedIn: [
         { screen: 'Sessions', effect: 'The pre-existing header avatar (ServerAvatarBadge) opens account and server controls; it becomes the search-close control when needed.' },
         { screen: 'Servers', path: 'Settings → Servers', effect: 'The pre-existing ServerAvatarBadge gives each configured server an initials badge.' },
         { screen: 'Identity', path: 'Settings → Identity', effect: 'The pre-existing editor previews the selected initials and header color via ServerAvatarBadge.' },
-        { screen: 'Bots', effect: 'The pre-existing bot-face system blinks idly (BotAnimatedFaceView) and reacts to a drag/tap on its create/edit hero face (BotInteractiveFaceView) — a separately implemented system, unrelated to the new HermesAvatar.swift.' },
+        { screen: 'Bots', effect: 'The pre-existing bot-face system blinks idly (BotAnimatedFaceView) and reacts to a drag/tap on its create/edit hero face (BotInteractiveFaceView) — a separately implemented system, unrelated to the new HermexAvatar.swift.' },
       ],
       implementationNotes: {
-        status: 'ServerAvatarBadge and the bot-face system: adopted, pre-existing production components, unchanged by this branch. HermesAvatar.swift and HermesAvatarSize: new in this branch\'s foundation layer, with no production call site yet.',
+        status: 'ServerAvatarBadge and the bot-face system: adopted, pre-existing production components, unchanged by this branch. HermexAvatar.swift and HermesAvatarSize: new in this branch\'s foundation layer, with no production call site yet.',
         sourcePaths: [
           'HermesMobile/Features/Settings/SettingsView.swift',
           'HermesMobile/Features/Bots/BotAvatarStore.swift',
           'HermesMobile/Features/Bots/BotProfileAppearance.swift',
           'HermesMobile/Features/Bots/BotFaceMotion.swift',
-          'HermesMobile/Features/Shared/HermesAvatar.swift',
+          'HermesMobile/Features/Shared/HermexAvatar.swift',
           'HermesMobile/Config/HermesSpacing.swift',
         ],
         notes: [
           'HermesAvatarSize is defined in HermesMobile/Config/HermesSpacing.swift, not in the pre-existing bot-appearance files — those files implement their own, separately-scaled identity system and do not reference HermesAvatarSize.',
           'One umbrella documentation section for image/icon/initials identity and bot-face identity, but not one shared implementation: BotAvatarMarkView (still), BotAnimatedFaceView (idle blink + working, Reduce Motion falls back to still), and BotInteractiveFaceView (hero drag-to-gaze/tap-to-react face) stay their own pre-existing SwiftUI types — bot faces are a distinct drawing/motion system, never adopting the umbrella Avatar family described here.',
-          'HermesAvatar.swift is the new foundation piece: a circular system-image badge at HermesAvatarSize, intended so a future Content Unavailable-style empty state could stop hand-rolling a raw Label icon treatment — it has not replaced ServerAvatarBadge or the bot-face system, and no production caller composes it yet.',
+          'HermexAvatar.swift is the new foundation piece: a circular system-image badge at HermesAvatarSize, intended so a future Content Unavailable-style empty state could stop hand-rolling a raw Label icon treatment — it has not replaced ServerAvatarBadge or the bot-face system, and no production caller composes it yet.',
         ],
       },
     },
@@ -1262,29 +1264,29 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Row Divider',
     description:
-      'HermesDivider is the shared SwiftUI hairline separator: it derives color from primary at 0.12 opacity, resolves one physical pixel from displayScale, accepts a tokenized leading inset, and is hidden from accessibility. The generic catalog Divider is the React Native documentation counterpart with component-owned opacity.',
-    whenToUse: 'Use it between rows or under a card footer — never inside a native List, HermesList, or Accordion List, which already own their separators; do not invent a second, differently-styled divider for a new screen.',
+      'HermexDivider is the shared SwiftUI hairline separator: it derives color from primary at 0.12 opacity, resolves one physical pixel from displayScale, accepts a tokenized leading inset, and is hidden from accessibility. The generic catalog Divider is the React Native documentation counterpart with component-owned opacity.',
+    whenToUse: 'Use it between rows or under a card footer — never inside a native List, HermexList, or Accordion List, which already own their separators; do not invent a second, differently-styled divider for a new screen.',
     props: [
-      { name: 'HermesDivider', type: 'View', desc: 'Shared SwiftUI divider with background-agnostic foreground-derived color and one-physical-pixel geometry.' },
+      { name: 'HermexDivider', type: 'View', desc: 'Shared SwiftUI divider with background-agnostic foreground-derived color and one-physical-pixel geometry.' },
       { name: 'leadingInset', type: 'CGFloat', default: 'HermesSpacing.s0', desc: 'Tokenized leading inset for row-aligned separators.' },
       { name: 'opacity (generic catalog Divider)', type: 'number', default: '0.72', desc: 'The RN reference component\'s own component-owned opacity prop, translucent by default; pass 1 for full strength (Card\'s footer divider).' },
     ],
-    a11y: 'Purely decorative — HermesDivider explicitly hides itself from accessibility.',
+    a11y: 'Purely decorative — HermexDivider explicitly hides itself from accessibility.',
     render: () => <HermexDividerPreview />,
     hermesReference: {
       useWhen: 'Use it between rows or under a card footer.',
-      avoidWhen: 'Avoid it inside a native List, HermesList, or Accordion List — those containers draw their own separators. Do not invent a second, differently-styled divider for a new screen.',
+      avoidWhen: 'Avoid it inside a native List, HermexList, or Accordion List — those containers draw their own separators. Do not invent a second, differently-styled divider for a new screen.',
       alternatives: [
         { name: 'List / ListItem', useWhen: 'For rows inside a List container, which owns the separators.' },
         { name: 'Native Divider (production)', useWhen: 'For current Settings groups and the SectionCard footer, which keep the native hairline today.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only component; Settings and SectionCard\'s footer keep their own existing native Divider/hairline styling in this branch, not HermesDivider.',
+      useSummary: 'A new, foundation-only component; Settings and SectionCard\'s footer keep their own existing native Divider/hairline styling in this branch, not HermexDivider.',
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
-        sourcePaths: ['HermesMobile/Features/Shared/HermesDivider.swift'],
+        sourcePaths: ['HermesMobile/Features/Shared/HermexDivider.swift'],
         notes: [
-          'HermesDivider owns its SwiftUI opacity and pixel geometry; callers choose only the tokenized leading inset. No global free-floating opacity token is exposed.',
+          'HermexDivider owns its SwiftUI opacity and pixel geometry; callers choose only the tokenized leading inset. No global free-floating opacity token is exposed.',
           'The generic catalog Divider owns opacity as an explicit component prop for its React Native reconstruction; callers do not apply external opacity styles.',
         ],
       },
@@ -1360,36 +1362,76 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Text Input',
     description:
-      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermesTextField`, `HermesSecureField`, and `HermesNumberField` (HermesTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (`.hermesSearch` over `.searchable`) stays its own separate entry rather than a Text Input variant.',
-    whenToUse: 'Reach for HermesTextField for an ordinary single-line value, HermesSecureField for a credential, and HermesNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
+      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermexTextField`, `HermexSecureField`, and `HermexNumberField` (HermexTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (`.hermexSearch` over `.searchable`) stays its own separate entry rather than a Text Input variant.',
+    whenToUse: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
     props: [
-      { name: 'HermesTextField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `TextField` for ordinary single-line entry, including an optional native `Text` prompt; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
-      { name: 'HermesSecureField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `SecureField` for masked single-line entry, such as a password, including an optional native `Text` prompt.' },
-      { name: 'HermesNumberField(_:value:format:prompt:)', type: 'Binding<Value>, F: ParseableFormatStyle, Text?', desc: 'Forwards straight to native `TextField(value:format:)` with a caller-supplied `ParseableFormatStyle` and optional native `Text` prompt — locale-aware native parsing/formatting, never a `Binding<String>` or a forced numeric keyboard.' },
+      { name: 'HermexTextField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `TextField` for ordinary single-line entry, including an optional native `Text` prompt; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
+      { name: 'HermexSecureField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `SecureField` for masked single-line entry, such as a password, including an optional native `Text` prompt.' },
+      { name: 'HermexNumberField(_:value:format:prompt:)', type: 'Binding<Value>, F: ParseableFormatStyle, Text?', desc: 'Forwards straight to native `TextField(value:format:)` with a caller-supplied `ParseableFormatStyle` and optional native `Text` prompt — locale-aware native parsing/formatting, never a `Binding<String>` or a forced numeric keyboard.' },
     ],
     a11y: 'Each wrapper forwards straight to its native control, so production keeps native focus, keyboard, clear behavior, dictation, Dynamic Type, and VoiceOver — none of the three add a custom accessibility layer of their own.',
-    render: () => <HermesTextInputFamilyGallery />,
+    render: () => <HermexTextInputFamilyGallery />,
     hermesReference: {
-      useWhen: 'Reach for HermesTextField for an ordinary single-line value, HermesSecureField for a credential, and HermesNumberField for a locale-aware numeric value with a caller-supplied ParseableFormatStyle.',
-      avoidWhen: 'Avoid HermesNumberField with a Binding<String>, manual parsing, or a forced numeric keyboard — supply a native ParseableFormatStyle instead. Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant.',
+      useWhen: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied ParseableFormatStyle.',
+      avoidWhen: 'Avoid HermexNumberField with a Binding<String>, manual parsing, or a forced numeric keyboard — supply a native ParseableFormatStyle instead. Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant.',
       alternatives: [
         { name: 'Hermes Dropdown', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
         { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare text field.' },
       ],
       adoptionStatus: {
         state: 'foundation-available',
-        detail: 'The three wrappers exist (HermesTextInput.swift) and are foundation-available on this branch; zero production screens use them. Production\'s existing direct TextField and SecureField call sites remain unchanged — migrating them onto the wrappers is deferred to a separate adoption issue.',
+        detail: 'The three wrappers exist (HermexTextInput.swift) and are foundation-available on this branch; zero production screens use them. Production\'s existing direct TextField and SecureField call sites remain unchanged — migrating them onto the wrappers is deferred to a separate adoption issue.',
       },
       useSummary: 'New foundation wrappers; no screen has adopted them yet in this slice. Production keeps its existing direct TextField/SecureField call sites unchanged.',
       implementationNotes: {
-        status: 'Component exists (HermesTextInput.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesTextInput.swift'],
+        status: 'Component exists (HermexTextInput.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexTextInput.swift'],
         notes: [
-          'Deliberately thin: `HermesTextField` forwards to native `TextField`, `HermesSecureField` to native `SecureField`, and `HermesNumberField` to the typed `TextField(value:format:)` path — none of the three own chrome, validation, helper/error text, a clear button, or their own focus, keyboard, autocorrection, capitalization, or content-type policy; the caller keeps those exactly as it would calling the native control directly.',
+          'Deliberately thin: `HermexTextField` forwards to native `TextField`, `HermexSecureField` to native `SecureField`, and `HermexNumberField` to the typed `TextField(value:format:)` path — none of the three own chrome, validation, helper/error text, a clear button, or their own focus, keyboard, autocorrection, capitalization, or content-type policy; the caller keeps those exactly as it would calling the native control directly.',
           'Report only: production\'s existing direct TextField and SecureField call sites (see the Design System Contract\'s frozen TextField/SecureField baselines) are unchanged by this branch and continue to call TextField/SecureField directly; migrating them onto the three wrappers is scoped to a separate issue, not this slice.',
-          'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/HermesTextField — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
+          'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/HermexTextField — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
           'TextEditor remains a native iOS control for multiline body text; this slice does not add a Hermex-owned multiline wrapper.',
-          'This reconstruction uses plain React Native TextInput to approximate HermesTextField/HermesSecureField/HermesNumberField visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
+          'This reconstruction uses plain React Native TextInput to approximate HermexTextField/HermexSecureField/HermexNumberField visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
+        ],
+      },
+    },
+  },
+  {
+    id: 'Bottom Sheet',
+    description:
+      'A Hermex-owned content scaffold — `HermexBottomSheet` (HermexBottomSheet.swift) — supplied to native SwiftUI `.sheet`, never a replacement for the presentation modifier itself. It owns a `NavigationStack` with an inline title, this catalog\'s own TopNav composed through native `.toolbar` at modal-appropriate placements (`.cancellationAction`/`.confirmationAction`), an unconstrained body slot that accepts either arbitrary content or a native `List`, and an optional footer pinned with `.safeAreaInset(edge: .bottom)` that arranges its direct children horizontally or vertically. The caller keeps calling `.sheet` directly — detents, the drag indicator, compact adaptation, interactive-dismiss policy, focus, validation, loading state, and dismissal all stay caller-owned, and native SwiftUI alone chooses adaptive presentation style by platform/context and owns dismissal interaction, presentation motion, and Reduce Motion; bottom attachment may occur where that native presentation chooses it, but this scaffold never defines or guarantees it.',
+    whenToUse:
+      'Reach for HermexBottomSheet as the content passed to a screen\'s own `.sheet` when that adaptively-presented modal needs a TopNav-style header plus an optional pinned footer — a picker, a short form, or a confirmation flow. Keep `.sheet` itself, its detents, and its dismissal policy at the call site; this scaffold only supplies what is inside it, never the presentation style itself. For an always-centered confirmation or alert, that is the next approved, separate Dialog family, not this component. For a persistent, back-navigable screen rather than a transient modal, use a native NavigationLink/`.navigationDestination` push instead of a sheet.',
+    props: [
+      { name: 'title', type: 'LocalizedStringKey', required: true, desc: 'The scaffold\'s inline native navigation title.' },
+      { name: 'footerAxis', type: '.horizontal | .vertical', default: '.horizontal', desc: 'Arranges the footer slot\'s direct children side by side or stacked — chosen by the caller, never inferred automatically.' },
+      { name: 'content', type: '@ViewBuilder', required: true, desc: 'The unconstrained body slot — accepts a native List or arbitrary content with no imposed card, scroll view, padding, or background.' },
+      { name: 'leadingPrimary / leadingSecondary', type: '@ViewBuilder', desc: 'The same leading TopNav slots as Hermes TopNav, rendered at `.cancellationAction` placement.' },
+      { name: 'trailingPrimary / trailingSecondary', type: '@ViewBuilder', desc: 'The same trailing TopNav slots as Hermes TopNav, rendered at `.confirmationAction` placement.' },
+      { name: 'footer', type: '@ViewBuilder', desc: 'Optional; omit for no pinned footer at all. Pinned with native `.safeAreaInset(edge: .bottom)`, never a hard-coded height.' },
+    ],
+    a11y: 'Header actions live in the shared TopNav\'s own slots, so they keep TopNav\'s accessibilityLabel and touch-target guarantees. The body slot forwards straight to whatever native content is supplied — a List keeps native selection/accessibility, arbitrary content keeps whatever the caller composed — and the pinned footer stays reachable at large Dynamic Type sizes through native `.safeAreaInset` rather than a fixed-height overlay that could clip it.',
+    render: () => <HermexBottomSheetFamilyGallery />,
+    hermesReference: {
+      useWhen: 'Reach for HermexBottomSheet as the content passed to a screen\'s own `.sheet` when that adaptively-presented modal needs a TopNav-style header plus an optional pinned footer.',
+      avoidWhen: 'Avoid it for an always-centered confirmation or alert — that is the next approved, separate Dialog family, never a claim this component makes about its own presentation. Avoid it for a persistent, back-navigable screen — use a native NavigationLink/.navigationDestination push instead of a sheet. Avoid composing a second NavigationStack, TopNav, or footer chrome inside its body slot — the scaffold already owns all three.',
+      alternatives: [
+        { name: 'Native NavigationLink / .navigationDestination (production)', useWhen: 'For a persistent, back-navigable screen instead of a transient, adaptively-presented modal.' },
+      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'HermexBottomSheet exists (HermexBottomSheet.swift) and is foundation-available on this branch; zero production screens use it. Every existing production `.sheet` keeps its own current header/body/footer anatomy unchanged — migrating one onto this scaffold is deferred to a separate adoption issue.',
+      },
+      useSummary: 'A new, foundation-only content scaffold for native `.sheet`; no production sheet composes it yet in this branch.',
+      implementationNotes: {
+        status: FOUNDATION_ONLY_STATUS,
+        sourcePaths: ['HermesMobile/Features/Shared/HermexBottomSheet.swift'],
+        notes: [
+          'Deliberately a content scaffold, not a presentation modifier: the caller keeps calling `.sheet` directly, including its detents, drag indicator, compact adaptation, interactive-dismiss policy, focus, validation, loading state, and dismissal — native SwiftUI alone chooses the adaptive presentation style by platform/context and owns dismissal interaction, presentation motion, and Reduce Motion either way; bottom attachment is never a universal claim this scaffold makes.',
+          'Composes the existing TopNav (HermesMobile/Features/Shared/TopNav.swift) through native `.toolbar` at `.cancellationAction`/`.confirmationAction` placements rather than a hand-rolled in-content bar.',
+          'The body `@ViewBuilder` slot is intentionally unconstrained — no card, scroll view, padding, or background — so it accepts a native List or arbitrary content without breaking either context.',
+          'This reconstruction hand-builds the header/body/footer anatomy from this catalog\'s own real TopNav/List/ListItem/Button primitives; it does not compose the generic template catalog\'s own BottomSheet component, which owns a slide-up/backdrop/handle animation language production\'s native `.sheet` does not use.',
+          'Report only: no production `.sheet` call site imports or composes HermexBottomSheet.swift in this branch; every existing sheet keeps its own current header/body/footer anatomy. Migrating one onto it is scoped to a separate adoption issue, not this slice.',
         ],
       },
     },
@@ -1397,8 +1439,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Search',
     description:
-      'A thin Hermex-owned wrapper — `.hermesSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
-    whenToUse: 'Reach for `.hermesSearch` on a searchable list or navigation surface once a screen migrates (tracked as a separate issue); until then, a direct `.searchable` call is still correct. Either way, write a concise prompt, preserve the system clear/focus behavior, and pair filtered emptiness with a specific no-results state rather than replacing the field with custom chrome.',
+      'A thin Hermex-owned wrapper — `.hermexSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
+    whenToUse: 'Reach for `.hermexSearch` on a searchable list or navigation surface once a screen migrates (tracked as a separate issue); until then, a direct `.searchable` call is still correct. Either way, write a concise prompt, preserve the system clear/focus behavior, and pair filtered emptiness with a specific no-results state rather than replacing the field with custom chrome.',
     props: [
       { name: 'text', type: 'Binding<String>', required: true, desc: 'The native field owns editing, focus, clear, and keyboard behavior while the screen owns filtering.' },
       { name: 'placement', type: 'SearchFieldPlacement', default: '.automatic (native default)', desc: 'Forwarded straight to `.searchable`; choose a native placement appropriate to the navigation surface, or omit it to keep the platform\'s own automatic choice.' },
@@ -1407,22 +1449,22 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     a11y: 'Forwards straight to native `.searchable`, so it keeps platform focus, keyboard, clear-button, dictation, VoiceOver, and Dynamic Type behavior. A no-results view names the active query and remains distinct from the unfiltered empty state.',
     render: () => <SearchFamilyGallery />,
     hermesReference: {
-      useWhen: 'Attach `.hermesSearch` (or, until a screen migrates, native `.searchable` directly) to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
+      useWhen: 'Attach `.hermexSearch` (or, until a screen migrates, native `.searchable` directly) to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
       avoidWhen: 'Avoid replacing the field with custom chrome or hand-positioning a substitute search field. The wrapper itself must stay thin — do not add scopes, suggestions, submit handling, or debounce to it; the screen keeps owning filtering and result presentation.',
       alternatives: [
         { name: 'Text Input', useWhen: 'For an inline filter or lookup field that is not attached to a navigation surface — a plain TextField.' },
       ],
       adoptionStatus: {
         state: 'foundation-available',
-        detail: 'Component exists (HermesSearch.swift) with no production call site yet. Production\'s eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call SwiftUI `.searchable` directly; migrating them onto `.hermesSearch` is deferred to a separate issue.',
+        detail: 'Component exists (HermexSearch.swift) with no production call site yet. Production\'s eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call SwiftUI `.searchable` directly; migrating them onto `.hermexSearch` is deferred to a separate issue.',
       },
       useSummary: 'New foundation wrapper; no screen has adopted it yet in this slice. Production keeps its existing direct `.searchable` call sites unchanged.',
       implementationNotes: {
-        status: 'Component exists (HermesSearch.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesSearch.swift'],
+        status: 'Component exists (HermexSearch.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexSearch.swift'],
         notes: [
-          'Deliberately thin: `.hermesSearch(text:placement:prompt:)` forwards straight to SwiftUI\'s native `.searchable(text:placement:prompt:)` — it owns no field chrome, focus, keyboard, clear, dictation, or accessibility behavior of its own, and the default placement stays `.automatic` so omitting it preserves native automatic placement.',
-          'Report only: production\'s eight direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermesSearch` is scoped to a separate issue, not this slice.',
+          'Deliberately thin: `.hermexSearch(text:placement:prompt:)` forwards straight to SwiftUI\'s native `.searchable(text:placement:prompt:)` — it owns no field chrome, focus, keyboard, clear, dictation, or accessibility behavior of its own, and the default placement stays `.automatic` so omitting it preserves native automatic placement.',
+          'Report only: production\'s eight direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermexSearch` is scoped to a separate issue, not this slice.',
         ],
       },
     },
@@ -1465,32 +1507,32 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Buttons',
     description:
       'Native SwiftUI Button stays the semantic control everywhere. Hermex layers two reusable ButtonStyle families on top for chrome and press feedback, spanning extra-small through large sizes, label/icon content layouts, five emphases, and resting/pressed/disabled/pending states, with an optional Adaptive Glass surface.',
-    whenToUse: 'Reach for .hermes(_:emphasis:pressFeedback:isGlass:) for a button whose chrome (fill, size, emphasis) Hermex should supply; reach for .hermesPressOnly(_:shadow:) when a caller already owns its own shape/fill — an icon, a compact control, a capsule, a card, a thumbnail — and only needs Reduce-Motion-safe press feedback. A Yes/No/Approve/Deny choice uses .hermes(_:emphasis:) with .primary/.secondary/.destructive.',
+    whenToUse: 'Reach for .hermex(_:emphasis:pressFeedback:isGlass:) for a button whose chrome (fill, size, emphasis) Hermex should supply; reach for .hermexPressOnly(_:shadow:) when a caller already owns its own shape/fill — an icon, a compact control, a capsule, a card, a thumbnail — and only needs Reduce-Motion-safe press feedback. A Yes/No/Approve/Deny choice uses .hermex(_:emphasis:) with .primary/.secondary/.destructive.',
     props: [
-      { name: 'HermesButtonPressOnlyStyle.Chrome', type: '.icon | .compactControl | .capsule | .card | .thumbnail', required: true, desc: 'Each has its own pressed scale/opacity/duration/anchor and an optional resting/pressed HermesShadow pair — a ButtonStyle for caller-owned chrome, not a label API.' },
-      { name: 'HermesButtonEmphasis', type: '.brandPrimary | .neutral | .primary | .secondary | .destructive', required: true, desc: 'Fill/border/foreground per emphasis on HermesButtonStyle. brandPrimary uses Gold 500, Gold 600 pressed, and a black label; the other decision roles retain their established mappings.' },
-      { name: 'HermesButtonPressFeedback', type: '.standard | .emphasized | .none', default: '.standard', desc: 'Standard is the default — Reduce-Motion-safe scale + opacity; Emphasized is a stronger response for a button that wants extra weight; None opts a button out entirely.' },
+      { name: 'HermexButtonPressOnlyStyle.Chrome', type: '.icon | .compactControl | .capsule | .card | .thumbnail', required: true, desc: 'Each has its own pressed scale/opacity/duration/anchor and an optional resting/pressed HermesShadow pair — a ButtonStyle for caller-owned chrome, not a label API.' },
+      { name: 'HermexButtonEmphasis', type: '.brandPrimary | .neutral | .primary | .secondary | .destructive', required: true, desc: 'Fill/border/foreground per emphasis on HermexButtonStyle. brandPrimary uses Gold 500, Gold 600 pressed, and a black label; the other decision roles retain their established mappings.' },
+      { name: 'HermexButtonPressFeedback', type: '.standard | .emphasized | .none', default: '.standard', desc: 'Standard is the default — Reduce-Motion-safe scale + opacity; Emphasized is a stronger response for a button that wants extra weight; None opts a button out entirely.' },
       { name: 'size', type: 'extraSmall | small | medium | large', default: 'large', desc: 'Generic catalog Button\'s own size scale — the closest reusable model for the extra-small-through-large requirement.' },
       { name: 'glass surface option', type: 'Bool', desc: 'Composes Adaptive Glass rather than duplicating its availability/accessibility fallback logic (see the Adaptive Glass Material entry).' },
-      { name: 'haptic', type: '(() -> Void)?', desc: 'Optional, semantic haptic fired alongside the action on HermesButton — never implied by Press Feedback.' },
+      { name: 'haptic', type: '(() -> Void)?', desc: 'Optional, semantic haptic fired alongside the action on HermexButton — never implied by Press Feedback.' },
     ],
-    a11y: 'Both styles honor Reduce Motion (scale/spring effects drop out) via the shared applyingHermesButtonPressFeedback helper, and Environment(\\.isEnabled) for a dimmed, non-interactive disabled state — native SwiftUI Button semantics (role, label, accessibilityLabel) are untouched by either style.',
+    a11y: 'Both styles honor Reduce Motion (scale/spring effects drop out) via the shared applyingHermexButtonPressFeedback helper, and Environment(\\.isEnabled) for a dimmed, non-interactive disabled state — native SwiftUI Button semantics (role, label, accessibilityLabel) are untouched by either style.',
     render: () => <ButtonDecisionAndTactilePreview />,
     hermesReference: {
-      useWhen: 'Reach for .hermes(_:emphasis:pressFeedback:isGlass:) for a button whose chrome Hermex should supply; reach for .hermesPressOnly(_:shadow:) when a caller already owns its own shape/fill and only needs Reduce-Motion-safe press feedback.',
-      avoidWhen: 'Avoid .hermes(_:emphasis:) on a control whose chrome another component already owns (a Segmented Control option, a ListItem row, a Tag-styled pill) — use .hermesPressOnly or that component. Avoid either style for a tappable file reference — that is Inline Reference Link.',
+      useWhen: 'Reach for .hermex(_:emphasis:pressFeedback:isGlass:) for a button whose chrome Hermex should supply; reach for .hermexPressOnly(_:shadow:) when a caller already owns its own shape/fill and only needs Reduce-Motion-safe press feedback.',
+      avoidWhen: 'Avoid .hermex(_:emphasis:) on a control whose chrome another component already owns (a Segmented Control option, a ListItem row, a Tag-styled pill) — use .hermexPressOnly or that component. Avoid either style for a tappable file reference — that is Inline Reference Link.',
       alternatives: [
         { name: 'ChatTactileButtonStyle / ChatDecisionButtonStyle (production)', useWhen: 'For any current Sessions, Bots, or composer control — the adopted styles every production call site still uses.' },
         { name: 'Inline Reference Link', useWhen: 'For a tappable file reference rather than a button.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only pair of ButtonStyle modifiers; the Sessions/Bots decision controls and the 18+ composer/thumbnail/capsule/card controls named below all still call the pre-existing, unmigrated ChatTactileButtonStyle (.chatTactile(_:)) and ChatDecisionButtonStyle in this branch, not HermesButtonStyle/HermesButtonPressOnlyStyle.',
+      useSummary: 'A new, foundation-only pair of ButtonStyle modifiers; the Sessions/Bots decision controls and the 18+ composer/thumbnail/capsule/card controls named below all still call the pre-existing, unmigrated ChatTactileButtonStyle (.chatTactile(_:)) and ChatDecisionButtonStyle in this branch, not HermexButtonStyle/HermexButtonPressOnlyStyle.',
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
-        sourcePaths: ['HermesMobile/Features/Shared/HermesButton.swift'],
+        sourcePaths: ['HermesMobile/Features/Shared/HermexButton.swift'],
         notes: [
-          'The generic catalog\'s own Button component (primary/secondary/tertiary/white/ghost/destructive, extraSmall/small/medium/large) is the closest reusable emphasis and size model shown above — HermesButtonStyle/HermesButtonPressOnlyStyle are ButtonStyle modifiers applied to a native Button, not a separate label/variant component, so they are documented here rather than reproduced as a second custom tap view.',
-          'ChatTactileButtonStyle.swift (HermesMobile/Features/Chat/ChatTactileButtonStyle.swift) is unchanged and still actively used by 18+ production files via .chatTactile(_:) in this branch — HermesButtonPressOnlyStyle does not replace or rename it, and no .hermesPressOnly(_:) call site exists in production yet. Likewise, the Sessions approval overlay and the Bot pending-request card keep calling .chatDecision(_:) directly, not .hermes(_:emphasis:).',
+          'The generic catalog\'s own Button component (primary/secondary/tertiary/white/ghost/destructive, extraSmall/small/medium/large) is the closest reusable emphasis and size model shown above — HermexButtonStyle/HermexButtonPressOnlyStyle are ButtonStyle modifiers applied to a native Button, not a separate label/variant component, so they are documented here rather than reproduced as a second custom tap view.',
+          'ChatTactileButtonStyle.swift (HermesMobile/Features/Chat/ChatTactileButtonStyle.swift) is unchanged and still actively used by 18+ production files via .chatTactile(_:) in this branch — HermexButtonPressOnlyStyle does not replace or rename it, and no .hermexPressOnly(_:) call site exists in production yet. Likewise, the Sessions approval overlay and the Bot pending-request card keep calling .chatDecision(_:) directly, not .hermex(_:emphasis:).',
         ],
       },
     },
@@ -1520,14 +1562,14 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Segmented Control', useWhen: 'For a prominent exclusive view switch.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only component; production\'s Bots multi-select question and Kanban\'s bulk card-selection rows each keep their own existing, independent selection-indicator implementation in this branch, not HermesCheckbox.',
+      useSummary: 'A new, foundation-only component; production\'s Bots multi-select question and Kanban\'s bulk card-selection rows each keep their own existing, independent selection-indicator implementation in this branch, not HermexCheckbox.',
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
         sourcePaths: [
-          'HermesMobile/Features/Shared/HermesCheckbox.swift',
+          'HermesMobile/Features/Shared/HermexCheckbox.swift',
         ],
         notes: [
-          'BotPendingRequestCard.swift and KanbanLabView.swift do not import HermesCheckbox.swift in this branch; each still draws its own selection indicator directly.',
+          'BotPendingRequestCard.swift and KanbanLabView.swift do not import HermexCheckbox.swift in this branch; each still draws its own selection indicator directly.',
           'The interactive configuration (passing action) renders a native Button with an .accessibilityRepresentation(Toggle(...)) so it is announced and operated as a real toggle, not a plain button; the row-owned configuration (action omitted) instead applies .accessibilityHidden(true) to the same visual.',
           'The checked fill and border use Color.primary (an adaptive semantic black/white, not Color.accentColor or a new neutral-ramp step) — the approved decision for the Checkbox/Radio selected treatment; the checkmark itself stays the inverse system background regardless of appearance.',
         ],
@@ -1538,11 +1580,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Radio',
     displayName: 'Radio',
     description:
-      'A reusable circular one-of-many selection control — the selected option shows a filled center dot, with the selected ring and dot both using the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent), mirroring HermesCheckbox\'s own selected treatment. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
+      'A reusable circular one-of-many selection control — the selected option shows a filled center dot, with the selected ring and dot both using the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent), mirroring HermexCheckbox\'s own selected treatment. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
     whenToUse: 'Use it for exclusive, one-of-many selection. For an independent multi-select fact, use Checkbox instead.',
     props: [
       { name: 'isSelected', type: 'Bool', required: true, desc: 'Whether the center dot is filled.' },
-      { name: 'action', type: '(() -> Void)?', desc: 'Omit when a containing row owns the tap — the radio then renders as a non-interactive, accessibility-hidden indicator, mirroring HermesCheckbox\'s own row-owned configuration.' },
+      { name: 'action', type: '(() -> Void)?', desc: 'Omit when a containing row owns the tap — the radio then renders as a non-interactive, accessibility-hidden indicator, mirroring HermexCheckbox\'s own row-owned configuration.' },
       { name: 'label', type: 'String?', desc: 'Optional inline label after the circle.' },
       { name: 'isEnabled', type: 'Bool', default: 'true', desc: 'Dims the control and disables interaction when false.' },
     ],
@@ -1556,14 +1598,14 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Segmented Control', useWhen: 'For a prominent, always-visible view or filter switch among a few options rather than a list-style choice.' },
         { name: 'Hermes Dropdown', useWhen: 'For a labeled field whose options should collapse into a menu instead of occupying a row each.' },
       ],
-      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermesRadio.swift) with no production call site yet.' },
+      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexRadio.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
       implementationNotes: {
-        status: 'Component exists (HermesRadio.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesRadio.swift'],
+        status: 'Component exists (HermexRadio.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexRadio.swift'],
         notes: [
-          'Mirrors HermesCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity, same adaptive Color.primary selected treatment) with a circular selected/unselected treatment instead of a boolean toggle.',
-          'Report only: a single-choice (not allowsMultipleChoices) Bot pending-request question already renders its own largecircle.fill/circle glyph per choice (see Hermes Checkbox) — a plausible future HermesRadio adoption site, not migrated in this slice.',
+          'Mirrors HermexCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity, same adaptive Color.primary selected treatment) with a circular selected/unselected treatment instead of a boolean toggle.',
+          'Report only: a single-choice (not allowsMultipleChoices) Bot pending-request question already renders its own largecircle.fill/circle glyph per choice (see Hermes Checkbox) — a plausible future HermexRadio adoption site, not migrated in this slice.',
         ],
       },
     },
@@ -1577,7 +1619,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     props: [
       { name: 'title', type: 'String', required: true, desc: 'The field\'s accessibility label and, when shown, its visible Picker label.' },
       { name: 'selection', type: 'Binding<Value?>', required: true, desc: 'Caller-controlled selected value; nil shows the placeholder option.' },
-      { name: 'options', type: '[HermesDropdownOption<Value>]', required: true, desc: 'Each option\'s value + display label.' },
+      { name: 'options', type: '[HermexDropdownOption<Value>]', required: true, desc: 'Each option\'s value + display label.' },
       { name: 'isEnabled', type: 'Bool', default: 'true', desc: 'Disables the control when false.' },
       { name: 'placeholder', type: 'String', default: '"Select"', desc: 'Shown as the nil-selection option\'s label.' },
     ],
@@ -1591,11 +1633,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Hermes Radio', useWhen: 'When every option should stay visible as its own row.' },
         { name: 'Segmented Control', useWhen: 'For a primary view/filter switch rather than a form field.' },
       ],
-      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermesDropdown.swift) with no production call site yet.' },
+      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexDropdown.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
       implementationNotes: {
-        status: 'Component exists (HermesDropdown.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesDropdown.swift'],
+        status: 'Component exists (HermexDropdown.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexDropdown.swift'],
         notes: [
           'Deliberately thin: a generic wrapper around `Picker(title, selection:).pickerStyle(.menu)`, matching SettingsView.swift\'s existing row-picker convention exactly rather than inventing a second, competing dropdown interaction.',
         ],
@@ -1607,7 +1649,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     displayName: 'Toast',
     whenToUse: 'Use a transient Toast for a one-off confirmation or brief status whose visibility the caller owns — clear it yourself, since there is no auto-dismiss; use Banner instead when the condition remains relevant until resolved (e.g. offline).',
     description:
-      'A transient status notice — a semantic tint/icon, a message, and an optional action — presented via the `hermesToast(isPresented:toast:)` view modifier. Lifecycle stays entirely caller-owned: no internal timer or auto-dismiss.',
+      'A transient status notice — a semantic tint/icon, a message, and an optional action — presented via the `hermexToast(isPresented:toast:)` view modifier. Lifecycle stays entirely caller-owned: no internal timer or auto-dismiss.',
     props: [
       { name: 'semantic', type: '.information | .success | .warning | .error', required: true, desc: 'Drives the tint and default icon.' },
       { name: 'message', type: 'Text', required: true, desc: 'The toast\'s message.' },
@@ -1623,13 +1665,13 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       alternatives: [
         { name: 'Hermes Banner', useWhen: 'When the condition remains relevant until resolved, rather than a one-off confirmation.' },
       ],
-      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermesToast.swift) with no production call site yet.' },
+      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexToast.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice. Distinct from Workspace/Git\'s own GitActionToastOverlay, a separate progress/success state machine that predates this generic primitive.',
       implementationNotes: {
-        status: 'Component exists (HermesToast.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesToast.swift'],
+        status: 'Component exists (HermexToast.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexToast.swift'],
         notes: [
-          'Presentation (`hermesToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe transition, so a new caller gets the same feel without hand-rolling it again: it enters by moving down from the top edge combined with opacity (HermesMotion.Bundle.overlayEnter) and exits back toward the top combined with opacity (HermesMotion.Bundle.overlayExit). Reduce Motion drops the directional move and falls back to an opacity-only state change. Visibility itself stays entirely caller-owned — no internal timer.',
+          'Presentation (`hermexToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe transition, so a new caller gets the same feel without hand-rolling it again: it enters by moving down from the top edge combined with opacity (HermesMotion.Bundle.overlayEnter) and exits back toward the top combined with opacity (HermesMotion.Bundle.overlayExit). Reduce Motion drops the directional move and falls back to an opacity-only state change. Visibility itself stays entirely caller-owned — no internal timer.',
         ],
       },
     },
@@ -1654,11 +1696,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Card', useWhen: 'For persistent, always-visible detail rather than a tap-triggered aside.' },
         { name: 'Disclosure Row', useWhen: 'For one collapsed line that expands into longer detail.' },
       ],
-      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermesTooltip.swift) with no production call site yet.' },
+      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexTooltip.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
       implementationNotes: {
-        status: 'Component exists (HermesTooltip.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermesTooltip.swift'],
+        status: 'Component exists (HermexTooltip.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexTooltip.swift'],
         notes: [
           'Reuses the exact `.popover(isPresented:) { … }.presentationCompactAdaptation(.none)` pattern ContextWindowIndicatorView and GitBranchPickerView already established, rather than inventing a second anchored-presentation convention.',
         ],
@@ -1744,7 +1786,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'disabled', type: 'boolean', default: 'false', desc: 'Dims the row\'s text and, when pressable, disables the press.' },
       { name: 'loading', type: 'boolean', default: 'false', desc: 'Renders the row\'s slots as Shimmer placeholders inside one SkeletonGroup (one "Loading" announcement, not one per slot); never pressable — the same anatomy a commit-pending row uses.' },
       { name: 'hapticFeedbackStyle', type: 'HapticButtonFeedbackStyle?', default: 'nil', desc: 'Opt-in tap feedback for callers preserving an existing haptic contract; nil keeps the row on a plain native Button.' },
-      { name: 'HermesList default vertical content margin', type: 'CGFloat', default: 'HermesSpacing.s12 (12)', desc: 'Applied once on the shared container via .contentMargins(.vertical, _, for: .scrollContent) — native List selection, refresh, row insets, separators, swipe/context menus, and keyboard/accessibility behavior are otherwise untouched.' },
+      { name: 'HermexList default vertical content margin', type: 'CGFloat', default: 'HermesSpacing.s12 (12)', desc: 'Applied once on the shared container via .contentMargins(.vertical, _, for: .scrollContent) — native List selection, refresh, row insets, separators, swipe/context menus, and keyboard/accessibility behavior are otherwise untouched.' },
     ],
     a11y: 'A pressable ListItem exposes one combined accessibilityLabel (title + description, overridable) and accessibilityRole="button"; a disabled or loading row is never pressable. A loading row announces "Loading" once via SkeletonGroup instead of once per Shimmer block. Layout adapts to Dynamic Type via ordinary text flow rather than fixed heights.',
     render: () => <ListItemFamilyGallery />,
@@ -1757,20 +1799,20 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Native List row (production)', useWhen: 'For any current screen — SessionInteractiveRow, BotInboxRow, and the picker sheets keep their own rows today.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'New, foundation-only components; the four picker sheets, SessionListItem/SessionInteractiveRow, BotInboxRow, and SessionListView\'s main-menu container each keep their own existing, independent row implementation in this branch, not ListItem or HermesList.',
+      useSummary: 'New, foundation-only components; the four picker sheets, SessionListItem/SessionInteractiveRow, BotInboxRow, and SessionListView\'s main-menu container each keep their own existing, independent row implementation in this branch, not ListItem or HermexList.',
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
         sourcePaths: [
           'HermesMobile/Features/Shared/ListItem.swift',
-          'HermesMobile/Features/Shared/HermesList.swift',
+          'HermesMobile/Features/Shared/HermexList.swift',
           'HermesMobile/Features/SessionList/SessionListItem.swift',
         ],
         notes: [
           'ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, and CronJobConfigurationPickers.swift each still construct their own picker row directly; none imports ListItem.swift in this branch — a future consolidation onto ListItem\'s selected/pending/trailing-checkmark configuration is documented here as a foundation capability, not a completed migration.',
           'SessionListItem.swift is itself new in this branch, with no production caller: SessionListComponents.swift\'s SessionInteractiveRow and Bots\' BotInboxRow both keep their own pre-existing row anatomy, unchanged.',
-          'SessionListView.swift\'s main-menu container does not compose HermesList in this branch; it keeps its own existing native SwiftUI List container.',
+          'SessionListView.swift\'s main-menu container does not compose HermexList in this branch; it keeps its own existing native SwiftUI List container.',
           'ListItem exposes an explicit, opt-in hapticFeedbackStyle so a future caller can preserve an existing tap-haptic contract instead of silently losing it to the plain Button ListItem otherwise wraps its action in — documented here as an available foundation capability, with no caller yet since ListItem itself has none.',
-          'HermesList applies a default 12pt vertical scroll-content margin (.contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)) reusing the existing HermesSpacing.s12 value — a foundation capability, not yet applied to any production List.',
+          'HermexList applies a default 12pt vertical scroll-content margin (.contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)) reusing the existing HermesSpacing.s12 value — a foundation capability, not yet applied to any production List.',
         ],
       },
     },
@@ -1811,7 +1853,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'The component is intentionally data-agnostic and contains no ProjectSummary, SessionSummary, persistence, pagination, or Sessions-list behavior — available in this branch\'s foundation layer, with no production call site.',
           'A future Sessions redesign may compose this component in a separate issue and branch.',
-          'Card appearance: exactly 16pt horizontal content padding, from the existing card/spacing token (HermesCardMetrics.contentPadding in Swift; Card\'s own DS_SPACING[800] default in the catalog). The Swift card still composes .hermesCardSurface(.outlined, cornerRadius: HermesRadius.card); the catalog card now composes the shared Card component (surface="outlined") directly, rather than a hand-reconstructed border/background, with Card\'s own default vertical padding zeroed since ListItem rows already own their vertical rhythm.',
+          'Card appearance: exactly 16pt horizontal content padding, from the existing card/spacing token (HermexCardMetrics.contentPadding in Swift; Card\'s own DS_SPACING[800] default in the catalog). The Swift card still composes .hermexCardSurface(.outlined, cornerRadius: HermesRadius.card); the catalog card now composes the shared Card component (surface="outlined") directly, rather than a hand-reconstructed border/background, with Card\'s own default vertical padding zeroed since ListItem rows already own their vertical rhythm.',
           'Cardless appearance: no Accordion-level horizontal outer padding is added on either platform; ListItem\'s own internal row insets are unchanged.',
           'Chevron: the header indicator renders at the next icon-size step up — HermesIconSize.medium / DS_ICON_SIZE.md (20pt) — not ListItem\'s existing 16pt default. Swift ListItem gained a configurable rowIndicatorSize seam (default HermesIconSize.small, preserving every other existing caller) so only the accordion header opts into 20pt.',
           'Dividers: the divider directly under an open header always spans the full available Accordion content width on both platforms. A divider between two body rows instead begins at those rows\' own text-content column — the existing avatar width + header/body gap + ListItem\'s own horizontal inset — rather than the row\'s outer frame.',
@@ -1895,15 +1937,15 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Native ContentUnavailableView', useWhen: 'For any current production empty/error/no-results state — this is what every screen actually calls today.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only pattern; every production screen — including Settings\' pickers, Kanban\'s status/filter empty branch, and Usage\'s loading/error/empty states — keeps calling the native SwiftUI ContentUnavailableView directly in this branch, not HermesContentUnavailable.',
+      useSummary: 'A new, foundation-only pattern; every production screen — including Settings\' pickers, Kanban\'s status/filter empty branch, and Usage\'s loading/error/empty states — keeps calling the native SwiftUI ContentUnavailableView directly in this branch, not HermexContentUnavailable.',
       implementationNotes: {
         status: FOUNDATION_ONLY_STATUS,
         sourcePaths: [
-          'HermesMobile/Features/Shared/HermesContentUnavailable.swift',
+          'HermesMobile/Features/Shared/HermexContentUnavailable.swift',
         ],
         notes: [
-          'The platform ContentUnavailableView is used directly across 30 production files (68 source references) in the current working tree, including ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, CronJobConfigurationPickers.swift, KanbanLabView.swift, InsightsView.swift, TasksView.swift, SkillsView.swift, and MemoryView.swift — none imports HermesContentUnavailable.swift. scripts/hermex_design_system_adoption_audit.py freezes this file/reference-count baseline so a future migration is a deliberate, reviewed change, not silent drift.',
-          'HermesAvatar (also new, unadopted) is composed by HermesContentUnavailable\'s own icon-bearing variants for their identity glyph — an internal foundation-layer composition, not a claim about any production picker sheet\'s current icon treatment.',
+          'The platform ContentUnavailableView is used directly across 30 production files (68 source references) in the current working tree, including ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, CronJobConfigurationPickers.swift, KanbanLabView.swift, InsightsView.swift, TasksView.swift, SkillsView.swift, and MemoryView.swift — none imports HermexContentUnavailable.swift. scripts/hermex_design_system_adoption_audit.py freezes this file/reference-count baseline so a future migration is a deliberate, reviewed change, not silent drift.',
+          'HermexAvatar (also new, unadopted) is composed by HermexContentUnavailable\'s own icon-bearing variants for their identity glyph — an internal foundation-layer composition, not a claim about any production picker sheet\'s current icon treatment.',
           'The additive layout prop (.intrinsic default / .fullScreen) is also new and unadopted in this branch — no production screen passes layout: .fullScreen yet. .fullScreen reads the container height via GeometryReader and positions the content cluster at roughly one third of it, wrapped in a ScrollView for Dynamic Type/long-content robustness, instead of ContentUnavailableView\'s own centering.',
         ],
       },
@@ -1914,7 +1956,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     description:
       'Shared Request Card, block, field, and choice surfaces for questions and approvals that need a response from the user. The pattern composes Request Card, Disclosure/command blocks, fields, choices, and Buttons; approval, denial, clarification, pending, disabled, success, failure, cancellation, and recovery remain domain-owned states.',
     props: [
-      { name: 'pendingRequestCardSurface(cornerRadius:)', type: '(CGFloat) -> some View', desc: 'Defined in PendingRequestSurfaces.swift, not HermesCard.swift — a separate, pre-existing function, unconditionally secondarySystemBackground + stroke, deliberately opaque so it always renders above live transcript text. cornerRadius is caller-supplied — 24pt (ChatComposerMetrics.cardCornerRadius) for the Sessions clarification card, a Bot-card-specific value for the Bot card.' },
+      { name: 'pendingRequestCardSurface(cornerRadius:)', type: '(CGFloat) -> some View', desc: 'Defined in PendingRequestSurfaces.swift, not HermexCard.swift — a separate, pre-existing function, unconditionally secondarySystemBackground + stroke, deliberately opaque so it always renders above live transcript text. cornerRadius is caller-supplied — 24pt (ChatComposerMetrics.cardCornerRadius) for the Sessions clarification card, a Bot-card-specific value for the Bot card.' },
       { name: 'pendingRequestBlockSurface()', type: '() -> some View', desc: 'The recessed block a question or command sits in, inside a card. Fixed 12pt corner radius.' },
       { name: 'pendingRequestFieldSurface()', type: '() -> some View', desc: 'The free-text response field\'s surface, including its padding. Fixed 14pt corner radius.' },
       { name: 'pendingRequestChoiceSurface(reduceTransparency:)', type: '(Bool) -> some View', desc: 'Opaque when Reduce Transparency is on; regular Adaptive Glass otherwise. Fixed 14pt corner radius on every branch.' },
@@ -2213,10 +2255,10 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
     // Alphabetized in the sidebar and main column by each entry's own visible display name (see
     // `alphabetizeByLabel` on `NavGroup`) — this declared order is the Hermes-owned family grouping
     // only (see the nav-order test in hermes-catalog.test.mjs), not the rendered order. Search
-    // joined this group once its `.hermesSearch` foundation wrapper shipped over native
+    // joined this group once its `.hermexSearch` foundation wrapper shipped over native
     // `.searchable` — it moved out of Native iOS even though production hasn't adopted the wrapper
     // yet (see Search's own adoptionStatus for the truthful, zero-adoption detail). Text Input
-    // joined the same way once its three HermesTextField/HermesSecureField/HermesNumberField
+    // joined the same way once its three HermexTextField/HermexSecureField/HermexNumberField
     // foundation wrappers shipped over native TextField/SecureField/TextField(value:format:) — see
     // Text Input's own adoptionStatus for the same truthful, zero-adoption detail.
     alphabetizeByLabel: true,
@@ -2224,6 +2266,7 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
       'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
+      'Bottom Sheet',
     ],
   },
   {

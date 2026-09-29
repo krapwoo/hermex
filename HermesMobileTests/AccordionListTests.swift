@@ -92,7 +92,7 @@ final class AccordionListTests: XCTestCase {
             headerSubtitle: { Text("\($0.rows.count) sessions") },
             headerAccessibilityLabel: { Text($0.title) },
             headerIsDisabled: { _ in false },
-            headerLeading: { _ in HermesAvatar(systemImage: "folder", size: .small) },
+            headerLeading: { _ in HermexAvatar(systemImage: "folder", size: .small) },
             headerTitleAccessory: { _ in EmptyView() },
             bodyItem: { _, row in ListItem(title: Text(row.title), action: {}) }
         )
@@ -116,8 +116,8 @@ final class AccordionListTests: XCTestCase {
         XCTAssertTrue(src.contains("titleRole: .label"))
         XCTAssertTrue(src.contains("rowIndicatorSystemImage:"))
         XCTAssertTrue(src.contains("HermesAvatarSize.small.rawValue + HermesSpacing.s12"))
-        XCTAssertTrue(src.contains(".hermesCardSurface(.outlined"))
-        XCTAssertTrue(src.contains("HermesDivider()"))
+        XCTAssertTrue(src.contains(".hermexCardSurface(.outlined"))
+        XCTAssertTrue(src.contains("HermexDivider()"))
         XCTAssertTrue(src.contains("HermesMotion.animation(for: HermesMotion.Bundle.contentReposition)"))
         XCTAssertTrue(src.contains("expanded ? Text(\"Expanded\") : Text(\"Collapsed\")"))
         XCTAssertTrue(src.contains("guard !headerIsDisabled(item) else { return }"))
@@ -134,7 +134,7 @@ final class AccordionListTests: XCTestCase {
     func testCardAppearanceAppliesTheSharedCardContentPaddingToken() throws {
         let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
         XCTAssertTrue(
-            src.contains(".padding(.horizontal, HermesCardMetrics.contentPadding)"),
+            src.contains(".padding(.horizontal, HermexCardMetrics.contentPadding)"),
             "card appearance must use the shared Card content padding token, not a new literal"
         )
     }
@@ -170,7 +170,7 @@ final class AccordionListTests: XCTestCase {
             "the body-row divider inset must derive from the existing avatar width + header/body gap + ListItem's own horizontal inset, not a hardcoded number"
         )
         XCTAssertTrue(
-            src.contains("HermesDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)"),
+            src.contains("HermexDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)"),
             "dividers between body rows must begin at the body row's actual text-content alignment"
         )
     }

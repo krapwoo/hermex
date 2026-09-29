@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum HermesButtonSize: CaseIterable {
+enum HermexButtonSize: CaseIterable {
     case extraSmall, small, medium, large
 
     var font: AppFont.Role {
@@ -33,15 +33,15 @@ enum HermesButtonSize: CaseIterable {
     var iconSpacing: CGFloat { HermesSpacing.s8 }
 }
 
-enum HermesButtonEmphasis: CaseIterable {
+enum HermexButtonEmphasis: CaseIterable {
     case neutral, brandPrimary, primary, secondary, destructive
 }
 
 /// Press Feedback: `.standard` is Hermex Buttons' default — a slight scale and opacity response,
 /// Reduce-Motion-safe. `.emphasized` is a stronger version for a button that wants extra weight
 /// (a primary composer/send action, for instance); `.none` opts a button out entirely. Physical
-/// haptics are a separate, opt-in concern (`HermesButton.haptic`), not part of Press Feedback.
-enum HermesButtonPressFeedback: CaseIterable {
+/// haptics are a separate, opt-in concern (`HermexButton.haptic`), not part of Press Feedback.
+enum HermexButtonPressFeedback: CaseIterable {
     case standard, emphasized, none
 
     var scale: CGFloat {
@@ -70,11 +70,11 @@ enum HermesButtonPressFeedback: CaseIterable {
 }
 
 /// The one place Hermex Buttons apply press feedback: scale, opacity, and a matching animation,
-/// live only while pressed and enabled, skipped entirely under Reduce Motion. `HermesButtonStyle`
-/// (full chrome) and `HermesButtonPressOnlyStyle` (caller-owned chrome) both call this instead of
+/// live only while pressed and enabled, skipped entirely under Reduce Motion. `HermexButtonStyle`
+/// (full chrome) and `HermexButtonPressOnlyStyle` (caller-owned chrome) both call this instead of
 /// each hand-rolling their own scale/opacity/animation chain.
 extension View {
-    func applyingHermesButtonPressFeedback(
+    func applyingHermexButtonPressFeedback(
         isPressed: Bool,
         isEnabled: Bool,
         scale: CGFloat,
@@ -94,10 +94,10 @@ extension View {
 /// Hermex's shared Button chrome: sizing, emphasis, and Press Feedback, standard by default and
 /// Reduce-Motion-safe. Composes Adaptive Glass for `isGlass` rather than duplicating its fallback
 /// logic. Applies to a native `Button`; it never replaces native Button semantics.
-struct HermesButtonStyle: ButtonStyle {
-    var size: HermesButtonSize = .medium
-    var emphasis: HermesButtonEmphasis = .neutral
-    var pressFeedback: HermesButtonPressFeedback = .standard
+struct HermexButtonStyle: ButtonStyle {
+    var size: HermexButtonSize = .medium
+    var emphasis: HermexButtonEmphasis = .neutral
+    var pressFeedback: HermexButtonPressFeedback = .standard
     var isGlass = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -122,7 +122,7 @@ struct HermesButtonStyle: ButtonStyle {
             }
             .overlay(shape.stroke(borderColor, lineWidth: emphasis == .secondary ? 1 : 0))
             .contentShape(shape)
-            .applyingHermesButtonPressFeedback(
+            .applyingHermexButtonPressFeedback(
                 isPressed: isPressed,
                 isEnabled: isEnabled,
                 scale: pressFeedback.scale,
@@ -182,32 +182,32 @@ struct HermesButtonStyle: ButtonStyle {
     }
 }
 
-extension ButtonStyle where Self == HermesButtonStyle {
-    static func hermes(
-        _ size: HermesButtonSize = .medium,
-        emphasis: HermesButtonEmphasis = .neutral,
-        pressFeedback: HermesButtonPressFeedback = .standard,
+extension ButtonStyle where Self == HermexButtonStyle {
+    static func hermex(
+        _ size: HermexButtonSize = .medium,
+        emphasis: HermexButtonEmphasis = .neutral,
+        pressFeedback: HermexButtonPressFeedback = .standard,
         isGlass: Bool = false
-    ) -> HermesButtonStyle {
-        HermesButtonStyle(size: size, emphasis: emphasis, pressFeedback: pressFeedback, isGlass: isGlass)
+    ) -> HermexButtonStyle {
+        HermexButtonStyle(size: size, emphasis: emphasis, pressFeedback: pressFeedback, isGlass: isGlass)
     }
 }
 
-/// A Hermex Button's content configuration: a label, an icon, or both in either order. `HermesButton`
-/// composes this with `HermesButtonStyle` and a pending state; `isPending` swaps the content for a
+/// A Hermex Button's content configuration: a label, an icon, or both in either order. `HermexButton`
+/// composes this with `HermexButtonStyle` and a pending state; `isPending` swaps the content for a
 /// spinner and disables the button rather than adding a fifth content shape.
-enum HermesButtonContent: Equatable {
+enum HermexButtonContent: Equatable {
     case label(String)
     case icon(String)
     case iconLeading(icon: String, label: String)
     case iconTrailing(icon: String, label: String)
 }
 
-struct HermesButton: View {
-    let content: HermesButtonContent
-    var size: HermesButtonSize = .medium
-    var emphasis: HermesButtonEmphasis = .neutral
-    var pressFeedback: HermesButtonPressFeedback = .standard
+struct HermexButton: View {
+    let content: HermexButtonContent
+    var size: HermexButtonSize = .medium
+    var emphasis: HermexButtonEmphasis = .neutral
+    var pressFeedback: HermexButtonPressFeedback = .standard
     var isGlass = false
     var isPending = false
     /// Optional, semantic haptic fired alongside `action` — never implied by Press Feedback.
@@ -226,7 +226,7 @@ struct HermesButton: View {
                 contentLabel
             }
         }
-        .buttonStyle(.hermes(size, emphasis: emphasis, pressFeedback: pressFeedback, isGlass: isGlass))
+        .buttonStyle(.hermex(size, emphasis: emphasis, pressFeedback: pressFeedback, isGlass: isGlass))
         .disabled(isPending)
     }
 
@@ -251,9 +251,9 @@ struct HermesButton: View {
 /// The other Hermex Button: press-only. A control whose shape, fill, and shadow stay
 /// caller-owned — an icon, a compact control, a capsule, a card, a thumbnail — still needs
 /// Reduce-Motion-safe Press Feedback, so it gets this rather than inventing a separate family.
-/// It applies press feedback through the same `applyingHermesButtonPressFeedback` `HermesButtonStyle`
+/// It applies press feedback through the same `applyingHermexButtonPressFeedback` `HermexButtonStyle`
 /// uses; only the per-chrome amount and the optional shadow pair are its own.
-struct HermesButtonPressOnlyStyle: ButtonStyle {
+struct HermexButtonPressOnlyStyle: ButtonStyle {
     enum Chrome {
         case icon
         case compactControl
@@ -320,7 +320,7 @@ struct HermesButtonPressOnlyStyle: ButtonStyle {
         let shadow = shadow ?? Shadow(resting: .none, pressed: .none)
 
         configuration.label
-            .applyingHermesButtonPressFeedback(
+            .applyingHermexButtonPressFeedback(
                 isPressed: isPressed,
                 isEnabled: isEnabled,
                 scale: chrome.pressedScale,
@@ -334,11 +334,11 @@ struct HermesButtonPressOnlyStyle: ButtonStyle {
     }
 }
 
-extension ButtonStyle where Self == HermesButtonPressOnlyStyle {
-    static func hermesPressOnly(
-        _ chrome: HermesButtonPressOnlyStyle.Chrome,
-        shadow: HermesButtonPressOnlyStyle.Shadow? = nil
-    ) -> HermesButtonPressOnlyStyle {
-        HermesButtonPressOnlyStyle(chrome: chrome, shadow: shadow)
+extension ButtonStyle where Self == HermexButtonPressOnlyStyle {
+    static func hermexPressOnly(
+        _ chrome: HermexButtonPressOnlyStyle.Chrome,
+        shadow: HermexButtonPressOnlyStyle.Shadow? = nil
+    ) -> HermexButtonPressOnlyStyle {
+        HermexButtonPressOnlyStyle(chrome: chrome, shadow: shadow)
     }
 }

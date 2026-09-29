@@ -4,28 +4,28 @@ import SwiftUI
 /// Card (`requestCardSurface`, used by `ClarificationRequestCard`, `ApprovalRequestOverlay`,
 /// and `BotPendingRequestCard`) both wrap their content in exactly this padding on every edge —
 /// this is the one place that default lives, instead of each surface repeating the literal.
-enum HermesCardMetrics {
+enum HermexCardMetrics {
     static let contentPadding: CGFloat = HermesSpacing.s16
 }
 
 /// Canonical Card surface choices. Any Card described as outlined uses this exact semantic
 /// background-and-border treatment rather than reconstructing white fill and grey stroke locally.
-enum HermesCardSurface {
+enum HermexCardSurface {
     case glass
     case outlined
 }
 
 extension View {
-    func hermesCardSurface(
-        _ surface: HermesCardSurface,
+    func hermexCardSurface(
+        _ surface: HermexCardSurface,
         cornerRadius: CGFloat = HermesRadius.card
     ) -> some View {
-        modifier(HermesCardSurfaceModifier(surface: surface, cornerRadius: cornerRadius))
+        modifier(HermexCardSurfaceModifier(surface: surface, cornerRadius: cornerRadius))
     }
 }
 
-private struct HermesCardSurfaceModifier: ViewModifier {
-    let surface: HermesCardSurface
+private struct HermexCardSurfaceModifier: ViewModifier {
+    let surface: HermexCardSurface
     let cornerRadius: CGFloat
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -65,7 +65,7 @@ private struct HermesCardSurfaceModifier: ViewModifier {
 /// today, the composer and message Attachment file tiles' outer surface. It is not Card's 16-point
 /// default; a component owns its own compact geometry, and this only unifies the fill-plus-hairline
 /// chrome those tiles each drew by hand into one named, shared treatment.
-enum HermesCompactCardMetrics {
+enum HermexCompactCardMetrics {
     static let borderOpacity: Double = 0.25
     static let borderWidth: CGFloat = 0.5
 }
@@ -82,8 +82,8 @@ extension View {
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(
-                        Color(.separator).opacity(HermesCompactCardMetrics.borderOpacity),
-                        lineWidth: HermesCompactCardMetrics.borderWidth
+                        Color(.separator).opacity(HermexCompactCardMetrics.borderOpacity),
+                        lineWidth: HermexCompactCardMetrics.borderWidth
                     )
             )
     }

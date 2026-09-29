@@ -45,20 +45,21 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Config/HermesRadius.swift",
     "HermesMobile/Config/HermesShadow.swift",
     "HermesMobile/Config/HermesSpacing.swift",
-    "HermesMobile/Features/Shared/HermesCard.swift",
-    "HermesMobile/Features/Shared/HermesButton.swift",
-    "HermesMobile/Features/Shared/HermesCheckbox.swift",
-    "HermesMobile/Features/Shared/HermesRadio.swift",
-    "HermesMobile/Features/Shared/HermesDropdown.swift",
-    "HermesMobile/Features/Shared/HermesToast.swift",
-    "HermesMobile/Features/Shared/HermesTooltip.swift",
-    "HermesMobile/Features/Shared/HermesAvatar.swift",
-    "HermesMobile/Features/Shared/HermesDivider.swift",
-    "HermesMobile/Features/Shared/HermesContentUnavailable.swift",
-    "HermesMobile/Features/Shared/HermesSearch.swift",
-    "HermesMobile/Features/Shared/HermesTextInput.swift",
+    "HermesMobile/Features/Shared/HermexCard.swift",
+    "HermesMobile/Features/Shared/HermexButton.swift",
+    "HermesMobile/Features/Shared/HermexCheckbox.swift",
+    "HermesMobile/Features/Shared/HermexRadio.swift",
+    "HermesMobile/Features/Shared/HermexDropdown.swift",
+    "HermesMobile/Features/Shared/HermexToast.swift",
+    "HermesMobile/Features/Shared/HermexTooltip.swift",
+    "HermesMobile/Features/Shared/HermexAvatar.swift",
+    "HermesMobile/Features/Shared/HermexDivider.swift",
+    "HermesMobile/Features/Shared/HermexContentUnavailable.swift",
+    "HermesMobile/Features/Shared/HermexSearch.swift",
+    "HermesMobile/Features/Shared/HermexTextInput.swift",
+    "HermesMobile/Features/Shared/HermexBottomSheet.swift",
     "HermesMobile/Features/Shared/ListItem.swift",
-    "HermesMobile/Features/Shared/HermesList.swift",
+    "HermesMobile/Features/Shared/HermexList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
     "HermesMobile/Features/Shared/TopNav.swift",
     "HermesMobile/Features/Shared/Banner.swift",
@@ -81,33 +82,37 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
         r"enum HermesIconSize\s*\{",
         r"enum HermesAvatarSize\s*:\s*CGFloat\s*,\s*CaseIterable",
     ]),
-    ("HermesMobile/Features/Shared/HermesCard.swift", [
-        r"enum HermesCardSurface",
+    ("HermesMobile/Features/Shared/HermexCard.swift", [
+        r"enum HermexCardSurface",
     ]),
     ("HermesMobile/Features/Shared/ListItem.swift", [
         r"struct ListItem<[^>]*>\s*:\s*View",
     ]),
-    ("HermesMobile/Features/Shared/HermesList.swift", [
-        r"struct HermesList<[^>]*>\s*:\s*View",
+    ("HermesMobile/Features/Shared/HermexList.swift", [
+        r"struct HermexList<[^>]*>\s*:\s*View",
     ]),
-    ("HermesMobile/Features/Shared/HermesButton.swift", [
-        r"struct HermesButtonStyle\s*:\s*ButtonStyle",
-        r"struct HermesButtonPressOnlyStyle\s*:\s*ButtonStyle",
+    ("HermesMobile/Features/Shared/HermexButton.swift", [
+        r"struct HermexButtonStyle\s*:\s*ButtonStyle",
+        r"struct HermexButtonPressOnlyStyle\s*:\s*ButtonStyle",
     ]),
     ("HermesMobile/Features/Shared/SegmentedControl.swift", [
         r"struct SegmentedControl<[^>]*>\s*:\s*View",
     ]),
-    ("HermesMobile/Features/Shared/HermesContentUnavailable.swift", [
-        r"struct HermesContentUnavailable\s*:\s*View",
+    ("HermesMobile/Features/Shared/HermexContentUnavailable.swift", [
+        r"struct HermexContentUnavailable\s*:\s*View",
     ]),
-    ("HermesMobile/Features/Shared/HermesSearch.swift", [
-        r"func hermesSearch\(",
+    ("HermesMobile/Features/Shared/HermexSearch.swift", [
+        r"func hermexSearch\(",
         r"searchable\(text:",
     ]),
-    ("HermesMobile/Features/Shared/HermesTextInput.swift", [
-        r"struct HermesTextField\s*:\s*View",
-        r"struct HermesSecureField\s*:\s*View",
-        r"struct HermesNumberField<[^>]*>\s*:\s*View",
+    ("HermesMobile/Features/Shared/HermexTextInput.swift", [
+        r"struct HermexTextField\s*:\s*View",
+        r"struct HermexSecureField\s*:\s*View",
+        r"struct HermexNumberField<[^>]*>\s*:\s*View",
+    ]),
+    ("HermesMobile/Features/Shared/HermexBottomSheet.swift", [
+        r"struct HermexBottomSheet<[^>]*>\s*:\s*View",
+        r"enum FooterAxis\s*\{",
     ]),
 ]
 
@@ -135,10 +140,10 @@ SEGMENTED_CONTROL_BASELINE = {
 SEGMENTED_CONTROL_PATTERN = re.compile(r"\.pickerStyle\(\.segmented\)")
 
 # ─── Frozen direct ContentUnavailableView baseline ───────────────────────────────────────────────
-# Owner: whoever lands the PR that migrates one of these call sites onto HermesContentUnavailable (or
+# Owner: whoever lands the PR that migrates one of these call sites onto HermexContentUnavailable (or
 # adds a new direct ContentUnavailableView call site). Removal condition: delete a file's entry here
 # (or lower its count) in the same PR that migrates/removes that call site. Verified against this
-# branch's own source (2026-09-28); HermesContentUnavailable.swift itself and HermesMobileTests/ are
+# branch's own source (2026-09-28); HermexContentUnavailable.swift itself and HermesMobileTests/ are
 # excluded from this accounting.
 CONTENT_UNAVAILABLE_BASELINE = {
     "HermesMobile/Features/Skills/SkillsView.swift": 6,
@@ -173,16 +178,16 @@ CONTENT_UNAVAILABLE_BASELINE = {
     "HermesMobile/Features/Bots/BotArtifactPreview.swift": 1,
 }
 CONTENT_UNAVAILABLE_PATTERN = re.compile(r"\bContentUnavailableView\b")
-CONTENT_UNAVAILABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesContentUnavailable.swift"
+CONTENT_UNAVAILABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexContentUnavailable.swift"
 
 # ─── Frozen direct .searchable baseline ──────────────────────────────────────────────────────────
-# This branch adds a Hermex-owned `.hermesSearch(text:placement:prompt:)` foundation wrapper
-# (HermesSearch.swift) over native `.searchable`, but does not migrate any production screen onto
+# This branch adds a Hermex-owned `.hermexSearch(text:placement:prompt:)` foundation wrapper
+# (HermexSearch.swift) over native `.searchable`, but does not migrate any production screen onto
 # it — every current search field keeps calling `.searchable` directly. Owner: whoever lands the PR
-# that migrates one of these eight call sites onto `.hermesSearch` (or adds a new direct
+# that migrates one of these eight call sites onto `.hermexSearch` (or adds a new direct
 # `.searchable` call site). Removal condition: delete a file's entry here (or lower its count) in
 # the same PR that migrates/removes that call site. Verified against this branch's own source
-# (2026-09-28); HermesSearch.swift itself is excluded from this accounting.
+# (2026-09-28); HermexSearch.swift itself is excluded from this accounting.
 SEARCHABLE_BASELINE = {
     "HermesMobile/Features/Kanban/KanbanLabView.swift": 1,
     "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
@@ -194,17 +199,17 @@ SEARCHABLE_BASELINE = {
     "HermesMobile/Features/Workspace/GitBranchPickerView.swift": 1,
 }
 SEARCHABLE_PATTERN = re.compile(r"\.searchable\(")
-SEARCHABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesSearch.swift"
+SEARCHABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexSearch.swift"
 
 # ─── Frozen direct TextField baseline ────────────────────────────────────────────────────────────
-# This branch adds three Hermex-owned Text Input foundation wrappers — `HermesTextField`,
-# `HermesSecureField`, `HermesNumberField` (HermesTextInput.swift) — over native `TextField`,
+# This branch adds three Hermex-owned Text Input foundation wrappers — `HermexTextField`,
+# `HermexSecureField`, `HermexNumberField` (HermexTextInput.swift) — over native `TextField`,
 # `SecureField`, and the typed `TextField(value:format:)` path, but does not migrate any production
 # screen onto them — every current text field keeps calling `TextField(` directly. Owner: whoever
-# lands the PR that migrates one of these call sites onto `HermesTextField`/`HermesNumberField` (or
+# lands the PR that migrates one of these call sites onto `HermexTextField`/`HermexNumberField` (or
 # adds a new direct `TextField(` call site). Removal condition: delete a file's entry here (or lower
 # its count) in the same PR that migrates/removes that call site. Verified against this branch's own
-# source (2026-09-28); HermesTextInput.swift itself and HermesMobileTests/ are excluded from this
+# source (2026-09-28); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this
 # accounting.
 TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Kanban/KanbanCardEditorView.swift": 8,
@@ -237,14 +242,14 @@ TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Workspace/GitCommitView.swift": 1,
 }
 TEXT_FIELD_PATTERN = re.compile(r"\bTextField\(")
-TEXT_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesTextInput.swift"
+TEXT_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexTextInput.swift"
 
 # ─── Frozen direct SecureField baseline ──────────────────────────────────────────────────────────
 # Same shape as TEXT_FIELD_BASELINE above, for native `SecureField(` call sites. Owner: whoever lands
-# the PR that migrates one of these call sites onto `HermesSecureField` (or adds a new direct
+# the PR that migrates one of these call sites onto `HermexSecureField` (or adds a new direct
 # `SecureField(` call site). Removal condition: delete a file's entry here (or lower its count) in the
 # same PR that migrates/removes that call site. Verified against this branch's own source
-# (2026-09-28); HermesTextInput.swift itself and HermesMobileTests/ are excluded from this accounting.
+# (2026-09-28); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this accounting.
 SECURE_FIELD_BASELINE = {
     "HermesMobile/Features/Bots/BotPendingRequestCard.swift": 2,
     "HermesMobile/Features/Bots/BotConnectionView.swift": 1,
@@ -254,7 +259,7 @@ SECURE_FIELD_BASELINE = {
     "HermesMobile/Features/Shared/CustomHeadersEditor.swift": 1,
 }
 SECURE_FIELD_PATTERN = re.compile(r"\bSecureField\(")
-SECURE_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermesTextInput.swift"
+SECURE_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexTextInput.swift"
 
 
 def read(rel_path: str) -> str:

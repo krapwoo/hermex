@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// A transient status notice: a semantic tint/icon, a message, and an optional action, presented via
-/// `hermesToast(isPresented:toast:)`. Distinct from `Banner` (a persistent in-flow notice) and from
+/// `hermexToast(isPresented:toast:)`. Distinct from `Banner` (a persistent in-flow notice) and from
 /// `GitActionToastOverlay` (Workspace/Git's own progress/success state machine) — this is the generic
 /// version, with lifecycle left entirely to the caller's `isPresented` binding.
-struct HermesToast: View {
+struct HermexToast: View {
     enum Semantic: Equatable {
         case information
         case success
@@ -88,15 +88,15 @@ struct HermesToast: View {
     }
 }
 
-/// Caller-owned visibility for a `HermesToast`: no internal timer, no auto-dismiss — the caller's
+/// Caller-owned visibility for a `HermexToast`: no internal timer, no auto-dismiss — the caller's
 /// `isPresented` binding is the only thing that shows or hides it. Presentation mirrors
 /// `GitActionToastOverlay`'s established top-anchored, Reduce-Motion-safe transition: it enters by
 /// moving down from the top edge combined with opacity (`HermesMotion.Bundle.overlayEnter`) and
 /// exits back toward the top combined with opacity (`HermesMotion.Bundle.overlayExit`). Reduce
 /// Motion drops the directional move entirely, falling back to an opacity-only state change.
-private struct HermesToastPresentation: ViewModifier {
+private struct HermexToastPresentation: ViewModifier {
     @Binding var isPresented: Bool
-    let toast: HermesToast
+    let toast: HermexToast
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -127,7 +127,7 @@ private struct HermesToastPresentation: ViewModifier {
 extension View {
     /// Overlays `toast` at the top of this view whenever `isPresented` is true. Lifecycle — when it
     /// appears and disappears — stays entirely caller-owned.
-    func hermesToast(isPresented: Binding<Bool>, toast: HermesToast) -> some View {
-        modifier(HermesToastPresentation(isPresented: isPresented, toast: toast))
+    func hermexToast(isPresented: Binding<Bool>, toast: HermexToast) -> some View {
+        modifier(HermexToastPresentation(isPresented: isPresented, toast: toast))
     }
 }

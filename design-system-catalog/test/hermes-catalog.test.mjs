@@ -144,7 +144,7 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
   const search = extractHermesSection(src, 'Search');
   assert.match(search, /\.searchable/);
   assert.match(search, /native/i);
-  assert.match(search, /`\.hermesSearch/, 'expected the Search entry to document the Hermex-owned .hermesSearch wrapper');
+  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to document the Hermex-owned .hermexSearch wrapper');
 
   const segmented = extractHermesSection(src, 'Segmented Control');
   assert.match(segmented, /fixed/);
@@ -950,7 +950,7 @@ test('ContentUnavailableView cites the verified production files + source refere
   assert.match(src, /30 production files/i, 'ContentUnavailableView should cite the verified 30 production files');
   assert.match(src, /68 source references/i, 'ContentUnavailableView should cite the verified 68 source references');
   const section = extractHermesSection(src, 'Content Unavailable');
-  assert.match(section, /none imports HermesContentUnavailable\.swift/i);
+  assert.match(section, /none imports HermexContentUnavailable\.swift/i);
 });
 
 // ─── Fable review correction packet (lineage c47cd161-f191-47d2-8851-2604a321c558) ────────────────
@@ -991,18 +991,18 @@ test('Pending-Request Surface callers/source paths correctly include Clarificati
 });
 
 // Correction (design-system-foundation truthfulness pass): the prior "promoted requestCardSurface(
-// cornerRadius:material:) in HermesCard.swift" claim did not match production source —
+// cornerRadius:material:) in HermexCard.swift" claim did not match production source —
 // PendingRequestSurfaces.swift's real, unchanged function is pendingRequestCardSurface(cornerRadius:)
 // (a single CGFloat parameter, unconditionally opaque); no RequestCardMaterial type exists in
 // production, and ApprovalRequestOverlay.swift does not call this function at all.
-test('Pending Request documents the real, unchanged pendingRequestCardSurface(cornerRadius:) — never a fabricated requestCardSurface(cornerRadius:material:)/RequestCardMaterial promotion into HermesCard.swift, and never ApprovalRequestOverlay as a caller', () => {
+test('Pending Request documents the real, unchanged pendingRequestCardSurface(cornerRadius:) — never a fabricated requestCardSurface(cornerRadius:material:)/RequestCardMaterial promotion into HermexCard.swift, and never ApprovalRequestOverlay as a caller', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Pending Request');
   assert.match(section, /pendingRequestCardSurface\(cornerRadius:\)/);
   assert.doesNotMatch(section, /requestCardSurface\(cornerRadius:material:\)/, 'requestCardSurface(cornerRadius:material:) does not exist in production — this claim must not appear');
   assert.doesNotMatch(section, /RequestCardMaterial/, 'RequestCardMaterial is not defined in PendingRequestSurfaces.swift or any pending-request production file');
   assert.doesNotMatch(section, /translucentOverScrim/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/HermesCard\.swift/, 'Pending Request does not depend on HermesCard.swift');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/HermexCard\.swift/, 'Pending Request does not depend on HermexCard.swift');
   assert.doesNotMatch(section, /ApprovalRequestOverlay['"),.]*\s+(?:is a|as a) (?:fourth )?(?:real )?caller/i, 'ApprovalRequestOverlay.swift does not call pendingRequestCardSurface(cornerRadius:) and must not be cited as a caller');
   assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ApprovalRequestOverlay\.swift/, 'ApprovalRequestOverlay.swift must not appear in sourcePaths as a caller');
 });
@@ -1796,18 +1796,18 @@ test('Card no longer describes stale 16pt-horizontal/14pt-vertical padding and s
   assert.doesNotMatch(cardImplSrc, /paddingVertical|paddingHorizontal/);
 });
 
-test('Card documents HermesCard.swift as a new, foundation-only primitive that SectionCard does NOT delegate to — both remain separate, independently-implemented components', () => {
+test('Card documents HermexCard.swift as a new, foundation-only primitive that SectionCard does NOT delegate to — both remain separate, independently-implemented components', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Hermes Card');
 
-  assert.match(section, /HermesCard\.swift is a new, foundation-only Card primitive/);
-  assert.doesNotMatch(section, /SectionCard.*composition.*delegates.*HermesCard/is, 'must not claim SectionCard delegates its chrome to HermesCard.swift — SectionCard.swift does not reference HermesCard.swift');
+  assert.match(section, /HermexCard\.swift is a new, foundation-only Card primitive/);
+  assert.doesNotMatch(section, /SectionCard.*composition.*delegates.*HermexCard/is, 'must not claim SectionCard delegates its chrome to HermexCard.swift — SectionCard.swift does not reference HermexCard.swift');
   assert.match(section, /does not replace or share an implementation with the existing, already-adopted SectionCard\.swift/);
   assert.match(section, /outlined.*system background.*separator/is);
-  assert.match(section, /no production file imports HermesCard\.swift/i);
+  assert.match(section, /no production file imports HermexCard\.swift/i);
 });
 
-test('Avatar broadens Identity Avatar into the umbrella while keeping the original approved introduction verbatim, truthfully separating the pre-existing adopted ServerAvatarBadge/bot-face system from the new unadopted HermesAvatar.swift/HermesAvatarSize', () => {
+test('Avatar broadens Identity Avatar into the umbrella while keeping the original approved introduction verbatim, truthfully separating the pre-existing adopted ServerAvatarBadge/bot-face system from the new unadopted HermexAvatar.swift/HermesAvatarSize', () => {
   const src = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(src, /id:\s*'Identity Avatar'/, 'the id must be renamed, not left alongside a new duplicate');
   const section = extractHermesSection(src, 'Hermes Avatar');
@@ -1817,7 +1817,7 @@ test('Avatar broadens Identity Avatar into the umbrella while keeping the origin
     'the original approved introduction must survive verbatim inside the broadened description',
   );
   assert.match(section, /pre-existing bot-face system/i);
-  assert.match(section, /HermesAvatar\.swift and HermesAvatarSize.*new in this branch/is);
+  assert.match(section, /HermexAvatar\.swift and HermesAvatarSize.*new in this branch/is);
   assert.match(section, /HermesMobile\/Config\/HermesSpacing\.swift/, 'HermesAvatarSize now lives in HermesSpacing.swift, not BotProfileAppearance.swift');
   assert.match(section, /HermesAvatarSize is defined in HermesMobile\/Config\/HermesSpacing\.swift, not in the pre-existing bot-appearance files/i);
   assert.match(section, /BotAvatarMarkView/);
@@ -1835,14 +1835,14 @@ test('Avatar broadens Identity Avatar into the umbrella while keeping the origin
   assert.match(previewsSrc, /export function BotMarkPreview/);
 });
 
-test('Row Divider documents the shared SwiftUI HermesDivider as a new, foundation-only component with no production call site', () => {
+test('Row Divider documents the shared SwiftUI HermexDivider as a new, foundation-only component with no production call site', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Row Divider');
-  assert.match(section, /HermesDivider/);
+  assert.match(section, /HermexDivider/);
   assert.match(section, /No global free-floating opacity token/);
-  assert.match(section, /HermesMobile\/Features\/Shared\/HermesDivider\.swift/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Settings\/SettingsView\.swift/, 'SettingsView.swift does not import HermesDivider.swift and must not be cited as a caller');
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/SectionCard\.swift/, 'SectionCard.swift does not import HermesDivider.swift and must not be cited as a caller');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexDivider\.swift/);
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Settings\/SettingsView\.swift/, 'SettingsView.swift does not import HermexDivider.swift and must not be cited as a caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/SectionCard\.swift/, 'SectionCard.swift does not import HermexDivider.swift and must not be cited as a caller');
   assert.match(section, /FOUNDATION_ONLY_STATUS|no production call site/i);
   assert.match(section, /<HermexDividerPreview/);
 
@@ -1910,17 +1910,17 @@ test('Inline Reference Link is a real focusable link, distinct from Tag — link
   assert.doesNotMatch(previewBody, /backgroundColor:|borderRadius:\s*999/, 'must carry no capsule-style fill/outline at any state');
 });
 
-test('Buttons documents every HermesButtonPressOnlyStyle.Chrome case and every HermesButtonEmphasis value as a new, foundation-only pair of ButtonStyles, names the shared applyingHermesButtonPressFeedback helper and optional haptics, and truthfully states that production\'s ChatTactileButtonStyle/.chatTactile and ChatDecisionButtonStyle/.chatDecision remain the real, current, unmigrated implementation', () => {
+test('Buttons documents every HermexButtonPressOnlyStyle.Chrome case and every HermexButtonEmphasis value as a new, foundation-only pair of ButtonStyles, names the shared applyingHermexButtonPressFeedback helper and optional haptics, and truthfully states that production\'s ChatTactileButtonStyle/.chatTactile and ChatDecisionButtonStyle/.chatDecision remain the real, current, unmigrated implementation', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Buttons');
   for (const chrome of ['.icon', '.compactControl', '.capsule', '.card', '.thumbnail']) {
-    assert.ok(section.includes(chrome), `expected HermesButtonPressOnlyStyle.Chrome case ${chrome}`);
+    assert.ok(section.includes(chrome), `expected HermexButtonPressOnlyStyle.Chrome case ${chrome}`);
   }
   for (const emphasis of ['.primary', '.secondary', '.destructive']) {
-    assert.ok(section.includes(emphasis), `expected HermesButtonEmphasis value ${emphasis}`);
+    assert.ok(section.includes(emphasis), `expected HermexButtonEmphasis value ${emphasis}`);
   }
-  assert.match(section, /HermesMobile\/Features\/Shared\/HermesButton\.swift/, 'expected the new, foundation-only Buttons source file');
-  assert.match(section, /applyingHermesButtonPressFeedback/, 'expected the one shared press-feedback helper both ButtonStyles call');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexButton\.swift/, 'expected the new, foundation-only Buttons source file');
+  assert.match(section, /applyingHermexButtonPressFeedback/, 'expected the one shared press-feedback helper both ButtonStyles call');
   assert.match(section, /haptic/i, 'expected optional, opt-in haptics to be documented');
   assert.match(section, /Reduce Motion/);
   assert.match(section, /<ButtonDecisionAndTactilePreview/);
@@ -1933,16 +1933,16 @@ test('Buttons documents every HermesButtonPressOnlyStyle.Chrome case and every H
   assert.match(section, /\.chatTactile\(/, 'expected .chatTactile( named as a real, current production call');
   assert.match(section, /\.chatDecision\(/, 'expected .chatDecision( named as a real, current production call');
   assert.doesNotMatch(section, /retired|succeeds the retired|renamed/i, 'must not claim ChatTactileButtonStyle/ChatDecisionButtonStyle were retired, renamed, or succeeded — they are still the real production implementation');
-  assert.match(section, /no \.hermesPressOnly\(_:\) call site exists in production yet/i);
+  assert.match(section, /no \.hermexPressOnly\(_:\) call site exists in production yet/i);
 
   const pendingRequestSection = extractHermesSection(src, 'Pending Request');
   assert.match(pendingRequestSection, /\.chatTactile\(|\.chatDecision\(/, 'expected Pending Request to name the real .chatTactile(/.chatDecision( call sites its decision controls actually use');
-  assert.doesNotMatch(pendingRequestSection, /\.hermesPressOnly\(|\.hermes\(_:emphasis:/, 'Pending Request must not claim its decision controls use the new, unadopted HermesButton API');
+  assert.doesNotMatch(pendingRequestSection, /\.hermexPressOnly\(|\.hermex\(_:emphasis:/, 'Pending Request must not claim its decision controls use the new, unadopted HermexButton API');
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(previewsSrc, /export function ButtonDecisionAndTactilePreview/);
   const body = extractFunctionBody(previewsSrc, 'ButtonDecisionAndTactilePreview');
-  assert.match(body, /HermesButtonPressOnlyStyle/);
+  assert.match(body, /HermexButtonPressOnlyStyle/);
 });
 
 test('the generic Button component gains a destructive variant backed by existing DS_SEMANTIC tokens, and the retained template catalog demonstrates it', () => {
@@ -2144,14 +2144,14 @@ test('Attachment documents the new, foundation-only AttachmentFileType/Attachmen
 });
 
 // Correction (design-system-foundation truthfulness pass): compactCardSurface(cornerRadius:) and
-// HermesCard.swift do not exist as a real dependency of MessageBubbleView.swift or
-// ChatComposerAttachmentStripView.swift — neither file imports HermesCard.swift in this branch.
+// HermexCard.swift do not exist as a real dependency of MessageBubbleView.swift or
+// ChatComposerAttachmentStripView.swift — neither file imports HermexCard.swift in this branch.
 // Attachment must state this as foundation-only, not as an adopted production composition.
-test('Correction (design-system-foundation truthfulness pass): Attachment states its Compact-Card composition as foundation-only — MessageBubbleView.swift and ChatComposerAttachmentStripView.swift do not import HermesCard.swift or call compactCardSurface', () => {
+test('Correction (design-system-foundation truthfulness pass): Attachment states its Compact-Card composition as foundation-only — MessageBubbleView.swift and ChatComposerAttachmentStripView.swift do not import HermexCard.swift or call compactCardSurface', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Attachment');
   assert.match(section, /foundation-only/i);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/HermesCard\.swift/, 'Attachment does not depend on HermesCard.swift');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/HermexCard\.swift/, 'Attachment does not depend on HermexCard.swift');
   assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/MessageBubbleView\.swift/, 'MessageBubbleView.swift does not import AttachmentFileType.swift/AttachmentTile.swift and must not be cited as a caller');
   assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ChatComposerAttachmentStripView\.swift/, 'ChatComposerAttachmentStripView.swift does not import AttachmentFileType.swift/AttachmentTile.swift and must not be cited as a caller');
 });
@@ -2238,9 +2238,9 @@ test('Checkbox is a new, foundation-only Components — Hermex entry (no product
   assert.doesNotMatch(section, /use Switch/, 'Switch is not a Hermex entry or a SwiftUI control');
   assert.match(section, /\bRadio\b/, 'expected Checkbox to be distinguished from Radio');
   assert.match(section, /Tag/, 'expected Checkbox to be distinguished from a Tag-style status/completion mark');
-  assert.match(section, /HermesMobile\/Features\/Shared\/HermesCheckbox\.swift/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Bots\/BotPendingRequestCard\.swift/, 'BotPendingRequestCard.swift does not import HermesCheckbox.swift and must not be cited as a caller');
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Kanban\/KanbanLabView\.swift/, 'KanbanLabView.swift does not import HermesCheckbox.swift and must not be cited as a caller');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexCheckbox\.swift/);
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Bots\/BotPendingRequestCard\.swift/, 'BotPendingRequestCard.swift does not import HermexCheckbox.swift and must not be cited as a caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Kanban\/KanbanLabView\.swift/, 'KanbanLabView.swift does not import HermexCheckbox.swift and must not be cited as a caller');
   assert.match(section, /<CheckboxFamilyGallery/);
 
   const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
@@ -2273,7 +2273,7 @@ test('the generic catalog Checkbox supports an omittable onChange for a row-owne
   assert.match(rowOwnedBody, /<ListItem/, 'expected the row-owned demo to compose the real ListItem');
   assert.match(rowOwnedBody, /<Checkbox checked=\{[^}]+\}\s*\/>/, 'expected the row-owned Checkbox instance to omit onChange');
   assert.match(rowOwnedBody, /selected=\{/, 'expected the owning ListItem to expose its own selected state');
-  assert.doesNotMatch(previewsSrc, /export function HermesCheckbox\b/, 'must not introduce a duplicate Hermex-specific checkbox component');
+  assert.doesNotMatch(previewsSrc, /export function HermexCheckbox\b/, 'must not introduce a duplicate Hermex-specific checkbox component');
 });
 
 // Correction (#607 follow-up 2): the previous "Input Field" entry mis-registered production's native
@@ -2283,26 +2283,26 @@ test('the generic catalog Checkbox supports an omittable onChange for a row-owne
 // TextEditor, `.searchable`) with an honest native-style reconstruction instead.
 //
 // Issue #607 (Text Input family slice): Text Input itself now becomes a Hermex-owned Components entry
-// once three thin foundation wrappers — HermesTextField, HermesSecureField, HermesNumberField
-// (HermesTextInput.swift) — ship over native TextField/SecureField/TextField(value:format:), the same
-// ownership-flip pattern Search went through for `.hermesSearch` over `.searchable`. Multiline stays
+// once three thin foundation wrappers — HermexTextField, HermexSecureField, HermexNumberField
+// (HermexTextInput.swift) — ship over native TextField/SecureField/TextField(value:format:), the same
+// ownership-flip pattern Search went through for `.hermexSearch` over `.searchable`. Multiline stays
 // truthfully native (TextEditor, not a newly owned wrapper) and Search stays its own separate
 // Components family rather than a Text Input variant.
-test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermesTextField/HermesSecureField/HermesNumberField over native TextField/SecureField/TextField(value:format:)), truthfully keeping TextEditor native and Search separate', () => {
+test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermexTextField/HermexSecureField/HermexNumberField over native TextField/SecureField/TextField(value:format:)), truthfully keeping TextEditor native and Search separate', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /\| 'Input Field'/, "the retired 'Input Field' id must no longer appear in the HermesSectionId union");
   assert.match(sectionsSrc, /\| 'Text Input'/, "expected 'Text Input' in the HermesSectionId union");
 
   const section = extractHermesSection(sectionsSrc, 'Text Input');
   assert.match(section, /hermesReference:\s*\{/);
-  assert.match(section, /HermesTextField/, 'expected the entry to name the Hermex-owned HermesTextField wrapper');
-  assert.match(section, /HermesSecureField/, 'expected the entry to name the Hermex-owned HermesSecureField wrapper');
-  assert.match(section, /HermesNumberField/, 'expected the entry to name the Hermex-owned HermesNumberField wrapper');
-  assert.match(section, /HermesTextField\(_:text:prompt:\)/, 'expected the catalog API to include HermesTextField\'s optional native prompt');
-  assert.match(section, /HermesSecureField\(_:text:prompt:\)/, 'expected the catalog API to include HermesSecureField\'s optional native prompt');
-  assert.match(section, /HermesNumberField\(_:value:format:prompt:\)/, 'expected the catalog API to include HermesNumberField\'s optional native prompt');
+  assert.match(section, /HermexTextField/, 'expected the entry to name the Hermex-owned HermexTextField wrapper');
+  assert.match(section, /HermexSecureField/, 'expected the entry to name the Hermex-owned HermexSecureField wrapper');
+  assert.match(section, /HermexNumberField/, 'expected the entry to name the Hermex-owned HermexNumberField wrapper');
+  assert.match(section, /HermexTextField\(_:text:prompt:\)/, 'expected the catalog API to include HermexTextField\'s optional native prompt');
+  assert.match(section, /HermexSecureField\(_:text:prompt:\)/, 'expected the catalog API to include HermexSecureField\'s optional native prompt');
+  assert.match(section, /HermexNumberField\(_:value:format:prompt:\)/, 'expected the catalog API to include HermexNumberField\'s optional native prompt');
   assert.match(section, /optional native `Text` prompt/i, 'expected the catalog to explain that prompt forwarding stays native');
-  assert.match(section, /TextField\(value:format:\)|TextField\(_:value:format:\)/, 'expected the entry to name the native typed TextField(value:format:) path HermesNumberField forwards to');
+  assert.match(section, /TextField\(value:format:\)|TextField\(_:value:format:\)/, 'expected the entry to name the native typed TextField(value:format:) path HermexNumberField forwards to');
   assert.match(section, /TextEditor/, 'expected TextEditor to remain named as a truthful native multiline alternative');
   assert.doesNotMatch(section, /<InputField\b/, 'must not render the generic template InputField as if it were production UI');
   assert.doesNotMatch(section, /<NativeTextInputPreview/, 'expected the retired native-only preview name to be gone from this entry\'s render reference');
@@ -2321,7 +2321,7 @@ test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermesText
   assert.match(section, /separate (?:adoption )?issue/i, 'expected migration to be scoped to a separate issue');
   assert.doesNotMatch(section, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Text Input must not claim production adoption');
 
-  assert.match(section, /HermesMobile\/Features\/Shared\/HermesTextInput\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermesTextInput.swift wrappers');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexTextInput\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermexTextInput.swift wrappers');
 
   const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
   assert.ok(navBlockMatch, 'expected an exported hermesNav array');
@@ -2348,37 +2348,107 @@ test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermesText
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.doesNotMatch(previewsSrc, /export function NativeTextInputPreview/, 'expected the retired native-only preview to be gone');
-  assert.match(section, /<HermesTextInputFamilyGallery/, 'expected Text Input to render the renamed Hermex family preview');
-  assert.match(previewsSrc, /export function HermesTextInputFamilyGallery/);
-  const body = extractFunctionBody(previewsSrc, 'HermesTextInputFamilyGallery');
+  assert.match(section, /<HermexTextInputFamilyGallery/, 'expected Text Input to render the renamed Hermex family preview');
+  assert.match(previewsSrc, /export function HermexTextInputFamilyGallery/);
+  const body = extractFunctionBody(previewsSrc, 'HermexTextInputFamilyGallery');
   assert.match(body, /secureTextEntry/, 'expected an interactive secure-entry example');
   assert.doesNotMatch(body, /multiline/, 'must not demonstrate a multiline variant — TextEditor stays native, not a Text Input variant');
   assert.doesNotMatch(body, /accessibilityRole="search"/, 'must not demonstrate a search variant — Search stays its own family, not a Text Input variant');
-  assert.doesNotMatch(body, /keyboardType=/, 'the number reconstruction must not imply that HermesNumberField forces a keyboard policy');
+  assert.doesNotMatch(body, /keyboardType=/, 'the number reconstruction must not imply that HermexNumberField forces a keyboard policy');
   assert.match(body, /onChangeText/, 'expected interactive entry, not a static mock');
 });
 
-// Search becomes a Hermex-owned shared foundation API (`.hermesSearch`, a thin wrapper over native
+// Issue #607 (Bottom Sheet family slice): a Hermex-owned Components entry for HermexBottomSheet — a
+// content scaffold supplied to native SwiftUI `.sheet` (never a replacement for it), composing a
+// NavigationStack, the existing TopNav (via native `.toolbar` at modal-appropriate placements), an
+// unconstrained body slot (native List or arbitrary content), and an optional horizontal/vertical
+// footer pinned with `.safeAreaInset`. Foundation-only: no production sheet adopts it in this slice.
+test('Issue #607: Bottom Sheet becomes a Hermex-owned Components entry (HermexBottomSheet over native `.sheet`, composing TopNav + an unconstrained body slot + an optional horizontal/vertical footer), truthfully claiming zero production adoption and distinguishing itself from Dialog and a full-screen destination', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /\| 'Bottom Sheet'/, "expected 'Bottom Sheet' in the HermesSectionId union");
+
+  const section = extractHermesSection(sectionsSrc, 'Bottom Sheet');
+  assert.match(section, /hermesReference:\s*\{/);
+  assert.match(section, /HermexBottomSheet/, 'expected the entry to name the Hermex-owned HermexBottomSheet scaffold');
+  assert.match(section, /NavigationStack/, 'expected the entry to document the owned NavigationStack');
+  assert.match(section, /TopNav/, 'expected the entry to document composing the existing TopNav');
+  assert.match(section, /\.cancellationAction/, 'expected the entry to document the modal-appropriate leading placement');
+  assert.match(section, /\.confirmationAction/, 'expected the entry to document the modal-appropriate trailing placement');
+  assert.match(section, /native List or arbitrary content|a native `?List`? or arbitrary content/i, 'expected the entry to document the body slot accepting List or arbitrary content');
+  assert.match(section, /footerAxis/, 'expected the entry to document the footerAxis prop');
+  assert.match(section, /horizontal/i);
+  assert.match(section, /vertical/i);
+  assert.match(section, /\.safeAreaInset/, 'expected the entry to document native safeAreaInset footer pinning');
+  assert.match(section, /detents/i, 'expected the entry to state the caller keeps owning detents');
+  assert.match(section, /drag indicator/i, 'expected the entry to state the caller keeps owning the drag indicator');
+  assert.match(section, /interactive-dismiss/i, 'expected the entry to state the caller keeps owning interactive-dismiss policy');
+  assert.match(section, /dismissal/i, 'expected the entry to state the caller keeps owning dismissal');
+  assert.match(section, /Reduce Motion/, 'expected the entry to state native SwiftUI owns Reduce Motion');
+  assert.match(section, /presentation motion|native SwiftUI (?:alone )?owns/i, 'expected the entry to state native SwiftUI owns presentation motion');
+
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /Dialog/, 'expected avoidWhen to distinguish Bottom Sheet from the next approved Dialog family');
+  assert.match(ref, /NavigationLink|navigationDestination|full-screen/i, 'expected avoidWhen/alternatives to distinguish Bottom Sheet from a full-screen/navigation destination');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.length > 0, 'expected at least one structured alternative');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'foundation-available');
+  assert.match(section, /foundation-available on this branch/i, 'expected the adoptionStatus detail to state foundation-available on this branch');
+  assert.match(section, /zero production screens use it/i, 'expected the adoptionStatus detail to truthfully report zero production adoption');
+  assert.match(section, /remain unchanged|unchanged/i, 'expected the adoptionStatus detail to state existing production sheets remain unchanged');
+  assert.match(section, /separate adoption issue/i, 'expected migration to be scoped to a separate adoption issue');
+  assert.doesNotMatch(section, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Bottom Sheet must not claim production adoption');
+
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexBottomSheet\.swift/, 'expected implementationNotes.sourcePaths to cite HermexBottomSheet.swift');
+  assert.match(section, /generic template catalog/i, 'expected the entry to name the generic template catalog it is distinct from');
+  assert.match(section, /own BottomSheet component/i, 'expected the entry to explicitly disclaim the generic template\'s own BottomSheet component');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(componentIds.includes('Bottom Sheet'), 'expected Bottom Sheet to be registered in the Components — Hermex nav group');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(section, /<HermexBottomSheetFamilyGallery/, 'expected Bottom Sheet to render its own family gallery');
+  assert.match(previewsSrc, /export function HermexBottomSheetFamilyGallery/);
+  assert.match(previewsSrc, /function BottomSheetSpecimen/, 'expected a shared specimen helper for the gallery\'s two demonstrated combinations');
+  const specimenBody = extractFunctionBody(previewsSrc, 'BottomSheetSpecimen');
+  const galleryBody = extractFunctionBody(previewsSrc, 'HermexBottomSheetFamilyGallery');
+  const body = specimenBody + galleryBody;
+  assert.match(specimenBody, /<TopNav/, 'expected the gallery to reuse the real TopNav reconstruction');
+  assert.match(galleryBody, /<List>/, 'expected the gallery to demonstrate a native List body using the real List reconstruction');
+  assert.match(galleryBody, /<ListItem/, 'expected the List body demonstration to use the real ListItem reconstruction');
+  assert.match(galleryBody, /footerAxis="horizontal"/, 'expected the gallery to demonstrate a horizontal footer axis');
+  assert.match(galleryBody, /footerAxis="vertical"/, 'expected the gallery to demonstrate a vertical footer axis');
+  assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/BottomSheet'/, 'must not import the generic template BottomSheet component');
+  assert.doesNotMatch(body, /<BottomSheet[\s>]/, 'must not compose the generic template BottomSheet component');
+  assert.doesNotMatch(body, /DragGesture|Animated\.(Value|timing)/, 'must not invent custom drag/animated behavior in the reconstruction');
+});
+
+// Search becomes a Hermex-owned shared foundation API (`.hermexSearch`, a thin wrapper over native
 // `.searchable`) while production screens stay on their existing direct `.searchable` call sites —
 // migration is a separate issue. This is the ownership-flip transaction: Search moves from Native
 // iOS — Hermex into Components — Hermex, its preview becomes an interactive Hermex Search family
 // demonstration (not a bare native reconstruction), and its adoptionStatus truthfully reports zero
 // production adoption.
-test('Search moves to Components — Hermex as a Hermex-owned foundation wrapper (.hermesSearch) over native .searchable, with a truthful zero-adoption status and an interactive family preview', () => {
+test('Search moves to Components — Hermex as a Hermex-owned foundation wrapper (.hermexSearch) over native .searchable, with a truthful zero-adoption status and an interactive family preview', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
 
-  assert.match(search, /`\.hermesSearch/, 'expected the Search entry to name the Hermex-owned .hermesSearch wrapper');
+  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to name the Hermex-owned .hermexSearch wrapper');
   assert.match(search, /`\.searchable`|\.searchable\(/, 'expected the Search entry to still name the native .searchable it wraps');
   assert.match(search, /avoidWhen:\s*'[^']*custom chrome[^']*'/i, 'expected avoidWhen to still forbid custom search-field chrome');
 
   const state = extractAdoptionState(search);
   assert.equal(state, 'foundation-available', 'expected Search to report foundation-available, not native-platform, once the wrapper ships');
-  assert.match(search, /adoptionStatus:\s*\{[\s\S]*?HermesSearch\.swift[\s\S]*?no production call site yet/, 'expected the adoptionStatus detail to name HermesSearch.swift and truthfully report zero production call sites');
+  assert.match(search, /adoptionStatus:\s*\{[\s\S]*?HermexSearch\.swift[\s\S]*?no production call site yet/, 'expected the adoptionStatus detail to name HermexSearch.swift and truthfully report zero production call sites');
   assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue/i, 'expected the adoptionStatus/notes to state migration is deferred to another issue');
   assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim production adoption');
 
-  assert.match(search, /HermesMobile\/Features\/Shared\/HermesSearch\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermesSearch.swift wrapper');
+  assert.match(search, /HermesMobile\/Features\/Shared\/HermexSearch\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermexSearch.swift wrapper');
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.doesNotMatch(previewsSrc, /export function NativeSearchPreview/, 'expected the retired native-only preview name to be gone');
@@ -2390,7 +2460,7 @@ test('Search moves to Components — Hermex as a Hermex-owned foundation wrapper
   assert.match(gallery, /ref=\{searchInputRef\}/, 'expected the native-style search input to expose a focus target');
   assert.match(gallery, /searchInputRef\.current\?\.focus\(\)/, 'expected clearing search to restore focus to the input after the clear control unmounts');
   assert.match(gallery, /No results for/, 'expected a specific no-results demonstration, not a generic empty state');
-  assert.doesNotMatch(gallery, /struct HermesSearchField|HermesSearchBar/, 'must not imply a custom Hermex search-field component');
+  assert.doesNotMatch(gallery, /struct HermexSearchField|HermexSearchBar/, 'must not imply a custom Hermex search-field component');
 });
 
 test('Materials — Hermex holds exactly Adaptive Glass, and Patterns — Hermex holds Content Unavailable, Pending Request, Transcript Activity, and Composer', () => {
@@ -2459,7 +2529,7 @@ test('Correction (2026-09-26): the generic catalog Divider owns opacity as a com
   const section = extractHermesSection(src, 'Row Divider');
   assert.match(section, /generic catalog Divider/i);
   assert.match(section, /component-owned opacity/i);
-  assert.match(section, /HermesDivider owns its SwiftUI opacity and pixel geometry/);
+  assert.match(section, /HermexDivider owns its SwiftUI opacity and pixel geometry/);
 });
 
 test('Correction (2026-09-26): ListItem genuinely supports a title-adjacent slot, description/metadata, and a loading state, while staying compatible with existing subtitle/footer/trailingText/trailingSubtext/trailing callers', () => {
@@ -3023,11 +3093,11 @@ test('Content Unavailable documents Empty, No results, Error, Unavailable, and C
 });
 
 // Correction (#607 follow-up 2): the catalog's own ContentUnavailablePreview laid its primary and
-// secondary actions out with `flexDirection: 'row'`, contradicting production HermesContentUnavailable
+// secondary actions out with `flexDirection: 'row'`, contradicting production HermexContentUnavailable
 // .swift's `VStack(spacing: HermesSpacing.s8) { actionButtons }`, which stacks them vertically with the
 // primary action first whenever both are present. The Custom variant and the "With primary + secondary
 // actions" state both render two actions, so both must exercise the corrected vertical layout.
-test('Correction (#607 follow-up 2): the Content Unavailable catalog preview stacks primary and secondary actions vertically, primary first, matching HermesContentUnavailable.swift\'s VStack — not a horizontal row', () => {
+test('Correction (#607 follow-up 2): the Content Unavailable catalog preview stacks primary and secondary actions vertically, primary first, matching HermexContentUnavailable.swift\'s VStack — not a horizontal row', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const body = extractFunctionBody(sectionsSrc, 'ContentUnavailablePreview');
   assert.doesNotMatch(body, /flexDirection:\s*'row'/, 'the two-action layout must not be a horizontal row');
@@ -3043,7 +3113,7 @@ test('Correction (#607 follow-up 2): the Content Unavailable catalog preview sta
   assert.match(section, /key: 'with-actions', name: 'With primary \+ secondary actions', node: <ContentUnavailablePreview primaryAction secondaryAction/, 'expected the "With primary + secondary actions" state to exercise both actions');
 });
 
-// Controller correction (production reconciliation): HermesContentUnavailable.swift is confirmed adopted for
+// Controller correction (production reconciliation): HermexContentUnavailable.swift is confirmed adopted for
 // the four picker sheets' loading/error/empty states (ModelPickerSheet, DefaultProfilePickerView,
 // CronJobSkillsPicker, CronJobConfigurationPickers) — ContentUnavailableView.search(text:)'s own
 // no-results treatment intentionally stays a direct call even at those same call sites, and other
@@ -3051,24 +3121,24 @@ test('Correction (#607 follow-up 2): the Content Unavailable catalog preview sta
 // section must say "partially adopted", not "currently no Hermex-owned source file" / "Target
 // architecture ... owned by a dedicated production workstream" — and must not overclaim full
 // migration.
-test('Correction (design-system-foundation truthfulness pass): Content Unavailable states foundation-only status — HermesContentUnavailable.swift has no production call site, and every screen (including the four picker sheets, Kanban, and Usage) still calls the native ContentUnavailableView directly', () => {
+test('Correction (design-system-foundation truthfulness pass): Content Unavailable states foundation-only status — HermexContentUnavailable.swift has no production call site, and every screen (including the four picker sheets, Kanban, and Usage) still calls the native ContentUnavailableView directly', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Content Unavailable');
-  assert.doesNotMatch(section, /partially adopted/i, 'HermesContentUnavailable.swift has zero production call sites — it must not be described as partially adopted');
-  assert.match(section, /HermesMobile\/Features\/Shared\/HermesContentUnavailable\.swift/);
+  assert.doesNotMatch(section, /partially adopted/i, 'HermexContentUnavailable.swift has zero production call sites — it must not be described as partially adopted');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexContentUnavailable\.swift/);
   for (const picker of [
     'HermesMobile/Features/Shared/ModelPickerSheet.swift',
     'HermesMobile/Features/Settings/DefaultProfilePickerView.swift',
     'HermesMobile/Features/Tasks/CronJobSkillsPicker.swift',
     'HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift',
   ]) {
-    assert.doesNotMatch(section, new RegExp(picker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${picker} does not import HermesContentUnavailable.swift and must not be cited as an adopted call site`);
+    assert.doesNotMatch(section, new RegExp(picker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${picker} does not import HermexContentUnavailable.swift and must not be cited as an adopted call site`);
   }
   assert.match(section, /30 production files/i);
   assert.match(section, /68 source references/i);
 });
 
-// ─── Explicit full-screen placement (HermesContentUnavailable.Layout) ───────────────────────────
+// ─── Explicit full-screen placement (HermexContentUnavailable.Layout) ───────────────────────────
 
 test('Content Unavailable documents the additive layout prop (.intrinsic default / .fullScreen) in its Props table, truthfully, with no production adoption claim', () => {
   const src = read(HERMES_SECTIONS_PATH);
@@ -3116,7 +3186,7 @@ test('Content Unavailable adds a bounded, phone-like full-screen-placement catal
   assert.match(frameRegion, /width:\s*\d/, 'expected the preview frame to declare a fixed width');
   assert.match(frameRegion, /height:\s*\d/, 'expected the preview frame to declare a fixed height');
   // Content begins ~1/3 down: a spacer/offset sized to roughly a third of the frame's own height,
-  // the same relationship HermesContentUnavailable.swift computes via GeometryReader's `/ 3`.
+  // the same relationship HermexContentUnavailable.swift computes via GeometryReader's `/ 3`.
   assert.match(frameRegion, /\/\s*3\b/, 'expected the preview to reserve roughly one third of the frame height above the content cluster');
 });
 
@@ -3296,6 +3366,7 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
     'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
     'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
+    'Bottom Sheet',
   ]);
 });
 
@@ -3344,7 +3415,7 @@ test('the Components — Hermex group\'s computed render order is actually alpha
   const computedOrder = ids.slice().sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
 
   assert.deepEqual(computedOrder.map(labelFor), [
-    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Buttons', 'Card', 'Checkbox', 'Disclosure Row', 'Dropdown',
+    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Disclosure Row', 'Dropdown',
     'Inline Reference Link', 'List / ListItem', 'Radio', 'Row Divider', 'Search',
     'Segmented Control', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');
@@ -3555,22 +3626,22 @@ test('the foundation branch-status table names the one verified real adoption (A
   assert.match(table, /None has a production call site in this branch/i);
 });
 
-// ─── #607 correction slice: Content Unavailable, HermesList, HermesUsageSize — foundation-only ────
+// ─── #607 correction slice: Content Unavailable, HermexList, HermesUsageSize — foundation-only ────
 
-test('Content Unavailable truthfully states Kanban\'s status/filter empty branch and Usage\'s loading/error/empty states, alongside the four picker sheets, all still call the native ContentUnavailableView directly (no HermesContentUnavailable adoption)', () => {
+test('Content Unavailable truthfully states Kanban\'s status/filter empty branch and Usage\'s loading/error/empty states, alongside the four picker sheets, all still call the native ContentUnavailableView directly (no HermexContentUnavailable adoption)', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Content Unavailable');
   assert.match(section, /Kanban/);
   assert.match(section, /Usage/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Kanban\/KanbanLabView\.swift/, 'KanbanLabView.swift does not import HermesContentUnavailable.swift and must not be cited as a caller');
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Insights\/InsightsView\.swift/, 'InsightsView.swift does not import HermesContentUnavailable.swift and must not be cited as a caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Kanban\/KanbanLabView\.swift/, 'KanbanLabView.swift does not import HermexContentUnavailable.swift and must not be cited as a caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Insights\/InsightsView\.swift/, 'InsightsView.swift does not import HermexContentUnavailable.swift and must not be cited as a caller');
   for (const picker of [
     'HermesMobile/Features/Shared/ModelPickerSheet.swift',
     'HermesMobile/Features/Settings/DefaultProfilePickerView.swift',
     'HermesMobile/Features/Tasks/CronJobSkillsPicker.swift',
     'HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift',
   ]) {
-    assert.doesNotMatch(section, new RegExp(picker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${picker} does not import HermesContentUnavailable.swift and must not be cited as an adopted call site`);
+    assert.doesNotMatch(section, new RegExp(picker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${picker} does not import HermexContentUnavailable.swift and must not be cited as an adopted call site`);
   }
 });
 
@@ -3579,8 +3650,8 @@ test('Content Unavailable truthfully states Kanban\'s status/filter empty branch
 test('List / ListItem documents its foundation capabilities without claiming any production adoption, including the deferred Session utility-row migration', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'List / ListItem');
-  assert.match(section, /HermesList/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListView\.swift/, 'SessionListView.swift does not import HermesList.swift and must not be cited as a caller');
+  assert.match(section, /HermexList/);
+  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListView\.swift/, 'SessionListView.swift does not import HermexList.swift and must not be cited as a caller');
   assert.match(section, /hapticFeedbackStyle/, 'expected the opt-in ListItem haptic capability to be documented');
   assert.match(section, /no production caller/i);
   assert.doesNotMatch(section, /retired bespoke SidebarNavButton/i);
@@ -4199,7 +4270,7 @@ test('Hermex Colors routes semantic roles to their bound Apple Color, restricts 
   assert.match(ref, /documentation-only/, 'expected the adoption detail to classify semantic roles as documentation-only bindings');
 });
 
-test('Adaptive Glass, Hermes Card, and Pending Request agree on one opaque approval/clarification surface: Pending Request\'s adopted pendingRequestCardSurface, never HermesCard\'s uncalled requestCardSurface', () => {
+test('Adaptive Glass, Hermes Card, and Pending Request agree on one opaque approval/clarification surface: Pending Request\'s adopted pendingRequestCardSurface, never HermexCard\'s uncalled requestCardSurface', () => {
   const src = read(HERMES_SECTIONS_PATH);
 
   const glass = extractHermesSection(src, 'Adaptive Glass');
@@ -4219,7 +4290,7 @@ test('Hermes Banner and Hermes Toast never claim Toast self-dismisses; Toast\'s 
   const src = read(HERMES_SECTIONS_PATH);
 
   const banner = extractHermesSection(src, 'Hermes Banner');
-  assert.doesNotMatch(banner, /self-dismiss/i, 'HermesToast has no internal timer or auto-dismiss (HermesToast.swift); Banner must not describe it as self-dismissing');
+  assert.doesNotMatch(banner, /self-dismiss/i, 'HermexToast has no internal timer or auto-dismiss (HermexToast.swift); Banner must not describe it as self-dismissing');
 
   const toast = extractHermesSection(src, 'Hermes Toast');
   const toastRef = extractHermesReferenceBlock(toast);
@@ -4280,7 +4351,7 @@ test('List/ListItem, Row Divider, and Skeleton Loading state real selection boun
 
   const divider = extractHermesSection(src, 'Row Divider');
   const dividerRef = extractHermesReferenceBlock(divider);
-  assert.match(dividerRef, /HermesList|Accordion List/, 'expected avoidWhen to prohibit use inside a container that already owns separators');
+  assert.match(dividerRef, /HermexList|Accordion List/, 'expected avoidWhen to prohibit use inside a container that already owns separators');
   assert.ok(extractAlternativeNames(dividerRef).includes('List / ListItem'), 'expected Row Divider to name List / ListItem as an alternative');
 
   const skeleton = extractHermesSection(src, 'Skeleton Loading');
@@ -4315,10 +4386,10 @@ test('Buttons states a real component-owned-chrome/file-link avoidWhen (not adop
 
   assert.doesNotMatch(
     section,
-    /only needs Reduce-Motion-safe press feedback, including for a Yes\/No\/Approve\/Deny-style choice, which uses \.hermes\(_:emphasis:\) directly/,
+    /only needs Reduce-Motion-safe press feedback, including for a Yes\/No\/Approve\/Deny-style choice, which uses \.hermex\(_:emphasis:\) directly/,
     'the whenToUse sentence must no longer contradict itself about which style a Yes/No/Approve/Deny choice uses',
   );
-  assert.match(section, /Yes\/No\/Approve\/Deny choice uses \.hermes\(_:emphasis:\)/, 'expected a standalone, non-contradictory sentence stating which style a decision choice uses');
+  assert.match(section, /Yes\/No\/Approve\/Deny choice uses \.hermex\(_:emphasis:\)/, 'expected a standalone, non-contradictory sentence stating which style a decision choice uses');
 });
 
 test('Checkbox names native Toggle (never the nonexistent "Switch"), and its alternatives cover every control avoidWhen names', () => {
@@ -4420,6 +4491,7 @@ test('every alternative name across every Hermex catalog entry resolves to a rea
     'ChatTactileButtonStyle / ChatDecisionButtonStyle (production)',
     'TranscriptLogRowView (production)',
     'Native ContentUnavailableView',
+    'Native NavigationLink / .navigationDestination (production)',
   ]);
 
   let checkedCount = 0;

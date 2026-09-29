@@ -65,20 +65,20 @@ enum HermesAvatarSize: CGFloat, CaseIterable {
 """.strip()
 
 SIMPLE_SNIPPETS = {
-    "HermesMobile/Features/Shared/HermesCard.swift": "enum HermesCardSurface { case glass }",
-    "HermesMobile/Features/Shared/HermesButton.swift": (
-        "struct HermesButtonStyle: ButtonStyle {}\nstruct HermesButtonPressOnlyStyle: ButtonStyle {}"
+    "HermesMobile/Features/Shared/HermexCard.swift": "enum HermexCardSurface { case glass }",
+    "HermesMobile/Features/Shared/HermexButton.swift": (
+        "struct HermexButtonStyle: ButtonStyle {}\nstruct HermexButtonPressOnlyStyle: ButtonStyle {}"
     ),
-    "HermesMobile/Features/Shared/HermesCheckbox.swift": "struct HermesCheckbox: View {}",
-    "HermesMobile/Features/Shared/HermesRadio.swift": "struct HermesRadio: View {}",
-    "HermesMobile/Features/Shared/HermesDropdown.swift": "struct HermesDropdown: View {}",
-    "HermesMobile/Features/Shared/HermesToast.swift": "struct HermesToast: View {}",
-    "HermesMobile/Features/Shared/HermesTooltip.swift": "struct HermesTooltip: View {}",
-    "HermesMobile/Features/Shared/HermesAvatar.swift": "struct HermesAvatar: View {}",
-    "HermesMobile/Features/Shared/HermesDivider.swift": "struct HermesDivider: View {}",
-    "HermesMobile/Features/Shared/HermesContentUnavailable.swift": "struct HermesContentUnavailable: View {}",
+    "HermesMobile/Features/Shared/HermexCheckbox.swift": "struct HermexCheckbox: View {}",
+    "HermesMobile/Features/Shared/HermexRadio.swift": "struct HermexRadio: View {}",
+    "HermesMobile/Features/Shared/HermexDropdown.swift": "struct HermexDropdown: View {}",
+    "HermesMobile/Features/Shared/HermexToast.swift": "struct HermexToast: View {}",
+    "HermesMobile/Features/Shared/HermexTooltip.swift": "struct HermexTooltip: View {}",
+    "HermesMobile/Features/Shared/HermexAvatar.swift": "struct HermexAvatar: View {}",
+    "HermesMobile/Features/Shared/HermexDivider.swift": "struct HermexDivider: View {}",
+    "HermesMobile/Features/Shared/HermexContentUnavailable.swift": "struct HermexContentUnavailable: View {}",
     "HermesMobile/Features/Shared/ListItem.swift": "struct ListItem<Leading: View>: View {}",
-    "HermesMobile/Features/Shared/HermesList.swift": "struct HermesList<Content: View>: View {}",
+    "HermesMobile/Features/Shared/HermexList.swift": "struct HermexList<Content: View>: View {}",
     "HermesMobile/Features/Shared/SegmentedControl.swift": "struct SegmentedControl<Value: Hashable>: View {}",
     "HermesMobile/Features/Shared/TopNav.swift": "struct TopNav: ToolbarContent {}",
     "HermesMobile/Features/Shared/Banner.swift": "struct Banner: View {}",
@@ -86,9 +86,9 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/AttachmentFileType.swift": "enum AttachmentFileType {}",
     "HermesMobile/Features/Shared/AttachmentTile.swift": "struct AttachmentTile: View {}",
     "HermesMobile/Features/Shared/SkeletonPlaceholder.swift": "struct SkeletonPlaceholder: View {}",
-    "HermesMobile/Features/Shared/HermesSearch.swift": (
+    "HermesMobile/Features/Shared/HermexSearch.swift": (
         "extension View {\n"
-        "    func hermesSearch(\n"
+        "    func hermexSearch(\n"
         "        text: Binding<String>,\n"
         "        placement: SearchFieldPlacement = .automatic,\n"
         "        prompt: Text? = nil\n"
@@ -97,11 +97,19 @@ SIMPLE_SNIPPETS = {
         "    }\n"
         "}"
     ),
-    "HermesMobile/Features/Shared/HermesTextInput.swift": (
-        "struct HermesTextField: View {}\n"
-        "struct HermesSecureField: View {}\n"
-        "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+    "HermesMobile/Features/Shared/HermexTextInput.swift": (
+        "struct HermexTextField: View {}\n"
+        "struct HermexSecureField: View {}\n"
+        "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
         "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+    ),
+    "HermesMobile/Features/Shared/HermexBottomSheet.swift": (
+        "struct HermexBottomSheet<Content: View>: View {\n"
+        "    enum FooterAxis {\n"
+        "        case horizontal\n"
+        "        case vertical\n"
+        "    }\n"
+        "}"
     ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
     "HermesMobile/Config/HermesMotion.swift": "enum HermesMotion {}",
@@ -202,19 +210,63 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
 
     def test_missing_required_file_fails(self):
         build_valid_fixture_tree(self.root)
-        (self.root / "HermesMobile/Features/Shared/HermesCard.swift").unlink()
+        (self.root / "HermesMobile/Features/Shared/HermexCard.swift").unlink()
         failures = audit.run(self.root)
         self.assertTrue(
-            any("missing required foundation file" in f and "HermesCard.swift" in f for f in failures),
+            any("missing required foundation file" in f and "HermexCard.swift" in f for f in failures),
             failures,
         )
 
     def test_missing_required_snippet_fails(self):
         build_valid_fixture_tree(self.root)
-        write(self.root, "HermesMobile/Features/Shared/HermesCard.swift", "// no HermesCardSurface here")
+        write(self.root, "HermesMobile/Features/Shared/HermexCard.swift", "// no HermexCardSurface here")
         failures = audit.run(self.root)
         self.assertTrue(
-            any("missing load-bearing snippet" in f and "HermesCard.swift" in f for f in failures),
+            any("missing load-bearing snippet" in f and "HermexCard.swift" in f for f in failures),
+            failures,
+        )
+
+    def test_missing_bottom_sheet_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/HermexBottomSheet.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexBottomSheet.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_drifted_bottom_sheet_declaration_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexBottomSheet.swift",
+            "// HermexBottomSheet renamed away, no FooterAxis either",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexBottomSheet.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_bottom_sheet_missing_footer_axis_enum_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexBottomSheet.swift",
+            "struct HermexBottomSheet<Content: View>: View {}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexBottomSheet.swift" in f and "FooterAxis" in f
+                for f in failures
+            ),
             failures,
         )
 
@@ -321,16 +373,16 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
 
     def test_searchable_baseline_ignores_the_shared_hermes_search_wrapper_itself(self):
         build_valid_fixture_tree(self.root)
-        # HermesSearch.swift forwards to native `.searchable` without a leading dot (an implicit
+        # HermexSearch.swift forwards to native `.searchable` without a leading dot (an implicit
         # `self` call inside the View extension), but exercise the exclusion directly regardless.
         write(
             self.root,
-            "HermesMobile/Features/Shared/HermesSearch.swift",
-            "extension View {\n    func hermesSearch(text: Binding<String>) -> some View { self.searchable(text: text) }\n}",
+            "HermesMobile/Features/Shared/HermexSearch.swift",
+            "extension View {\n    func hermexSearch(text: Binding<String>) -> some View { self.searchable(text: text) }\n}",
         )
         failures = audit.run(self.root)
         self.assertFalse(
-            any("HermesSearch.swift" in f for f in failures),
+            any("HermexSearch.swift" in f for f in failures),
             failures,
         )
 
@@ -376,19 +428,19 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         build_valid_fixture_tree(self.root)
         write(
             self.root,
-            "HermesMobile/Features/Shared/HermesTextInput.swift",
+            "HermesMobile/Features/Shared/HermexTextInput.swift",
             (
-                "struct HermesTextField: View {\n"
+                "struct HermexTextField: View {\n"
                 "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
                 "}\n"
-                "struct HermesSecureField: View {}\n"
-                "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+                "struct HermexSecureField: View {}\n"
+                "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
                 "where Format.FormatInput == Value, Format.FormatOutput == String {}"
             ),
         )
         failures = audit.run(self.root)
         self.assertFalse(
-            any("HermesTextInput.swift" in f for f in failures),
+            any("HermexTextInput.swift" in f for f in failures),
             failures,
         )
 
@@ -434,19 +486,19 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         build_valid_fixture_tree(self.root)
         write(
             self.root,
-            "HermesMobile/Features/Shared/HermesTextInput.swift",
+            "HermesMobile/Features/Shared/HermexTextInput.swift",
             (
-                "struct HermesTextField: View {}\n"
-                "struct HermesSecureField: View {\n"
+                "struct HermexTextField: View {}\n"
+                "struct HermexSecureField: View {\n"
                 "    var body: some View { SecureField(\"x\", text: .constant(\"\")) }\n"
                 "}\n"
-                "struct HermesNumberField<Value, Format: ParseableFormatStyle>: View "
+                "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
                 "where Format.FormatInput == Value, Format.FormatOutput == String {}"
             ),
         )
         failures = audit.run(self.root)
         self.assertFalse(
-            any("HermesTextInput.swift" in f for f in failures),
+            any("HermexTextInput.swift" in f for f in failures),
             failures,
         )
 
@@ -489,16 +541,16 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
 
     def test_content_unavailable_baseline_ignores_the_canonical_hermes_content_unavailable_file_itself(self):
         build_valid_fixture_tree(self.root)
-        # HermesContentUnavailable.swift's own required snippet references "View", not
+        # HermexContentUnavailable.swift's own required snippet references "View", not
         # ContentUnavailableView, but exercise the exclusion directly regardless.
         write(
             self.root,
-            "HermesMobile/Features/Shared/HermesContentUnavailable.swift",
-            "struct HermesContentUnavailable: View {\n    var body: some View { ContentUnavailableView(\"x\") }\n}",
+            "HermesMobile/Features/Shared/HermexContentUnavailable.swift",
+            "struct HermexContentUnavailable: View {\n    var body: some View { ContentUnavailableView(\"x\") }\n}",
         )
         failures = audit.run(self.root)
         self.assertFalse(
-            any("HermesContentUnavailable.swift" in f for f in failures),
+            any("HermexContentUnavailable.swift" in f for f in failures),
             failures,
         )
 
@@ -530,7 +582,7 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             build_valid_fixture_tree(root)
-            (root / "HermesMobile/Features/Shared/HermesCard.swift").unlink()
+            (root / "HermesMobile/Features/Shared/HermexCard.swift").unlink()
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--root", str(root)],
                 capture_output=True,
@@ -538,7 +590,7 @@ class CliTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("missing required foundation file", result.stderr)
-            self.assertIn("HermesCard.swift", result.stderr)
+            self.assertIn("HermexCard.swift", result.stderr)
 
     def test_cli_exits_zero_on_a_valid_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:

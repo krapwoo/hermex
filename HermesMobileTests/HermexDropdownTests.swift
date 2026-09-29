@@ -2,12 +2,12 @@ import XCTest
 import SwiftUI
 @testable import HermesMobile
 
-/// Contracts for `HermesDropdown` (`HermesDropdown.swift`): caller-controlled selection over the
+/// Contracts for `HermexDropdown` (`HermexDropdown.swift`): caller-controlled selection over the
 /// native `.menu`-style `Picker`, matching the established convention in
 /// `SettingsView.swift`'s row pickers rather than a custom floating sheet. A SwiftUI view tree isn't
 /// inspectable at runtime without a rendering harness, so this is a compile contract plus a source
 /// contract for the native Picker path.
-final class HermesDropdownTests: XCTestCase {
+final class HermexDropdownTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -26,12 +26,12 @@ final class HermesDropdownTests: XCTestCase {
         struct Host: View {
             @State var selection: String?
             var body: some View {
-                HermesDropdown(
+                HermexDropdown(
                     title: "Profile",
                     selection: $selection,
                     options: [
-                        HermesDropdownOption("a", label: "Alpha"),
-                        HermesDropdownOption("b", label: "Beta")
+                        HermexDropdownOption("a", label: "Alpha"),
+                        HermexDropdownOption("b", label: "Beta")
                     ],
                     placeholder: "Choose a profile"
                 )
@@ -46,10 +46,10 @@ final class HermesDropdownTests: XCTestCase {
         struct Host: View {
             @State var selection: String? = "a"
             var body: some View {
-                HermesDropdown(
+                HermexDropdown(
                     title: "Profile",
                     selection: $selection,
-                    options: [HermesDropdownOption("a", label: "Alpha")],
+                    options: [HermexDropdownOption("a", label: "Alpha")],
                     isEnabled: false
                 )
             }
@@ -61,7 +61,7 @@ final class HermesDropdownTests: XCTestCase {
     // MARK: - Source contract: native Menu/Picker semantics, no custom floating sheet
 
     func testUsesTheNativeMenuStylePickerRatherThanACustomSheet() throws {
-        let src = try source("HermesMobile/Features/Shared/HermesDropdown.swift")
+        let src = try source("HermesMobile/Features/Shared/HermexDropdown.swift")
         XCTAssertTrue(src.contains("Picker("))
         XCTAssertTrue(src.contains(".pickerStyle(.menu)"))
         XCTAssertFalse(src.contains(".sheet("), "Dropdown should not recreate a custom floating sheet")

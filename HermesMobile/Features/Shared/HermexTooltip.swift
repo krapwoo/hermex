@@ -4,7 +4,7 @@ import SwiftUI
 /// presentation path (the same one `ContextWindowIndicatorView` and `GitBranchPickerView` already
 /// use) — never a hover-only affordance. Dismissal is the popover's own native recovery path: tap
 /// outside, or the hardware-keyboard Escape key.
-struct HermesTooltip<Trigger: View, Content: View>: View {
+struct HermexTooltip<Trigger: View, Content: View>: View {
     @State private var isPresented = false
     let accessibilityLabel: String
     let trigger: () -> Trigger
@@ -44,7 +44,7 @@ struct HermesTooltip<Trigger: View, Content: View>: View {
 }
 
 /// The common trigger: a small "info" glyph sized to the accepted icon scale.
-struct HermesTooltipInfoTrigger: View {
+struct HermexTooltipInfoTrigger: View {
     var body: some View {
         Image(systemName: "info.circle")
             .font(.system(size: HermesIconSize.small))
@@ -52,12 +52,12 @@ struct HermesTooltipInfoTrigger: View {
     }
 }
 
-extension HermesTooltip where Trigger == HermesTooltipInfoTrigger {
+extension HermexTooltip where Trigger == HermexTooltipInfoTrigger {
     /// The common case: an "info" glyph trigger, so a caller doesn't have to spell one out.
     static func info(
         accessibilityLabel: String = String(localized: "More information"),
         @ViewBuilder content: @escaping () -> Content
-    ) -> HermesTooltip {
-        HermesTooltip(accessibilityLabel: accessibilityLabel, trigger: { HermesTooltipInfoTrigger() }, content: content)
+    ) -> HermexTooltip {
+        HermexTooltip(accessibilityLabel: accessibilityLabel, trigger: { HermexTooltipInfoTrigger() }, content: content)
     }
 }

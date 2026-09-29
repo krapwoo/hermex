@@ -104,7 +104,7 @@ struct SegmentedControl<Value: Hashable>: View {
                 .contentShape(Rectangle())
             }
         }
-        .buttonStyle(.hermesPressOnly(.capsule))
+        .buttonStyle(.hermexPressOnly(.capsule))
         .accessibilityLabel(accessibilityLabel(for: option))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

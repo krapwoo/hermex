@@ -4,7 +4,7 @@ import SwiftUI
 /// error, or empty list state reads the same way everywhere instead of each screen re-composing its
 /// own label/description/actions closures. `ContentUnavailableView.search(text:)`'s own no-results
 /// treatment is already this exact pattern and stays a direct call at its sites.
-struct HermesContentUnavailable: View {
+struct HermexContentUnavailable: View {
     enum Variant {
         /// A background fetch in progress; no icon, just a spinner and a description.
         case loading
@@ -83,7 +83,7 @@ struct HermesContentUnavailable: View {
 
     /// Preserved as-is when only one action exists; the primary action only takes the established
     /// primary hierarchy once a secondary action gives it something to stand out from.
-    static func primaryActionEmphasis(hasSecondaryAction: Bool) -> HermesButtonEmphasis {
+    static func primaryActionEmphasis(hasSecondaryAction: Bool) -> HermexButtonEmphasis {
         hasSecondaryAction ? .primary : .secondary
     }
 
@@ -91,11 +91,11 @@ struct HermesContentUnavailable: View {
     private var actionButtons: some View {
         if let primaryAction {
             Button(primaryAction.title, action: primaryAction.handler)
-                .buttonStyle(.hermes(.medium, emphasis: Self.primaryActionEmphasis(hasSecondaryAction: secondaryAction != nil)))
+                .buttonStyle(.hermex(.medium, emphasis: Self.primaryActionEmphasis(hasSecondaryAction: secondaryAction != nil)))
         }
         if let secondaryAction {
             Button(secondaryAction.title, action: secondaryAction.handler)
-                .buttonStyle(.hermes(.medium, emphasis: .neutral))
+                .buttonStyle(.hermex(.medium, emphasis: .neutral))
         }
     }
 
@@ -106,7 +106,7 @@ struct HermesContentUnavailable: View {
             ProgressView()
         case .empty, .noResults, .error, .unavailable, .custom:
             VStack(spacing: HermesSpacing.s12) {
-                HermesAvatar(systemImage: systemImage, size: .large, isDecorative: true)
+                HermexAvatar(systemImage: systemImage, size: .large, isDecorative: true)
                 Text(title)
                     .appFont(.title3)
                     .foregroundStyle(.primary)

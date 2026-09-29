@@ -9,7 +9,7 @@ import SwiftUI
 /// call sites already use — a localizable string prompt and an explicit `Text` prompt — rather than
 /// forwarding through a single, less specific type.
 extension View {
-    func hermesSearch(
+    func hermexSearch(
         text: Binding<String>,
         placement: SearchFieldPlacement = .automatic,
         prompt: Text? = nil
@@ -17,7 +17,7 @@ extension View {
         searchable(text: text, placement: placement, prompt: prompt)
     }
 
-    func hermesSearch(
+    func hermexSearch(
         text: Binding<String>,
         placement: SearchFieldPlacement = .automatic,
         prompt: LocalizedStringKey

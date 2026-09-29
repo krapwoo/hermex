@@ -2,12 +2,12 @@ import XCTest
 import SwiftUI
 @testable import HermesMobile
 
-/// Contracts for `HermesList` (`HermesList.swift`): a default 12pt vertical scroll-content margin
+/// Contracts for `HermexList` (`HermexList.swift`): a default 12pt vertical scroll-content margin
 /// using the existing `HermesSpacing.s12` token, while native SwiftUI List semantics (selection,
 /// refresh, row insets, separators, swipe/context menus, keyboard/accessibility) stay untouched. A
 /// SwiftUI view tree isn't inspectable at runtime without a rendering harness, so this is a
-/// source-contract suite, matching the convention used by ListItemTests/HermesContentUnavailableTests.
-final class HermesListTests: XCTestCase {
+/// source-contract suite, matching the convention used by ListItemTests/HermexContentUnavailableTests.
+final class HermexListTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -20,10 +20,10 @@ final class HermesListTests: XCTestCase {
     }
 
     func testDefaultVerticalContentMarginUsesTheExistingS12Token() throws {
-        let src = try source("HermesMobile/Features/Shared/HermesList.swift")
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
         XCTAssertTrue(
             src.contains(".contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)"),
-            "expected HermesList to apply a default 12pt vertical scroll-content margin using HermesSpacing.s12"
+            "expected HermexList to apply a default 12pt vertical scroll-content margin using HermesSpacing.s12"
         )
     }
 
@@ -32,7 +32,7 @@ final class HermesListTests: XCTestCase {
     }
 
     func testCompiles() {
-        let list = HermesList {
+        let list = HermexList {
             Text("Row")
         }
         XCTAssertFalse(String(describing: type(of: list)).isEmpty)

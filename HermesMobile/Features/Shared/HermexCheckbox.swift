@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Shared checkbox metrics. The visual control stays compact while the interactive
 /// wrapper expands to the platform minimum hit target.
-enum HermesCheckboxMetrics {
+enum HermexCheckboxMetrics {
     static let boxSize: CGFloat = 20
     static let borderWidth: CGFloat = 2
     static let minimumHitTarget: CGFloat = 44
@@ -13,7 +13,7 @@ enum HermesCheckboxMetrics {
 /// Pass an `action` when the checkbox owns interaction. When a containing row
 /// owns the tap, omit `action`; the same visual is rendered as an
 /// accessibility-hidden indicator so controls are never nested.
-struct HermesCheckbox: View {
+struct HermexCheckbox: View {
     let isChecked: Bool
     var isEnabled = true
     var label: String?
@@ -23,10 +23,10 @@ struct HermesCheckbox: View {
         if let action {
             Button(action: action) {
                 content
-                    .frame(minWidth: HermesCheckboxMetrics.minimumHitTarget, minHeight: HermesCheckboxMetrics.minimumHitTarget)
+                    .frame(minWidth: HermexCheckboxMetrics.minimumHitTarget, minHeight: HermexCheckboxMetrics.minimumHitTarget)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.hermesPressOnly(.icon))
+            .buttonStyle(.hermexPressOnly(.icon))
             .disabled(!isEnabled)
             .accessibilityRepresentation {
                 Toggle(
@@ -53,7 +53,7 @@ struct HermesCheckbox: View {
                         RoundedRectangle(cornerRadius: HermesRadius.r4, style: .continuous)
                             .stroke(
                                 isChecked ? Color.primary : Color(.separator),
-                                lineWidth: HermesCheckboxMetrics.borderWidth
+                                lineWidth: HermexCheckboxMetrics.borderWidth
                             )
                     }
 
@@ -63,7 +63,7 @@ struct HermesCheckbox: View {
                         .foregroundStyle(Color(.systemBackground))
                 }
             }
-            .frame(width: HermesCheckboxMetrics.boxSize, height: HermesCheckboxMetrics.boxSize)
+            .frame(width: HermexCheckboxMetrics.boxSize, height: HermexCheckboxMetrics.boxSize)
 
             if let label {
                 Text(label)

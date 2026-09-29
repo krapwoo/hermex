@@ -1,18 +1,18 @@
 import SwiftUI
 
-/// Shared radio metrics, mirroring `HermesCheckboxMetrics`: a compact visual control inside the
+/// Shared radio metrics, mirroring `HermexCheckboxMetrics`: a compact visual control inside the
 /// platform minimum hit target.
-enum HermesRadioMetrics {
-    static let circleSize: CGFloat = HermesCheckboxMetrics.boxSize
+enum HermexRadioMetrics {
+    static let circleSize: CGFloat = HermexCheckboxMetrics.boxSize
     static let innerDotSize: CGFloat = 10
-    static let borderWidth: CGFloat = HermesCheckboxMetrics.borderWidth
-    static let minimumHitTarget: CGFloat = HermesCheckboxMetrics.minimumHitTarget
+    static let borderWidth: CGFloat = HermexCheckboxMetrics.borderWidth
+    static let minimumHitTarget: CGFloat = HermexCheckboxMetrics.minimumHitTarget
 }
 
-/// A reusable one-of-many selection control — the circular counterpart to `HermesCheckbox`'s
+/// A reusable one-of-many selection control — the circular counterpart to `HermexCheckbox`'s
 /// boolean square. Pass an `action` when the radio owns interaction; a containing row that owns the
 /// tap instead gets the same visual as an accessibility-hidden indicator.
-struct HermesRadio: View {
+struct HermexRadio: View {
     let isSelected: Bool
     var isEnabled = true
     var label: String?
@@ -22,10 +22,10 @@ struct HermesRadio: View {
         if let action {
             Button(action: action) {
                 content
-                    .frame(minWidth: HermesRadioMetrics.minimumHitTarget, minHeight: HermesRadioMetrics.minimumHitTarget)
+                    .frame(minWidth: HermexRadioMetrics.minimumHitTarget, minHeight: HermexRadioMetrics.minimumHitTarget)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.hermesPressOnly(.icon))
+            .buttonStyle(.hermexPressOnly(.icon))
             .disabled(!isEnabled)
             .accessibilityLabel(label ?? String(localized: "Option"))
             .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -41,16 +41,16 @@ struct HermesRadio: View {
                 Circle()
                     .stroke(
                         isSelected ? Color.primary : Color(.separator),
-                        lineWidth: HermesRadioMetrics.borderWidth
+                        lineWidth: HermexRadioMetrics.borderWidth
                     )
 
                 if isSelected {
                     Circle()
                         .fill(Color.primary)
-                        .frame(width: HermesRadioMetrics.innerDotSize, height: HermesRadioMetrics.innerDotSize)
+                        .frame(width: HermexRadioMetrics.innerDotSize, height: HermexRadioMetrics.innerDotSize)
                 }
             }
-            .frame(width: HermesRadioMetrics.circleSize, height: HermesRadioMetrics.circleSize)
+            .frame(width: HermexRadioMetrics.circleSize, height: HermexRadioMetrics.circleSize)
 
             if let label {
                 Text(label)

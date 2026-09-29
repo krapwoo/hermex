@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// One option in a `HermesDropdown`.
-struct HermesDropdownOption<Value: Hashable>: Identifiable {
+/// One option in a `HermexDropdown`.
+struct HermexDropdownOption<Value: Hashable>: Identifiable {
     let value: Value
     let label: String
     var id: Value { value }
@@ -16,10 +16,10 @@ struct HermesDropdownOption<Value: Hashable>: Identifiable {
 /// checked-option and disclosure chrome `SettingsView`'s row pickers already use, generalized for
 /// reuse. Never a custom floating sheet: native `Picker`/`Menu` semantics already satisfy label,
 /// value, placeholder, and the checked selected option.
-struct HermesDropdown<Value: Hashable>: View {
+struct HermexDropdown<Value: Hashable>: View {
     let title: String
     @Binding var selection: Value?
-    let options: [HermesDropdownOption<Value>]
+    let options: [HermexDropdownOption<Value>]
     var isEnabled = true
     var placeholder: String = String(localized: "Select")
 

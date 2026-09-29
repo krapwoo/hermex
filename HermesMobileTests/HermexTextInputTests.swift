@@ -2,14 +2,14 @@ import XCTest
 import SwiftUI
 @testable import HermesMobile
 
-/// Contracts for the three thin Hermex-owned Text Input wrappers (`HermesTextInput.swift`):
-/// `HermesTextField` forwards to native `TextField`, `HermesSecureField` forwards to native
-/// `SecureField`, and `HermesNumberField` forwards to native SwiftUI's typed
+/// Contracts for the three thin Hermex-owned Text Input wrappers (`HermexTextInput.swift`):
+/// `HermexTextField` forwards to native `TextField`, `HermexSecureField` forwards to native
+/// `SecureField`, and `HermexNumberField` forwards to native SwiftUI's typed
 /// `TextField(value:format:)` path. None of the three draw their own chrome. A SwiftUI view tree
 /// isn't inspectable at runtime without a rendering harness, so this is a compile contract plus a
 /// source contract that pins the forwarding calls and the absence of custom chrome, validation, or
 /// manual number parsing.
-final class HermesTextInputTests: XCTestCase {
+final class HermexTextInputTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -21,18 +21,18 @@ final class HermesTextInputTests: XCTestCase {
         try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
     }
 
-    private func hermesTextInputSource() throws -> String {
-        try source("HermesMobile/Features/Shared/HermesTextInput.swift")
+    private func hermexTextInputSource() throws -> String {
+        try source("HermesMobile/Features/Shared/HermexTextInput.swift")
     }
 
     // MARK: - Compile contracts
 
     @MainActor
-    func testHermesTextFieldCompilesWithATitleAndATextBinding() {
+    func testHermexTextFieldCompilesWithATitleAndATextBinding() {
         struct Host: View {
             @State var value = ""
             var body: some View {
-                HermesTextField("Name", text: $value)
+                HermexTextField("Name", text: $value)
             }
         }
         let host = Host()
@@ -40,11 +40,11 @@ final class HermesTextInputTests: XCTestCase {
     }
 
     @MainActor
-    func testHermesSecureFieldCompilesWithATitleAndATextBinding() {
+    func testHermexSecureFieldCompilesWithATitleAndATextBinding() {
         struct Host: View {
             @State var value = ""
             var body: some View {
-                HermesSecureField("Password", text: $value)
+                HermexSecureField("Password", text: $value)
             }
         }
         let host = Host()
@@ -52,11 +52,11 @@ final class HermesTextInputTests: XCTestCase {
     }
 
     @MainActor
-    func testHermesNumberFieldCompilesWithACallerSuppliedParseableFormatStyle() {
+    func testHermexNumberFieldCompilesWithACallerSuppliedParseableFormatStyle() {
         struct Host: View {
             @State var value: Int = 0
             var body: some View {
-                HermesNumberField("Quantity", value: $value, format: .number)
+                HermexNumberField("Quantity", value: $value, format: .number)
             }
         }
         let host = Host()
@@ -72,9 +72,9 @@ final class HermesTextInputTests: XCTestCase {
 
             var body: some View {
                 VStack {
-                    HermesTextField("Name", text: $text, prompt: Text("Enter a name"))
-                    HermesSecureField("Password", text: $secret, prompt: Text("Enter a password"))
-                    HermesNumberField("Quantity", value: $number, format: .number, prompt: Text("Enter a quantity"))
+                    HermexTextField("Name", text: $text, prompt: Text("Enter a name"))
+                    HermexSecureField("Password", text: $secret, prompt: Text("Enter a password"))
+                    HermexNumberField("Quantity", value: $number, format: .number, prompt: Text("Enter a quantity"))
                 }
             }
         }
@@ -84,29 +84,29 @@ final class HermesTextInputTests: XCTestCase {
 
     // MARK: - Source contracts: thin forwarding wrappers, no custom chrome
 
-    func testHermesTextFieldForwardsDirectlyToNativeTextField() throws {
-        let src = try hermesTextInputSource()
-        XCTAssertTrue(src.contains("struct HermesTextField"))
+    func testHermexTextFieldForwardsDirectlyToNativeTextField() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("struct HermexTextField"))
         XCTAssertTrue(src.contains("TextField(titleKey, text: $text, prompt: prompt)"), "expected the wrapper to forward to native TextField")
     }
 
-    func testHermesSecureFieldForwardsDirectlyToNativeSecureField() throws {
-        let src = try hermesTextInputSource()
-        XCTAssertTrue(src.contains("struct HermesSecureField"))
+    func testHermexSecureFieldForwardsDirectlyToNativeSecureField() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("struct HermexSecureField"))
         XCTAssertTrue(src.contains("SecureField(titleKey, text: $text, prompt: prompt)"), "expected the wrapper to forward to native SecureField")
     }
 
     func testAllThreeWrappersForwardAnOptionalNativeTextPrompt() throws {
-        let src = try hermesTextInputSource()
+        let src = try hermexTextInputSource()
         XCTAssertTrue(src.contains("prompt: Text? = nil"), "expected callers to be able to omit a native Text prompt")
         XCTAssertTrue(src.contains("TextField(titleKey, text: $text, prompt: prompt)"))
         XCTAssertTrue(src.contains("SecureField(titleKey, text: $text, prompt: prompt)"))
         XCTAssertTrue(src.contains("TextField(titleKey, value: $value, format: format, prompt: prompt)"))
     }
 
-    func testHermesNumberFieldUsesTheTypedFormatStylePathNotAStringBinding() throws {
-        let src = try hermesTextInputSource()
-        XCTAssertTrue(src.contains("struct HermesNumberField"))
+    func testHermexNumberFieldUsesTheTypedFormatStylePathNotAStringBinding() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("struct HermexNumberField"))
         XCTAssertTrue(src.contains("ParseableFormatStyle"), "expected a caller-supplied native parseable format style")
         XCTAssertTrue(
             src.contains("TextField(titleKey, value: $value, format: format, prompt: prompt)"),
@@ -114,15 +114,15 @@ final class HermesTextInputTests: XCTestCase {
         )
     }
 
-    func testHermesNumberFieldAvoidsManualStringParsingOrAForcedNumericKeyboard() throws {
-        let src = try hermesTextInputSource()
+    func testHermexNumberFieldAvoidsManualStringParsingOrAForcedNumericKeyboard() throws {
+        let src = try hermexTextInputSource()
         XCTAssertFalse(src.contains("NumberFormatter()"), "must not manually parse numbers")
         XCTAssertFalse(src.contains("keyboardType(.numberPad)"), "must not force a numeric keyboard")
         XCTAssertFalse(src.contains("keyboardType(.decimalPad)"), "must not force a numeric keyboard")
     }
 
     func testIntroducesNoCustomFieldChromeValidationOrKeyboardPolicy() throws {
-        let src = try hermesTextInputSource()
+        let src = try hermexTextInputSource()
         XCTAssertFalse(src.contains(".border("), "must not draw custom border chrome")
         XCTAssertFalse(src.contains("keyboardType("), "keyboard configuration stays with the caller")
         XCTAssertFalse(src.contains("textContentType("), "content type stays with the caller")
@@ -135,10 +135,10 @@ final class HermesTextInputTests: XCTestCase {
     }
 
     func testDoesNotAddAMultilineComponentOrCollapseIntoOneEnumDrivenComponent() throws {
-        let src = try hermesTextInputSource()
+        let src = try hermexTextInputSource()
         XCTAssertFalse(src.contains("TextEditor("), "must not add a multiline wrapper")
-        XCTAssertFalse(src.contains("struct HermesTextInput:"), "must not collapse into one enum-driven mega component")
-        XCTAssertFalse(src.contains("struct HermesTextInput "), "must not collapse into one enum-driven mega component")
-        XCTAssertFalse(src.contains("enum HermesTextInputVariant"), "must not collapse into one enum-driven mega component")
+        XCTAssertFalse(src.contains("struct HermexTextInput:"), "must not collapse into one enum-driven mega component")
+        XCTAssertFalse(src.contains("struct HermexTextInput "), "must not collapse into one enum-driven mega component")
+        XCTAssertFalse(src.contains("enum HermexTextInputVariant"), "must not collapse into one enum-driven mega component")
     }
 }

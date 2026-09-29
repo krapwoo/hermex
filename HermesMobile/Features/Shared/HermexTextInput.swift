@@ -1,14 +1,14 @@
 import SwiftUI
 
 /// Three thin Hermex-owned entry points over native SwiftUI text entry, each forwarding straight to
-/// its native counterpart: `HermesTextField` to `TextField`, `HermesSecureField` to `SecureField`,
-/// and `HermesNumberField` to the typed `TextField(value:format:)` path. None of the three draw their
+/// its native counterpart: `HermexTextField` to `TextField`, `HermexSecureField` to `SecureField`,
+/// and `HermexNumberField` to the typed `TextField(value:format:)` path. None of the three draw their
 /// own chrome, validation, helper/error text, clear button, or own focus, keyboard, autocorrection,
 /// capitalization, or content-type policy — callers keep those context-specific modifiers exactly as
-/// they would calling the native control directly. `HermesNumberField` takes a caller-supplied
+/// they would calling the native control directly. `HermexNumberField` takes a caller-supplied
 /// `ParseableFormatStyle` rather than a `Binding<String>`, so locale-aware native parsing and
 /// formatting stay intact.
-struct HermesTextField: View {
+struct HermexTextField: View {
     private let titleKey: LocalizedStringKey
     @Binding private var text: String
     private let prompt: Text?
@@ -24,7 +24,7 @@ struct HermesTextField: View {
     }
 }
 
-struct HermesSecureField: View {
+struct HermexSecureField: View {
     private let titleKey: LocalizedStringKey
     @Binding private var text: String
     private let prompt: Text?
@@ -40,7 +40,7 @@ struct HermesSecureField: View {
     }
 }
 
-struct HermesNumberField<Value, Format: ParseableFormatStyle>: View where Format.FormatInput == Value, Format.FormatOutput == String {
+struct HermexNumberField<Value, Format: ParseableFormatStyle>: View where Format.FormatInput == Value, Format.FormatOutput == String {
     private let titleKey: LocalizedStringKey
     @Binding private var value: Value
     private let format: Format

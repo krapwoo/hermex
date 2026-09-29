@@ -28,7 +28,7 @@ A few representative, real Hermex disambiguations — read as examples of how `u
 
 - **Toast vs Banner** — both are transient/persistent status surfaces. Toast is a one-off
   confirmation the caller dismisses after a short interval — it has no internal timer or
-  auto-dismiss (HermesToast.swift), so the caller's own binding is what clears it; Banner stays
+  auto-dismiss (HermexToast.swift), so the caller's own binding is what clears it; Banner stays
   in-flow until the condition it describes resolves. Reaching for the wrong one shows either a
   message that never clears, or a persistent condition that silently disappears.
 - **Checkbox vs Radio vs Segmented Control** — Checkbox records an independent multi-select fact;

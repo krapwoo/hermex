@@ -2,12 +2,12 @@ import XCTest
 import SwiftUI
 @testable import HermesMobile
 
-/// Contracts for the Card family's shared defaults (`HermesCard.swift`): the exact 16-point content
+/// Contracts for the Card family's shared defaults (`HermexCard.swift`): the exact 16-point content
 /// padding available for Card-composing surfaces, the Compact Card surface's compile contract, and
 /// the Request Card surface factory. A SwiftUI view tree isn't inspectable at runtime without a
-/// rendering harness, so the factory's presence is a source contract read from `HermesCard.swift`
+/// rendering harness, so the factory's presence is a source contract read from `HermexCard.swift`
 /// itself; the padding value is a pure contract.
-final class HermesCardTests: XCTestCase {
+final class HermexCardTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -22,8 +22,8 @@ final class HermesCardTests: XCTestCase {
     // MARK: - Pure contract
 
     func testCardContentPaddingIsExactlySixteenPointsOnEveryEdge() {
-        XCTAssertEqual(HermesCardMetrics.contentPadding, HermesSpacing.s16)
-        XCTAssertEqual(HermesCardMetrics.contentPadding, 16)
+        XCTAssertEqual(HermexCardMetrics.contentPadding, HermesSpacing.s16)
+        XCTAssertEqual(HermexCardMetrics.contentPadding, 16)
     }
 
     // MARK: - Compile contract
@@ -38,7 +38,7 @@ final class HermesCardTests: XCTestCase {
     // MARK: - Request Card lives in the Card family
 
     func testRequestCardSurfaceIsDefinedInTheCardFamilyFile() throws {
-        let src = try source("HermesMobile/Features/Shared/HermesCard.swift")
+        let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
         XCTAssertTrue(src.contains("func requestCardSurface(cornerRadius:"))
     }
 }

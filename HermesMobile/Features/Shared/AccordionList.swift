@@ -232,28 +232,28 @@ struct AccordionList<
     private func cardGroup(_ item: Item) -> some View {
         VStack(spacing: HermesSpacing.s0) {
             if separatorStyle.showsOuterDividers {
-                HermesDivider()
+                HermexDivider()
             }
             groupRows(item)
             if separatorStyle.showsOuterDividers {
-                HermesDivider()
+                HermexDivider()
             }
         }
-        .padding(.horizontal, HermesCardMetrics.contentPadding)
-        .hermesCardSurface(.outlined, cornerRadius: HermesRadius.card)
+        .padding(.horizontal, HermexCardMetrics.contentPadding)
+        .hermexCardSurface(.outlined, cornerRadius: HermesRadius.card)
     }
 
     @ViewBuilder
     private func cardlessGroup(_ item: Item, index: Int) -> some View {
         if separatorStyle.showsOuterDividers, index == items.startIndex {
-            HermesDivider()
+            HermexDivider()
         }
 
         groupRows(item)
 
         if separatorStyle.showsOuterDividers
             || (separatorStyle == .betweenRows && index < items.index(before: items.endIndex)) {
-            HermesDivider()
+            HermexDivider()
         }
     }
 
@@ -266,7 +266,7 @@ struct AccordionList<
 
         if expanded {
             if separatorStyle.showsInternalDividers, !rows.isEmpty {
-                HermesDivider()
+                HermexDivider()
             }
 
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
@@ -286,7 +286,7 @@ struct AccordionList<
                     )
 
                 if separatorStyle.showsInternalDividers, index < rows.index(before: rows.endIndex) {
-                    HermesDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)
+                    HermexDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)
                 }
             }
         }
