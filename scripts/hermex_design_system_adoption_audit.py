@@ -58,6 +58,9 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermexSearch.swift",
     "HermesMobile/Features/Shared/HermexTextInput.swift",
     "HermesMobile/Features/Shared/HermexBottomSheet.swift",
+    "HermesMobile/Features/Shared/HermexSameWindowOverlay.swift",
+    "HermesMobile/Features/Shared/HermexOverlayLifecycle.swift",
+    "HermesMobile/Features/Shared/HermexDialog.swift",
     "HermesMobile/Features/Shared/ListItem.swift",
     "HermesMobile/Features/Shared/HermexList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
@@ -113,6 +116,17 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ("HermesMobile/Features/Shared/HermexBottomSheet.swift", [
         r"struct HermexBottomSheet<[^>]*>\s*:\s*View",
         r"enum FooterAxis\s*\{",
+    ]),
+    ("HermesMobile/Features/Shared/HermexSameWindowOverlay.swift", [
+        r"struct HermexSameWindowOverlay<[^>]*>\s*:\s*UIViewControllerRepresentable",
+    ]),
+    ("HermesMobile/Features/Shared/HermexOverlayLifecycle.swift", [
+        r"struct HermexOverlayLifecycle",
+        r"struct HermexOverlayActionContext",
+    ]),
+    ("HermesMobile/Features/Shared/HermexDialog.swift", [
+        r"func hermexDialog[<(]",
+        r"enum HermexDialogFooterAxis",
     ]),
 ]
 

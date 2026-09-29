@@ -49,6 +49,16 @@ A few representative, real Hermex disambiguations — read as examples of how `u
 - **List / ListItem vs Hermes Card** — a homogeneous set of peer rows (settings, search results,
   sessions) is List/ListItem, which supplies the shared surface and dividers; a standalone
   self-contained unit sitting alongside differently-shaped content is a Card.
+- **Dialog vs Bottom Sheet** — both are Hermex-owned custom-presented surfaces, but for opposite
+  jobs. Dialog (`HermexDialog`) is an always-centered, fully custom modal for a short, focused
+  interruption or confirmation — it never scrolls, never accepts text input, and its dimmed
+  backdrop never dismisses it. The component always supplies the standard close button and
+  accessibility Escape; the caller supplies the footer actions. Bottom Sheet (`HermexBottomSheet`) is content supplied to native
+  `.sheet` for forms, editable content, or a longer workflow that may need to scroll — the caller
+  keeps owning `.sheet` itself, including its dismiss policy. Reaching for Dialog with form fields or
+  long content forces content past the point Dialog is contracted to stay short; reaching for Bottom
+  Sheet for a one- or two-action confirmation loses Dialog's forced-attention, non-dismissible
+  backdrop.
 - **Native iOS patterns (Search, Text Input) vs a Hermex-owned wrapper** — Hermex intentionally
   keeps some surfaces on the platform primitive (`.searchable`, `TextField`/`SecureField`/
   `TextEditor`) rather than a custom component. Their `adoptionStatus` is `native-platform`, not

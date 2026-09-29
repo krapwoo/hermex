@@ -2428,6 +2428,73 @@ test('Issue #607: Bottom Sheet becomes a Hermex-owned Components entry (HermexBo
   assert.doesNotMatch(body, /DragGesture|Animated\.(Value|timing)/, 'must not invent custom drag/animated behavior in the reconstruction');
 });
 
+// Issue #607 (Dialog family slice): a Hermex-owned Components entry for HermexDialog — a fully
+// custom, always-centered modal mounted through the shared same-window overlay host, never a
+// native `.alert`/`.sheet`/`fullScreenCover`/`Menu`/`.popover`. Non-dismissible dimmed backdrop, an
+// always-present standard close button, a generic header/body, and a caller-chosen horizontal or
+// vertical footer. Foundation-only: no production confirmation/alert adopts it in this slice. The
+// visible sidebar/title label stays the plain 'Dialog' even though the internal id is namespaced
+// 'Hermes Dialog' to avoid colliding with the retained template catalog's own bare 'Dialog' id.
+test('Issue #607: Dialog becomes a Hermex-owned Components entry (HermexDialog mounted through the shared same-window overlay host, non-dismissible backdrop, always-present close button, no scrolling or text input), truthfully claiming zero production adoption and distinguishing itself from Bottom Sheet', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /\| 'Hermes Dialog'/, "expected 'Hermes Dialog' in the HermesSectionId union");
+
+  const section = extractHermesSection(sectionsSrc, 'Hermes Dialog');
+  assert.match(section, /displayName:\s*'Dialog'/, "expected the visible label to stay the plain 'Dialog', not the namespaced id");
+  assert.match(section, /hermesReference:\s*\{/);
+  assert.match(section, /HermexDialog/, 'expected the entry to name the Hermex-owned HermexDialog component');
+  assert.match(section, /hermexDialog\(isPresented:footerAxis:header:content:footer:\)|\.hermexDialog\(/, 'expected the entry to name the hermexDialog(...) presentation modifier');
+  assert.match(section, /same-window overlay host|HermexSameWindowOverlay/i, 'expected the entry to document the shared same-window overlay host');
+  assert.match(section, /close button/i, 'expected the entry to document the always-present standard close button');
+  assert.match(section, /never dismiss|does not dismiss|dimmed backdrop never dismisses/i, 'expected the entry to state the backdrop never dismisses Dialog');
+  assert.match(section, /never scrolls|no internal scrolling|does not scroll/i, 'expected the entry to state Dialog never scrolls');
+  assert.match(section, /text input|text field/i, 'expected the entry to state Dialog excludes text input');
+  assert.match(section, /footerAxis/, 'expected the entry to document the footerAxis prop');
+  assert.match(section, /horizontal/i);
+  assert.match(section, /vertical/i);
+  assert.match(section, /Escape/i, 'expected the entry to document accessibility Escape');
+  assert.match(section, /heading/i, 'expected the entry to document heading-first focus/reading order');
+  assert.match(section, /focus/i);
+  assert.match(section, /Reduce Motion/, 'expected the entry to document the Reduce Motion fallback');
+
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /Bottom Sheet/, 'expected alternatives to name Bottom Sheet for forms/long content');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.length > 0, 'expected at least one structured alternative');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'foundation-available');
+  assert.match(section, /foundation-available on this branch/i, 'expected the adoptionStatus detail to state foundation-available on this branch');
+  assert.match(section, /zero production screens use it/i, 'expected the adoptionStatus detail to truthfully report zero production adoption');
+  assert.match(section, /separate adoption issue/i, 'expected migration to be scoped to a separate adoption issue');
+  assert.doesNotMatch(section, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Dialog must not claim production adoption');
+
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexDialog\.swift/, 'expected implementationNotes.sourcePaths to cite HermexDialog.swift');
+  assert.match(section, /generic template catalog/i, 'expected the entry to name the generic template catalog it is distinct from');
+  assert.match(section, /own Dialog/i, 'expected the entry to explicitly disclaim the generic template\'s own Dialog component');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(componentIds.includes('Hermes Dialog'), 'expected Hermes Dialog to be registered in the Components — Hermex nav group');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(section, /<DialogFamilyGallery/, 'expected Dialog to render its own family gallery');
+  assert.match(previewsSrc, /export function DialogFamilyGallery/);
+  assert.match(previewsSrc, /function DialogSpecimen/, 'expected a shared specimen helper for the gallery\'s demonstrated combinations');
+  const specimenBody = extractFunctionBody(previewsSrc, 'DialogSpecimen');
+  const galleryBody = extractFunctionBody(previewsSrc, 'DialogFamilyGallery');
+  const body = specimenBody + galleryBody;
+  assert.match(galleryBody, /footerAxis="horizontal"/, 'expected the gallery to demonstrate a horizontal footer axis');
+  assert.match(galleryBody, /footerAxis="vertical"/, 'expected the gallery to demonstrate a vertical footer axis');
+  assert.match(body, /destructive/i, 'expected the gallery to demonstrate a destructive action');
+  assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/Dialog'/, 'must not import a generic template Dialog component');
+  assert.doesNotMatch(body, /<Dialog[\s>]/, 'must not compose a generic template Dialog component');
+  assert.doesNotMatch(body, /onPress=\{\(\) => \{\s*\/\/ dismiss/i, 'the backdrop specimen must not simulate background-tap dismissal');
+});
+
 // Search becomes a Hermex-owned shared foundation API (`.hermexSearch`, a thin wrapper over native
 // `.searchable`) while production screens stay on their existing direct `.searchable` call sites —
 // migration is a separate issue. This is the ownership-flip transaction: Search moves from Native
@@ -3366,7 +3433,7 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
     'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
     'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-    'Bottom Sheet',
+    'Bottom Sheet', 'Hermes Dialog',
   ]);
 });
 
@@ -3415,7 +3482,7 @@ test('the Components — Hermex group\'s computed render order is actually alpha
   const computedOrder = ids.slice().sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
 
   assert.deepEqual(computedOrder.map(labelFor), [
-    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Disclosure Row', 'Dropdown',
+    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Dialog', 'Disclosure Row', 'Dropdown',
     'Inline Reference Link', 'List / ListItem', 'Radio', 'Row Divider', 'Search',
     'Segmented Control', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');

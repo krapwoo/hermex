@@ -175,6 +175,30 @@ const preview = StyleSheet.create({
   bottomSheetFooterVertical: { flexDirection: 'column' },
   bottomSheetFooterButton: { flex: 1 },
   bottomSheetFooterButtonFull: { width: '100%' },
+
+  // Dialog — a static dimmed backdrop behind a centered card, shown inline for inspection (same
+  // reasoning as the Bottom Sheet shell above): production never renders this as literal RN, and
+  // the real backdrop never dismisses the dialog either way.
+  dialogSpecimen: { width: 300, gap: 8 },
+  dialogBackdrop: {
+    width: '100%', minHeight: 220, borderRadius: 20, overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: 20,
+  },
+  dialogCard: {
+    width: '100%', borderRadius: 20, backgroundColor: '#ffffff', padding: 20, gap: 12,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+  },
+  dialogHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  dialogHeading: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1c1c1e' },
+  dialogCloseButton: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.08)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  dialogBodyText: { fontSize: 13, color: '#3a3a3c', lineHeight: 18 },
+  dialogFooter: { flexDirection: 'row', gap: 8 },
+  dialogFooterVertical: { flexDirection: 'column' },
+  dialogFooterButton: { flex: 1 },
+  dialogFooterButtonFull: { width: '100%' },
   segmentedFixedTrack: {
     width: 280, flexDirection: 'row', gap: 4, paddingHorizontal: 4,
     borderRadius: 999, backgroundColor: 'rgba(120,120,128,0.16)',
@@ -724,6 +748,84 @@ export function HermexBottomSheetFamilyGallery() {
         reconstruction shows the sheet surface inline for inspection rather than as a real
         overlay/backdrop, since production's own sheet always presents through `.sheet`, never a
         custom transition this component owns.
+      </Text>
+    </View>
+  );
+}
+
+// ─── Dialog — HermexDialog: non-dismissible dimmed backdrop + centered card (standard close
+// button, generic header/body, caller-oriented horizontal/vertical footer), mounted through the
+// shared same-window overlay host rather than any native `.alert`/`.sheet` ──────────────────────
+function DialogSpecimen({
+  label,
+  heading,
+  body,
+  footerAxis,
+  footer,
+}: {
+  label: string;
+  heading: string;
+  body: string;
+  footerAxis: 'horizontal' | 'vertical';
+  footer: ReactNode;
+}) {
+  return (
+    <View style={preview.dialogSpecimen}>
+      <Text style={preview.label}>{label}</Text>
+      <View style={preview.dialogBackdrop}>
+        <View style={preview.dialogCard}>
+          <View style={preview.dialogHeaderRow}>
+            <Text style={preview.dialogHeading}>{heading}</Text>
+            <View style={preview.dialogCloseButton}>
+              <Icon name="clear" size={16} color="#1c1c1e" />
+            </View>
+          </View>
+          <Text style={preview.dialogBodyText}>{body}</Text>
+          <View style={[preview.dialogFooter, footerAxis === 'vertical' && preview.dialogFooterVertical]}>
+            {footer}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function DialogFamilyGallery() {
+  return (
+    <View style={preview.stack}>
+      <View style={preview.row}>
+        <DialogSpecimen
+          label="Short confirmation — horizontal actions"
+          heading="Delete this draft?"
+          body="This removes the unsent draft from this device. It cannot be undone."
+          footerAxis="horizontal"
+          footer={
+            <>
+              <Button variant="secondary" label="Cancel" onPress={() => {}} style={preview.dialogFooterButton} />
+              <Button variant="destructive" label="Delete" onPress={() => {}} style={preview.dialogFooterButton} />
+            </>
+          }
+        />
+        <DialogSpecimen
+          label="Explanatory dialog — vertical actions"
+          heading="Turn on notifications?"
+          body="Hermex can notify you when a session needs your attention, even while the app is closed."
+          footerAxis="vertical"
+          footer={
+            <>
+              <Button variant="primary" label="Turn On" onPress={() => {}} style={preview.dialogFooterButtonFull} />
+              <Button variant="tertiary" label="Not Now" onPress={() => {}} style={preview.dialogFooterButtonFull} />
+            </>
+          }
+        />
+      </View>
+      <Text style={preview.caption}>
+        `HermexDialog` mounts through the shared same-window overlay host, never `.alert`, `.sheet`,
+        or another native presentation wrapper — shown here inline, over a static dimmed backdrop,
+        for inspection rather than as a real floating overlay. The standard close button (top right)
+        is always present alongside the caller's own header; the dimmed backdrop never dismisses the
+        dialog, and the footer's horizontal (left) or vertical (right) layout is the caller's own
+        explicit choice, never inferred from action count or width.
       </Text>
     </View>
   );

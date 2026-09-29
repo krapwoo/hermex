@@ -289,6 +289,10 @@
 		8102DD9283BB40E09A97B002 /* HermexDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2696A8C321643D18191FA61 /* HermexDropdown.swift */; };
 		99E0617B41FD4C80A0401B91 /* HermexSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC19C6015215428687DFABC9 /* HermexSearch.swift */; };
 		5DE792B0525A4B738798EA07 /* HermexTextInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6849C0CA584B51926EB15F /* HermexTextInput.swift */; };
+		144453C5678541B891208950 /* HermexOverlayLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */; };
+		2F5811257A704B3CAEFE479D /* HermexSameWindowOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3DF04E53AA4AA2A7192929 /* HermexSameWindowOverlay.swift */; };
+		5819A9C383D948B6A961B356 /* HermexDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D564A8906C54A93A1C7ABCD /* HermexDialog.swift */; };
+		6A09DF848F9B48DF9A9DF427 /* HermexOverlayLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC04293D3B48D89AA7B5EC /* HermexOverlayLab.swift */; };
 		EDFD768BA5834DE583299C90 /* HermexBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F5456AF298B41FAB9FFFC16 /* HermexBottomSheet.swift */; };
 		1C40C77044CE497793FCB1FA /* HermexList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 971BA849BAA64C368C754FE5 /* HermexList.swift */; };
 		FC7A279644E64A94B1196804 /* HermexRadio.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A35B8D34824068B7A5CE24 /* HermexRadio.swift */; };
@@ -330,6 +334,9 @@
 		0DC93CD4B29E4F4E8E25842F /* HermesSpacingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */; };
 		41A99808A608461EA4533C10 /* HermexToastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25CA8D3960840488BF70F74 /* HermexToastTests.swift */; };
 		F31D66837D46410BA1B52AC7 /* HermexTooltipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5409012422814D289BDC6ABE /* HermexTooltipTests.swift */; };
+		B22BB5492D7F4A7299601289 /* HermexOverlayLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */; };
+		D7C2EF8B1DEF4A8E94B4125B /* HermexSameWindowOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D94129A3F987431A9AD9DB08 /* HermexSameWindowOverlayTests.swift */; };
+		E0FBADE242A2483A909C80DA /* HermexDialogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63ADC1780994839B8C0939B /* HermexDialogTests.swift */; };
 		8BA357933F4E44DDAC28E399 /* ListItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95BDAAA0DBC438097C926F2 /* ListItemTests.swift */; };
 		A607AC000000000000000004 /* AccordionListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A607AC000000000000000003 /* AccordionListTests.swift */; };
 		60A3E471D72A4B8FB3FFA037 /* SkeletonPlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70840C945A1F416785F26738 /* SkeletonPlaceholderTests.swift */; };
@@ -926,6 +933,10 @@
 		F2696A8C321643D18191FA61 /* HermexDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDropdown.swift; sourceTree = "<group>"; };
 		EC19C6015215428687DFABC9 /* HermexSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSearch.swift; sourceTree = "<group>"; };
 		1A6849C0CA584B51926EB15F /* HermexTextInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexTextInput.swift; sourceTree = "<group>"; };
+		1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexOverlayLifecycle.swift; sourceTree = "<group>"; };
+		4C3DF04E53AA4AA2A7192929 /* HermexSameWindowOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSameWindowOverlay.swift; sourceTree = "<group>"; };
+		5D564A8906C54A93A1C7ABCD /* HermexDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDialog.swift; sourceTree = "<group>"; };
+		A6EC04293D3B48D89AA7B5EC /* HermexOverlayLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexOverlayLab.swift; sourceTree = "<group>"; };
 		0F5456AF298B41FAB9FFFC16 /* HermexBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexBottomSheet.swift; sourceTree = "<group>"; };
 		971BA849BAA64C368C754FE5 /* HermexList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexList.swift; sourceTree = "<group>"; };
 		C7A35B8D34824068B7A5CE24 /* HermexRadio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexRadio.swift; sourceTree = "<group>"; };
@@ -967,6 +978,9 @@
 		CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesSpacingTests.swift; sourceTree = "<group>"; };
 		F25CA8D3960840488BF70F74 /* HermexToastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexToastTests.swift; sourceTree = "<group>"; };
 		5409012422814D289BDC6ABE /* HermexTooltipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexTooltipTests.swift; sourceTree = "<group>"; };
+		BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexOverlayLifecycleTests.swift; sourceTree = "<group>"; };
+		D94129A3F987431A9AD9DB08 /* HermexSameWindowOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSameWindowOverlayTests.swift; sourceTree = "<group>"; };
+		F63ADC1780994839B8C0939B /* HermexDialogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDialogTests.swift; sourceTree = "<group>"; };
 		B95BDAAA0DBC438097C926F2 /* ListItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemTests.swift; sourceTree = "<group>"; };
 		A607AC000000000000000003 /* AccordionListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccordionListTests.swift; sourceTree = "<group>"; };
 		70840C945A1F416785F26738 /* SkeletonPlaceholderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholderTests.swift; sourceTree = "<group>"; };
@@ -1554,6 +1568,9 @@
 				CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */,
 				F25CA8D3960840488BF70F74 /* HermexToastTests.swift */,
 				5409012422814D289BDC6ABE /* HermexTooltipTests.swift */,
+				BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */,
+				D94129A3F987431A9AD9DB08 /* HermexSameWindowOverlayTests.swift */,
+				F63ADC1780994839B8C0939B /* HermexDialogTests.swift */,
 				B95BDAAA0DBC438097C926F2 /* ListItemTests.swift */,
 				A607AC000000000000000003 /* AccordionListTests.swift */,
 				70840C945A1F416785F26738 /* SkeletonPlaceholderTests.swift */,
@@ -1779,6 +1796,10 @@
 				F2696A8C321643D18191FA61 /* HermexDropdown.swift */,
 				EC19C6015215428687DFABC9 /* HermexSearch.swift */,
 				1A6849C0CA584B51926EB15F /* HermexTextInput.swift */,
+				1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */,
+				4C3DF04E53AA4AA2A7192929 /* HermexSameWindowOverlay.swift */,
+				5D564A8906C54A93A1C7ABCD /* HermexDialog.swift */,
+				A6EC04293D3B48D89AA7B5EC /* HermexOverlayLab.swift */,
 				971BA849BAA64C368C754FE5 /* HermexList.swift */,
 				0F5456AF298B41FAB9FFFC16 /* HermexBottomSheet.swift */,
 				C7A35B8D34824068B7A5CE24 /* HermexRadio.swift */,
@@ -2725,6 +2746,10 @@
 				8102DD9283BB40E09A97B002 /* HermexDropdown.swift in Sources */,
 				99E0617B41FD4C80A0401B91 /* HermexSearch.swift in Sources */,
 				5DE792B0525A4B738798EA07 /* HermexTextInput.swift in Sources */,
+				144453C5678541B891208950 /* HermexOverlayLifecycle.swift in Sources */,
+				2F5811257A704B3CAEFE479D /* HermexSameWindowOverlay.swift in Sources */,
+				5819A9C383D948B6A961B356 /* HermexDialog.swift in Sources */,
+				6A09DF848F9B48DF9A9DF427 /* HermexOverlayLab.swift in Sources */,
 				1C40C77044CE497793FCB1FA /* HermexList.swift in Sources */,
 				EDFD768BA5834DE583299C90 /* HermexBottomSheet.swift in Sources */,
 				FC7A279644E64A94B1196804 /* HermexRadio.swift in Sources */,
@@ -2783,6 +2808,9 @@
 				0DC93CD4B29E4F4E8E25842F /* HermesSpacingTests.swift in Sources */,
 				41A99808A608461EA4533C10 /* HermexToastTests.swift in Sources */,
 				F31D66837D46410BA1B52AC7 /* HermexTooltipTests.swift in Sources */,
+				B22BB5492D7F4A7299601289 /* HermexOverlayLifecycleTests.swift in Sources */,
+				D7C2EF8B1DEF4A8E94B4125B /* HermexSameWindowOverlayTests.swift in Sources */,
+				E0FBADE242A2483A909C80DA /* HermexDialogTests.swift in Sources */,
 				8BA357933F4E44DDAC28E399 /* ListItemTests.swift in Sources */,
 				A607AC000000000000000004 /* AccordionListTests.swift in Sources */,
 				60A3E471D72A4B8FB3FFA037 /* SkeletonPlaceholderTests.swift in Sources */,

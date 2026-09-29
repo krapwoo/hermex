@@ -111,6 +111,21 @@ SIMPLE_SNIPPETS = {
         "    }\n"
         "}"
     ),
+    "HermesMobile/Features/Shared/HermexSameWindowOverlay.swift": (
+        "struct HermexSameWindowOverlay<Overlay: View>: UIViewControllerRepresentable {}"
+    ),
+    "HermesMobile/Features/Shared/HermexOverlayLifecycle.swift": (
+        "struct HermexOverlayLifecycle {}\nstruct HermexOverlayActionContext {}"
+    ),
+    "HermesMobile/Features/Shared/HermexDialog.swift": (
+        "enum HermexDialogFooterAxis {\n"
+        "    case horizontal\n"
+        "    case vertical\n"
+        "}\n"
+        "extension View {\n"
+        "    func hermexDialog() -> some View { self }\n"
+        "}"
+    ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
     "HermesMobile/Config/HermesMotion.swift": "enum HermesMotion {}",
     "HermesMobile/Config/HermesRadius.swift": "enum HermesRadius {}",
@@ -265,6 +280,74 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         self.assertTrue(
             any(
                 "missing load-bearing snippet" in f and "HermexBottomSheet.swift" in f and "FooterAxis" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_missing_dialog_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/HermexDialog.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexDialog.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_drifted_dialog_declaration_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexDialog.swift",
+            "// HermexDialog renamed away, no hermexDialog( either",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexDialog.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_dialog_missing_footer_axis_enum_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexDialog.swift",
+            "extension View {\n    func hermexDialog() -> some View { self }\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexDialog.swift" in f and "HermexDialogFooterAxis" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_missing_same_window_overlay_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/HermexSameWindowOverlay.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexSameWindowOverlay.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_missing_overlay_lifecycle_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/HermexOverlayLifecycle.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexOverlayLifecycle.swift" in f
                 for f in failures
             ),
             failures,

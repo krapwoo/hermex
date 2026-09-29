@@ -43,6 +43,7 @@ import {
   ButtonDecisionAndTactilePreview,
   CheckboxFamilyGallery,
   ComposerPatternPreview,
+  DialogFamilyGallery,
   DisclosureLogRowPreview,
   DropdownFamilyGallery,
   HermexBottomSheetFamilyGallery,
@@ -84,6 +85,7 @@ export type HermesSectionId =
   | 'Search'
   | 'Text Input'
   | 'Bottom Sheet'
+  | 'Hermes Dialog'
   | 'Segmented Control'
   | 'Buttons'
   | 'Hermes Checkbox'
@@ -1437,6 +1439,51 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     },
   },
   {
+    id: 'Hermes Dialog',
+    displayName: 'Dialog',
+    description:
+      'A fully custom, always-centered modal — `HermexDialog` (HermexDialog.swift), presented via the `.hermexDialog(isPresented:footerAxis:header:content:footer:)` view modifier — mounted through the shared same-window overlay host rather than any native `.alert`, `.sheet`, `fullScreenCover`, or other presentation wrapper. Hermex owns the dimmed backdrop, centered card geometry, focus, accessibility containment, motion, and exactly-once dismissal/action completion. The dimmed backdrop never dismisses it; a standard close button is always present, alongside a caller-supplied header, short body content, and a footer the caller lays out horizontally or vertically.',
+    whenToUse:
+      'Reach for Dialog for a short, focused interruption or confirmation that needs the user\'s full attention — a destructive confirmation, or a brief explanation with one or two actions. Never use it for forms, text input, long content, or a browsable flow: it never scrolls and never accepts text input by design. Background taps never dismiss it, unlike a native sheet or popover; the component always supplies the standard close button and accessibility Escape, while the caller supplies the footer actions. Forms, editable content, and longer content belong in Bottom Sheet instead.',
+    props: [
+      { name: 'isPresented', type: 'Binding<Bool>', required: true, desc: 'Caller-owned presentation state. The modifier writes it back to false only once exit visually completes, never at exit start.' },
+      { name: 'footerAxis', type: '.horizontal | .vertical', default: '.horizontal', desc: 'Arranges the footer slot\'s direct children side by side or stacked — chosen by the caller, never inferred from action count or width.' },
+      { name: 'header', type: '@ViewBuilder', required: true, desc: 'Leading header content read first by VoiceOver; the standard close button always sits at the row\'s trailing edge alongside it.' },
+      { name: 'content', type: '@ViewBuilder', required: true, desc: 'Short body content. No internal scrolling and no text fields/forms — the component never silently becomes a scrolling dialog.' },
+      { name: 'footer', type: '(HermexOverlayActionContext) -> View', required: true, desc: 'Receives an action context whose dismiss()/dismissAfter(_:) request dismissal; dismissAfter defers exactly one action until after exit completes.' },
+    ],
+    a11y: 'The same-window host isolates the underlying screen from touch and accessibility while presented. Initial VoiceOver focus lands on the heading; reading order is heading, body, footer, then close, even though close sits visually in the header row. The close button keeps a stable "Close dialog" accessible name and the project-standard touch target. Accessibility Escape and the close button share one dismissal path, and focus returns to the presenting trigger once the dialog closes.',
+    render: () => <DialogFamilyGallery />,
+    hermesReference: {
+      useWhen: 'Use Dialog for a short, high-attention modal decision or piece of information — a destructive confirmation or a brief explanation with one or two actions the user must resolve before continuing.',
+      avoidWhen: 'Avoid it for forms, text input, long content, anchored contextual actions, or ordinary navigation. Avoid expecting a background tap to dismiss it — that never happens by design; the component supplies the close button and Escape, while the caller supplies footer actions appropriate to the decision.',
+      alternatives: [
+        { name: 'Bottom Sheet', useWhen: 'For forms, editable content, or a longer mobile workflow that needs scrolling — Dialog never scrolls and never accepts text input.' },
+        { name: 'Native NavigationLink / .navigationDestination (production)', useWhen: 'For a persistent, back-navigable screen instead of a transient, full-attention interruption.' },
+      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'HermexDialog exists (HermexDialog.swift) and is foundation-available on this branch; zero production screens use it. Every existing production confirmation/alert keeps its own current presentation unchanged — migrating one onto Dialog is deferred to a separate adoption issue.',
+      },
+      useSummary: 'A new, foundation-only fully custom modal; no production screen composes it yet in this branch.',
+      implementationNotes: {
+        status: FOUNDATION_ONLY_STATUS,
+        sourcePaths: [
+          'HermesMobile/Features/Shared/HermexDialog.swift',
+          'HermesMobile/Features/Shared/HermexSameWindowOverlay.swift',
+          'HermesMobile/Features/Shared/HermexOverlayLifecycle.swift',
+        ],
+        notes: [
+          'Mounted through HermexSameWindowOverlay (.root bounds) — the same reusable same-window UIHostingController host the attachment picker\'s HermexKeyboardRetainingOverlay now wraps (.aboveKeyboard bounds) — rather than any native .alert, .sheet, fullScreenCover, Menu, or .popover.',
+          'Exactly-once dismissal and deferred-action completion are owned by a small generation-based HermexOverlayLifecycle state machine, shared with the same-window host mechanism and intended for reuse by the next approved family in this same slice (Popover Menu, not yet part of this branch).',
+          'Entry/exit motion reuses the existing HermesMotion.Bundle.overlayEnter/overlayExit bundles (scrim fade plus centered 0.95→1 scale and opacity); Reduce Motion removes the scale and keeps an opacity-only state change. Reduce Transparency falls back through the existing hermexCardSurface(.glass) solid-card treatment.',
+          'This reconstruction hand-builds the header/close/body/footer anatomy from this catalog\'s own real Card/Button primitives; it does not reuse the generic template catalog\'s own Dialog, whose background-tap-dismisses behavior would contradict this component\'s non-dismissible backdrop.',
+          'Report only: no production confirmation/alert call site imports or composes HermexDialog.swift in this branch; every existing one keeps its own current presentation unchanged. Migrating one onto Dialog is scoped to a separate adoption issue, not this slice.',
+        ],
+      },
+    },
+  },
+  {
     id: 'Search',
     description:
       'A thin Hermex-owned wrapper — `.hermexSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
@@ -2266,7 +2313,7 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
       'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-      'Bottom Sheet',
+      'Bottom Sheet', 'Hermes Dialog',
     ],
   },
   {
