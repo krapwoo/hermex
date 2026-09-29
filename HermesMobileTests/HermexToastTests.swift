@@ -81,4 +81,43 @@ final class HermexToastTests: XCTestCase {
         XCTAssertFalse(src.contains("DispatchQueue.main.asyncAfter"))
         XCTAssertTrue(src.contains("@Binding var isPresented: Bool"))
     }
+
+    // MARK: - Issue #DSF-03: XS neutral trailing action, not a status-tinted plain Button
+
+    /// Isolates the `if let action { ... }` block's own source so an assertion about the trailing
+    /// action's chrome never accidentally matches the icon's own, still-status-tinted, foreground
+    /// modifier a few lines above it.
+    private func trailingActionSource() throws -> String {
+        let src = try source("HermesMobile/Features/Shared/HermexToast.swift")
+        let after = try XCTUnwrap(src.components(separatedBy: "if let action {").last,
+                                   "expected an `if let action` trailing-action block")
+        return try XCTUnwrap(after.components(separatedBy: "\n            }").first,
+                              "expected the action block to close before the closing HStack brace")
+    }
+
+    func testTrailingActionComposesAnExtraSmallNeutralHermexButtonRatherThanAStatusTintedPlainButton() throws {
+        let block = try trailingActionSource()
+        XCTAssertTrue(block.contains("HermexButton("), "expected the trailing action to compose the shared HermexButton")
+        XCTAssertTrue(block.contains("size: .extraSmall"), "expected the trailing action to use HermexButtonSize.extraSmall")
+        XCTAssertTrue(block.contains("emphasis: .neutral"), "expected the trailing action to use neutral emphasis")
+        XCTAssertFalse(block.contains(".buttonStyle(.plain)"), "the trailing action must no longer be a plain Button")
+        XCTAssertFalse(block.contains("semantic.tint"),
+                       "the trailing action must not carry the toast's status tint — status tint stays on status content (the icon), not the neutral action")
+    }
+
+    func testStatusIconKeepsItsSemanticTintAfterTheTrailingActionBecomesNeutral() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexToast.swift")
+        let iconBlock = try XCTUnwrap(src.components(separatedBy: "if let icon {").last?
+            .components(separatedBy: "\n\n").first,
+            "expected an `if let icon` block")
+        XCTAssertTrue(iconBlock.contains("semantic.tint"), "the icon must keep the toast's semantic tint even though the action loses it")
+    }
+
+    func testOverlayLabIncludesToastFollowupFixturesWithAndWithoutAnAction() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+        XCTAssertTrue(src.contains("private struct HermexOverlayLabToastFollowup"))
+        XCTAssertTrue(src.contains("HermexToast(.success"))
+        XCTAssertTrue(src.contains("action: .init(title: \"Undo\""))
+        XCTAssertTrue(src.contains("overlay-lab-followup-toast"))
+    }
 }

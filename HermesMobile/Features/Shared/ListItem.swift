@@ -18,6 +18,15 @@ struct ListItemState: Equatable {
     var isDisabled = false
 }
 
+/// `ListItem`'s selected-row visual chrome. `.standard` is the original, still-default behavior:
+/// the filled selection pill plus the built-in trailing checkmark. `.indicatorOnly` is additive —
+/// Selection Sheet opts into it so a row-owned Radio/Checkbox visual is the row's only selection
+/// mark, while `state.isSelected`'s accessibility trait stays identical under both modes.
+enum ListItemSelectionChrome {
+    case standard
+    case indicatorOnly
+}
+
 extension View {
     /// The selected-row treatment shared by every `ListItem`: a filled `Color.primary` pill with the
     /// inverted foreground that fill needs. The caller owns the row's frame, because the pill can
@@ -49,6 +58,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
     var accessibilityLabel: Text?
     var accessibilityValue: Text?
     var state = ListItemState()
+    var selectionChrome: ListItemSelectionChrome = .standard
     /// Omit for a plain native `Button`. Set it when a caller needs an explicit tap haptic while
     /// retaining `ListItem`'s shared row anatomy.
     var hapticFeedbackStyle: HapticButtonFeedbackStyle?
@@ -77,7 +87,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
 
             trailingAccessory()
         }
-        .listItemSelectionPill(isSelected: state.isSelected)
+        .listItemSelectionPill(isSelected: state.isSelected && selectionChrome == .standard)
     }
 
     @ViewBuilder
@@ -124,7 +134,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
             ProgressView()
                 .controlSize(.small)
                 .tint(state.isSelected ? Color(.systemBackground) : Color.primary)
-        } else if state.isSelected {
+        } else if state.isSelected && selectionChrome == .standard {
             Image(systemName: "checkmark")
                 .font(.body.weight(.semibold))
                 .accessibilityHidden(true)
@@ -138,7 +148,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
     }
 
     private var subtitleForeground: Color {
-        state.isSelected ? Color(.systemBackground).opacity(0.7) : Color.secondary
+        state.isSelected && selectionChrome == .standard ? Color(.systemBackground).opacity(0.7) : Color.secondary
     }
 }
 
@@ -151,6 +161,7 @@ extension ListItem where Leading == EmptyView {
         accessibilityLabel: Text? = nil,
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
+        selectionChrome: ListItemSelectionChrome = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -166,6 +177,7 @@ extension ListItem where Leading == EmptyView {
             accessibilityLabel: accessibilityLabel,
             accessibilityValue: accessibilityValue,
             state: state,
+            selectionChrome: selectionChrome,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -186,6 +198,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
         accessibilityLabel: Text? = nil,
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
+        selectionChrome: ListItemSelectionChrome = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -200,6 +213,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
             accessibilityLabel: accessibilityLabel,
             accessibilityValue: accessibilityValue,
             state: state,
+            selectionChrome: selectionChrome,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -220,6 +234,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
         accessibilityLabel: Text? = nil,
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
+        selectionChrome: ListItemSelectionChrome = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -233,6 +248,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
             accessibilityLabel: accessibilityLabel,
             accessibilityValue: accessibilityValue,
             state: state,
+            selectionChrome: selectionChrome,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -253,6 +269,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
         accessibilityLabel: Text? = nil,
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
+        selectionChrome: ListItemSelectionChrome = .standard,
         hapticFeedbackStyle: HapticButtonFeedbackStyle? = nil,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
@@ -268,6 +285,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
             accessibilityLabel: accessibilityLabel,
             accessibilityValue: accessibilityValue,
             state: state,
+            selectionChrome: selectionChrome,
             hapticFeedbackStyle: hapticFeedbackStyle,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
@@ -289,6 +307,7 @@ extension ListItem where Trailing == EmptyView {
         accessibilityLabel: Text? = nil,
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
+        selectionChrome: ListItemSelectionChrome = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -304,6 +323,7 @@ extension ListItem where Trailing == EmptyView {
             accessibilityLabel: accessibilityLabel,
             accessibilityValue: accessibilityValue,
             state: state,
+            selectionChrome: selectionChrome,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,

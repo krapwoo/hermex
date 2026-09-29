@@ -45,7 +45,6 @@ import {
   ComposerPatternPreview,
   DialogFamilyGallery,
   DisclosureLogRowPreview,
-  DropdownFamilyGallery,
   HermexBottomSheetFamilyGallery,
   HermexDividerPreview,
   HermesSkeletonGallery,
@@ -56,6 +55,7 @@ import {
   RadioFamilyGallery,
   SearchFamilyGallery,
   SegmentedControlGallery,
+  SelectionSheetFamilyGallery,
   TagGallery,
   ToastFamilyGallery,
   TooltipFamilyGallery,
@@ -92,7 +92,7 @@ export type HermesSectionId =
   | 'Buttons'
   | 'Hermes Checkbox'
   | 'Hermes Radio'
-  | 'Hermes Dropdown'
+  | 'Hermes Selection Sheet'
   | 'Hermes Toast'
   | 'Hermes Tooltip'
   | 'Hermes TopNav'
@@ -110,6 +110,17 @@ export type HermesSectionId =
   | 'Hermex Spacing'
   | 'Hermex Shadow'
   | 'Hermex Iconography';
+
+// The Card family's approved Neutral color mapping (DSF-07), mirroring native HermexCardColors:
+// every Card variant's background/border resolves to one of these pairs instead of a hand-typed
+// rgba/hex literal. This catalog renders one static (light) appearance, so only the light anchor of
+// each adaptive pair is used; native's dark counterpart is a documented follow-up, not asserted here.
+const HERMEX_CARD_COLORS = {
+  primarySurface: HERMES_COLOR_RAMPS.Neutral[50],
+  secondarySurface: HERMES_COLOR_RAMPS.Neutral[100],
+  standardBorder: HERMES_COLOR_RAMPS.Neutral[400],
+  increasedContrastBorder: HERMES_COLOR_RAMPS.Neutral[600],
+};
 
 // ─── Reconstruction chrome ───────────────────────────────────────────────────
 // Approximates the exact numbers found in Hermex's SwiftUI source (corner radius, opacity, stroke
@@ -159,8 +170,8 @@ const recon = StyleSheet.create({
   prChoiceGlass: { width: 220, padding: 12, borderRadius: 14, backgroundColor: 'rgba(240,240,245,0.85)' },
   prChoiceOpaque: { width: 220, padding: 12, borderRadius: 14, backgroundColor: '#f8f8f8', borderWidth: 1, borderColor: '#c6c6c8' },
   prText: { fontSize: 13, color: '#3a3a3c' },
-  cardBox: { width: 240, borderRadius: 18, backgroundColor: 'rgba(120,120,128,0.12)', borderWidth: 0.7, borderColor: 'rgba(0,0,0,0.06)' },
-  cardBoxOpaque: { backgroundColor: '#f2f2f7', borderWidth: 1, borderColor: 'rgba(0,0,0,0.10)' },
+  cardBox: { width: 240, borderRadius: 18, backgroundColor: HERMEX_CARD_COLORS.primarySurface, borderWidth: 0.7, borderColor: HERMEX_CARD_COLORS.standardBorder },
+  cardBoxOpaque: { backgroundColor: HERMEX_CARD_COLORS.primarySurface, borderWidth: 1, borderColor: HERMEX_CARD_COLORS.standardBorder },
   cardTitle: { fontSize: 11, fontWeight: '600', color: '#6d6d72', textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 4, marginBottom: 8 },
   // Neutralizes the real Card's own background/shadow chrome so this recon's own tinted/opaque
   // surface (cardBox/cardBoxOpaque above) stays the visible surface — the real Card is composed here
@@ -206,7 +217,7 @@ interface FoundationStatusRow {
 }
 const FOUNDATION_BRANCH_STATUS: FoundationStatusRow[] = [
   { area: 'Tokens (Colors, Spacing, Motion, Radius & Geometry, Shadow, Iconography, Typography, Font)', note: 'Defined and available in this branch\'s foundation layer. No production screen reads from them yet, with one exception: AppTheme.swift\'s HeaderLogoColor sources its six header-accent hex values from the new HermesProductPalette token instead of literal hex strings.' },
-  { area: 'Components (Card, Button, Checkbox, Radio, Dropdown, Toast, Tooltip, TopNav, Avatar, Divider, Banner, Tag, Attachment, Skeleton, List/ListItem, Disclosure Row, Segmented Control)', note: 'Implemented and available in this branch\'s foundation layer, with SwiftUI unit-test coverage. None has a production call site in this branch — every existing screen keeps its current, unmigrated implementation.' },
+  { area: 'Components (Card, Button, Checkbox, Radio, Selection Sheet, Toast, Tooltip, TopNav, Avatar, Divider, Banner, Tag, Attachment, Skeleton, List/ListItem, Disclosure Row, Segmented Control)', note: 'Implemented and available in this branch\'s foundation layer, with SwiftUI unit-test coverage. None has a production call site in this branch — every existing screen keeps its current, unmigrated implementation.' },
   { area: 'Patterns (Content Unavailable) and pre-existing patterns (Adaptive Glass, Pending Request, Composer, Transcript Activity)', note: 'Content Unavailable is the same story as the components above — a new, unadopted foundation candidate. Adaptive Glass and the Pending Request surfaces predate this branch and remain genuinely in production use; their entries describe that existing, unchanged production reality.' },
 ];
 
@@ -382,7 +393,14 @@ function CardChromePreview({
         <Card
           density={kind === 'compact' ? 'compact' : 'default'}
           surface={isOutlined ? 'outlined' : 'elevated'}
-          style={isOutlined ? recon.cardOutlinedPreview : recon.cardTransparentSurface}
+          style={
+            isOutlined
+              ? [
+                  recon.cardOutlinedPreview,
+                  { backgroundColor: HERMEX_CARD_COLORS.primarySurface, borderColor: HERMEX_CARD_COLORS.standardBorder },
+                ]
+              : recon.cardTransparentSurface
+          }
         >
           <Text style={recon.cardBody}>{body}</Text>
         </Card>
@@ -1084,7 +1102,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'title', type: 'String?  (Section Card)  ·  String  (SettingsCard, required)', desc: 'Uppercase caption above the card.' },
       { name: 'content', type: '@ViewBuilder', required: true, desc: 'Card body — 16pt padding on every edge by default (Section Card, Request Card); Compact Card is the one explicitly-named exception.' },
       { name: 'footer', type: '@ViewBuilder  (Section Card only)', desc: 'Optional row under a Divider, outside the content padding.' },
-      { name: 'surface', type: 'HermexCardSurface.glass | .outlined', desc: 'Defaults to adaptive glass. Outlined is the canonical outlined Card treatment: semantic system background, 1pt separator-grey border, and no elevation.' },
+      { name: 'surface', type: 'HermexCardSurface.glass | .outlined', desc: 'Defaults to adaptive glass. Outlined is the canonical outlined Card treatment: semantic system background, 1pt separator-grey border, and no elevation — both now resolved through the tokenized HermexCardColors Neutral mapping (primarySurface/standardBorder) rather than a raw platform color.' },
     ],
     a11y: 'No explicit accessibility grouping in either version — relies on the default per-child announcement order of a VStack.',
     variants: {
@@ -1126,7 +1144,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: FOUNDATION_ONLY_STATUS,
         sourcePaths: ['HermesMobile/Features/Shared/HermexCard.swift'],
         notes: [
-          'HermexCard.swift\'s canonical chrome: HermesRadius.card, 16pt content padding on every edge, background, border, and elevation. HermexCardSurface.outlined is the canonical outlined Card treatment: semantic system background, 1pt semantic grey separator border, and no elevation. Request Card is the opaque approval/clarification surface; Compact Card is an explicit, named compact density for component compositions such as normal Attachment tiles.',
+          'HermexCard.swift\'s canonical chrome: HermesRadius.card, 16pt content padding on every edge, background, border, and elevation. Every Card variant\'s background/border now resolves through the component-scoped HermexCardColors Neutral mapping (primarySurface/secondarySurface/standardBorder/increasedContrastBorder), not a platform color — HermexCardSurface.outlined is the canonical outlined Card treatment: the tokenized primarySurface background and a 1pt standardBorder (or increasedContrastBorder) border, adaptive light/dark, and no elevation. Request Card is the opaque approval/clarification surface; Compact Card is an explicit, named compact density for component compositions such as normal Attachment tiles.',
+          'increasedContrastBorder is Neutral.adaptive(light: Neutral.s600, dark: Neutral.s400 / #AEAEB1); this static web catalog renders only the light Neutral[600] anchor above — the dark #AEAEB1 counterpart is documented here, not rendered. A pure hex contrast-ratio calculation (not a visual-only pass) confirms both anchors are >=3:1 against the primary and secondary Card surfaces in their respective appearance, per hermes-catalog.test.mjs.',
           'SectionCard.swift and SettingsCard (both pre-existing, unmodified, and genuinely used at the screens listed above) implement their own chrome independently — this branch does not change them to delegate to HermexCard.swift, and no production file imports HermexCard.swift.',
           'Pending-request fields, choices, command blocks, decision logic, and request lifecycle stay part of the Pending Request pattern, which also does not depend on HermexCard.swift — see that entry\'s own corrected sourcePaths.',
         ],
@@ -1366,8 +1385,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Text Input',
     description:
-      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermexTextField`, `HermexSecureField`, and `HermexNumberField` (HermexTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (`.hermexSearch` over `.searchable`) stays its own separate entry rather than a Text Input variant.',
-    whenToUse: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Dropdown instead of free text.',
+      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermexTextField`, `HermexSecureField`, and `HermexNumberField` (HermexTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (the custom `HermexSearchField`/`.hermexSearch`) stays its own separate entry rather than a Text Input variant.',
+    whenToUse: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Selection Sheet instead of free text.',
     props: [
       { name: 'HermexTextField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `TextField` for ordinary single-line entry, including an optional native `Text` prompt; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
       { name: 'HermexSecureField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `SecureField` for masked single-line entry, such as a password, including an optional native `Text` prompt.' },
@@ -1379,7 +1398,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       useWhen: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied ParseableFormatStyle.',
       avoidWhen: 'Avoid HermexNumberField with a Binding<String>, manual parsing, or a forced numeric keyboard — supply a native ParseableFormatStyle instead. Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant.',
       alternatives: [
-        { name: 'Hermes Dropdown', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
+        { name: 'Hermes Selection Sheet', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
         { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare text field.' },
       ],
       adoptionStatus: {
@@ -1432,7 +1451,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         sourcePaths: ['HermesMobile/Features/Shared/HermexBottomSheet.swift'],
         notes: [
           'Deliberately a content scaffold, not a presentation modifier: the caller keeps calling `.sheet` directly, including its detents, drag indicator, compact adaptation, interactive-dismiss policy, focus, validation, loading state, and dismissal — native SwiftUI alone chooses the adaptive presentation style by platform/context and owns dismissal interaction, presentation motion, and Reduce Motion either way; bottom attachment is never a universal claim this scaffold makes.',
-          'Composes the existing TopNav (HermesMobile/Features/Shared/TopNav.swift) through native `.toolbar` at `.cancellationAction`/`.confirmationAction` placements rather than a hand-rolled in-content bar.',
+          'Composes the existing TopNav (HermesMobile/Features/Shared/TopNav.swift) through native `.toolbar` at `.cancellationAction`/`.confirmationAction` placements rather than a hand-rolled in-content bar. HermexBottomSheet itself — not TopNav.swift\'s own global defaults — scopes an XS/neutral/adaptive-glass `.buttonStyle(.hermex(.extraSmall, emphasis: .neutral, isGlass: true))` default to its four TopNav slots at this composition boundary, preferring familiar icons with accessible labels; a caller may still apply its own explicit button style directly inside a slot to override it. The pinned footer has no divider or border of its own.',
           'The body `@ViewBuilder` slot is intentionally unconstrained — no card, scroll view, padding, or background — so it accepts a native List or arbitrary content without breaking either context.',
           'This reconstruction hand-builds the header/body/footer anatomy from this catalog\'s own real TopNav/List/ListItem/Button primitives; it does not compose the generic template catalog\'s own BottomSheet component, which owns a slide-up/backdrop/handle animation language production\'s native `.sheet` does not use.',
           'Report only: no production `.sheet` call site imports or composes HermexBottomSheet.swift in this branch; every existing sheet keeps its own current header/body/footer anatomy. Migrating one onto it is scoped to a separate adoption issue, not this slice.',
@@ -1444,17 +1463,17 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Dialog',
     displayName: 'Dialog',
     description:
-      'A fully custom, always-centered modal — `HermexDialog` (HermexDialog.swift), presented via the `.hermexDialog(isPresented:footerAxis:header:content:footer:)` view modifier — mounted through the shared same-window overlay host rather than any native `.alert`, `.sheet`, `fullScreenCover`, or other presentation wrapper. Hermex owns the dimmed backdrop, centered card geometry, focus, accessibility containment, motion, and exactly-once dismissal/action completion. The dimmed backdrop never dismisses it; a standard close button is always present, alongside a caller-supplied header, short body content, and a footer the caller lays out horizontally or vertically.',
+      'A fully custom, always-centered modal — `HermexDialog` (HermexDialog.swift), presented via the `.hermexDialog(isPresented:footerAxis:header:content:footer:)` view modifier — mounted through the shared same-window overlay host rather than any native `.alert`, `.sheet`, `fullScreenCover`, or other presentation wrapper. Hermex owns the dimmed backdrop, centered card geometry, focus, accessibility containment, motion, and exactly-once dismissal/action completion. The header row vertically centers the caller-supplied heading against a compact XS adaptive-glass close control that keeps its 44pt minimum hit target; the dimmed backdrop never dismisses it. The caller lays the footer out horizontally (actions hug the trailing edge, authored lower emphasis first and higher emphasis last) or vertically.',
     whenToUse:
       'Reach for Dialog for a short, focused interruption or confirmation that needs the user\'s full attention — a destructive confirmation, or a brief explanation with one or two actions. Never use it for forms, text input, long content, or a browsable flow: it never scrolls and never accepts text input by design. Background taps never dismiss it, unlike a native sheet or popover; the component always supplies the standard close button and accessibility Escape, while the caller supplies the footer actions. Forms, editable content, and longer content belong in Bottom Sheet instead.',
     props: [
       { name: 'isPresented', type: 'Binding<Bool>', required: true, desc: 'Caller-owned presentation state. The modifier writes it back to false only once exit visually completes, never at exit start.' },
       { name: 'footerAxis', type: '.horizontal | .vertical', default: '.horizontal', desc: 'Arranges the footer slot\'s direct children side by side or stacked — chosen by the caller, never inferred from action count or width.' },
-      { name: 'header', type: '@ViewBuilder', required: true, desc: 'Leading header content read first by VoiceOver; the standard close button always sits at the row\'s trailing edge alongside it.' },
+      { name: 'header', type: '@ViewBuilder', required: true, desc: 'Leading header content read first by VoiceOver; the standard close button always sits vertically centered with it at the row\'s trailing edge.' },
       { name: 'content', type: '@ViewBuilder', required: true, desc: 'Short body content. No internal scrolling and no text fields/forms — the component never silently becomes a scrolling dialog.' },
-      { name: 'footer', type: '(HermexOverlayActionContext) -> View', required: true, desc: 'Receives an action context whose dismiss()/dismissAfter(_:) request dismissal; dismissAfter defers exactly one action until after exit completes.' },
+      { name: 'footer', type: '(HermexOverlayActionContext) -> View', required: true, desc: 'Receives an action context whose dismiss()/dismissAfter(_:) request dismissal; dismissAfter defers exactly one action until after exit completes. The horizontal axis aligns the caller\'s own action order to the trailing edge without reordering it; the vertical axis stacks it unchanged.' },
     ],
-    a11y: 'The same-window host isolates the underlying screen from touch and accessibility while presented. Initial VoiceOver focus lands on the heading; reading order is heading, body, footer, then close, even though close sits visually in the header row. The close button keeps a stable "Close dialog" accessible name and the project-standard touch target. Accessibility Escape and the close button share one dismissal path, and focus returns to the presenting trigger once the dialog closes.',
+    a11y: 'The same-window host isolates the underlying screen from touch and accessibility while presented. Initial VoiceOver focus lands on the heading; reading order is heading, body, footer, then close, even though close sits visually in the header row. The close button\'s visual chrome is a compact XS adaptive-glass control, but it keeps a stable "Close dialog" accessible name and the project-standard 44pt minimum touch target regardless. Accessibility Escape and the close button share one dismissal path, and focus returns to the presenting trigger once the dialog closes.',
     render: () => <DialogFamilyGallery />,
     hermesReference: {
       useWhen: 'Use Dialog for a short, high-attention modal decision or piece of information — a destructive confirmation or a brief explanation with one or two actions the user must resolve before continuing.',
@@ -1477,6 +1496,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         ],
         notes: [
           'Mounted through HermexSameWindowOverlay (.root bounds) — the same reusable same-window UIHostingController host the attachment picker\'s HermexKeyboardRetainingOverlay now wraps (.aboveKeyboard bounds) — rather than any native .alert, .sheet, fullScreenCover, Menu, or .popover.',
+          'The header row uses HStack(alignment: .center) so the heading and close control align on the same vertical center. The close control composes the shared HermexButton at size: .extraSmall, emphasis: .neutral, isGlass: true — the same adaptive-glass chrome as Buttons\' Glass surface — wrapped in a 44pt minWidth/minHeight frame so the compact 24pt visual keeps the project-standard touch target. The horizontal footer case adds a leading Spacer so the caller\'s own action order hugs the semantic trailing edge without reordering it; the vertical case is unchanged.',
           'Exactly-once dismissal and deferred-action completion are owned by a small generation-based HermexOverlayLifecycle state machine, shared with the same-window host mechanism and intended for reuse by the next approved family in this same slice (Popover Menu, not yet part of this branch).',
           'Entry/exit motion reuses the existing HermesMotion.Bundle.overlayEnter/overlayExit bundles (scrim fade plus centered 0.95→1 scale and opacity); Reduce Motion removes the scale and keeps an opacity-only state change. Reduce Transparency falls back through the existing hermexCardSurface(.glass) solid-card treatment.',
           'This reconstruction hand-builds the header/close/body/footer anatomy from this catalog\'s own real Card/Button primitives; it does not reuse the generic template catalog\'s own Dialog, whose background-tap-dismisses behavior would contradict this component\'s non-dismissible backdrop.',
@@ -1501,10 +1521,11 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     render: () => <PopoverMenuFamilyGallery />,
     hermesReference: {
       useWhen: 'Use Popover Menu for a short list of simple, anchored actions on a trigger — it is always trigger-anchored, flips above/below to stay on screen, and clamps horizontally inside the safe area.',
-      avoidWhen: 'Avoid it for a full-attention modal decision or confirmation — use Dialog. Avoid it for forms, editable content, or a longer scrolling workflow — use Bottom Sheet. Avoid it for nested submenus, toggles, or a persistent selection model — none exist in this v1.',
+      avoidWhen: 'Avoid it for a full-attention modal decision or confirmation — use Dialog. Avoid it for forms, editable content, or a longer scrolling workflow — use Bottom Sheet. Avoid it for nested submenus, toggles, or a persistent selection model — none exist in this v1; a persistent single- or multi-selection choice belongs in Selection Sheet instead.',
       alternatives: [
         { name: 'Dialog', useWhen: 'For a full-attention modal decision or confirmation the user must resolve before continuing.' },
         { name: 'Bottom Sheet', useWhen: 'For forms, editable content, or a longer mobile workflow that needs scrolling.' },
+        { name: 'Hermes Selection Sheet', useWhen: 'For a persistent single- or multi-selection choice rather than a one-off action list.' },
       ],
       adoptionStatus: {
         state: 'foundation-available',
@@ -1531,32 +1552,35 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Search',
     description:
-      'A thin Hermex-owned wrapper — `.hermexSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
-    whenToUse: 'Reach for `.hermexSearch` on a searchable list or navigation surface once a screen migrates (tracked as a separate issue); until then, a direct `.searchable` call is still correct. Either way, write a concise prompt, preserve the system clear/focus behavior, and pair filtered emptiness with a specific no-results state rather than replacing the field with custom chrome.',
+      'One custom Hermex-owned search field, `HermexSearchField`, plus `.hermexSearch(...)`, a convenience modifier that composes that exact field as a persistent top content inset. `HermexSearchField` owns its chrome (an adaptive Neutral surface and border, resting/focused/disabled), local focus, the conditional clear control, and keyboard-submit wiring; the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, autocorrection, and platform text-entry accessibility. Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience — Hermex cannot truthfully reproduce that native placement contract once it owns the chrome.',
+    whenToUse: 'Reach for `HermexSearchField` (or `.hermexSearch` to pin it above a scrolling list) anywhere a field needs to stay persistently findable above searchable content. Write a concise title and optional prompt, keep query edits live through the caller\'s binding, and pair filtered emptiness with a specific no-results state — the field never owns results.',
     props: [
-      { name: 'text', type: 'Binding<String>', required: true, desc: 'The native field owns editing, focus, clear, and keyboard behavior while the screen owns filtering.' },
-      { name: 'placement', type: 'SearchFieldPlacement', default: '.automatic (native default)', desc: 'Forwarded straight to `.searchable`; choose a native placement appropriate to the navigation surface, or omit it to keep the platform\'s own automatic choice.' },
-      { name: 'prompt', type: 'Text? / LocalizedStringKey', desc: 'Short task-specific guidance such as "Search sessions" or "Search skills"; omit for no synthetic copy.' },
+      { name: 'title', type: 'LocalizedStringKey', required: true, desc: 'Caller-owned localizable title; doubles as the field\'s persistent accessibility label.' },
+      { name: 'text', type: 'Binding<String>', required: true, desc: 'Live query binding; the field owns local focus, clear, and keyboard-submit wiring around it, while the caller owns filtering and results.' },
+      { name: 'prompt', type: 'Text?', desc: 'Optional visual empty-field guidance such as "Search sessions"; omit for no synthetic copy.' },
+      { name: 'isEnabled', type: 'Bool', default: 'true', desc: 'Disabling prevents editing, clear, and submission, and resigns focus if the field was focused when it changed.' },
+      { name: 'onSubmit', type: '() -> Void', desc: 'Runs once when the keyboard Search action fires; the query is unchanged by submission.' },
     ],
-    a11y: 'Forwards straight to native `.searchable`, so it keeps platform focus, keyboard, clear-button, dictation, VoiceOver, and Dynamic Type behavior. A no-results view names the active query and remains distinct from the unfiltered empty state.',
+    a11y: 'The caller\'s title is the persistent accessible label; the search icon is decorative and hidden from accessibility. The clear control is exposed only while the query is nonempty, announces "Clear search", and keeps an independent 44pt minimum hit target. Dynamic Type may grow the field\'s height without clipping; RTL mirrors visual order while preserving logical leading/trailing behavior; Increased Contrast strengthens the border; Reduce Transparency falls back to an opaque surface.',
     render: () => <SearchFamilyGallery />,
     hermesReference: {
-      useWhen: 'Attach `.hermexSearch` (or, until a screen migrates, native `.searchable` directly) to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
-      avoidWhen: 'Avoid replacing the field with custom chrome or hand-positioning a substitute search field. The wrapper itself must stay thin — do not add scopes, suggestions, submit handling, or debounce to it; the screen keeps owning filtering and result presentation.',
+      useWhen: 'Attach `HermexSearchField` or `.hermexSearch(...)` to a searchable list or navigation surface, pairing filtered emptiness with a specific no-results state.',
+      avoidWhen: 'Avoid adding scopes, suggestions, history, tokens/scopes, voice UI, remote requests, debounce, or result ownership to the field itself — the caller keeps owning filtering, results, loading, and error/no-results presentation.',
       alternatives: [
         { name: 'Text Input', useWhen: 'For an inline filter or lookup field that is not attached to a navigation surface — a plain TextField.' },
       ],
       adoptionStatus: {
         state: 'foundation-available',
-        detail: 'Component exists (HermexSearch.swift) with no production call site yet. Production\'s eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call SwiftUI `.searchable` directly; migrating them onto `.hermexSearch` is deferred to a separate issue.',
+        detail: 'Component exists (HermexSearch.swift) with no production call site yet. Production\'s eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating them onto `.hermexSearch` is deferred to a separate issue.',
       },
-      useSummary: 'New foundation wrapper; no screen has adopted it yet in this slice. Production keeps its existing direct `.searchable` call sites unchanged.',
+      useSummary: 'New custom foundation component; no screen has adopted it yet in this slice. Production keeps its existing eight direct `.searchable` call sites unchanged.',
       implementationNotes: {
         status: 'Component exists (HermexSearch.swift) with no production call site yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermexSearch.swift'],
         notes: [
-          'Deliberately thin: `.hermexSearch(text:placement:prompt:)` forwards straight to SwiftUI\'s native `.searchable(text:placement:prompt:)` — it owns no field chrome, focus, keyboard, clear, dictation, or accessibility behavior of its own, and the default placement stays `.automatic` so omitting it preserves native automatic placement.',
-          'Report only: production\'s eight direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermexSearch` is scoped to a separate issue, not this slice.',
+          'One canonical visual implementation: `HermexSearchField` owns chrome, local `@FocusState`, the clear control, and `.submitLabel(.search)`/`.onSubmit` wiring around a native `TextField`; `.hermexSearch(...)` only composes that same field as a `.safeAreaInset(edge: .top)` — there is no second field implementation.',
+          'Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience; Hermex cannot truthfully reproduce that native placement contract once it draws its own chrome.',
+          'Report only: production\'s eight existing direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermexSearch` is scoped to a separate issue, not this slice.',
         ],
       },
     },
@@ -1564,7 +1588,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Segmented Control',
     description:
-      'One custom Hermex mutually-exclusive selection family with two presentations: fixed divides the available width equally for compact option sets; scrolling preserves each option\'s intrinsic width for larger sets. Both share Button semantics, typography, selected-pill treatment, and a Reduce-Motion-safe selection transition.',
+      'One custom Hermex mutually-exclusive selection family with two presentations: fixed divides the available width equally for compact option sets and grows vertically with up to two centered label lines at accessibility text sizes; scrolling preserves each option\'s intrinsic width for larger sets. Both share Button semantics, typography, selected-pill treatment, and a Reduce-Motion-safe selection transition.',
     whenToUse: 'Use fixed for short, stable sets such as task filters, usage windows, and Cost/Tokens. Use scrolling for a larger horizontal set such as Kanban statuses. Use Checkbox for independent multi-selection and Tag only for display-only labels.',
     props: [
       { name: 'selection', type: 'Binding<Value>', required: true, desc: 'The single selected value.' },
@@ -1580,7 +1604,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Hermes Checkbox', useWhen: 'For independent multi-selection rather than mutually exclusive choice.' },
         { name: 'Tag', useWhen: 'For a display-only label rather than an interactive selection control.' },
         { name: 'Hermes Radio', useWhen: 'For a list-style one-of-many choice inside a form, not a top-level view switch.' },
-        { name: 'Hermes Dropdown', useWhen: 'For a labeled field with more options than fit a fixed track.' },
+        { name: 'Hermes Selection Sheet', useWhen: 'For a longer option list than fits a fixed track.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
       useSummary: 'A new, foundation-only component; the displayed name intentionally omits a Hermex prefix. Tasks, Usage, and Kanban each keep their own existing, direct native SwiftUI segmented control in this branch — see the Design System Contract\'s frozen baseline count for those three files.',
@@ -1633,7 +1657,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Checkbox',
     displayName: 'Checkbox',
     description:
-      'A reusable square multi-selection control: the box fills with the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent) and a checkmark pops in when checked, staying the inverse system background so it remains legible against either. Pass an action (the generic catalog Checkbox\'s `onChange`) when the checkbox owns interaction; when a containing row owns the tap instead — a multi-select list row, for example — omit it, and the identical box/checkmark visual renders as a non-interactive, accessibility-hidden indicator so controls are never nested.',
+      'A reusable square multi-selection control: the box fills with HermexSelectionControlColors.selected (Neutral.s950 in light appearance, Neutral.s50 in dark — not a fixed accent), while the checkmark uses the inverse selectedForeground pair so it remains legible against either. Pass an action (the generic catalog Checkbox\'s `onChange`) when the checkbox owns interaction; when a containing row owns the tap instead — a multi-select list row, for example — omit it, and the identical box/checkmark visual renders as a non-interactive, accessibility-hidden indicator so controls are never nested.',
     whenToUse: 'Use it for an independent multi-select fact recorded for a future action (e.g. a form submit) — checking one has no effect on others. For a setting that takes effect immediately, use native Toggle; for one-of-many exclusive selection, use Radio; for a status or completion mark (Tag) or an ordinary picker row\'s selected checkmark (List / ListItem), use that component instead — Checkbox always means an editable multi-select choice.',
     props: [
       { name: 'checked', type: 'Bool', required: true, desc: 'Whether the box is filled and shows the checkmark.' },
@@ -1663,7 +1687,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         notes: [
           'BotPendingRequestCard.swift and KanbanLabView.swift do not import HermexCheckbox.swift in this branch; each still draws its own selection indicator directly.',
           'The interactive configuration (passing action) renders a native Button with an .accessibilityRepresentation(Toggle(...)) so it is announced and operated as a real toggle, not a plain button; the row-owned configuration (action omitted) instead applies .accessibilityHidden(true) to the same visual.',
-          'The checked fill and border use Color.primary (an adaptive semantic black/white, not Color.accentColor or a new neutral-ramp step) — the approved decision for the Checkbox/Radio selected treatment; the checkmark itself stays the inverse system background regardless of appearance.',
+          'The checked fill and border use HermexSelectionControlColors.selected (Neutral.s950 in light, Neutral.s50 in dark); the checkmark uses selectedForeground, the inverse Neutral pair. The mapping is component-scoped and intentionally avoids Color.accentColor.',
+          'HermexSelectionControlColors\' pairings are contrast-validated, component-scoped: unselectedBorder is Neutral.adaptive(light: Neutral.s500, dark: Neutral.s600), corrected from the retired, under-contrast light Neutral.s400 (#AEAEB1, ~2.1:1) to the validated Neutral.s500 (#8E8E93, >=3:1 against the primary surface, WCAG 1.4.11).',
         ],
       },
     },
@@ -1672,7 +1697,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Radio',
     displayName: 'Radio',
     description:
-      'A reusable circular one-of-many selection control — the selected option shows a filled center dot, with the selected ring and dot both using the adaptive semantic Color.primary (black in light appearance, white in dark — not a fixed accent), mirroring HermexCheckbox\'s own selected treatment. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
+      'A reusable circular one-of-many selection control — the selected option shows a filled center dot, with the selected ring and dot both using HermexSelectionControlColors.selected (Neutral.s950 in light appearance, Neutral.s50 in dark — not a fixed accent), mirroring HermexCheckbox\'s own selected treatment. A group is just multiple Radio instances sharing one selected value in the caller; the component itself only knows its own selected state.',
     whenToUse: 'Use it for exclusive, one-of-many selection. For an independent multi-select fact, use Checkbox instead.',
     props: [
       { name: 'isSelected', type: 'Bool', required: true, desc: 'Whether the center dot is filled.' },
@@ -1688,7 +1713,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       alternatives: [
         { name: 'Hermes Checkbox', useWhen: 'For an independent multi-select fact rather than mutually exclusive choice.' },
         { name: 'Segmented Control', useWhen: 'For a prominent, always-visible view or filter switch among a few options rather than a list-style choice.' },
-        { name: 'Hermes Dropdown', useWhen: 'For a labeled field whose options should collapse into a menu instead of occupying a row each.' },
+        { name: 'Hermes Selection Sheet', useWhen: 'For a long or scrollable option list that should collapse into a sheet instead of occupying a row each.' },
       ],
       adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexRadio.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
@@ -1696,42 +1721,45 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: 'Component exists (HermexRadio.swift) with no production call site yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermexRadio.swift'],
         notes: [
-          'Mirrors HermexCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity, same adaptive Color.primary selected treatment) with a circular selected/unselected treatment instead of a boolean toggle.',
+          'Mirrors HermexCheckbox\'s architecture exactly (DS circle size matches the checkbox box size, same 44pt minimum hit target, same disabled opacity, same component-scoped HermexSelectionControlColors Neutral.s950 / Neutral.s50 selected treatment) with a circular selected/unselected treatment instead of a boolean toggle.',
+          'HermexSelectionControlColors\' pairings are contrast-validated, component-scoped: unselectedBorder is Neutral.adaptive(light: Neutral.s500, dark: Neutral.s600), corrected from the retired, under-contrast light Neutral.s400 (#AEAEB1, ~2.1:1) to the validated Neutral.s500 (#8E8E93, >=3:1 against the primary surface, WCAG 1.4.11).',
           'Report only: a single-choice (not allowsMultipleChoices) Bot pending-request question already renders its own largecircle.fill/circle glyph per choice (see Hermes Checkbox) — a plausible future HermexRadio adoption site, not migrated in this slice.',
         ],
       },
     },
   },
   {
-    id: 'Hermes Dropdown',
-    displayName: 'Dropdown',
+    id: 'Hermes Selection Sheet',
+    displayName: 'Selection Sheet',
     description:
-      'A caller-controlled selection field over the native `.menu`-style Picker — the same checked-option and disclosure chrome SettingsView\'s own row pickers already use, generalized for reuse. Never a custom floating sheet: native Picker/Menu semantics already satisfy label, value, placeholder, and the checked selected option.',
-    whenToUse: 'Use it for a labeled single-selection field driven by a fixed option list. For freeform text entry, use native TextField (see Text Input).',
+      'A caller-presented sheet — `HermexSelectionSheet` (HermexSelectionSheet.swift) — composed entirely from existing foundations: Bottom Sheet for the sheet chrome, TopNav for Cancel/Done, a scrolling `HermexList` of `ListItem` rows, row-owned visual-only `HermexRadio`/`HermexCheckbox` indicators, and an optional caller-controlled `HermexSearchField`. The caller owns native `.sheet` presentation, detents, drag indicator, and compact adaptation; Selection Sheet owns only the presented content and local selection lifecycle. Single selection commits immediately on an enabled row tap and dismisses; multi-selection stages taps in a local draft until Done, with Cancel/swipe/Escape/teardown discarding it.',
+    whenToUse: 'Use it for a fixed-option single- or multi-selection field, especially a longer or scrollable option list. For a short set that should stay always visible as its own rows, use Radio or Checkbox instead; for a short set as a top-level view switch, use Segmented Control.',
     props: [
-      { name: 'title', type: 'String', required: true, desc: 'The field\'s accessibility label and, when shown, its visible Picker label.' },
-      { name: 'selection', type: 'Binding<Value?>', required: true, desc: 'Caller-controlled selected value; nil shows the placeholder option.' },
-      { name: 'options', type: '[HermexDropdownOption<Value>]', required: true, desc: 'Each option\'s value + display label.' },
-      { name: 'isEnabled', type: 'Bool', default: 'true', desc: 'Disables the control when false.' },
-      { name: 'placeholder', type: 'String', default: '"Select"', desc: 'Shown as the nil-selection option\'s label.' },
+      { name: 'selection', type: 'Binding<Value?>', required: true, desc: 'Single-selection initializer: the caller\'s current optional selection. Committed once on an enabled-row tap, then dismissed; disabled rows and Cancel/swipe/Escape/teardown never mutate it.' },
+      { name: 'selections', type: 'Binding<Set<Value>>', required: true, desc: 'Multi-selection initializer: seeds a local draft at open time. Row taps toggle the draft only; Done writes the complete draft to this binding once and dismisses; Cancel/swipe/Escape/teardown discard the draft.' },
+      { name: 'options', type: '[HermexSelectionSheetOption<Value>]', required: true, desc: 'Each option\'s value, display title, and enabled state. Disabled options stay visible and announced but never toggle or dismiss.' },
+      { name: 'search', type: 'HermexSelectionSheetSearch?', desc: 'Optional. When present, renders the real HermexSearchField above the list; the caller owns the query binding and supplies the currently visible options array — Selection Sheet never filters, debounces, or loads results itself.' },
     ],
-    a11y: 'A native `.menu` Picker: platform-owned focus, Dynamic Type, VoiceOver, and the checked selected option — no bespoke chrome to keep accessible.',
-    render: () => <DropdownFamilyGallery />,
+    a11y: 'Every row is one ListItem Button target with a 44pt minimum hit area; the Radio/Checkbox indicator is accessibility-hidden so it never duplicates the row\'s own selected/disabled announcement. Initial VoiceOver focus lands on the current selected enabled option, else the first enabled visible option. Cancel and Done stay reachable with keyboard and VoiceOver; Escape follows native sheet dismissal and discards an uncommitted multi draft.',
+    render: () => <SelectionSheetFamilyGallery />,
     hermesReference: {
-      useWhen: 'Use it for a labeled single-selection field driven by a fixed option list.',
-      avoidWhen: 'Avoid it for freeform text entry — use native TextField (see Text Input) instead.',
+      useWhen: 'Use it for a fixed-option single- or multi-selection field, especially a longer or scrollable option list that would not fit as its own rows or a fixed track.',
+      avoidWhen: 'Avoid it for a short, always-visible set of choices — use Radio, Checkbox, or Segmented Control instead. Avoid adding caller-owned filtering, remote requests, debounce, pagination, or result loading/error state to the component itself — the caller keeps owning search query, visible options, loading, and errors.',
       alternatives: [
+        { name: 'Hermes Radio', useWhen: 'When every option should stay visible as its own row instead of collapsing into a sheet.' },
+        { name: 'Hermes Checkbox', useWhen: 'For a short, always-visible independent multi-select list rather than a staged sheet draft.' },
+        { name: 'Segmented Control', useWhen: 'For a short, always-visible top-level view or filter switch rather than a form field.' },
         { name: 'Text Input', useWhen: 'For freeform text entry rather than a fixed option list.' },
-        { name: 'Hermes Radio', useWhen: 'When every option should stay visible as its own row.' },
-        { name: 'Segmented Control', useWhen: 'For a primary view/filter switch rather than a form field.' },
       ],
-      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexDropdown.swift) with no production call site yet.' },
-      useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
+      adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexSelectionSheet.swift) with no production call site yet.' },
+      useSummary: 'New production primitive; no screen has adopted it yet in this slice — zero production Picker/Menu call sites are migrated onto it.',
       implementationNotes: {
-        status: 'Component exists (HermexDropdown.swift) with no production call site yet.',
-        sourcePaths: ['HermesMobile/Features/Shared/HermexDropdown.swift'],
+        status: 'Component exists (HermexSelectionSheet.swift) with no production call site yet.',
+        sourcePaths: ['HermesMobile/Features/Shared/HermexSelectionSheet.swift'],
         notes: [
-          'Deliberately thin: a generic wrapper around `Picker(title, selection:).pickerStyle(.menu)`, matching SettingsView.swift\'s existing row-picker convention exactly rather than inventing a second, competing dropdown interaction.',
+          'The caller owns native `.sheet` presentation, detents, drag indicator, compact adaptation, the trigger, option data, and any query/filtering; Selection Sheet dismisses through the environment dismiss action and never wraps itself in a second `.sheet` or overlay mechanism.',
+          'Single-selection rows use a noninteractive, accessibility-hidden HermexRadio indicator; multi-selection rows use a noninteractive, accessibility-hidden HermexCheckbox indicator — ListItem owns the only Button action per row via its additive indicator-only selectionChrome seam, so no nested control exists.',
+          'Report only: no production call site imports or composes HermexSelectionSheet.swift in this branch; every existing native Picker/Menu call site keeps its current, unmigrated implementation. Migrating one onto Selection Sheet is scoped to a separate adoption issue, not this slice.',
         ],
       },
     },
@@ -1747,7 +1775,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'message', type: 'Text', required: true, desc: 'The toast\'s message.' },
       { name: 'icon', type: 'String?', desc: 'Overrides the semantic\'s default SF Symbol.' },
       { name: 'isIconDecorative', type: 'Bool', default: 'true', desc: 'Hides the icon from VoiceOver when the message text already announces the same fact.' },
-      { name: 'action', type: '{ title: String; handler: () -> Void }?', desc: 'Optional trailing action button.' },
+      { name: 'action', type: '{ title: String; handler: () -> Void }?', desc: 'Optional trailing action button, composed as an extraSmall neutral HermexButton — never a status-tinted plain button. Status tint stays on the semantic icon only.' },
     ],
     a11y: 'Icon, message, and action combine into one accessible element when there is no action; an action present keeps the group\'s children independently focusable (accessibilityElement(children: .contain)).',
     render: () => <ToastFamilyGallery />,
@@ -1764,6 +1792,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         sourcePaths: ['HermesMobile/Features/Shared/HermexToast.swift'],
         notes: [
           'Presentation (`hermexToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe transition, so a new caller gets the same feel without hand-rolling it again: it enters by moving down from the top edge combined with opacity (HermesMotion.Bundle.overlayEnter) and exits back toward the top combined with opacity (HermesMotion.Bundle.overlayExit). Reduce Motion drops the directional move and falls back to an opacity-only state change. Visibility itself stays entirely caller-owned — no internal timer.',
+          'The trailing action composes the shared HermexButton at size: .extraSmall, emphasis: .neutral rather than a plain Button tinted to the toast\'s own status color; the semantic icon keeps that status tint. The catalog gallery demonstrates this with the generic Toast\'s opt-in `actionNode` slot (native/components/Toast/Toast.tsx) rendering a real extraSmall Button, since the generic `action` shortcut always color-matches the toast\'s own status and cannot express a neutral treatment; every other Toast call site keeps using `action` unchanged.',
         ],
       },
     },
@@ -1830,6 +1859,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
           'No production file imports or composes the new TopNav.swift in this branch; every screen\'s leading/trailing/principal toolbar placement is still written directly at its own call site.',
           'A screen with no custom leading/trailing actions (most simple list/detail screens) can keep a plain native navigation title and would never need to compose this component at all.',
           'The retained Kanban `.bottomBar` item and any keyboard accessory toolbar remain separate production concerns with their own anatomy; TopNav documents only the top bar.',
+          'The gallery\'s icon-only slot actions compose an adaptive-glass surface as a recommended, caller-chosen composition — TopNav.swift itself gains no new default button style of its own; Bottom Sheet scopes that default at its own composition boundary, not here.',
         ],
       },
     },
@@ -2351,14 +2381,16 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
     // only (see the nav-order test in hermes-catalog.test.mjs), not the rendered order. Search
     // joined this group once its `.hermexSearch` foundation wrapper shipped over native
     // `.searchable` — it moved out of Native iOS even though production hasn't adopted the wrapper
-    // yet (see Search's own adoptionStatus for the truthful, zero-adoption detail). Text Input
+    // yet, and stayed here once that wrapper became the custom HermexSearchField/.hermexSearch
+    // foundation with native `.searchable`/`SearchFieldPlacement` retired (see Search's own
+    // adoptionStatus for the truthful, zero-adoption detail). Text Input
     // joined the same way once its three HermexTextField/HermexSecureField/HermexNumberField
     // foundation wrappers shipped over native TextField/SecureField/TextField(value:format:) — see
     // Text Input's own adoptionStatus for the same truthful, zero-adoption detail.
     alphabetizeByLabel: true,
     ids: [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-      'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
+      'Inline Reference Link', 'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
       'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
     ],

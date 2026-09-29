@@ -1,0 +1,332 @@
+import XCTest
+import SwiftUI
+@testable import HermesMobile
+
+/// Contracts for `HermexSelectionSheet` (`HermexSelectionSheet.swift`, Issue #607, DSF-06): the
+/// caller-presented content that retires the unused `HermexDropdown` foundation and replaces its
+/// intended fixed-option-selection role. Selection Sheet composes the existing `HermexBottomSheet`,
+/// `TopNav`, `HermexList`/`ListItem`, row-owned `HermexRadio`/`HermexCheckbox` indicators, and an
+/// optional `HermexSearchField` — never a second, competing overlay/presentation mechanism. It
+/// supports immediate single-selection commit and staged multi-selection with explicit Done/Cancel.
+///
+/// This test is written before `HermexSelectionSheet.swift` exists, so every test that needs the
+/// future source fails through one explicit, readable XCTest assertion (`selectionSheetSource()`)
+/// rather than a raw file-not-found error — see the approved design spec
+/// (`2026-09-29-selection-sheet-design.md`, `DSF-06-selection-sheet-r1`) and flow-state brief
+/// (`2026-09-29-selection-sheet-flow-state.md`, `DSF-06-flow-r1`) this pins.
+final class HermexSelectionSheetTests: XCTestCase {
+    // MARK: - Source helpers
+
+    private func resourceURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+    }
+
+    private func source(_ relativePath: String) throws -> String {
+        try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
+    }
+
+    /// Loads the future `HermexSelectionSheet.swift` source if it exists, or records one clear,
+    /// explicit XCTest failure and returns `nil` so the caller can bail out safely — never a raw
+    /// "file doesn't exist" error that would mask the intended contract being pinned.
+    private func selectionSheetSource(file: StaticString = #filePath, line: UInt = #line) -> String? {
+        let url = resourceURL("HermesMobile/Features/Shared/HermexSelectionSheet.swift")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            XCTFail(
+                "HermesMobile/Features/Shared/HermexSelectionSheet.swift does not exist yet — "
+                    + "Task 3 of the Selection Sheet implementation plan adds it",
+                file: file,
+                line: line
+            )
+            return nil
+        }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+
+    // MARK: - Public type contracts
+
+    func testDefinesTheOptionModel() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("struct HermexSelectionSheetOption<Value: Hashable>: Identifiable"),
+            "expected the approved option model's exact declaration"
+        )
+    }
+
+    func testDefinesTheSearchConfigurationModel() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("struct HermexSelectionSheetSearch"), "expected the optional Search configuration model")
+    }
+
+    func testDefinesTheMultiSelectionDraftModel() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("struct HermexSelectionSheetDraft<Value: Hashable>"),
+            "expected the pure multi-selection draft model"
+        )
+    }
+
+    func testDefinesTheSelectionSheetViewWithExactlyOneGenericParameter() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("struct HermexSelectionSheet<Value: Hashable>: View"),
+            "expected the component to declare exactly one generic parameter (Value) — no second " +
+                "generic row-content parameter, which would imply an arbitrary public row closure"
+        )
+    }
+
+    func testDeclaresExplicitSingleAndMultiSelectionBindingPaths() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("Binding<Value?>"), "expected an explicit single-selection Binding<Value?> initializer path")
+        XCTAssertTrue(src.contains("Binding<Set<Value>>"), "expected an explicit multi-selection Binding<Set<Value>> initializer path")
+    }
+
+    func testNoArbitraryPublicRowContentClosureExists() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(src.contains("Row: View"), "expected no second generic row-content type parameter")
+        XCTAssertFalse(src.contains("@escaping () -> Row"), "expected no caller-supplied arbitrary row builder")
+        XCTAssertFalse(src.contains("@ViewBuilder row"), "expected no public @ViewBuilder row slot")
+    }
+
+    // MARK: - Composition contracts (existing foundations only, never a new overlay mechanism)
+
+    func testComposesTheExistingBottomSheetScaffold() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("HermexBottomSheet("), "expected Selection Sheet to compose the existing HermexBottomSheet scaffold")
+    }
+
+    func testComposesTheExistingSearchFieldWhenSearchIsProvided() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("HermexSearchField("), "expected the optional Search slot to render the real HermexSearchField")
+    }
+
+    func testComposesTheExistingListContainer() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("HermexList {"), "expected the option list to compose the shared HermexList container")
+    }
+
+    func testComposesListItemForRows() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("ListItem("), "expected every option row to compose the shared ListItem anatomy")
+    }
+
+    func testUsesVisualOnlyRadioAndCheckboxIndicators() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("HermexRadio(isSelected:"),
+            "expected the single-selection row indicator to be a visual-only HermexRadio(isSelected:)"
+        )
+        XCTAssertTrue(
+            src.contains("HermexCheckbox(isChecked:"),
+            "expected the multi-selection row indicator to be a visual-only HermexCheckbox(isChecked:)"
+        )
+    }
+
+    func testUsesTheIndicatorOnlyListItemSelectionChrome() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains(".indicatorOnly"),
+            "expected rows to opt into ListItem's additive .indicatorOnly selected chrome, so the row-owned " +
+                "Radio/Checkbox visual never duplicates ListItem's own selected pill/checkmark"
+        )
+    }
+
+    func testUsesTheEnvironmentDismissActionRatherThanASecondSheetModifier() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("@Environment(\\.dismiss)"),
+            "expected row commit, Done, and Cancel to all dismiss through the environment dismiss action"
+        )
+    }
+
+    func testNeverCallsANativeSheetModifierItself() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(src.contains(".sheet("), "the caller owns .sheet — Selection Sheet must never wrap itself in a second one")
+    }
+
+    func testHasNoDependencyOnThePopoverOrSameWindowOverlayMechanism() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(src.contains("HermexPopoverMenu"), "Selection Sheet must not depend on Popover Menu")
+        XCTAssertFalse(src.contains("HermexSameWindowOverlay"), "Selection Sheet must not depend on the same-window overlay host — native .sheet already owns presentation")
+        XCTAssertFalse(src.contains("HermexOverlayLifecycle"), "Selection Sheet must not depend on the overlay lifecycle state machine — native .sheet already owns exactly-once dismissal")
+    }
+
+    // MARK: - Row state, focus, and content contracts
+
+    func testRowsOwnSelectedAndDisabledState() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("state.isSelected") || src.contains("isSelected:"), "expected rows to express selected state")
+        XCTAssertTrue(src.contains("state.isDisabled") || src.contains("isEnabled") || src.contains("isDisabled"), "expected rows to express disabled state for a disabled option")
+    }
+
+    func testAllowsUpToThreeTitleLinesAtAccessibilityTextSizes() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("titleLineLimit: 3"), "expected rows to permit up to three title lines rather than clipping at accessibility Dynamic Type sizes")
+    }
+
+    func testOwnsAccessibilityFocusForInitialRowFocus() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("@AccessibilityFocusState"),
+            "expected Selection Sheet to own accessibility focus state so it can move initial VoiceOver focus to the selected enabled option, or the first enabled option otherwise"
+        )
+    }
+
+    func testGenericAndQueriedEmptyCopyAreDistinct() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("No options available"), "expected the generic empty-without-query copy")
+        XCTAssertTrue(src.contains("No results"), "expected the distinct empty-with-query (no-results) copy")
+    }
+
+    // MARK: - Single-selection lifecycle (no overfitting one exact formatting shape)
+
+    func testEnabledSingleActivationOnlyMutatesWhenValueDiffersThenDismisses() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("option.isEnabled"),
+            "expected single-selection row activation to check the option's enabled state before doing anything"
+        )
+        XCTAssertTrue(
+            src.range(of: #"selection\.wrappedValue\s*!=\s*option\.value"#, options: .regularExpression) != nil,
+            "expected the caller binding to be mutated only when the tapped value differs from the current selection"
+        )
+        XCTAssertTrue(
+            src.range(of: #"selection\.wrappedValue\s*=\s*option\.value"#, options: .regularExpression) != nil,
+            "expected the single-selection caller binding to be written with the tapped option's value"
+        )
+        XCTAssertTrue(src.contains("dismiss()"), "expected activation to dismiss the sheet")
+    }
+
+    func testDisabledSingleRowsCannotMutateOrDismiss() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.range(of: #"guard\s+option\.isEnabled\s+else\s*\{\s*return\s*\}"#, options: .regularExpression) != nil,
+            "expected a disabled option's row activation to guard-return before any mutation or dismissal"
+        )
+    }
+
+    // MARK: - Multi-selection lifecycle (no overfitting one exact formatting shape)
+
+    func testMultiInitializationSnapshotsCallerSelectionsIntoBaselineAndDraft() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains("baseline"), "expected multi-selection to seed a baseline from the caller's current set")
+        XCTAssertTrue(
+            src.contains("selections.wrappedValue") || src.contains("HermexSelectionSheetDraft("),
+            "expected multi-selection to seed its local draft from the caller's current Set<Value> binding"
+        )
+    }
+
+    func testMultiInitializerSeedsDraftSynchronouslyBeforeTheFirstRowCanBeActivated() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("_draft = State(initialValue: HermexSelectionSheetDraft(baseline: selections.wrappedValue))"),
+            "expected the multi initializer to snapshot the caller set synchronously, before the sheet becomes interactive"
+        )
+        XCTAssertFalse(
+            src.contains("seedDraftIfNeeded()"),
+            "draft seeding must not wait for an asynchronous view task, where an immediate first tap could see nil state"
+        )
+    }
+
+    func testRowTogglesMutateOnlyTheLocalDraft() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(src.contains(".toggle("), "expected an enabled multi-selection row tap to toggle the local draft, never the caller binding directly")
+    }
+
+    func testDoneAssignsTheCompleteDraftExactlyOnceThenDismisses() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.range(of: #"selections\.wrappedValue\s*=\s*draft\.values"#, options: .regularExpression) != nil
+                || src.range(of: #"selections\.wrappedValue\s*=\s*\w*[Dd]raft\.values"#, options: .regularExpression) != nil,
+            "expected Done to write the complete current draft to the caller binding exactly once"
+        )
+    }
+
+    func testCancelAndDismissPathsNeverWriteTheCallerSelectionBinding() {
+        guard let src = selectionSheetSource() else { return }
+        // Cancel must dismiss without ever assigning to either caller binding — approximate by
+        // scoping to the Cancel action's own trailing closure text, not the whole file (Done's own
+        // closure elsewhere legitimately assigns the multi-selection binding).
+        guard let cancelRange = src.range(of: #"Cancel[\s\S]{0,20}\{[\s\S]{0,200}?\}"#, options: .regularExpression) else {
+            XCTFail("expected a locatable Cancel action closure to scope this contract to")
+            return
+        }
+        let cancelBody = String(src[cancelRange])
+        XCTAssertFalse(cancelBody.contains("selection.wrappedValue ="), "Cancel must never write the single-selection caller binding")
+        XCTAssertFalse(cancelBody.contains("selections.wrappedValue ="), "Cancel must never write the multi-selection caller binding")
+        XCTAssertTrue(cancelBody.contains("dismiss()"), "expected Cancel to dismiss")
+    }
+
+    func testFilteringNeverIntersectsHiddenSelectedValuesOutOfTheDraft() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(
+            src.contains(".intersection("),
+            "expected no intersection with the caller's currently-visible option array — a value temporarily " +
+                "hidden by Search filtering must remain in the draft"
+        )
+        XCTAssertFalse(
+            src.contains("selections.wrappedValue.filter") || src.contains("draft.values = draft.values.filter"),
+            "expected no filtering operation that could drop a hidden selected value from the draft"
+        )
+    }
+
+    // MARK: - Retirement contracts: HermexDropdown is fully removed, Popover Menu stays action-only
+
+    func testHermexDropdownProductionSourceIsRemoved() {
+        let url = resourceURL("HermesMobile/Features/Shared/HermexDropdown.swift")
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: url.path),
+            "expected HermexDropdown.swift to be deleted once Selection Sheet replaces its role — no shim or deprecation wrapper retained"
+        )
+    }
+
+    func testHermexDropdownTestsAreRemoved() {
+        let url = resourceURL("HermesMobileTests/HermexDropdownTests.swift")
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: url.path),
+            "expected HermexDropdownTests.swift to be deleted alongside the retired HermexDropdown.swift"
+        )
+    }
+
+    func testHermexPopoverMenuRemainsActionOnlyWithNoSelectionAPI() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexPopoverMenu.swift")
+        XCTAssertFalse(src.contains("Selection"), "expected HermexPopoverMenu to remain action-only — no selection API of its own; persistent selection belongs to Selection Sheet")
+        XCTAssertTrue(src.contains("struct HermexPopoverMenuAction"), "expected Popover Menu's existing action-only model to be unchanged")
+    }
+
+    // MARK: - DEBUG lab reachability
+
+    func testRemainsReachableFromTheDebugOverlayLab() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+        XCTAssertTrue(
+            src.contains("--hermex-overlay-lab-selection-sheet"),
+            "expected a deterministic launch flag scrolling straight to the Selection Sheet fixtures"
+        )
+        XCTAssertTrue(
+            src.contains("overlay-lab-selection-sheet-section"),
+            "expected a deterministic scroll anchor for the Selection Sheet section"
+        )
+    }
+
+    func testDebugLabExposesStableSingleMultiSearchAndLongListFixtureIdentifiers() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+        XCTAssertTrue(src.contains("overlay-lab-selection-sheet-single"), "expected a stable identifier for the single-selection fixture")
+        XCTAssertTrue(src.contains("overlay-lab-selection-sheet-multi"), "expected a stable identifier for the staged multi-selection fixture")
+        XCTAssertTrue(src.contains("overlay-lab-selection-sheet-search"), "expected a stable identifier for the optional Search fixture")
+        XCTAssertTrue(src.contains("overlay-lab-selection-sheet-long-list"), "expected a stable identifier for the long (20+ option) scrolling-list fixture")
+    }
+
+    func testDebugLabCanAutoPresentSingleAndMultiSheetsForHeadlessRenderedVerification() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+        XCTAssertTrue(
+            src.contains("--hermex-overlay-lab-auto-selection-sheet-single"),
+            "expected a DEBUG-only launch seam for rendering the single-selection sheet without host pointer automation"
+        )
+        XCTAssertTrue(
+            src.contains("--hermex-overlay-lab-auto-selection-sheet-multi"),
+            "expected a DEBUG-only launch seam for rendering the multi-selection sheet and its Done/Cancel actions without host pointer automation"
+        )
+    }
+}

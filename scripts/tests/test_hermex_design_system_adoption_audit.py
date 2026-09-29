@@ -71,7 +71,18 @@ SIMPLE_SNIPPETS = {
     ),
     "HermesMobile/Features/Shared/HermexCheckbox.swift": "struct HermexCheckbox: View {}",
     "HermesMobile/Features/Shared/HermexRadio.swift": "struct HermexRadio: View {}",
-    "HermesMobile/Features/Shared/HermexDropdown.swift": "struct HermexDropdown: View {}",
+    "HermesMobile/Features/Shared/HermexSelectionSheet.swift": (
+        "import SwiftUI\n"
+        "struct HermexSelectionSheetOption<Value: Hashable>: Identifiable {\n"
+        "    let value: Value\n"
+        "    var id: Value { value }\n"
+        "}\n"
+        "struct HermexSelectionSheet<Value: Hashable>: View {\n"
+        "    var body: some View {\n"
+        "        HermexBottomSheet(\"Select\") { EmptyView() }\n"
+        "    }\n"
+        "}"
+    ),
     "HermesMobile/Features/Shared/HermexToast.swift": "struct HermexToast: View {}",
     "HermesMobile/Features/Shared/HermexTooltip.swift": "struct HermexTooltip: View {}",
     "HermesMobile/Features/Shared/HermexAvatar.swift": "struct HermexAvatar: View {}",
@@ -94,13 +105,18 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/AttachmentTile.swift": "struct AttachmentTile: View {}",
     "HermesMobile/Features/Shared/SkeletonPlaceholder.swift": "struct SkeletonPlaceholder: View {}",
     "HermesMobile/Features/Shared/HermexSearch.swift": (
+        "import SwiftUI\n"
+        "struct HermexSearchField: View {\n"
+        "    var body: some View { EmptyView() }\n"
+        "}\n"
         "extension View {\n"
         "    func hermexSearch(\n"
-        "        text: Binding<String>,\n"
-        "        placement: SearchFieldPlacement = .automatic,\n"
-        "        prompt: Text? = nil\n"
+        "        _ titleKey: LocalizedStringKey,\n"
+        "        text: Binding<String>\n"
         "    ) -> some View {\n"
-        "        searchable(text: text, placement: placement, prompt: prompt)\n"
+        "        safeAreaInset(edge: .top, spacing: 0) {\n"
+        "            HermexSearchField(titleKey, text: text)\n"
+        "        }\n"
         "    }\n"
         "}"
     ),
@@ -346,6 +362,73 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
             failures,
         )
 
+    # ─── Selection Sheet family slice / Dropdown retirement (Issue #607, test-first phase) ────────
+    # `HermexSelectionSheet.swift` does not exist yet and `HermexDropdown.swift` has not been
+    # deleted yet — Task 3 of the Selection Sheet implementation plan ships the retirement and the
+    # addition together. Until then these tests pin the contract that slice must satisfy.
+
+    def test_missing_selection_sheet_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/HermexSelectionSheet.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexSelectionSheet.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_drifted_selection_sheet_declaration_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
+            "// HermexSelectionSheet renamed away, no HermexSelectionSheetOption either",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexSelectionSheet.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_selection_sheet_missing_bottom_sheet_composition_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
+            (
+                "struct HermexSelectionSheetOption<Value: Hashable>: Identifiable {\n"
+                "    let value: Value\n"
+                "    var id: Value { value }\n"
+                "}\n"
+                "struct HermexSelectionSheet<Value: Hashable>: View {\n"
+                "    var body: some View { EmptyView() }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f
+                and "HermexSelectionSheet.swift" in f
+                and "HermexBottomSheet" in f
+                for f in failures
+            ),
+            "expected the audit to require Selection Sheet to compose HermexBottomSheet(, not a "
+            f"bespoke presentation: {failures}",
+        )
+
+    def test_the_audit_module_no_longer_declares_the_retired_hermex_dropdown_foundation_requirement(self):
+        # Confirms REQUIRED_FOUNDATION_FILES was swapped, not merely extended: the audit itself must
+        # no longer require HermexDropdown.swift once Selection Sheet replaces it as the registered
+        # Hermex foundation for this role.
+        self.assertNotIn("HermesMobile/Features/Shared/HermexDropdown.swift", audit.REQUIRED_FOUNDATION_FILES)
+        self.assertIn("HermesMobile/Features/Shared/HermexSelectionSheet.swift", audit.REQUIRED_FOUNDATION_FILES)
+
     # ─── Popover Menu family slice (test-first phase) ────────────────────────────────────────────
     # `HermexPopoverMenu.swift` and `HermexList`'s `case compactOverlay` do not exist yet — Task 7/8
     # of the implementation plan ship them, along with the audit's own REQUIRED_FOUNDATION_FILES/
@@ -534,18 +617,40 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
             failures,
         )
 
-    def test_searchable_baseline_ignores_the_shared_hermes_search_wrapper_itself(self):
+    def test_hermex_search_swift_is_no_longer_excluded_and_a_stray_searchable_call_fails(self):
         build_valid_fixture_tree(self.root)
-        # HermexSearch.swift forwards to native `.searchable` without a leading dot (an implicit
-        # `self` call inside the View extension), but exercise the exclusion directly regardless.
+        # Unlike the old thin-wrapper foundation, the custom HermexSearchField/.hermexSearch
+        # implementation must never call native `.searchable` again — HermexSearch.swift is no
+        # longer excluded from this accounting, so a stray `.searchable(` call inside it now fails
+        # like any other new, unfrozen call site.
         write(
             self.root,
             "HermesMobile/Features/Shared/HermexSearch.swift",
-            "extension View {\n    func hermexSearch(text: Binding<String>) -> some View { self.searchable(text: text) }\n}",
+            (
+                "import SwiftUI\n"
+                "struct HermexSearchField: View {\n"
+                "    var body: some View { EmptyView().searchable(text: .constant(\"\")) }\n"
+                "}\n"
+                "extension View {\n"
+                "    func hermexSearch(\n"
+                "        _ titleKey: LocalizedStringKey,\n"
+                "        text: Binding<String>\n"
+                "    ) -> some View {\n"
+                "        safeAreaInset(edge: .top, spacing: 0) {\n"
+                "            HermexSearchField(titleKey, text: text)\n"
+                "        }\n"
+                "    }\n"
+                "}"
+            ),
         )
         failures = audit.run(self.root)
-        self.assertFalse(
-            any("HermexSearch.swift" in f for f in failures),
+        self.assertTrue(
+            any(
+                "direct .searchable" in f
+                and "new, unfrozen call site" in f
+                and "HermexSearch.swift" in f
+                for f in failures
+            ),
             failures,
         )
 
@@ -604,6 +709,34 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         failures = audit.run(self.root)
         self.assertFalse(
             any("HermexTextInput.swift" in f for f in failures),
+            failures,
+        )
+
+    def test_text_field_baseline_ignores_the_hermex_search_field_itself(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexSearch.swift",
+            (
+                "import SwiftUI\n"
+                "struct HermexSearchField: View {\n"
+                "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
+                "}\n"
+                "extension View {\n"
+                "    func hermexSearch(\n"
+                "        _ titleKey: LocalizedStringKey,\n"
+                "        text: Binding<String>\n"
+                "    ) -> some View {\n"
+                "        safeAreaInset(edge: .top, spacing: 0) {\n"
+                "            HermexSearchField(titleKey, text: text)\n"
+                "        }\n"
+                "    }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertFalse(
+            any("HermexSearch.swift" in f and "direct TextField" in f for f in failures),
             failures,
         )
 

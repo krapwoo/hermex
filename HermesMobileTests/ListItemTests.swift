@@ -113,6 +113,79 @@ final class ListItemTests: XCTestCase {
         )
     }
 
+    // MARK: - Selection Sheet seam: additive, default-preserving selectionChrome (Issue #607)
+    //
+    // `ListItemSelectionChrome` does not exist yet — Task 2 of the Selection Sheet implementation
+    // plan adds it. Before that lands, these are source-only contracts (no compile reference to the
+    // missing enum), so the test target itself keeps building while pinning the approved seam: a
+    // `.standard` default that preserves every existing caller's current selected pill/checkmark and
+    // accessibility behavior unchanged, plus an additive `.indicatorOnly` mode Selection Sheet opts
+    // into so a row-owned Radio/Checkbox visual never duplicates the built-in selected mark.
+
+    func testDefinesAnAdditiveSelectionChromeEnumDefaultingToStandard() throws {
+        let src = try source("HermesMobile/Features/Shared/ListItem.swift")
+        XCTAssertTrue(src.contains("enum ListItemSelectionChrome"), "expected a ListItemSelectionChrome enum")
+        XCTAssertTrue(src.contains("case standard"), "expected a .standard case")
+        XCTAssertTrue(src.contains("case indicatorOnly"), "expected an additive .indicatorOnly case")
+        XCTAssertTrue(
+            src.contains("var selectionChrome: ListItemSelectionChrome = .standard"),
+            "expected a stored selectionChrome property defaulting to .standard"
+        )
+    }
+
+    func testSelectedAccessibilityTraitStaysDrivenByStateIsSelectedRegardlessOfChrome() throws {
+        let src = try source("HermesMobile/Features/Shared/ListItem.swift")
+        XCTAssertTrue(
+            src.contains(".accessibilityAddTraits(state.isSelected ? .isSelected : [])"),
+            "expected the selected accessibility trait to remain driven by state.isSelected, unconditioned on selectionChrome, for both .standard and .indicatorOnly rows"
+        )
+    }
+
+    func testSelectionPillAndBuiltInCheckmarkAreGatedToStandardChromeOnly() throws {
+        let src = try source("HermesMobile/Features/Shared/ListItem.swift")
+        XCTAssertTrue(
+            src.contains("listItemSelectionPill(isSelected: state.isSelected && selectionChrome == .standard)"),
+            "expected the selected pill treatment to render only under .standard chrome, so .indicatorOnly rows can pair with a Radio/Checkbox visual without a duplicate selection mark"
+        )
+        XCTAssertTrue(
+            src.contains("state.isSelected && selectionChrome == .standard"),
+            "expected the built-in trailing selected checkmark to be gated the same way, only under .standard chrome"
+        )
+    }
+
+    func testIndicatorOnlySelectedSubtitleDoesNotUseTheStandardPillInverseColor() throws {
+        let src = try source("HermesMobile/Features/Shared/ListItem.swift")
+        XCTAssertTrue(
+            src.contains("state.isSelected && selectionChrome == .standard"),
+            "expected every inverse selected foreground to require the standard filled pill"
+        )
+        XCTAssertTrue(
+            src.contains("private var subtitleForeground")
+                && src.contains("state.isSelected && selectionChrome == .standard ? Color(.systemBackground).opacity(0.7) : Color.secondary"),
+            "an indicator-only selected row has no dark pill, so its subtitle must remain secondary rather than becoming an unreadable inverse color"
+        )
+    }
+
+    func testEveryConvenienceInitializerForwardsSelectionChromeWithAStandardDefault() throws {
+        let src = try source("HermesMobile/Features/Shared/ListItem.swift")
+        // Count declared `init(` headers only, excluding the forwarding `self.init(` calls each
+        // convenience initializer's body makes to the designated one.
+        let declaredInitializerCount = src.components(separatedBy: "init(").count - 1
+            - (src.components(separatedBy: "self.init(").count - 1)
+        // The stored property's own declaration ("var selectionChrome: ListItemSelectionChrome =
+        // .standard") also contains this substring, so it must be excluded to count only
+        // initializer-parameter declarations.
+        let selectionChromeParameterCount = src.components(
+            separatedBy: "selectionChrome: ListItemSelectionChrome = .standard"
+        ).count - 1 - (src.contains("var selectionChrome: ListItemSelectionChrome = .standard") ? 1 : 0)
+        XCTAssertGreaterThan(declaredInitializerCount, 1, "expected ListItem to keep its multiple defaulted convenience initializers")
+        XCTAssertEqual(
+            selectionChromeParameterCount,
+            declaredInitializerCount,
+            "expected every declared ListItem convenience initializer to forward selectionChrome with a .standard default, so no existing call site must change"
+        )
+    }
+
     // MARK: - Source helpers
 
     private func resourceURL(_ relativePath: String) -> URL {

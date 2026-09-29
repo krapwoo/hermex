@@ -15,6 +15,11 @@ export interface CheckboxProps {
   label?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Optional color override for the checked fill/border and the checkmark's inverse foreground,
+   *  consumed by the Hermex gallery to match native's Neutral color mapping. Omitted, the generic
+   *  template default (DS_SEMANTIC.emphasis.info selected / DS_SEMANTIC.surface.white foreground /
+   *  DS_SEMANTIC.border.dark unselected) is unchanged. */
+  colors?: { selected?: string; selectedForeground?: string; unselectedBorder?: string };
 }
 
 const BOX_SIZE = 20;
@@ -33,7 +38,7 @@ const HIT_SLOP = Math.max(0, Math.ceil((DS_A11Y_MIN_TOUCH_TARGET - BOX_SIZE) / 2
  *  View rendering the identical box/checkmark visual, hidden from assistive tech so a containing
  *  row's own Pressable stays the only interactive/accessible control — never a checkbox nested inside
  *  another control. */
-export function Checkbox({ checked, onChange, label, disabled = false, style }: CheckboxProps) {
+export function Checkbox({ checked, onChange, label, disabled = false, style, colors }: CheckboxProps) {
   const checkAnim = useRef(new Animated.Value(checked ? 1 : 0)).current;
   const { pressScale, onPressIn, onPressOut } = usePressScale(disabled);
   const [focused, setFocused] = useState(false);
@@ -44,13 +49,17 @@ export function Checkbox({ checked, onChange, label, disabled = false, style }: 
     return () => anim.stop();
   }, [checked, checkAnim]);
 
-  const boxBackground = checkAnim.interpolate({ inputRange: [0, 1], outputRange: ['rgba(0,0,0,0)', DS_SEMANTIC.emphasis.info] });
-  const boxBorderColor = checkAnim.interpolate({ inputRange: [0, 1], outputRange: [DS_SEMANTIC.border.dark, DS_SEMANTIC.emphasis.info] });
+  const selectedColor = colors?.selected ?? DS_SEMANTIC.emphasis.info;
+  const unselectedBorderColor = colors?.unselectedBorder ?? DS_SEMANTIC.border.dark;
+  const selectedForegroundColor = colors?.selectedForeground ?? DS_SEMANTIC.surface.white;
+
+  const boxBackground = checkAnim.interpolate({ inputRange: [0, 1], outputRange: ['rgba(0,0,0,0)', selectedColor] });
+  const boxBorderColor = checkAnim.interpolate({ inputRange: [0, 1], outputRange: [unselectedBorderColor, selectedColor] });
 
   const box = (
     <Animated.View style={[styles.box, { backgroundColor: boxBackground, borderColor: boxBorderColor, transform: [{ scale: pressScale }] }]}>
       <Animated.View style={{ opacity: checkAnim, transform: [{ scale: checkAnim }] }}>
-        <Icon name="check" size={DS_ICON_SIZE.xs} color={DS_SEMANTIC.surface.white} strokeWidth={3} />
+        <Icon name="check" size={DS_ICON_SIZE.xs} color={selectedForegroundColor} strokeWidth={3} />
       </Animated.View>
       {/* Keyboard-focus ring — the same interaction.focused treatment Button/Pill use, drawn as a
           zero-layout absolute overlay around the box so focusing never shifts layout. */}

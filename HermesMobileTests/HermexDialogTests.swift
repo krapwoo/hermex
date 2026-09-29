@@ -199,6 +199,101 @@ import XCTest
                           "Dynamic Type must wrap the modifier so its forwarded overlay environment receives accessibility5")
     }
 
+    // MARK: - Issue #DSF-01: header/close centering, XS adaptive-glass close, trailing footer
+
+    /// Isolates the `closeButton` computed property's own source, the same bounded-slice pattern
+    /// `testAccessibilityLabSpecimenAppliesDynamicTypeToTheDialogModifier` uses for a named region
+    /// of `HermexOverlayLab.swift` — scoping assertions to just this control instead of the whole
+    /// file, so the icon's own status/emphasis text never bleeds into other proximate `HermexButton`
+    /// call sites this file may later grow.
+    private func closeButtonSource() throws -> String {
+        let src = try hermexDialogSource()
+        let after = try XCTUnwrap(src.components(separatedBy: "private var closeButton: some View {").last,
+                                   "expected a closeButton computed property")
+        return try XCTUnwrap(after.components(separatedBy: "\n\n    private func present()").first,
+                              "expected closeButton to be immediately followed by present()")
+    }
+
+    func testHeaderRowVerticallyCentersHeadingAndCloseControl() throws {
+        let src = try hermexDialogSource()
+        XCTAssertTrue(src.contains("HStack(alignment: .center, spacing: HermexDialogMetrics.headerSpacing)"),
+                      "expected the header row to vertically center the heading and close control")
+        XCTAssertFalse(src.contains("HStack(alignment: .top, spacing: HermexDialogMetrics.headerSpacing)"),
+                       "the header row must no longer use top alignment now that header/close are centered")
+    }
+
+    func testCloseControlComposesTheSharedHermexButtonAtExtraSmallNeutralAdaptiveGlass() throws {
+        let block = try closeButtonSource()
+        XCTAssertTrue(block.contains("HermexButton("), "expected the close control to compose the shared HermexButton")
+        XCTAssertTrue(block.contains("content: .icon(\"xmark\")"), "expected the close control to keep its xmark glyph")
+        XCTAssertTrue(block.contains("size: .extraSmall"), "expected the close control's compact visual to be HermexButtonSize.extraSmall")
+        XCTAssertTrue(block.contains("emphasis: .neutral"), "expected the close control to use neutral emphasis")
+        XCTAssertTrue(block.contains("isGlass: true"), "expected the close control to compose adaptive glass")
+        XCTAssertFalse(block.contains("in: Circle()"),
+                       "the bespoke circular background must be replaced by the shared HermexButton chrome")
+    }
+
+    /// A min-only outer `.frame(minWidth:minHeight:)` clamps its own size up to 44pt and centers its
+    /// XS child without proposing anything the child must fill and without adding a content shape —
+    /// SwiftUI's default content shape for a composite view stays sized to the child's own layout
+    /// (the ~24pt `HermexButtonSize.extraSmall` chrome), so the surrounding ~10pt of padding on each
+    /// side is not actually tappable even though the frame reports 44x44. There is no distinct,
+    /// individually hit-testable UIView for this control inside the hosted window hierarchy — the
+    /// whole dialog surface renders through one SwiftUI-owned hit-testing path — so a windowed
+    /// `hitTest(_:)` at the frame's edge cannot deterministically distinguish "claimed by the close
+    /// button's enlarged shape" from "claimed by whatever sits behind/around it" without inventing a
+    /// new rendering harness. This stays a source contract instead, narrowly scoped to the exact fix:
+    /// the outer frame must be followed immediately by `.contentShape(Rectangle())`, which is what
+    /// actually enlarges the hit-testable region to match the reported frame, before the control's
+    /// other (keyboard/disabled/accessibility) modifiers apply.
+    func testCloseControlExpandsItsActualHitTestShapeToThe44ptFrameItReports() throws {
+        let block = try closeButtonSource()
+        XCTAssertTrue(block.contains("HermexDialogMetrics.closeButtonDimension"),
+                      "expected the close control to still reserve its 44pt minimum hit target even though its visual chrome shrinks to XS")
+
+        let frameModifier = ".frame(minWidth: HermexDialogMetrics.closeButtonDimension, minHeight: HermexDialogMetrics.closeButtonDimension)"
+        guard let frameRange = block.range(of: frameModifier) else {
+            XCTFail("expected the 44pt outer frame to size the composite HermexButton")
+            return
+        }
+
+        let afterFrame = block[frameRange.upperBound...]
+        guard let contentShapeRange = afterFrame.range(of: ".contentShape(Rectangle())") else {
+            XCTFail("""
+                a min-only outer .frame() clamps its own size up to 44pt and centers its XS child \
+                without proposing anything the child must fill and without adding a content shape, \
+                so the surrounding padding stays untappable even though the frame reports 44x44; the \
+                outer frame must be followed by .contentShape(Rectangle()) so the enlarged frame \
+                itself becomes the hit-testable region
+                """)
+            return
+        }
+
+        let betweenFrameAndContentShape = afterFrame[afterFrame.startIndex..<contentShapeRange.lowerBound]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        XCTAssertTrue(betweenFrameAndContentShape.isEmpty,
+                      ".contentShape(Rectangle()) must directly follow the 44pt frame, with no modifier in between")
+
+        for laterModifier in [".keyboardShortcut(.cancelAction)", ".disabled(", ".accessibilityLabel(", ".accessibilityIdentifier("] {
+            guard let modifierRange = block.range(of: laterModifier) else {
+                XCTFail("expected \(laterModifier) to remain on the composite close control")
+                continue
+            }
+            XCTAssertLessThan(contentShapeRange.upperBound, modifierRange.lowerBound,
+                              "\(laterModifier) must come after the enlarged .contentShape(Rectangle()), not before it")
+        }
+    }
+
+    func testHorizontalFooterAlignsCallerSuppliedActionsToTheSemanticTrailingEdge() throws {
+        let src = try hermexDialogSource()
+        let afterHorizontal = try XCTUnwrap(src.components(separatedBy: "case .horizontal:").last,
+                                             "expected a .horizontal case in footerLayout's switch")
+        let horizontalCase = try XCTUnwrap(afterHorizontal.components(separatedBy: "case .vertical:").first,
+                                            "expected a .vertical case immediately following .horizontal")
+        XCTAssertTrue(horizontalCase.contains("Spacer(") || horizontalCase.contains("alignment: .trailing"),
+                      "expected the horizontal footer to push caller-supplied actions to the semantic trailing edge via a leading Spacer or a trailing frame alignment, never a guessed reordering of the caller's own content")
+    }
+
     // MARK: - Rendered behavior
     // Reduce Motion is forced on the harness so present/dismiss complete synchronously within one
     // MainActor turn — deterministic, with no sleep or polling, per the async-testing rule in

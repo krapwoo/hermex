@@ -9,10 +9,20 @@ enum SegmentedControlStyle {
 }
 
 private enum SegmentedControlMetrics {
-    /// Compact visible pill height. The surrounding Button retains the full minimum touch target.
-    static let visualHeight: CGFloat = 36
     static let minimumTouchHeight: CGFloat = 44
     static let trackInset: CGFloat = HermesSpacing.s4
+    /// Vertical padding step above and below the selected pill that defines the fixed variant's
+    /// recessed visual-track background, distinct from the 44pt interactive row it sits inside.
+    /// Insets from the text-bearing row rather than fixing a height, so the track grows with
+    /// accessibility-sized labels: 40pt at the 44pt minimum row height.
+    static let fixedTrackVisualPadding: CGFloat = HermesSpacing.s2
+    /// Vertical inset between the fixed variant's selected pill and its text-bearing row. Insets
+    /// rather than fixing a height, so the pill grows with wrapped or scaled labels: 36pt at the
+    /// 44pt minimum row height.
+    static let selectedVisualInset: CGFloat = HermesSpacing.s4
+    /// The scrolling variant's selected pill keeps its prior fixed visual height instead of growing
+    /// with accessibility text, unlike the fixed variant's dynamically inset pill.
+    static let scrollingSelectedPillHeight: CGFloat = 36
 }
 
 struct SegmentedControlOption<Value: Hashable>: Identifiable {
@@ -54,8 +64,13 @@ struct SegmentedControl<Value: Hashable>: View {
                     optionButton(option, expandsToFill: true)
                 }
             }
+            .frame(minHeight: SegmentedControlMetrics.minimumTouchHeight)
             .padding(.horizontal, SegmentedControlMetrics.trackInset)
-            .background(Color(.secondarySystemFill), in: Capsule(style: .continuous))
+            .background {
+                Capsule(style: .continuous)
+                    .fill(Color(.secondarySystemFill))
+                    .padding(.vertical, SegmentedControlMetrics.fixedTrackVisualPadding)
+            }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text(title))
         case .scrolling:
@@ -86,15 +101,24 @@ struct SegmentedControl<Value: Hashable>: View {
         } label: {
             ZStack {
                 if isSelected {
-                    Capsule(style: .continuous)
-                        .fill(Color(.systemBackground))
-                        .hermesShadow(.controlElevatedResting)
-                        .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
-                        .frame(height: SegmentedControlMetrics.visualHeight)
-                        .allowsHitTesting(false)
+                    if expandsToFill {
+                        Capsule(style: .continuous)
+                            .fill(Color(.systemBackground))
+                            .hermesShadow(.controlElevatedResting)
+                            .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
+                            .padding(.vertical, SegmentedControlMetrics.selectedVisualInset)
+                            .allowsHitTesting(false)
+                    } else {
+                        Capsule(style: .continuous)
+                            .fill(Color(.systemBackground))
+                            .hermesShadow(.controlElevatedResting)
+                            .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
+                            .frame(height: SegmentedControlMetrics.scrollingSelectedPillHeight)
+                            .allowsHitTesting(false)
+                    }
                 }
 
-                optionLabel(option, isSelected: isSelected)
+                optionLabel(option, isSelected: isSelected, expandsToFill: expandsToFill)
 
                 .padding(.horizontal, HermesSpacing.s12)
                 .frame(
@@ -111,7 +135,8 @@ struct SegmentedControl<Value: Hashable>: View {
 
     private func optionLabel(
         _ option: SegmentedControlOption<Value>,
-        isSelected: Bool
+        isSelected: Bool,
+        expandsToFill: Bool
     ) -> some View {
         HStack(spacing: HermesSpacing.s8) {
             if let tint = option.tint {
@@ -123,6 +148,8 @@ struct SegmentedControl<Value: Hashable>: View {
 
             Text(option.title)
                 .appFont(isSelected ? .subheadlineSemibold : .subheadline)
+                .lineLimit(expandsToFill ? 2 : nil)
+                .multilineTextAlignment(.center)
 
             if let count = option.count {
                 Text(verbatim: "\(count)")

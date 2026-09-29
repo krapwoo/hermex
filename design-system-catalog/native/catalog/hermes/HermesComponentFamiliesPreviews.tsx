@@ -16,7 +16,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Platform, View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, Dropdown, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
+import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
 import { Icon } from '../../../icons/Icon.native';
 import type { IconName } from '../../../icons';
 import { DS_ICON_SIZE, DS_RADIUS } from '../../../tokens';
@@ -142,11 +142,23 @@ const preview = StyleSheet.create({
   skeletonCard: { width: 200, height: 88, borderRadius: 16 },
 
   // Native iOS patterns and the Hermex-owned Segmented Control reconstruction.
-  nativeSearch: {
-    width: 280, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#efeff4',
-  },
   nativeSearchInput: { flex: 1, minWidth: 0, fontSize: 16, color: '#1c1c1e', paddingVertical: 0 },
+
+  // Search — the custom Hermex-owned HermexSearchField reconstruction: own adaptive Neutral surface
+  // and border (resting vs. focused vs. disabled) rather than a bare native `.searchable` mock.
+  searchField: {
+    width: 280, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 12, borderRadius: DS_RADIUS.medium,
+    backgroundColor: HERMES_COLOR_RAMPS.Neutral[100],
+    borderWidth: 1, borderColor: HERMES_COLOR_RAMPS.Neutral[300],
+  },
+  searchFieldFocused: { borderColor: HERMES_COLOR_RAMPS.Neutral[600], borderWidth: 1.5 },
+  searchFieldDisabled: { opacity: 0.62 },
+  searchFieldInput: { flex: 1, minWidth: 0, fontSize: 16, color: '#1c1c1e', paddingVertical: 0 },
+  // The independent 44pt hit target itself is applied inline at the clear control's call site (see
+  // SearchFamilyGallery) so it stays a literal, checkable minWidth/minHeight pair; this only supplies
+  // the shared centering.
+  searchClearTarget: { alignItems: 'center', justifyContent: 'center' },
   nativeFieldGroup: { gap: 4, width: 280 },
   nativeFieldInput: {
     minHeight: 44, fontSize: 16, color: '#1c1c1e', paddingHorizontal: 12, paddingVertical: 10,
@@ -169,9 +181,10 @@ const preview = StyleSheet.create({
   },
   bottomSheetBody: { padding: 16, gap: 8 },
   bottomSheetBodyText: { fontSize: 13, color: '#3a3a3c', lineHeight: 18 },
+  // No borderTop here — HermexBottomSheet.swift pins the footer with a plain .safeAreaInset over
+  // the bar material, with no Divider or border of its own.
   bottomSheetFooter: {
     flexDirection: 'row', gap: 8, padding: 16,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,0.10)',
   },
   bottomSheetFooterVertical: { flexDirection: 'column' },
   bottomSheetFooterButton: { flex: 1 },
@@ -189,15 +202,17 @@ const preview = StyleSheet.create({
     width: '100%', borderRadius: 20, backgroundColor: '#ffffff', padding: 20, gap: 12,
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
   },
-  dialogHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  dialogHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   dialogHeading: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1c1c1e' },
+  // 24pt visual matches HermexButtonSize.extraSmall.minHeight; the glass surface reuses the same
+  // translucent composition as buttonGlassSurface (Buttons — Adaptive Glass) rather than a bespoke tint.
   dialogCloseButton: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.08)',
+    width: 24, height: 24, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
   dialogBodyText: { fontSize: 13, color: '#3a3a3c', lineHeight: 18 },
-  dialogFooter: { flexDirection: 'row', gap: 8 },
-  dialogFooterVertical: { flexDirection: 'column' },
+  dialogFooter: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
+  dialogFooterVertical: { flexDirection: 'column', justifyContent: 'flex-start' },
   dialogFooterButton: { flex: 1 },
   dialogFooterButtonFull: { width: '100%' },
 
@@ -238,10 +253,15 @@ const preview = StyleSheet.create({
     borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
   },
 
-  segmentedFixedTrack: {
-    width: 280, flexDirection: 'row', gap: 4, paddingHorizontal: 4,
-    borderRadius: 999, backgroundColor: 'rgba(120,120,128,0.16)',
+  segmentedFixedTrackWrapper: { width: 280 },
+  // A distinct 40pt visual-track background layer (the 36pt selected pill plus one HermesSpacing.s2
+  // padding step above and below) — separate from the 44pt interactive row it sits behind, which
+  // keeps owning the full touch target.
+  segmentedFixedVisualTrack: {
+    position: 'absolute', left: 0, right: 0, top: 2, height: 40, borderRadius: 999,
+    backgroundColor: 'rgba(120,120,128,0.16)',
   },
+  segmentedFixedTrack: { flexDirection: 'row', gap: 4, paddingHorizontal: 4 },
   segmentedTouchTarget: { minHeight: 44, justifyContent: 'center' },
   segmentedPill: {
     height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -273,7 +293,7 @@ const preview = StyleSheet.create({
   streamDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34C759' },
   attentionText: { fontSize: 11, color: '#FF3B30', fontWeight: '600' },
 
-  // Checkbox/Radio — adaptive Color.primary selected-fill swatch (same Light/Dark frame precedent
+  // Checkbox/Radio — component-scoped adaptive Neutral selected-fill swatch (same Light/Dark frame precedent
   // as HermesSemanticColorReference.tsx's SampleFrame, kept local since it's a one-off two-frame
   // pair rather than a full role gallery).
   adaptiveSwatchCell: { alignItems: 'center', gap: 4 },
@@ -287,26 +307,38 @@ const preview = StyleSheet.create({
   adaptiveSwatchLabel: { fontSize: 9, fontWeight: '700', color: '#8a8a8a', fontFamily: 'Menlo' },
 });
 
-// ─── Checkbox/Radio — adaptive Color.primary selected-fill demo ────────────────
-// The approved decision is adaptive semantic black/white (Color.primary), not a fixed accent —
-// reuses `color.text.primary`'s own previewLight/previewDark facts rather than a second, hand-typed
-// pair of hex literals.
+// The approved Neutral color mapping (DSF-08/DSF-09, corrected), mirroring native
+// HermexSelectionControlColors: every Hermex Radio/Checkbox specimen below passes this instead of
+// the generic template's default DS_SEMANTIC.emphasis.info blue. Light-appearance values only,
+// matching HermesColorRamp.Neutral's light anchor (.s950/.s50/.s500) — the gallery renders one
+// static appearance; dark adaptation is documented by the swatch below, not asserted by these
+// specimens themselves. unselectedBorder was originally Neutral.s400 (#AEAEB1); the review measured
+// that light anchor at ~2.1:1 against the light primary surface, below the 3:1 non-text boundary
+// threshold (WCAG 1.4.11), and corrected it to the contrast-validated Neutral.s500 (#8E8E93).
+const HERMEX_SELECTION_CONTROL_COLORS = {
+  selected: '#2D2D2F',
+  selectedForeground: '#F9F9FA',
+  unselectedBorder: '#8E8E93',
+};
+
+// ─── Checkbox/Radio — component-scoped adaptive Neutral selected-fill demo ─────
+// The approved light/dark pair is Neutral.s950 / Neutral.s50, not Color.primary's pure black/white
+// and not a fixed accent. Reuse the same Hermex selection-control mapping as every real specimen.
 function AdaptiveSelectedFillSwatch({ shape }: { shape: 'square' | 'circle' }) {
-  const primary = HERMES_SEMANTIC_COLORS['color.text.primary'];
   const fill = shape === 'circle' ? preview.adaptiveSwatchCircle : preview.adaptiveSwatchSquare;
   return (
     <View style={preview.row}>
       <View style={preview.adaptiveSwatchCell}>
         <View style={[preview.adaptiveSwatchFrame, preview.adaptiveSwatchFrameLight]}>
-          <View style={[fill, { backgroundColor: primary.previewLight }]} />
+          <View style={[fill, { backgroundColor: HERMEX_SELECTION_CONTROL_COLORS.selected }]} />
         </View>
-        <Text style={preview.adaptiveSwatchLabel}>Light · {primary.previewLight}</Text>
+        <Text style={preview.adaptiveSwatchLabel}>Light · {HERMEX_SELECTION_CONTROL_COLORS.selected}</Text>
       </View>
       <View style={preview.adaptiveSwatchCell}>
         <View style={[preview.adaptiveSwatchFrame, preview.adaptiveSwatchFrameDark]}>
-          <View style={[fill, { backgroundColor: primary.previewDark }]} />
+          <View style={[fill, { backgroundColor: HERMEX_SELECTION_CONTROL_COLORS.selectedForeground }]} />
         </View>
-        <Text style={preview.adaptiveSwatchLabel}>Dark · {primary.previewDark}</Text>
+        <Text style={preview.adaptiveSwatchLabel}>Dark · {HERMEX_SELECTION_CONTROL_COLORS.selectedForeground}</Text>
       </View>
     </View>
   );
@@ -600,32 +632,44 @@ export function HermesSkeletonGallery() {
   );
 }
 
-// ─── Search — Hermex-owned `.hermexSearch` wrapper over native `.searchable` ─
+// ─── Search — the custom Hermex-owned HermexSearchField/.hermexSearch foundation ─
 const SEARCH_FAMILY_SAMPLE_SESSIONS = ['Refactor auth module', 'Investigate flaky test', 'Update onboarding copy'];
 
 export function SearchFamilyGallery() {
   const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
   const searchInputRef = useRef<TextInput>(null);
   const trimmed = query.trim().toLowerCase();
   const results = trimmed.length === 0
     ? SEARCH_FAMILY_SAMPLE_SESSIONS
     : SEARCH_FAMILY_SAMPLE_SESSIONS.filter((session) => session.toLowerCase().includes(trimmed));
+  const submitUnit = submitCount === 1 ? 'time' : 'times';
   return (
     <View style={preview.stack}>
-      <View style={preview.nativeSearch} accessibilityRole="search">
+      <Text style={preview.label}>Enabled — HermexSearchField</Text>
+      <View
+        style={[preview.searchField, isFocused && preview.searchFieldFocused]}
+        accessibilityRole="search"
+      >
         <Icon name="search" size={DS_ICON_SIZE.sm} color="#6d6d72" />
         <TextInput
           ref={searchInputRef}
           value={query}
           onChangeText={setQuery}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onSubmitEditing={() => setSubmitCount((count) => count + 1)}
+          returnKeyType="search"
           placeholder="Search sessions"
           accessibilityLabel="Search sessions"
-          style={preview.nativeSearchInput}
+          style={preview.searchFieldInput}
         />
         {query.length > 0 && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear search"
+            style={[preview.searchClearTarget, { minWidth: 44, minHeight: 44 }]}
             onPress={() => {
               setQuery('');
               searchInputRef.current?.focus();
@@ -635,6 +679,8 @@ export function SearchFamilyGallery() {
           </Pressable>
         )}
       </View>
+      <Text style={preview.caption}>Submitted {submitCount} {submitUnit}.</Text>
+
       {results.length > 0 ? (
         <View style={preview.stack}>
           {results.map((session) => (
@@ -644,11 +690,28 @@ export function SearchFamilyGallery() {
       ) : (
         <Text style={preview.caption}>No results for “{query}”.</Text>
       )}
+
+      <Text style={preview.label}>Disabled</Text>
+      <View
+        style={[preview.searchField, preview.searchFieldDisabled]}
+        accessibilityRole="search"
+        accessibilityState={{ disabled: true }}
+      >
+        <Icon name="search" size={DS_ICON_SIZE.sm} color="#6d6d72" />
+        <TextInput
+          value="Read only"
+          editable={false}
+          accessibilityLabel="Disabled search"
+          style={preview.searchFieldInput}
+        />
+      </View>
+
       <Text style={preview.caption}>
-        `.hermexSearch(text:placement:prompt:)` is a thin Hermex-owned wrapper that forwards straight
-        to SwiftUI's native `.searchable` modifier — this reconstruction documents its prompt, focus,
-        clear, and no-results behavior. Native iOS still owns placement, focus, keyboard, clear,
-        dictation, VoiceOver, and Dynamic Type; this preview introduces no custom Hermex field chrome.
+        The custom Hermex-owned `HermexSearchField` — its own adaptive Neutral surface and border
+        (resting, focused, disabled), not a bare native `.searchable` reconstruction. Results, filtering,
+        and the no-results state above stay caller-owned; the field itself only owns chrome, local
+        focus, the clear control, and keyboard-submit wiring. `.hermexSearch(...)` composes this exact
+        field as a persistent top content inset — it is not a second implementation.
       </Text>
     </View>
   );
@@ -815,8 +878,8 @@ function DialogSpecimen({
         <View style={preview.dialogCard}>
           <View style={preview.dialogHeaderRow}>
             <Text style={preview.dialogHeading}>{heading}</Text>
-            <View style={preview.dialogCloseButton}>
-              <Icon name="clear" size={16} color="#1c1c1e" />
+            <View style={[preview.dialogCloseButton, preview.buttonGlassSurface]}>
+              <Icon name="clear" size={12} color="#1c1c1e" />
             </View>
           </View>
           <Text style={preview.dialogBodyText}>{body}</Text>
@@ -861,9 +924,12 @@ export function DialogFamilyGallery() {
       <Text style={preview.caption}>
         `HermexDialog` mounts through the shared same-window overlay host, never `.alert`, `.sheet`,
         or another native presentation wrapper — shown here inline, over a static dimmed backdrop,
-        for inspection rather than as a real floating overlay. The standard close button (top right)
-        is always present alongside the caller's own header; the dimmed backdrop never dismisses the
-        dialog, and the footer's horizontal (left) or vertical (right) layout is the caller's own
+        for inspection rather than as a real floating overlay. The header row vertically centers the
+        caller's own heading against a compact 24pt adaptive-glass close control (top right, always
+        present) that keeps a 44pt minimum hit target even though its visual chrome is XS; the dimmed
+        backdrop never dismisses the dialog. The horizontal footer (left) hugs the trailing edge with
+        the caller's actions in their own authored order, lower emphasis first and higher emphasis
+        last; the vertical footer (right) stacks top-to-bottom instead. Axis is always the caller's
         explicit choice, never inferred from action count or width.
       </Text>
     </View>
@@ -1173,16 +1239,19 @@ function FixedSegmentedControlPreview() {
   const [value, setValue] = useState('tokens');
 
   return (
-    <View accessibilityRole="tablist" style={preview.segmentedFixedTrack}>
-      {options.map((option) => (
-        <SegmentedPreviewOptionView
-          key={option.value}
-          option={option}
-          selected={option.value === value}
-          fill
-          onPress={() => setValue(option.value)}
-        />
-      ))}
+    <View style={preview.segmentedFixedTrackWrapper}>
+      <View style={preview.segmentedFixedVisualTrack} />
+      <View accessibilityRole="tablist" style={preview.segmentedFixedTrack}>
+        {options.map((option) => (
+          <SegmentedPreviewOptionView
+            key={option.value}
+            option={option}
+            selected={option.value === value}
+            fill
+            onPress={() => setValue(option.value)}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -1221,7 +1290,11 @@ export function SegmentedControlGallery() {
       <Text style={preview.label}>Fixed — custom Hermex equal-width control</Text>
       <FixedSegmentedControlPreview />
       <Text style={preview.caption}>
-        Used by Tasks, Usage window selection, and the Cost/Tokens selector. Each option preserves
+        Used by Tasks, Usage window selection, and the Cost/Tokens selector. A distinct 40pt
+        visual-track background sits behind the row (the 36pt selected pill plus one padding step
+        above and below), while each option's interactive row keeps the full 44pt touch target that
+        extends beyond it. At accessibility text sizes the equal-width segments grow vertically and
+        labels may wrap to two centered lines rather than clipping or shrinking. Each option preserves
         native Button semantics while Hermex owns the track, selected pill, typography, and motion.
       </Text>
       <Text style={[preview.label, { marginTop: 8 }]}>Scrolling — larger mutually-exclusive sets</Text>
@@ -1590,7 +1663,7 @@ export function AccordionListFamilyGallery() {
  */
 function CheckboxInteractiveDemo() {
   const [checked, setChecked] = useState(false);
-  return <Checkbox checked={checked} onChange={setChecked} label="Remember this trip" />;
+  return <Checkbox checked={checked} onChange={setChecked} label="Remember this trip" colors={HERMEX_SELECTION_CONTROL_COLORS} />;
 }
 
 function CheckboxRowOwnedDemo() {
@@ -1604,7 +1677,7 @@ function CheckboxRowOwnedDemo() {
       {files.map((file) => (
         <ListItem
           key={file.key}
-          leading={<Checkbox checked={!!selectedIds[file.key]} />}
+          leading={<Checkbox checked={!!selectedIds[file.key]} colors={HERMEX_SELECTION_CONTROL_COLORS} />}
           title={file.title}
           selected={!!selectedIds[file.key]}
           onPress={() => setSelectedIds((prev) => ({ ...prev, [file.key]: !prev[file.key] }))}
@@ -1619,13 +1692,13 @@ export function CheckboxFamilyGallery() {
     <View style={preview.stack}>
       <Text style={preview.label}>Unchecked · Checked</Text>
       <View style={preview.row}>
-        <Checkbox checked={false} onChange={() => {}} label="Unchecked" />
-        <Checkbox checked={true} onChange={() => {}} label="Checked" />
+        <Checkbox checked={false} onChange={() => {}} label="Unchecked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+        <Checkbox checked={true} onChange={() => {}} label="Checked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
       </View>
       <Text style={[preview.label, { marginTop: 8 }]}>Disabled</Text>
       <View style={preview.row}>
-        <Checkbox checked={false} onChange={() => {}} disabled label="Disabled, unchecked" />
-        <Checkbox checked={true} onChange={() => {}} disabled label="Disabled, checked" />
+        <Checkbox checked={false} onChange={() => {}} disabled label="Disabled, unchecked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+        <Checkbox checked={true} onChange={() => {}} disabled label="Disabled, checked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
       </View>
       <Text style={[preview.label, { marginTop: 8 }]}>Interactive (tap to toggle; Tab to focus)</Text>
       <CheckboxInteractiveDemo />
@@ -1637,10 +1710,11 @@ export function CheckboxFamilyGallery() {
       <AdaptiveSelectedFillSwatch shape="square" />
       <Text style={preview.caption}>
         Production HermexCheckbox fills and borders the checked box with the adaptive semantic
-        Color.primary — black in light appearance, white in dark — not a fixed accent color; the
-        checkmark stays the inverse system background so it remains legible against either. The
-        generic catalog Checkbox above (blue accent) is the reusable template's own unrelated default
-        and is not changed by this decision.
+        Neutral mapping — deep Neutral.s950 in light appearance and near-white Neutral.s50 in dark — not
+        a fixed accent color; the checkmark uses the inverse Neutral pair so it remains legible
+        against either. Every Checkbox specimen above now passes that same light-appearance mapping
+        via the shared colors prop, matching native instead of the reusable template's own unrelated
+        blue default.
       </Text>
       <Text style={[preview.label, { marginTop: 8 }]}>Row-owned indicator (multi-select list)</Text>
       <CheckboxRowOwnedDemo />
@@ -1842,8 +1916,10 @@ export function BannerFamilyGallery() {
 }
 
 // ─── TopNav ─────────────────────────────────────────────────────────────────────
+// Icon-first, accessibly-labeled, and composed with the same Adaptive Glass surface as Buttons'
+// Glass entry — a style composition on top of the existing variant, not a bespoke tint of its own.
 function iconSlotButton(iconName: IconName, label: string) {
-  return <Button variant="secondary" size="small" showIcon showLabel={false} iconName={iconName} accessibilityLabel={label} onPress={() => {}} style={preview.topNavActionButton} />;
+  return <Button variant="secondary" size="small" showIcon showLabel={false} iconName={iconName} accessibilityLabel={label} onPress={() => {}} style={[preview.topNavActionButton, preview.buttonGlassSurface]} />;
 }
 
 export function TopNavFamilyGallery() {
@@ -2150,8 +2226,16 @@ export function ToastFamilyGallery() {
         <Toast message="Reconnecting…" variant="warning" />
         <Toast message="Could not send message" variant="negative" />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>With a trailing action</Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>With a trailing action — the generic Toast's own status-tinted shortcut</Text>
       <Toast message="Session archived" variant="neutral" action={{ label: 'Undo', onPress: () => {} }} />
+      <Text style={[preview.label, { marginTop: 8 }]}>
+        HermexToast's real trailing action — an XS neutral Button, not status-tinted
+      </Text>
+      <Toast
+        message="Session archived"
+        variant="neutral"
+        actionNode={<Button label="Undo" size="extraSmall" variant="tertiary" onPress={() => {}} />}
+      />
       <Text style={preview.caption}>
         The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
         Production HermexToast is the message/icon/action card alone — animation and lifecycle live
@@ -2159,7 +2243,11 @@ export function ToastFamilyGallery() {
         entirely caller-owned rather than baked into the toast view itself. That modifier's default
         motion enters by moving down from the top edge combined with opacity and exits back toward
         the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
-        Reduce Motion drops the move and falls back to an opacity-only state change.
+        Reduce Motion drops the move and falls back to an opacity-only state change. HermexToast's own
+        trailing action composes the shared HermexButton at size: .extraSmall, emphasis: .neutral —
+        an XS neutral label button, not the status-tinted plain button shown above; the opt-in
+        `actionNode` prop demonstrates that real primitive here instead of only describing it in
+        prose, while every other Toast call site keeps using the built-in `action` shortcut unchanged.
       </Text>
     </View>
   );
@@ -2205,9 +2293,9 @@ function RadioGroupDemo() {
   const [selected, setSelected] = useState('a');
   return (
     <View style={{ gap: 10 }}>
-      <Radio selected={selected === 'a'} onPress={() => setSelected('a')} label="Option A" />
-      <Radio selected={selected === 'b'} onPress={() => setSelected('b')} label="Option B" />
-      <Radio selected={selected === 'c'} onPress={() => setSelected('c')} label="Option C" disabled />
+      <Radio selected={selected === 'a'} onPress={() => setSelected('a')} label="Option A" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+      <Radio selected={selected === 'b'} onPress={() => setSelected('b')} label="Option B" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+      <Radio selected={selected === 'c'} onPress={() => setSelected('c')} label="Option C" disabled colors={HERMEX_SELECTION_CONTROL_COLORS} />
     </View>
   );
 }
@@ -2217,9 +2305,9 @@ export function RadioFamilyGallery() {
     <View style={preview.stack}>
       <Text style={preview.label}>Unselected · Selected · Disabled</Text>
       <View style={preview.row}>
-        <Radio selected={false} onPress={() => {}} label="Unselected" />
-        <Radio selected={true} onPress={() => {}} label="Selected" />
-        <Radio selected={false} onPress={() => {}} label="Disabled" disabled />
+        <Radio selected={false} onPress={() => {}} label="Unselected" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+        <Radio selected={true} onPress={() => {}} label="Selected" colors={HERMEX_SELECTION_CONTROL_COLORS} />
+        <Radio selected={false} onPress={() => {}} label="Disabled" disabled colors={HERMEX_SELECTION_CONTROL_COLORS} />
       </View>
       <Text style={[preview.label, { marginTop: 8 }]}>One-of-many group (tap to change selection)</Text>
       <RadioGroupDemo />
@@ -2231,40 +2319,207 @@ export function RadioFamilyGallery() {
       <AdaptiveSelectedFillSwatch shape="circle" />
       <Text style={preview.caption}>
         Production HermexRadio fills the selected ring and inner dot with the adaptive semantic
-        Color.primary — black in light appearance, white in dark — not a fixed accent color, mirroring
-        HermexCheckbox's own adaptive treatment. The generic catalog Radio above (blue accent) is the
-        reusable template's own unrelated default and is not changed by this decision.
+        Neutral mapping — deep Neutral.s950 in light appearance and near-white Neutral.s50 in dark — not
+        a fixed accent color, mirroring HermexCheckbox's own adaptive treatment. Every Radio specimen
+        above now passes that same light-appearance mapping via the shared colors prop, matching
+        native instead of the reusable template's own unrelated blue default.
       </Text>
     </View>
   );
 }
 
-// ─── Dropdown ──────────────────────────────────────────────────────────────────
-export function DropdownFamilyGallery() {
-  const options = [
-    { value: 'default', label: 'Default' },
-    { value: 'research', label: 'Research' },
-    { value: 'coding', label: 'Coding' },
-  ];
+// ─── Selection Sheet ────────────────────────────────────────────────────────────
+// Reconstructs `HermexSelectionSheet`'s content only, from existing catalog primitives —
+// List/ListItem own the scrolling rows and the single interactive target per row; Radio/Checkbox
+// render as row-owned, non-interactive visual indicators (Checkbox already supports this by
+// omitting `onChange`; Radio's `onPress` is required in the generic template, so it is wrapped in a
+// `pointerEvents="none"` + `accessibilityElementsHidden` View instead — the closest the existing
+// seam allows). Native `.sheet` presentation, detents, drag indicator, compact adaptation, and, for
+// Search, the query binding/visible-options filtering/loading/errors all stay caller-owned in
+// production; this gallery's own wrapping page stands in for that caller.
+const SELECTION_SHEET_PROFILE_OPTIONS = [
+  { value: 'default', label: 'Default' },
+  { value: 'research', label: 'Research' },
+  { value: 'coding', label: 'Coding' },
+];
+
+const SELECTION_SHEET_SKILL_OPTIONS = [
+  { value: 'writing', label: 'Writing' },
+  { value: 'research', label: 'Research' },
+  { value: 'coding', label: 'Coding' },
+];
+
+const SELECTION_SHEET_LONG_LIST_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+  value: `option-${i + 1}`,
+  label: `Option ${i + 1}`,
+}));
+
+function SelectionSheetRadioIndicator({ selected }: { selected: boolean }) {
+  return (
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Radio selected={selected} onPress={() => {}} colors={HERMEX_SELECTION_CONTROL_COLORS} />
+    </View>
+  );
+}
+
+function SelectionSheetSingleDemo() {
+  const [committed, setCommitted] = useState('research');
+  const committedLabel = SELECTION_SHEET_PROFILE_OPTIONS.find((option) => option.value === committed)?.label;
   return (
     <View style={preview.stack}>
-      <Text style={preview.label}>Placeholder · Selected value · Disabled</Text>
+      <List>
+        {SELECTION_SHEET_PROFILE_OPTIONS.map((option) => (
+          <ListItem
+            key={option.value}
+            leading={<SelectionSheetRadioIndicator selected={committed === option.value} />}
+            title={option.label}
+            selected={committed === option.value}
+            onPress={() => setCommitted(option.value)}
+          />
+        ))}
+        <ListItem
+          leading={<SelectionSheetRadioIndicator selected={false} />}
+          title="Locked profile"
+          disabled
+          onPress={() => {}}
+        />
+      </List>
+      <Text style={preview.caption}>
+        Committed value: "{committedLabel}". Tapping an enabled row commits it immediately (the real
+        sheet then dismisses); the disabled "Locked profile" row stays visible and announced but never
+        commits or dismisses.
+      </Text>
+    </View>
+  );
+}
+
+function SelectionSheetMultiDemo() {
+  const committedBaseline = ['writing', 'research'];
+  const [committed, setCommitted] = useState<string[]>(committedBaseline);
+  const [draft, setDraft] = useState<string[]>(committedBaseline);
+  const isDirty = draft.slice().sort().join(',') !== committed.slice().sort().join(',');
+
+  const toggle = (value: string) => {
+    setDraft((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  };
+
+  return (
+    <View style={preview.stack}>
+      <List>
+        {SELECTION_SHEET_SKILL_OPTIONS.map((option) => (
+          <ListItem
+            key={option.value}
+            leading={<Checkbox checked={draft.includes(option.value)} colors={HERMEX_SELECTION_CONTROL_COLORS} />}
+            title={option.label}
+            selected={draft.includes(option.value)}
+            onPress={() => toggle(option.value)}
+          />
+        ))}
+      </List>
       <View style={preview.row}>
-        <View style={{ width: 180 }}>
-          <Dropdown label="Profile" placeholder="Choose a profile" options={options} onChange={() => {}} />
-        </View>
-        <View style={{ width: 180 }}>
-          <Dropdown label="Profile" value="research" options={options} onChange={() => {}} />
-        </View>
-        <View style={{ width: 180 }}>
-          <Dropdown label="Profile" value="default" options={options} disabled onChange={() => {}} />
-        </View>
+        <Button label="Cancel" size="extraSmall" variant="tertiary" onPress={() => setDraft(committed)} />
+        <Button label="Done" size="extraSmall" variant="secondary" onPress={() => setCommitted(draft)} />
       </View>
       <Text style={preview.caption}>
-        The generic catalog Dropdown opens a BottomSheet picker on tap — a custom floating sheet.
-        Production HermexDropdown deliberately does not recreate that: it is a native `.menu`-style
-        `Picker`, the same convention SettingsView's own row pickers already use, so the checked
-        selected option, label, and disclosure chrome are all platform-owned.
+        Row taps edit only the local draft — {isDirty ? 'dirty: draft differs from the committed baseline' : 'clean: draft matches the committed baseline'}.
+        Committed: {committed.join(', ') || 'none'}. Cancel discards the draft back to that committed
+        baseline; Done replaces the committed baseline with the current draft exactly once.
+      </Text>
+    </View>
+  );
+}
+
+function SelectionSheetSearchDemo() {
+  const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
+  const trimmed = query.trim().toLowerCase();
+  const visibleOptions = trimmed.length === 0
+    ? SELECTION_SHEET_PROFILE_OPTIONS
+    : SELECTION_SHEET_PROFILE_OPTIONS.filter((option) => option.label.toLowerCase().includes(trimmed));
+  return (
+    <View style={preview.stack}>
+      <View style={[preview.searchField, isFocused && preview.searchFieldFocused]} accessibilityRole="search">
+        <Icon name="search" size={DS_ICON_SIZE.sm} color="#6d6d72" />
+        <TextInput
+          ref={searchInputRef}
+          value={query}
+          onChangeText={setQuery}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder="Search profiles"
+          accessibilityLabel="Search profiles"
+          style={preview.searchFieldInput}
+        />
+        {query.length > 0 && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            style={[preview.searchClearTarget, { minWidth: 44, minHeight: 44 }]}
+            onPress={() => {
+              setQuery('');
+              searchInputRef.current?.focus();
+            }}
+          >
+            <Icon name="clear" size={DS_ICON_SIZE.sm} color="#6d6d72" />
+          </Pressable>
+        )}
+      </View>
+      {visibleOptions.length > 0 ? (
+        <List>
+          {visibleOptions.map((option) => (
+            <ListItem key={option.value} title={option.label} onPress={() => {}} />
+          ))}
+        </List>
+      ) : (
+        <Text style={preview.caption}>No results</Text>
+      )}
+      <Text style={preview.caption}>
+        The caller owns the query binding and filters the visible options array it passes in —
+        Selection Sheet never matches, debounces, or loads results on its own. Clearing the query
+        restores every option; an unmatched query shows this exact generic copy, "No results", never
+        echoing the query back.
+      </Text>
+    </View>
+  );
+}
+
+function SelectionSheetLongListDemo() {
+  const [selected, setSelected] = useState('option-1');
+  return (
+    <View style={preview.stack}>
+      <List variant="compactOverlay" maxHeight={240} style={preview.compactOverlayDemoList}>
+        {SELECTION_SHEET_LONG_LIST_OPTIONS.map((option) => (
+          <ListItem
+            key={option.value}
+            leading={<SelectionSheetRadioIndicator selected={selected === option.value} />}
+            title={option.label}
+            selected={selected === option.value}
+            onPress={() => setSelected(option.value)}
+          />
+        ))}
+      </List>
+    </View>
+  );
+}
+
+export function SelectionSheetFamilyGallery() {
+  return (
+    <View style={preview.stack}>
+      <Text style={preview.label}>Single selection — current value, commit-on-tap, disabled option</Text>
+      <SelectionSheetSingleDemo />
+      <Text style={[preview.label, { marginTop: 8 }]}>Multi selection — staged draft, Cancel discards, Done commits</Text>
+      <SelectionSheetMultiDemo />
+      <Text style={[preview.label, { marginTop: 8 }]}>Optional caller-controlled Search — caller-owned filtering, "No results" empty state</Text>
+      <SelectionSheetSearchDemo />
+      <Text style={[preview.label, { marginTop: 8 }]}>Long list — 24 options (past the 20-option threshold), bounded internal scroll</Text>
+      <SelectionSheetLongListDemo />
+      <Text style={preview.caption}>
+        Every specimen above reconstructs `HermexSelectionSheet`'s presented content only. Native
+        `.sheet` presentation, detents, drag indicator, compact adaptation, and — for Search — the
+        query binding, visible-options filtering, loading, and error state all stay caller-owned in
+        production; this gallery's own wrapping page is standing in for that caller, not for a second
+        presentation system.
       </Text>
     </View>
   );

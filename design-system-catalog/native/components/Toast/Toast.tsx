@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Animated, Easing, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { DS_SEMANTIC, DS_SPACING, DS_RADIUS, DS_TYPOGRAPHY, DS_FONT_WEIGHT, DS_SHADOW, DS_ICON_SIZE, DS_MOTION_DURATION, DS_MOTION_EASING } from '../../../tokens';
 import { Icon } from '../../../icons/Icon.native';
@@ -38,6 +38,10 @@ export interface ToastProps {
   /** Optional trailing action — e.g. "Undo". Colour-matched to the toast's own text/icon colour
    *  (whichever that resolves to for the active variant), not a separate fixed accent. */
   action?: { label: string; onPress: () => void };
+  /** Opt-in replacement for the built-in `action` ghost Button — e.g. the Hermex catalog's real
+   *  extraSmall neutral Button reconstruction, which cannot color-match a status tint. Renders in
+   *  the same trailing slot when set; unrelated call sites keep using `action` unchanged. */
+  actionNode?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -49,7 +53,7 @@ export interface ToastProps {
  * measure-free, JS-driven (`useNativeDriver: false`, so it's visible in the web preview too, not
  * just on native) enter/exit pattern Dialog/BottomSheet use for their own show/hide.
  */
-export function Toast({ message, visible = true, variant, iconName, iconColor, action, style }: ToastProps) {
+export function Toast({ message, visible = true, variant, iconName, iconColor, action, actionNode, style }: ToastProps) {
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
 
@@ -94,18 +98,20 @@ export function Toast({ message, visible = true, variant, iconName, iconColor, a
     >
       <Icon name={resolvedIcon} size={DS_ICON_SIZE.sm} color={resolvedIconColor} />
       <Text style={[styles.text, { color: resolvedTextColor }]} numberOfLines={2}>{message}</Text>
-      {action && (
+      {(action || actionNode) && (
         <>
           {/* A plain vertical rule tinted to resolvedTextColor at reduced opacity — not the shared
               Divider component, which is a fixed subtle-black horizontal line meant for light
               surfaces; Toast's own background can be dark (base) or a light tint (variant), so the
               divider has to adapt to whichever text colour is active instead. */}
           <View style={[styles.divider, { backgroundColor: resolvedTextColor }]} />
-          {/* Always ghost + label-only — Toast's action is a quiet inline affordance, never a second
-              visual weight competing with the message. Ghost's own padding is already 0, so it sits
-              flush like the rest of the row; textStyle overrides ghost's fixed label colour with
-              resolvedTextColor so the action still colour-matches this toast's own variant. */}
-          <Button variant="ghost" size="small" label={action.label} onPress={action.onPress} textStyle={{ color: resolvedTextColor }} />
+          {actionNode ?? (
+            // Always ghost + label-only — Toast's action is a quiet inline affordance, never a second
+            // visual weight competing with the message. Ghost's own padding is already 0, so it sits
+            // flush like the rest of the row; textStyle overrides ghost's fixed label colour with
+            // resolvedTextColor so the action still colour-matches this toast's own variant.
+            <Button variant="ghost" size="small" label={action!.label} onPress={action!.onPress} textStyle={{ color: resolvedTextColor }} />
+          )}
         </>
       )}
     </Animated.View>

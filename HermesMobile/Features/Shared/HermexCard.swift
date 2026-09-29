@@ -15,6 +15,28 @@ enum HermexCardSurface {
     case outlined
 }
 
+/// The Card family's approved Neutral color mapping (DSF-07): every Card variant's background and
+/// border resolve to one of these four adaptive pairs instead of a platform color or a hand-typed
+/// literal.
+enum HermexCardColors {
+    static let primarySurface = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s50,
+        dark: HermesColorRamp.Neutral.s950
+    )
+    static let secondarySurface = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s100,
+        dark: HermesColorRamp.Neutral.s900
+    )
+    static let standardBorder = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s400,
+        dark: HermesColorRamp.Neutral.s600
+    )
+    static let increasedContrastBorder = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s600,
+        dark: HermesColorRamp.Neutral.s400
+    )
+}
+
 extension View {
     func hermexCardSurface(
         _ surface: HermexCardSurface,
@@ -39,22 +61,28 @@ private struct HermexCardSurfaceModifier: ViewModifier {
         case .glass:
             content
                 .background {
-                    shape.fill(Color(.secondarySystemBackground).opacity(reduceTransparency ? 1 : 0.34))
+                    shape.fill(HermexCardColors.primarySurface.opacity(reduceTransparency ? 1 : 0.34))
                 }
                 .adaptiveGlass(.regular, fallbackMaterial: .regularMaterial, in: shape)
                 .clipShape(shape)
                 .overlay {
                     shape
-                        .stroke(Color.primary.opacity(colorSchemeContrast == .increased ? 0.16 : 0.06), lineWidth: 0.7)
+                        .stroke(
+                            colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder,
+                            lineWidth: 0.7
+                        )
                         .allowsHitTesting(false)
                 }
         case .outlined:
             content
-                .background(Color(.systemBackground), in: shape)
+                .background(HermexCardColors.primarySurface, in: shape)
                 .clipShape(shape)
                 .overlay {
                     shape
-                        .stroke(Color(.separator), lineWidth: 1)
+                        .stroke(
+                            colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder,
+                            lineWidth: 1
+                        )
                         .allowsHitTesting(false)
                 }
         }
@@ -77,12 +105,24 @@ extension View {
     /// border. `cornerRadius` defaults to `HermesRadius.card` — the one outer radius every normal
     /// Attachment tile shares with Card — so a call site only overrides it for a deliberately
     /// different (for example mini) surface instead of hand-picking a radius that can drift.
-    func compactCardSurface(cornerRadius: CGFloat = HermesRadius.card, fill: Color = Color(.secondarySystemBackground)) -> some View {
+    func compactCardSurface(cornerRadius: CGFloat = HermesRadius.card, fill: Color = HermexCardColors.secondarySurface) -> some View {
         background(fill, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .modifier(HermexCompactCardBorderModifier(cornerRadius: cornerRadius))
+    }
+}
+
+private struct HermexCompactCardBorderModifier: ViewModifier {
+    let cornerRadius: CGFloat
+
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+
+    func body(content: Content) -> some View {
+        content
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(
-                        Color(.separator).opacity(HermexCompactCardMetrics.borderOpacity),
+                        (colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder)
+                            .opacity(colorSchemeContrast == .increased ? 1 : HermexCompactCardMetrics.borderOpacity),
                         lineWidth: HermexCompactCardMetrics.borderWidth
                     )
             )
@@ -112,18 +152,21 @@ private struct RequestCardSurfaceModifier: ViewModifier {
     let cornerRadius: CGFloat
     let material: RequestCardMaterial
 
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         switch material {
         case .opaque:
             content
-                .background(Color(.secondarySystemBackground), in: shape)
-                .overlay(shape.stroke(.primary.opacity(0.10), lineWidth: 1))
+                .background(HermexCardColors.primarySurface, in: shape)
+                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder, lineWidth: 1))
         case .translucentOverScrim:
             content
                 .background(.regularMaterial, in: shape)
-                .overlay(shape.stroke(.primary.opacity(0.10), lineWidth: 1))
+                .background(HermexCardColors.primarySurface.opacity(0.34), in: shape)
+                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder, lineWidth: 1))
         }
     }
 }

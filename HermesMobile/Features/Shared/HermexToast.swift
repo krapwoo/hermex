@@ -71,10 +71,9 @@ struct HermexToast: View {
             Spacer(minLength: HermesSpacing.s8)
 
             if let action {
-                Button(action.title, action: action.handler)
-                    .appFont(.subheadlineSemibold)
-                    .buttonStyle(.plain)
-                    .foregroundStyle(semantic.tint)
+                HermexButton(content: .label(action.title), size: .extraSmall, emphasis: .neutral) {
+                    action.handler()
+                }
             }
         }
         .padding(.horizontal, HermesSpacing.s16)

@@ -286,7 +286,7 @@
 		25D57FFB2B744EA89108859A /* HermexCheckbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 261EF1C472FA4D8BBFEFBDC7 /* HermexCheckbox.swift */; };
 		91D12059D5CF40EC81B55634 /* HermexContentUnavailable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20589A8079BF485F8DF9C777 /* HermexContentUnavailable.swift */; };
 		8FC4BA5460CF44C89700B750 /* HermexDivider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132F980E1B3F46BDB20C3777 /* HermexDivider.swift */; };
-		8102DD9283BB40E09A97B002 /* HermexDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2696A8C321643D18191FA61 /* HermexDropdown.swift */; };
+		4C1D9F2A6B3E4A2E9C7B5D1F /* HermexSelectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2A6F1C3D4E4F5A8B9C0D1E /* HermexSelectionSheet.swift */; };
 		99E0617B41FD4C80A0401B91 /* HermexSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC19C6015215428687DFABC9 /* HermexSearch.swift */; };
 		5DE792B0525A4B738798EA07 /* HermexTextInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6849C0CA584B51926EB15F /* HermexTextInput.swift */; };
 		144453C5678541B891208950 /* HermexOverlayLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */; };
@@ -321,8 +321,8 @@
 		43CFEFEE8A704F8084FC1AF2 /* HermexCheckboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA887909FB4CEF9A5A16F1 /* HermexCheckboxTests.swift */; };
 		A0191FEA34B241528D93AC1F /* HermesColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E2FB2010BD74796B6843633 /* HermesColorTests.swift */; };
 		0C680D025A3B44828E1CDA4F /* HermexContentUnavailableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85689855C3914E0E9280E5A7 /* HermexContentUnavailableTests.swift */; };
-		F68756A9F4434510AB8B05FA /* HermexDropdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC476231E144E0BBE57B9FB /* HermexDropdownTests.swift */; };
 		A06D678D7AFE4C8593BF33F4 /* HermexSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0943A5FC924FB182F0EE5C /* HermexSearchTests.swift */; };
+		069CB6B693AF405BA8D1A943 /* HermexSelectionSheetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F03A1936DA4E4586201290 /* HermexSelectionSheetTests.swift */; };
 		ACD8C07AABB843819193E30B /* HermexTextInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD4288E7CCC4FE69412E2FF /* HermexTextInputTests.swift */; };
 		2C10930EF8B841B18C2CBC42 /* HermexBottomSheetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200E21C40B5F44B9AAFBEC67 /* HermexBottomSheetTests.swift */; };
 		A6F1D7BCD00F42F8A1A6721E /* HermexListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40BFB2AEDAE488795E892B7 /* HermexListTests.swift */; };
@@ -333,6 +333,7 @@
 		013627B7569D4D16B8D8D13A /* HermesRadiusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A06EC099F4BD68A9A9710 /* HermesRadiusTests.swift */; };
 		12CA77521CBF41ABB8B3E503 /* HermesShadowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056D4077CE064E6CA3BF92C6 /* HermesShadowTests.swift */; };
 		0DC93CD4B29E4F4E8E25842F /* HermesSpacingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */; };
+		D99D59903E1C45D18CD2FF33 /* SegmentedControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093F37B31B2B44BE94C663B1 /* SegmentedControlTests.swift */; };
 		41A99808A608461EA4533C10 /* HermexToastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25CA8D3960840488BF70F74 /* HermexToastTests.swift */; };
 		F31D66837D46410BA1B52AC7 /* HermexTooltipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5409012422814D289BDC6ABE /* HermexTooltipTests.swift */; };
 		B22BB5492D7F4A7299601289 /* HermexOverlayLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */; };
@@ -932,7 +933,7 @@
 		261EF1C472FA4D8BBFEFBDC7 /* HermexCheckbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexCheckbox.swift; sourceTree = "<group>"; };
 		20589A8079BF485F8DF9C777 /* HermexContentUnavailable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexContentUnavailable.swift; sourceTree = "<group>"; };
 		132F980E1B3F46BDB20C3777 /* HermexDivider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDivider.swift; sourceTree = "<group>"; };
-		F2696A8C321643D18191FA61 /* HermexDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDropdown.swift; sourceTree = "<group>"; };
+		9B2A6F1C3D4E4F5A8B9C0D1E /* HermexSelectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSelectionSheet.swift; sourceTree = "<group>"; };
 		EC19C6015215428687DFABC9 /* HermexSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSearch.swift; sourceTree = "<group>"; };
 		1A6849C0CA584B51926EB15F /* HermexTextInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexTextInput.swift; sourceTree = "<group>"; };
 		1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexOverlayLifecycle.swift; sourceTree = "<group>"; };
@@ -967,8 +968,8 @@
 		21AA887909FB4CEF9A5A16F1 /* HermexCheckboxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexCheckboxTests.swift; sourceTree = "<group>"; };
 		0E2FB2010BD74796B6843633 /* HermesColorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesColorTests.swift; sourceTree = "<group>"; };
 		85689855C3914E0E9280E5A7 /* HermexContentUnavailableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexContentUnavailableTests.swift; sourceTree = "<group>"; };
-		BDC476231E144E0BBE57B9FB /* HermexDropdownTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexDropdownTests.swift; sourceTree = "<group>"; };
 		FF0943A5FC924FB182F0EE5C /* HermexSearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSearchTests.swift; sourceTree = "<group>"; };
+		56F03A1936DA4E4586201290 /* HermexSelectionSheetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexSelectionSheetTests.swift; sourceTree = "<group>"; };
 		CDD4288E7CCC4FE69412E2FF /* HermexTextInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexTextInputTests.swift; sourceTree = "<group>"; };
 		200E21C40B5F44B9AAFBEC67 /* HermexBottomSheetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexBottomSheetTests.swift; sourceTree = "<group>"; };
 		B40BFB2AEDAE488795E892B7 /* HermexListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexListTests.swift; sourceTree = "<group>"; };
@@ -979,6 +980,7 @@
 		1D9A06EC099F4BD68A9A9710 /* HermesRadiusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesRadiusTests.swift; sourceTree = "<group>"; };
 		056D4077CE064E6CA3BF92C6 /* HermesShadowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesShadowTests.swift; sourceTree = "<group>"; };
 		CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesSpacingTests.swift; sourceTree = "<group>"; };
+		093F37B31B2B44BE94C663B1 /* SegmentedControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedControlTests.swift; sourceTree = "<group>"; };
 		F25CA8D3960840488BF70F74 /* HermexToastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexToastTests.swift; sourceTree = "<group>"; };
 		5409012422814D289BDC6ABE /* HermexTooltipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexTooltipTests.swift; sourceTree = "<group>"; };
 		BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermexOverlayLifecycleTests.swift; sourceTree = "<group>"; };
@@ -1558,8 +1560,8 @@
 				21AA887909FB4CEF9A5A16F1 /* HermexCheckboxTests.swift */,
 				0E2FB2010BD74796B6843633 /* HermesColorTests.swift */,
 				85689855C3914E0E9280E5A7 /* HermexContentUnavailableTests.swift */,
-				BDC476231E144E0BBE57B9FB /* HermexDropdownTests.swift */,
 				FF0943A5FC924FB182F0EE5C /* HermexSearchTests.swift */,
+				56F03A1936DA4E4586201290 /* HermexSelectionSheetTests.swift */,
 				CDD4288E7CCC4FE69412E2FF /* HermexTextInputTests.swift */,
 				B40BFB2AEDAE488795E892B7 /* HermexListTests.swift */,
 				200E21C40B5F44B9AAFBEC67 /* HermexBottomSheetTests.swift */,
@@ -1570,6 +1572,7 @@
 				1D9A06EC099F4BD68A9A9710 /* HermesRadiusTests.swift */,
 				056D4077CE064E6CA3BF92C6 /* HermesShadowTests.swift */,
 				CDD1C9A021FD4DC6B0E2CE9C /* HermesSpacingTests.swift */,
+				093F37B31B2B44BE94C663B1 /* SegmentedControlTests.swift */,
 				F25CA8D3960840488BF70F74 /* HermexToastTests.swift */,
 				5409012422814D289BDC6ABE /* HermexTooltipTests.swift */,
 				BB3B34442DF44F69A109E57E /* HermexOverlayLifecycleTests.swift */,
@@ -1798,7 +1801,7 @@
 				261EF1C472FA4D8BBFEFBDC7 /* HermexCheckbox.swift */,
 				20589A8079BF485F8DF9C777 /* HermexContentUnavailable.swift */,
 				132F980E1B3F46BDB20C3777 /* HermexDivider.swift */,
-				F2696A8C321643D18191FA61 /* HermexDropdown.swift */,
+				9B2A6F1C3D4E4F5A8B9C0D1E /* HermexSelectionSheet.swift */,
 				EC19C6015215428687DFABC9 /* HermexSearch.swift */,
 				1A6849C0CA584B51926EB15F /* HermexTextInput.swift */,
 				1E0DBA8FB6C248B298A7B2D9 /* HermexOverlayLifecycle.swift */,
@@ -2749,7 +2752,7 @@
 				25D57FFB2B744EA89108859A /* HermexCheckbox.swift in Sources */,
 				91D12059D5CF40EC81B55634 /* HermexContentUnavailable.swift in Sources */,
 				8FC4BA5460CF44C89700B750 /* HermexDivider.swift in Sources */,
-				8102DD9283BB40E09A97B002 /* HermexDropdown.swift in Sources */,
+				4C1D9F2A6B3E4A2E9C7B5D1F /* HermexSelectionSheet.swift in Sources */,
 				99E0617B41FD4C80A0401B91 /* HermexSearch.swift in Sources */,
 				5DE792B0525A4B738798EA07 /* HermexTextInput.swift in Sources */,
 				144453C5678541B891208950 /* HermexOverlayLifecycle.swift in Sources */,
@@ -2801,8 +2804,8 @@
 				43CFEFEE8A704F8084FC1AF2 /* HermexCheckboxTests.swift in Sources */,
 				A0191FEA34B241528D93AC1F /* HermesColorTests.swift in Sources */,
 				0C680D025A3B44828E1CDA4F /* HermexContentUnavailableTests.swift in Sources */,
-				F68756A9F4434510AB8B05FA /* HermexDropdownTests.swift in Sources */,
 				A06D678D7AFE4C8593BF33F4 /* HermexSearchTests.swift in Sources */,
+				069CB6B693AF405BA8D1A943 /* HermexSelectionSheetTests.swift in Sources */,
 				ACD8C07AABB843819193E30B /* HermexTextInputTests.swift in Sources */,
 				A6F1D7BCD00F42F8A1A6721E /* HermexListTests.swift in Sources */,
 				2C10930EF8B841B18C2CBC42 /* HermexBottomSheetTests.swift in Sources */,
@@ -2813,6 +2816,7 @@
 				013627B7569D4D16B8D8D13A /* HermesRadiusTests.swift in Sources */,
 				12CA77521CBF41ABB8B3E503 /* HermesShadowTests.swift in Sources */,
 				0DC93CD4B29E4F4E8E25842F /* HermesSpacingTests.swift in Sources */,
+				D99D59903E1C45D18CD2FF33 /* SegmentedControlTests.swift in Sources */,
 				41A99808A608461EA4533C10 /* HermexToastTests.swift in Sources */,
 				F31D66837D46410BA1B52AC7 /* HermexTooltipTests.swift in Sources */,
 				B22BB5492D7F4A7299601289 /* HermexOverlayLifecycleTests.swift in Sources */,

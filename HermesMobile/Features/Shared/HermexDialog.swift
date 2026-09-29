@@ -154,7 +154,7 @@ struct HermexDialog<Header: View, DialogContent: View, Footer: View>: View {
 
     private var surface: some View {
         VStack(alignment: .leading, spacing: HermexDialogMetrics.contentSpacing) {
-            HStack(alignment: .top, spacing: HermexDialogMetrics.headerSpacing) {
+            HStack(alignment: .center, spacing: HermexDialogMetrics.headerSpacing) {
                 header()
                     .accessibilityAddTraits(.isHeader)
                     .accessibilitySortPriority(3)
@@ -186,7 +186,10 @@ struct HermexDialog<Header: View, DialogContent: View, Footer: View>: View {
     private var footerLayout: some View {
         switch footerAxis {
         case .horizontal:
-            HStack(spacing: HermexDialogMetrics.footerSpacing) { footer(actionContext) }
+            HStack(spacing: HermexDialogMetrics.footerSpacing) {
+                Spacer(minLength: 0)
+                footer(actionContext)
+            }
         case .vertical:
             VStack(spacing: HermexDialogMetrics.footerSpacing) { footer(actionContext) }
         }
@@ -197,16 +200,16 @@ struct HermexDialog<Header: View, DialogContent: View, Footer: View>: View {
     }
 
     private var closeButton: some View {
-        Button {
+        HermexButton(
+            content: .icon("xmark"),
+            size: .extraSmall,
+            emphasis: .neutral,
+            isGlass: true
+        ) {
             requestDismissal(after: nil)
-        } label: {
-            Image(systemName: "xmark")
-                .font(.system(size: HermesIconSize.small, weight: .semibold))
-                .foregroundStyle(.primary)
-                .frame(width: HermexDialogMetrics.closeButtonDimension, height: HermexDialogMetrics.closeButtonDimension)
-                .background(.primary.opacity(0.08), in: Circle())
         }
-        .buttonStyle(.hermexPressOnly(.icon))
+        .frame(minWidth: HermexDialogMetrics.closeButtonDimension, minHeight: HermexDialogMetrics.closeButtonDimension)
+        .contentShape(Rectangle())
         .keyboardShortcut(.cancelAction)
         .disabled(lifecycle.phase != .presented)
         .accessibilityLabel(HermexDialogPresentation.closeButtonAccessibilityLabel)

@@ -1,17 +1,33 @@
 #if DEBUG
 import SwiftUI
 
-/// DEBUG-only lab (`--hermex-overlay-lab`) exercising the unadopted custom same-window overlay
-/// components — `HermexDialog` and `HermexPopoverMenu` — in a signed simulator build, so their
-/// rendered behavior (motion, accessibility, Reduce Motion/Transparency, exactly-once dismissal) can
-/// be verified without any production call site. Not reachable in Release builds and not a
-/// production adoption surface (see `HermesMobileApp`). `--hermex-overlay-lab-popover` scrolls
-/// straight to the Popover section on launch — a deterministic seam so a fresh relaunch always
-/// brings those fixtures into view without manual scrolling.
+/// DEBUG-only lab (`--hermex-overlay-lab`) exercising unadopted custom same-window overlay
+/// components — `HermexDialog` and `HermexPopoverMenu` — plus a small set of rendered-verification
+/// fixtures for shared components that changed in Batch A (`SegmentedControl`, `HermexToast`,
+/// `HermexBottomSheet`) — in a signed simulator build, so their rendered behavior (motion,
+/// accessibility, Reduce Motion/Transparency, exactly-once dismissal) can be verified without any
+/// production call site. Not reachable in Release builds and not a production adoption surface (see
+/// `HermesMobileApp`); the Batch A and Batch B follow-up sections exist to visually confirm those
+/// source-contract changes render correctly, not to adopt the components anywhere.
+/// `--hermex-overlay-lab-popover` scrolls straight to the Popover section on launch,
+/// `--hermex-overlay-lab-followup` scrolls straight to the Batch A follow-up section, and
+/// `--hermex-overlay-lab-batch-b` scrolls straight to the Batch B follow-up section — deterministic
+/// seams so a fresh relaunch always brings those fixtures into view without manual scrolling.
+/// `--hermex-overlay-lab-batch-b-controls` targets the lower selection-controls subsection when host
+/// scrolling is unavailable. `--hermex-overlay-lab-search` scrolls straight to the Search section,
+/// exercising the custom `HermexSearchField`/`.hermexSearch` foundation the same way.
+/// `--hermex-overlay-lab-selection-sheet` scrolls straight to the Selection Sheet section (Issue
+/// #607, DSF-06), exercising the caller-presented `HermexSelectionSheet` foundation that replaced
+/// the retired `HermexDropdown`.
 struct HermexOverlayLab: View {
     @State private var forceReduceMotion = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-motion")
     @State private var forceReduceTransparency = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-transparency")
     private let jumpsToPopoverSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-popover")
+    private let jumpsToFollowupSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-followup")
+    private let jumpsToBatchBSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-batch-b")
+    private let jumpsToBatchBSelectionControls = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-batch-b-controls")
+    private let jumpsToSearchSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-search")
+    private let jumpsToSelectionSheetSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-selection-sheet")
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -21,8 +37,20 @@ struct HermexOverlayLab: View {
                     Divider()
                     dialogSection
                     Divider()
+                    followupSection
+                        .id(HermexOverlayLabFollowupSection.scrollAnchorID)
+                    Divider()
                     popoverSection
                         .id(HermexOverlayLabPopoverSection.scrollAnchorID)
+                    Divider()
+                    batchBSection
+                        .id(HermexOverlayLabBatchBSection.scrollAnchorID)
+                    Divider()
+                    searchSection
+                        .id(HermexOverlayLabSearchSection.scrollAnchorID)
+                    Divider()
+                    selectionSheetSection
+                        .id(HermexOverlayLabSelectionSheetSection.scrollAnchorID)
                 }
                 .padding(20)
             }
@@ -30,8 +58,19 @@ struct HermexOverlayLab: View {
             .navigationTitle(Text(verbatim: "Overlay Lab"))
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                guard jumpsToPopoverSection else { return }
-                proxy.scrollTo(HermexOverlayLabPopoverSection.scrollAnchorID, anchor: .top)
+                if jumpsToPopoverSection {
+                    proxy.scrollTo(HermexOverlayLabPopoverSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToFollowupSection {
+                    proxy.scrollTo(HermexOverlayLabFollowupSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToBatchBSection {
+                    proxy.scrollTo(HermexOverlayLabBatchBSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToBatchBSelectionControls {
+                    proxy.scrollTo(HermexOverlayLabBatchBSelectionControls.scrollAnchorID, anchor: .top)
+                } else if jumpsToSearchSection {
+                    proxy.scrollTo(HermexOverlayLabSearchSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToSelectionSheetSection {
+                    proxy.scrollTo(HermexOverlayLabSelectionSheetSection.scrollAnchorID, anchor: .top)
+                }
             }
         }
         // SwiftUI exposes no public writable override for these two accessibility settings; the
@@ -66,6 +105,15 @@ struct HermexOverlayLab: View {
         }
     }
 
+    private var followupSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Batch A Follow-up").font(.headline)
+            HermexOverlayLabSegmentedControlFollowup()
+            HermexOverlayLabToastFollowup()
+            HermexOverlayLabBottomSheetFollowup()
+        }
+    }
+
     private var popoverSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(verbatim: "Popover Menu").font(.headline)
@@ -84,11 +132,62 @@ struct HermexOverlayLab: View {
             HermexOverlayLabPopoverAccessibilitySize()
         }
     }
+
+    private var batchBSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Batch B Follow-up").font(.headline)
+            HermexOverlayLabCardFollowup()
+            HermexOverlayLabSelectionControlsFollowup()
+                .id(HermexOverlayLabBatchBSelectionControls.scrollAnchorID)
+        }
+    }
+
+    private var searchSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Search").font(.headline)
+            HermexOverlayLabSearchFollowup()
+        }
+    }
+
+    private var selectionSheetSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Selection Sheet").font(.headline)
+            HermexOverlayLabSelectionSheetSingle()
+            HermexOverlayLabSelectionSheetMulti()
+            HermexOverlayLabSelectionSheetSearch()
+            HermexOverlayLabSelectionSheetLongList()
+        }
+    }
 }
 
 /// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-popover` jumps to on launch.
 private enum HermexOverlayLabPopoverSection {
     static let scrollAnchorID = "overlay-lab-popover-section"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-followup` jumps to on launch.
+private enum HermexOverlayLabFollowupSection {
+    static let scrollAnchorID = "overlay-lab-followup-section"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-batch-b` jumps to on launch.
+private enum HermexOverlayLabBatchBSection {
+    static let scrollAnchorID = "overlay-lab-batch-b-section"
+}
+
+/// Namespaces the lower Batch B selection-controls scroll target used when host input is unavailable.
+private enum HermexOverlayLabBatchBSelectionControls {
+    static let scrollAnchorID = "overlay-lab-batch-b-selection-controls"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-search` jumps to on launch.
+private enum HermexOverlayLabSearchSection {
+    static let scrollAnchorID = "overlay-lab-search-section"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-selection-sheet` jumps to on launch.
+private enum HermexOverlayLabSelectionSheetSection {
+    static let scrollAnchorID = "overlay-lab-selection-sheet-section"
 }
 
 // ─── 1. Short confirmation, horizontal footer ──────────────────────────────────
@@ -279,6 +378,97 @@ private struct HermexOverlayLabAccessibilityOrder: View {
                 Button("Footer reads third") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .secondary))
                     .accessibilityIdentifier("overlay-lab-a11y-footer")
+            }
+    }
+}
+
+// ─── Batch A follow-up fixtures ─────────────────────────────────────────────────
+// Rendered-verification specimens for shared components whose source contract changed in Batch A
+// (DSF-01..DSF-04). These exist to confirm the changes render correctly on device/simulator, not to
+// adopt the components at any production call site.
+
+// ─── Segmented Control: fixed vs. scrolling geometry side by side ─────────────
+private struct HermexOverlayLabSegmentedControlFollowup: View {
+    private enum Filter: String, CaseIterable, Hashable {
+        case all, active, done
+    }
+
+    @State private var fixedSelection: Filter = .active
+    @State private var scrollingSelection: Filter = .active
+
+    private var options: [SegmentedControlOption<Filter>] {
+        [
+            SegmentedControlOption(value: .all, title: "All"),
+            SegmentedControlOption(value: .active, title: "Active"),
+            SegmentedControlOption(value: .done, title: "Done")
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Segmented Control (fixed vs. scrolling)").font(.subheadline.weight(.semibold))
+            SegmentedControl("Filter (fixed)", selection: $fixedSelection, options: options, style: .fixed)
+                .accessibilityIdentifier("overlay-lab-followup-segmented-fixed")
+            SegmentedControl("Filter (scrolling)", selection: $scrollingSelection, options: options, style: .scrolling)
+        }
+    }
+}
+
+// ─── Toast: success specimen with and without a trailing action ───────────────
+private struct HermexOverlayLabToastFollowup: View {
+    @State private var undoCount = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Toast (success, with and without action)").font(.subheadline.weight(.semibold))
+            HermexToast(.success, message: Text(verbatim: "Draft saved"))
+            HermexToast(
+                .success,
+                message: Text(verbatim: "Message sent"),
+                action: .init(title: "Undo") { undoCount += 1 }
+            )
+            .accessibilityIdentifier("overlay-lab-followup-toast")
+            Text(verbatim: "Undo ran \(undoCount) times")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-followup-toast-undo-count")
+        }
+    }
+}
+
+// ─── Bottom Sheet: icon-first TopNav slots on the scoped glass default, borderless footer ─
+private struct HermexOverlayLabBottomSheetFollowup: View {
+    @State private var isPresented = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-auto-bottom-sheet")
+
+    var body: some View {
+        Button("Bottom sheet (icon-first TopNav)") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-followup-bottom-sheet-trigger")
+            .sheet(isPresented: $isPresented) {
+                HermexBottomSheet("Rename Session") {
+                    Text(verbatim: "Choose a name that helps you find this session later.")
+                        .font(.body)
+                        .padding(.horizontal, HermesSpacing.screenHorizontal)
+                        .padding(.top, HermesSpacing.s12)
+                } leadingPrimary: {
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel(Text("Cancel"))
+                } trailingPrimary: {
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .accessibilityLabel(Text("Save"))
+                } footer: {
+                    Button("Cancel") { isPresented = false }
+                        .buttonStyle(.hermex(.medium, emphasis: .secondary))
+                    Button("Save") { isPresented = false }
+                        .buttonStyle(.hermex(.medium, emphasis: .primary))
+                }
             }
     }
 }
@@ -489,4 +679,272 @@ private struct HermexOverlayLabPopoverAccessibilitySize: View {
 // Rotate the simulator while any fixture above is open to exercise
 // `HermexPopoverPlacement`'s live recompute; Reduce Motion/Transparency are forced
 // globally by the lab's own toggles (`controls`), so every fixture above exercises both.
+
+// ─── Batch B follow-up fixtures ─────────────────────────────────────────────────
+// Rendered-verification specimens for shared components whose source contract changed in Batch B
+// (DSF-07..DSF-09). These exist to confirm the changes render correctly on device/simulator, not to
+// adopt the components at any production call site.
+
+// ─── Card: every real surface variant, translucent Request Card over an intentional scrim ─────
+private struct HermexOverlayLabCardFollowup: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Card (surface variants)").font(.subheadline.weight(.semibold))
+
+            Text(verbatim: "Glass surface")
+                .font(.body)
+                .padding(HermexCardMetrics.contentPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .hermexCardSurface(.glass)
+                .accessibilityIdentifier("overlay-lab-batch-b-card-glass")
+
+            Text(verbatim: "Outlined surface")
+                .font(.body)
+                .padding(HermexCardMetrics.contentPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .hermexCardSurface(.outlined)
+                .accessibilityIdentifier("overlay-lab-batch-b-card-outlined")
+
+            Text(verbatim: "Compact card surface")
+                .font(.body)
+                .padding(HermesSpacing.s12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .compactCardSurface()
+                .accessibilityIdentifier("overlay-lab-batch-b-card-compact")
+
+            Text(verbatim: "Request card, opaque")
+                .font(.body)
+                .padding(HermexCardMetrics.contentPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .requestCardSurface(cornerRadius: HermesRadius.card, material: .opaque)
+                .accessibilityIdentifier("overlay-lab-batch-b-card-request-opaque")
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: "Request card, translucent over scrim")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ZStack {
+                    RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous)
+                        .fill(Color.blue.opacity(0.4))
+                        .frame(height: 96)
+                    Text(verbatim: "Approve this request?")
+                        .font(.body)
+                        .padding(HermexCardMetrics.contentPadding)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .requestCardSurface(cornerRadius: HermesRadius.card, material: .translucentOverScrim)
+                        .padding(.horizontal, HermesSpacing.s16)
+                }
+            }
+            .accessibilityIdentifier("overlay-lab-batch-b-card-request-translucent")
+        }
+        .accessibilityIdentifier("overlay-lab-batch-b-card-section")
+    }
+}
+
+// ─── Selection controls: Radio and Checkbox, every real state plus a row-owned indicator ──────
+private struct HermexOverlayLabSelectionControlsFollowup: View {
+    @State private var rowOwnedIsChecked = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Selection controls (Radio, Checkbox)").font(.subheadline.weight(.semibold))
+
+            HermexRadio(isSelected: false, label: "Unselected option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-radio-unselected")
+            HermexRadio(isSelected: true, label: "Selected option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-radio-selected")
+            HermexRadio(isSelected: true, isEnabled: false, label: "Disabled, selected option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-radio-disabled-selected")
+
+            HermexCheckbox(isChecked: false, label: "Unchecked option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-checkbox-unchecked")
+            HermexCheckbox(isChecked: true, label: "Checked option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-checkbox-checked")
+            HermexCheckbox(isChecked: true, isEnabled: false, label: "Disabled, checked option") {}
+                .accessibilityIdentifier("overlay-lab-batch-b-checkbox-disabled-checked")
+
+            Button {
+                rowOwnedIsChecked.toggle()
+            } label: {
+                HStack(spacing: HermesSpacing.s8) {
+                    HermexCheckbox(isChecked: rowOwnedIsChecked, action: nil)
+                    Text(verbatim: "Row-owned checkbox (enclosing Button owns the tap)")
+                        .font(.body)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("overlay-lab-batch-b-checkbox-row-owned")
+        }
+        .accessibilityIdentifier("overlay-lab-batch-b-selection-controls-section")
+    }
+}
+
+// ─── Search follow-up fixtures ──────────────────────────────────────────────────
+// Rendered-verification specimens for the custom Search foundation (DSF-05): the direct field,
+// its disabled state, and the `.hermexSearch(...)` convenience modifier's persistent top inset
+// geometry. These exist to confirm the shared component renders and behaves correctly on
+// device/simulator, not to adopt Search at any production call site.
+private struct HermexOverlayLabSearchFollowup: View {
+    @State private var query = "Investigate"
+    @State private var submitCount = 0
+
+    private let sampleSessions = ["Investigate flaky test", "Refactor auth module", "Update onboarding copy"]
+
+    var body: some View {
+        let submitUnit = submitCount == 1 ? "time" : "times"
+
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Direct field").font(.subheadline.weight(.semibold))
+            HermexSearchField(
+                "Search sessions",
+                text: $query,
+                prompt: Text("Search sessions"),
+                onSubmit: { submitCount += 1 }
+            )
+            .accessibilityIdentifier("overlay-lab-search-field")
+            Text(verbatim: "Query: \"\(query)\" — submitted \(submitCount) \(submitUnit)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-search-field-evidence")
+
+            HermexSearchField(
+                "Disabled search",
+                text: .constant("Read only"),
+                isEnabled: false
+            )
+            .accessibilityIdentifier("overlay-lab-search-field-disabled")
+
+            Text(verbatim: "Convenience modifier (top inset)").font(.subheadline.weight(.semibold))
+            List(sampleSessions.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { session in
+                Text(session)
+            }
+            .frame(height: 160)
+            .hermexSearch("Search sessions", text: $query, prompt: Text("Search sessions"))
+            .accessibilityIdentifier("overlay-lab-search-modifier-list")
+        }
+    }
+}
+
+// ─── Selection Sheet follow-up fixtures ─────────────────────────────────────────
+// Rendered-verification specimens for the caller-presented Selection Sheet foundation (Issue #607,
+// DSF-06), which replaced the retired `HermexDropdown`. Each fixture owns its own `.sheet` and
+// detents — the component itself never presents — so these also prove the component does not.
+// These exist to confirm the shared component renders and behaves correctly on device/simulator,
+// not to adopt it at any production call site.
+
+private enum HermexOverlayLabProvider: String, Hashable, CaseIterable {
+    case anthropic = "Anthropic"
+    case openai = "OpenAI"
+    case google = "Google"
+}
+
+// ─── Single selection: current value, immediate commit, disabled option ───────
+private struct HermexOverlayLabSelectionSheetSingle: View {
+    @State private var isPresented = ProcessInfo.processInfo.arguments.contains(
+        "--hermex-overlay-lab-auto-selection-sheet-single"
+    )
+    @State private var selection: HermexOverlayLabProvider? = .anthropic
+
+    private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
+        [
+            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
+            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
+            HermexSelectionSheetOption(value: .google, title: "Google", isEnabled: false)
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Single selection") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-selection-sheet-single-trigger")
+            Text(verbatim: "Committed: \(selection?.rawValue ?? "None")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-selection-sheet-single-committed")
+        }
+        .accessibilityIdentifier("overlay-lab-selection-sheet-single")
+        .sheet(isPresented: $isPresented) {
+            HermexSelectionSheet("Default Provider", selection: $selection, options: options)
+                .presentationDetents([.medium, .large])
+        }
+    }
+}
+
+// ─── Multi selection: two-value baseline, staged draft, Cancel, Done ──────────
+private struct HermexOverlayLabSelectionSheetMulti: View {
+    @State private var isPresented = ProcessInfo.processInfo.arguments.contains(
+        "--hermex-overlay-lab-auto-selection-sheet-multi"
+    )
+    @State private var selections: Set<HermexOverlayLabProvider> = [.anthropic, .openai]
+
+    private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
+        [
+            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
+            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
+            HermexSelectionSheetOption(value: .google, title: "Google")
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Multi selection") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-trigger")
+            Text(verbatim: "Committed: \(selections.map(\.rawValue).sorted().joined(separator: ", "))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-committed")
+        }
+        .accessibilityIdentifier("overlay-lab-selection-sheet-multi")
+        .sheet(isPresented: $isPresented) {
+            HermexSelectionSheet("Model Providers", selections: $selections, options: options)
+                .presentationDetents([.medium, .large])
+        }
+    }
+}
+
+// ─── Optional caller-controlled Search: filtered options and no-results state ─
+private struct HermexOverlayLabSelectionSheetSearch: View {
+    @State private var isPresented = false
+    @State private var selection: HermexOverlayLabProvider?
+    @State private var query = ""
+
+    private var visibleOptions: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
+        HermexOverlayLabProvider.allCases
+            .filter { query.isEmpty || $0.rawValue.localizedCaseInsensitiveContains(query) }
+            .map { HermexSelectionSheetOption(value: $0, title: LocalizedStringKey($0.rawValue)) }
+    }
+
+    var body: some View {
+        Button("Search + no-results") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-selection-sheet-search-trigger")
+            .sheet(isPresented: $isPresented) {
+                HermexSelectionSheet(
+                    "Search Providers",
+                    selection: $selection,
+                    options: visibleOptions,
+                    search: HermexSelectionSheetSearch(title: "Search providers", text: $query)
+                )
+                .presentationDetents([.medium, .large])
+            }
+    }
+}
+
+// ─── Long list: 20+ options, internally scrolling ──────────────────────────────
+private struct HermexOverlayLabSelectionSheetLongList: View {
+    @State private var isPresented = false
+    @State private var selection: Int?
+
+    private var options: [HermexSelectionSheetOption<Int>] {
+        (1...24).map { HermexSelectionSheetOption(value: $0, title: "Option \($0)") }
+    }
+
+    var body: some View {
+        Button("Long list (24 options)") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-selection-sheet-long-list-trigger")
+            .sheet(isPresented: $isPresented) {
+                HermexSelectionSheet("Choose an Option", selection: $selection, options: options)
+                    .presentationDetents([.medium, .large])
+            }
+    }
+}
 #endif

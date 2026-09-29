@@ -68,6 +68,7 @@ struct HermexBottomSheet<
                     TopNav(
                         leadingPlacement: .cancellationAction,
                         trailingPlacement: .confirmationAction,
+                        actionStyle: .compactAdaptiveGlass,
                         leadingPrimary: leadingPrimary,
                         leadingSecondary: leadingSecondary,
                         trailingPrimary: trailingPrimary,

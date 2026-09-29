@@ -10,6 +10,10 @@ export interface RadioProps {
   label?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Optional color override for the selected ring/dot and unselected border, consumed by the
+   *  Hermex gallery to match native's Neutral color mapping. Omitted, the generic template default
+   *  (DS_SEMANTIC.emphasis.info selected / DS_SEMANTIC.border.dark unselected) is unchanged. */
+  colors?: { selected?: string; unselectedBorder?: string };
 }
 
 const CIRCLE_SIZE = 20;
@@ -28,7 +32,7 @@ const HIT_SLOP = Math.max(0, Math.ceil((DS_A11Y_MIN_TOUCH_TARGET - CIRCLE_SIZE) 
  * pops in/out (scale + opacity) rather than snapping — both kept JS-driven (`useNativeDriver: false`)
  * for the same Fabric-safety reason.
  */
-export function Radio({ selected, onPress, label, disabled = false, style }: RadioProps) {
+export function Radio({ selected, onPress, label, disabled = false, style, colors }: RadioProps) {
   const { pressScale, onPressIn, onPressOut } = usePressScale(disabled);
   const dotAnim = useRef(new Animated.Value(selected ? 1 : 0)).current;
   const [focused, setFocused] = useState(false);
@@ -55,8 +59,22 @@ export function Radio({ selected, onPress, label, disabled = false, style }: Rad
       hitSlop={HIT_SLOP}
       style={[styles.row, disabled && styles.disabled, style]}
     >
-      <Animated.View style={[styles.circle, selected && styles.circleSelected, { transform: [{ scale: pressScale }] }]}>
-        <Animated.View style={[styles.dot, { opacity: dotAnim, transform: [{ scale: dotAnim }] }]} />
+      <Animated.View
+        style={[
+          styles.circle,
+          selected && styles.circleSelected,
+          !selected && colors?.unselectedBorder ? { borderColor: colors.unselectedBorder } : null,
+          selected && colors?.selected ? { borderColor: colors.selected } : null,
+          { transform: [{ scale: pressScale }] },
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.dot,
+            colors?.selected ? { backgroundColor: colors.selected } : null,
+            { opacity: dotAnim, transform: [{ scale: dotAnim }] },
+          ]}
+        />
         {/* Keyboard-focus ring — same interaction.focused treatment Button/Pill use; a zero-layout
             absolute overlay so focusing never shifts layout. */}
         {focused && !disabled && <View pointerEvents="none" style={styles.focusRing} />}

@@ -26,6 +26,10 @@ final class HermexBottomSheetTests: XCTestCase {
         try source("HermesMobile/Features/Shared/HermexBottomSheet.swift")
     }
 
+    private func overlayLabSource() throws -> String {
+        try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+    }
+
     // MARK: - Compile contracts
 
     @MainActor
@@ -223,5 +227,60 @@ final class HermexBottomSheetTests: XCTestCase {
         XCTAssertFalse(src.contains(".animation("), "must not add a custom animation — native .sheet owns presentation motion")
         XCTAssertFalse(src.contains("reduceMotion"), "must not add a home-grown Reduce Motion branch — native .sheet owns it")
         XCTAssertFalse(src.contains("Color.black.opacity"), "must not add a custom dimming/backdrop layer")
+    }
+
+    // MARK: - Issue #DSF-02: default XS/neutral/adaptive-glass TopNav slot styling
+    //
+    // TopNav decides whether a slot reaches the toolbar at all purely from its own generic type
+    // (`slotIsEmpty<V>(_:)` compares `ObjectIdentifier(V.self)` against `ObjectIdentifier(EmptyView
+    // .self)`). Wrapping a slot in a closure that calls `.buttonStyle(...)` on its result — e.g.
+    // `{ leadingPrimary().buttonStyle(...) }` — returns an opaque `ModifiedContent`, never
+    // `EmptyView`, so `slotIsEmpty` becomes unconditionally false for that slot no matter what the
+    // caller actually passed in. Every `HermexBottomSheet`, including one with no toolbar actions at
+    // all, would then mount a zero-content `ToolbarItemGroup` — exactly what TopNav's own elision
+    // exists to prevent. `ToolbarContent` is not a `View`, so the style cannot be attached outside
+    // `TopNav(...)`; instead TopNav exposes an opt-in action style that it applies inside each
+    // non-empty ToolbarItemGroup only after the unchanged generic-type elision check succeeds.
+
+    func testTopNavSlotsReceiveTheOriginalClosuresDirectlyPreservingTopNavsEmptySlotElision() throws {
+        let src = try hermesBottomSheetSource()
+        let toolbarBlock = try XCTUnwrap(src.components(separatedBy: ".toolbar {").last,
+                                          "expected a .toolbar composing TopNav")
+        for slot in ["leadingPrimary", "leadingSecondary", "trailingPrimary", "trailingSecondary"] {
+            XCTAssertTrue(toolbarBlock.contains("\(slot): \(slot)"),
+                          "expected \(slot) to be passed to TopNav directly (e.g. `\(slot): \(slot)`) so TopNav's own EmptyView-default slot type is preserved instead of being replaced by an opaque ModifiedContent")
+            XCTAssertFalse(toolbarBlock.contains("\(slot)().buttonStyle"),
+                           "wrapping \(slot) in a closure that calls .buttonStyle on its invoked result defeats TopNav.slotIsEmpty for every caller, including one that supplies no toolbar actions at all")
+        }
+    }
+
+    func testBottomSheetOptsIntoCompactAdaptiveGlassTopNavActionsWithoutWrappingItsSlots() throws {
+        let src = try hermesBottomSheetSource()
+        let toolbarBlock = try XCTUnwrap(src.components(separatedBy: ".toolbar {").last,
+                                          "expected a .toolbar composing TopNav")
+        XCTAssertTrue(toolbarBlock.contains("actionStyle: .compactAdaptiveGlass"),
+                      "expected Bottom Sheet alone to opt into TopNav's compact XS neutral adaptive-glass action style")
+        XCTAssertFalse(toolbarBlock.contains(".buttonStyle(.hermex("),
+                       "Bottom Sheet must not apply the style by wrapping each slot or by pretending ToolbarContent is a View")
+    }
+
+    /// Guards the other half of the requirement: TopNav may provide an opt-in action-style seam, but
+    /// its global default remains native so every existing caller outside Bottom Sheet is unchanged.
+    func testScopingTheDefaultButtonStyleLeavesTopNavsOwnGlobalDefaultsUnchanged() throws {
+        let topNavSrc = try source("HermesMobile/Features/Shared/TopNav.swift")
+        XCTAssertTrue(topNavSrc.contains("actionStyle: TopNavActionStyle = .native"),
+                      "TopNav's action style must default to native so Bottom Sheet's opt-in does not restyle unrelated callers")
+        XCTAssertTrue(topNavSrc.contains("if !Self.slotIsEmpty(LeadingPrimary.self)"),
+                      "TopNav must keep checking the original generic slot type before creating a toolbar group")
+        XCTAssertTrue(topNavSrc.contains("actionStyle.apply(to: leadingPrimary())"),
+                      "TopNav applies the opt-in style only inside a toolbar group that survived empty-slot elision")
+    }
+
+    func testOverlayLabIncludesAReachableBottomSheetFollowupFixture() throws {
+        let src = try overlayLabSource()
+        XCTAssertTrue(src.contains("private struct HermexOverlayLabBottomSheetFollowup"))
+        XCTAssertTrue(src.contains("HermexBottomSheet("))
+        XCTAssertTrue(src.contains(".sheet(isPresented:"))
+        XCTAssertTrue(src.contains("overlay-lab-followup-bottom-sheet-trigger"))
     }
 }

@@ -8,6 +8,24 @@ enum HermexCheckboxMetrics {
     static let minimumHitTarget: CGFloat = 44
 }
 
+/// The shared Neutral color mapping for both selection controls (DSF-08/DSF-09): `HermexCheckbox`'s
+/// checked fill/border/checkmark and `HermexRadio`'s selected ring/dot both resolve to these three
+/// adaptive pairs instead of `Color.primary` or the inverse system background.
+enum HermexSelectionControlColors {
+    static let selected = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s950,
+        dark: HermesColorRamp.Neutral.s50
+    )
+    static let selectedForeground = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s50,
+        dark: HermesColorRamp.Neutral.s950
+    )
+    static let unselectedBorder = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s500,
+        dark: HermesColorRamp.Neutral.s600
+    )
+}
+
 /// A reusable square multi-selection control.
 ///
 /// Pass an `action` when the checkbox owns interaction. When a containing row
@@ -48,11 +66,11 @@ struct HermexCheckbox: View {
         HStack(spacing: HermesSpacing.s8) {
             ZStack {
                 RoundedRectangle(cornerRadius: HermesRadius.r4, style: .continuous)
-                    .fill(isChecked ? Color.primary : Color.clear)
+                    .fill(isChecked ? HermexSelectionControlColors.selected : Color.clear)
                     .overlay {
                         RoundedRectangle(cornerRadius: HermesRadius.r4, style: .continuous)
                             .stroke(
-                                isChecked ? Color.primary : Color(.separator),
+                                isChecked ? HermexSelectionControlColors.selected : HermexSelectionControlColors.unselectedBorder,
                                 lineWidth: HermexCheckboxMetrics.borderWidth
                             )
                     }
@@ -60,7 +78,7 @@ struct HermexCheckbox: View {
                 if isChecked {
                     Image(systemName: "checkmark")
                         .font(.system(size: HermesIconSize.xs, weight: .bold))
-                        .foregroundStyle(Color(.systemBackground))
+                        .foregroundStyle(HermexSelectionControlColors.selectedForeground)
                 }
             }
             .frame(width: HermexCheckboxMetrics.boxSize, height: HermexCheckboxMetrics.boxSize)

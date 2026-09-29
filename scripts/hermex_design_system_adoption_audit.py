@@ -49,7 +49,7 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermexButton.swift",
     "HermesMobile/Features/Shared/HermexCheckbox.swift",
     "HermesMobile/Features/Shared/HermexRadio.swift",
-    "HermesMobile/Features/Shared/HermexDropdown.swift",
+    "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
     "HermesMobile/Features/Shared/HermexToast.swift",
     "HermesMobile/Features/Shared/HermexTooltip.swift",
     "HermesMobile/Features/Shared/HermexAvatar.swift",
@@ -107,8 +107,9 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
         r"struct HermexContentUnavailable\s*:\s*View",
     ]),
     ("HermesMobile/Features/Shared/HermexSearch.swift", [
+        r"struct HermexSearchField\s*:\s*View",
         r"func hermexSearch\(",
-        r"searchable\(text:",
+        r"safeAreaInset\(edge:\s*\.top",
     ]),
     ("HermesMobile/Features/Shared/HermexTextInput.swift", [
         r"struct HermexTextField\s*:\s*View",
@@ -133,6 +134,11 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ("HermesMobile/Features/Shared/HermexPopoverMenu.swift", [
         r"func hermexPopoverMenu\(",
         r"struct HermexPopoverMenuAction",
+    ]),
+    ("HermesMobile/Features/Shared/HermexSelectionSheet.swift", [
+        r"struct HermexSelectionSheetOption<",
+        r"struct HermexSelectionSheet<",
+        r"HermexBottomSheet\(",
     ]),
 ]
 
@@ -201,13 +207,16 @@ CONTENT_UNAVAILABLE_PATTERN = re.compile(r"\bContentUnavailableView\b")
 CONTENT_UNAVAILABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexContentUnavailable.swift"
 
 # ─── Frozen direct .searchable baseline ──────────────────────────────────────────────────────────
-# This branch adds a Hermex-owned `.hermexSearch(text:placement:prompt:)` foundation wrapper
-# (HermexSearch.swift) over native `.searchable`, but does not migrate any production screen onto
-# it — every current search field keeps calling `.searchable` directly. Owner: whoever lands the PR
-# that migrates one of these eight call sites onto `.hermexSearch` (or adds a new direct
-# `.searchable` call site). Removal condition: delete a file's entry here (or lower its count) in
-# the same PR that migrates/removes that call site. Verified against this branch's own source
-# (2026-09-28); HermexSearch.swift itself is excluded from this accounting.
+# This branch replaces the old `.hermexSearch(text:placement:prompt:)` foundation wrapper — which
+# forwarded straight to native `.searchable` — with a custom `HermexSearchField` view and a
+# `.hermexSearch(...)` convenience modifier that composes it as a persistent top content inset.
+# HermexSearch.swift itself must never call `.searchable` again, so it is no longer excluded from
+# this accounting: a stray `.searchable(` call inside it now fails like any other new, unfrozen call
+# site. Production does not migrate any screen in this slice — every current search field keeps
+# calling `.searchable` directly. Owner: whoever lands the PR that migrates one of these eight call
+# sites onto `.hermexSearch` (or adds a new direct `.searchable` call site). Removal condition:
+# delete a file's entry here (or lower its count) in the same PR that migrates/removes that call
+# site. Verified against this branch's own source (2026-09-28).
 SEARCHABLE_BASELINE = {
     "HermesMobile/Features/Kanban/KanbanLabView.swift": 1,
     "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
@@ -219,7 +228,6 @@ SEARCHABLE_BASELINE = {
     "HermesMobile/Features/Workspace/GitBranchPickerView.swift": 1,
 }
 SEARCHABLE_PATTERN = re.compile(r"\.searchable\(")
-SEARCHABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexSearch.swift"
 
 # ─── Frozen direct TextField baseline ────────────────────────────────────────────────────────────
 # This branch adds three Hermex-owned Text Input foundation wrappers — `HermexTextField`,
@@ -230,7 +238,10 @@ SEARCHABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexSearch.swift"
 # adds a new direct `TextField(` call site). Removal condition: delete a file's entry here (or lower
 # its count) in the same PR that migrates/removes that call site. Verified against this branch's own
 # source (2026-09-28); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this
-# accounting.
+# accounting. HermexSearch.swift is excluded too, the same way: `HermexSearchField` is a foundation
+# component whose approved design keeps the system-backed `TextField` as its editor — that direct
+# call is the field's own implementation, not a production call site that should have reached for
+# the foundation instead.
 TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Kanban/KanbanCardEditorView.swift": 8,
     "HermesMobile/Features/Kanban/KanbanLabView.swift": 5,
@@ -262,7 +273,10 @@ TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Workspace/GitCommitView.swift": 1,
 }
 TEXT_FIELD_PATTERN = re.compile(r"\bTextField\(")
-TEXT_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexTextInput.swift"
+TEXT_FIELD_EXCLUDED_FILES = {
+    "HermesMobile/Features/Shared/HermexTextInput.swift",
+    "HermesMobile/Features/Shared/HermexSearch.swift",
+}
 
 # ─── Frozen direct SecureField baseline ──────────────────────────────────────────────────────────
 # Same shape as TEXT_FIELD_BASELINE above, for native `SecureField(` call sites. Owner: whoever lands
@@ -451,12 +465,12 @@ def check_content_unavailable_baseline() -> list[str]:
 
 
 def check_searchable_baseline() -> list[str]:
-    live = _count_pattern_per_file(SEARCHABLE_PATTERN, exclude={SEARCHABLE_EXCLUDED_FILE})
+    live = _count_pattern_per_file(SEARCHABLE_PATTERN)
     return _check_frozen_baseline("direct .searchable", SEARCHABLE_BASELINE, live)
 
 
 def check_text_field_baseline() -> list[str]:
-    live = _count_pattern_per_file(TEXT_FIELD_PATTERN, exclude={TEXT_FIELD_EXCLUDED_FILE})
+    live = _count_pattern_per_file(TEXT_FIELD_PATTERN, exclude=TEXT_FIELD_EXCLUDED_FILES)
     return _check_frozen_baseline("direct TextField", TEXT_FIELD_BASELINE, live)
 
 

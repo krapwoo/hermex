@@ -84,4 +84,22 @@ final class TopNavTests: XCTestCase {
         XCTAssertTrue(topNavSource.contains("trailingSecondary"))
         XCTAssertTrue(topNavSource.contains(": ToolbarContent"))
     }
+
+    func testActionStyleIsAppliedOnlyInsideGroupsAfterEmptySlotChecks() throws {
+        let topNavSource = try source("HermesMobile/Features/Shared/TopNav.swift")
+        XCTAssertTrue(topNavSource.contains("enum TopNavActionStyle"))
+        XCTAssertTrue(topNavSource.contains("actionStyle: TopNavActionStyle = .native"))
+        for slot in ["leadingPrimary", "leadingSecondary", "trailingPrimary", "trailingSecondary"] {
+            XCTAssertTrue(topNavSource.contains("actionStyle.apply(to: \(slot)())"),
+                          "expected the opt-in style to wrap \(slot) only inside its non-empty toolbar group")
+        }
+    }
+
+    func testCompactAdaptiveGlassActionsPreserveTextLabelsIntrinsicWidth() throws {
+        let topNavSource = try source("HermesMobile/Features/Shared/TopNav.swift")
+        XCTAssertTrue(
+            topNavSource.contains(".fixedSize(horizontal: true, vertical: false)"),
+            "compact glass text actions such as Cancel and Done must not collapse into the toolbar overflow ellipsis"
+        )
+    }
 }

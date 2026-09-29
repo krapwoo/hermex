@@ -142,9 +142,14 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
   assert.doesNotMatch(src, /Hermex Segmented Control|Hermes Segmented Control/);
 
   const search = extractHermesSection(src, 'Search');
-  assert.match(search, /\.searchable/);
-  assert.match(search, /native/i);
-  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to document the Hermex-owned .hermexSearch wrapper');
+  assert.match(search, /HermexSearchField/, 'expected the Search entry to name the canonical HermexSearchField component');
+  assert.match(search, /system-backed `TextField`|system-backed TextField/i, 'expected the Search entry to state the native TextField still owns text editing');
+  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to document the Hermex-owned .hermexSearch composition modifier');
+  assert.doesNotMatch(
+    search,
+    /forwards straight to native `.searchable`|avoid[^']*custom chrome/i,
+    'native .searchable forwarding and the ban on custom chrome are retired',
+  );
 
   const segmented = extractHermesSection(src, 'Segmented Control');
   assert.match(segmented, /fixed/);
@@ -2289,7 +2294,11 @@ test('the generic catalog Checkbox supports an omittable onChange for a row-owne
   assert.match(body, /<CheckboxRowOwnedDemo/, 'expected a row-owned indicator demo');
   const rowOwnedBody = extractFunctionBody(previewsSrc, 'CheckboxRowOwnedDemo');
   assert.match(rowOwnedBody, /<ListItem/, 'expected the row-owned demo to compose the real ListItem');
-  assert.match(rowOwnedBody, /<Checkbox checked=\{[^}]+\}\s*\/>/, 'expected the row-owned Checkbox instance to omit onChange');
+  const rowOwnedCheckboxTag = rowOwnedBody.match(/<Checkbox\b[\s\S]*?\/>/);
+  assert.ok(rowOwnedCheckboxTag, 'expected a row-owned Checkbox instance');
+  assert.match(rowOwnedCheckboxTag[0], /checked=\{[^}]+\}/, 'expected the row-owned Checkbox to receive its visual checked state');
+  assert.match(rowOwnedCheckboxTag[0], /colors=\{HERMEX_SELECTION_CONTROL_COLORS\}/, 'expected the row-owned indicator to use the Hermex visual color mapping');
+  assert.doesNotMatch(rowOwnedCheckboxTag[0], /onChange=/, 'expected the row-owned Checkbox instance to omit onChange');
   assert.match(rowOwnedBody, /selected=\{/, 'expected the owning ListItem to expose its own selected state');
   assert.doesNotMatch(previewsSrc, /export function HermexCheckbox\b/, 'must not introduce a duplicate Hermex-specific checkbox component');
 });
@@ -2588,6 +2597,119 @@ test('Issue #607: Popover Menu becomes a Hermex-owned Components entry (HermexPo
   assert.doesNotMatch(body, /<Menu[\s>]/, 'must not compose a native-style Menu component');
 });
 
+test('Popover Menu stays action-only and directs persistent selection to Selection Sheet instead of adding a selection API of its own', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Hermes Popover Menu');
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /Selection Sheet/i, 'expected Popover Menu to name Selection Sheet as where persistent selection belongs');
+  assert.match(section, /selection model/i, 'expected Popover Menu to keep stating v1 excludes a persistent selection model');
+});
+
+// ─── Issue #607 (Selection Sheet slice, test-first phase): retires the unused Hermex Dropdown ───
+// foundation/gallery/nav entry and replaces its intended fixed-option-selection role with a
+// caller-presented `HermexSelectionSheet` — content composed from the existing Bottom Sheet, TopNav,
+// List/ListItem, and row-owned Radio/Checkbox indicators, supporting immediate single selection and
+// staged multi-selection with optional caller-controlled Search. These tests are written before
+// `HermexSelectionSheet.swift` and its catalog entry exist, and before `HermexDropdown.swift`/its
+// gallery are removed, so they are expected to fail red until the Selection Sheet slice lands both
+// the retirement and the addition together.
+
+test('Issue #607: Hermes Dropdown is fully retired from the catalog — no section id, nav entry, display name, or family gallery remains, while the unrelated generic template Dropdown stays available', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  assert.doesNotMatch(sectionsSrc, /id:\s*'Hermes Dropdown'/, 'expected the Hermes Dropdown SectionDef to be removed');
+  assert.doesNotMatch(sectionsSrc, /\| 'Hermes Dropdown'/, 'expected Hermes Dropdown to be removed from the HermesSectionId union');
+  assert.doesNotMatch(sectionsSrc, /DropdownFamilyGallery/, 'expected no remaining reference to DropdownFamilyGallery in hermesSections.tsx');
+  assert.doesNotMatch(previewsSrc, /export function DropdownFamilyGallery/, 'expected DropdownFamilyGallery to no longer be exported');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(!componentIds.includes('Hermes Dropdown'), 'expected Hermes Dropdown to be removed from the Components — Hermex nav group');
+
+  // The generic, unrelated template Dropdown stays available to its own consumer — this slice
+  // only retires Hermex's own Dropdown reference layer entry, never the shared generic component.
+  assert.ok(
+    existsSync(path.join(ROOT, 'native/components/Dropdown/Dropdown.tsx')),
+    'expected the generic catalog Dropdown component to remain available to unrelated consumers',
+  );
+});
+
+test('Issue #607: Selection Sheet becomes a Hermes-owned Components entry (HermexSelectionSheet composed from Bottom Sheet, TopNav, List/ListItem, and row-owned Radio/Checkbox indicators, caller-owned .sheet presentation, immediate single commit, staged multi Done/Cancel, optional caller-controlled Search), truthfully claiming zero production adoption', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /\| 'Hermes Selection Sheet'/, "expected 'Hermes Selection Sheet' in the HermesSectionId union");
+
+  const section = extractHermesSection(sectionsSrc, 'Hermes Selection Sheet');
+  assert.match(section, /displayName:\s*'Selection Sheet'/, "expected the visible label to be the plain 'Selection Sheet'");
+  assert.match(section, /hermesReference:\s*\{/);
+  assert.match(section, /HermexSelectionSheet/, 'expected the entry to name the Hermex-owned HermexSelectionSheet component');
+  assert.match(section, /caller.own(?:s|ed)[^.]*\.sheet|\.sheet[^.]*caller.own/i, 'expected the entry to document caller-owned .sheet presentation');
+  assert.match(section, /Bottom Sheet/i, 'expected the entry to document composing Bottom Sheet');
+  assert.match(section, /TopNav/i, 'expected the entry to document composing TopNav');
+  assert.match(section, /ListItem/, 'expected the entry to document composing List/ListItem rows');
+  assert.match(section, /Radio/, 'expected the entry to document the row-owned Radio indicator for single selection');
+  assert.match(section, /Checkbox/, 'expected the entry to document the row-owned Checkbox indicator for multi selection');
+  assert.match(section, /Search/i, 'expected the entry to document optional caller-controlled Search');
+  assert.match(section, /caller[^.]*(?:filter|query)|(?:filter|query)[^.]*caller/i, 'expected the entry to document caller-owned filtering/query, not component-owned filtering');
+  assert.match(section, /single[^.]*(?:commit|dismiss)|commit[^.]*single/i, 'expected the entry to document immediate single-selection commit');
+  assert.match(section, /Done/, 'expected the entry to document the multi-selection Done action');
+  assert.match(section, /Cancel/, 'expected the entry to document the Cancel/discard action');
+  assert.match(section, /disabled/i, 'expected the entry to document disabled option behavior');
+
+  const ref = extractHermesReferenceBlock(section);
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.length > 0, 'expected at least one structured alternative');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'foundation-available');
+  assert.match(section, /foundation-available/i, 'expected the adoptionStatus detail to state foundation-available');
+  assert.match(section, /zero production/i, 'expected the adoptionStatus detail to truthfully report zero production adoption');
+  assert.doesNotMatch(section, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Selection Sheet must not claim production adoption');
+
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexSelectionSheet\.swift/, 'expected implementationNotes.sourcePaths to cite HermexSelectionSheet.swift');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(componentIds.includes('Hermes Selection Sheet'), 'expected Hermes Selection Sheet to be registered in the Components — Hermex nav group');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(section, /<SelectionSheetFamilyGallery/, 'expected Selection Sheet to render its own family gallery');
+  assert.match(previewsSrc, /export function SelectionSheetFamilyGallery/);
+  const galleryBody = extractFunctionBody(previewsSrc, 'SelectionSheetFamilyGallery');
+  assert.match(galleryBody, /single/i, 'expected the gallery to demonstrate single selection');
+  assert.match(galleryBody, /multi/i, 'expected the gallery to demonstrate staged multi-selection');
+  assert.match(galleryBody, /Cancel/, 'expected the gallery to demonstrate Cancel discarding the staged draft');
+  assert.match(galleryBody, /Done/, 'expected the gallery to demonstrate Done committing the staged draft');
+  assert.match(galleryBody, /disabled/i, 'expected the gallery to demonstrate a disabled option');
+  assert.match(galleryBody, /[Nn]o results/, 'expected the gallery to demonstrate a Search no-results specimen');
+  assert.match(galleryBody, /(?:20|twenty)/i, 'expected the gallery to demonstrate a 20+ option scrolling list');
+
+  const singleBody = extractFunctionBody(previewsSrc, 'SelectionSheetSingleDemo');
+  const lockedTitleIndex = singleBody.indexOf('title="Locked profile"');
+  assert.notEqual(lockedTitleIndex, -1, 'expected a rendered Locked profile row');
+  const lockedRowStart = singleBody.lastIndexOf('<ListItem', lockedTitleIndex);
+  const lockedRowEnd = singleBody.indexOf('/>', lockedTitleIndex);
+  assert.ok(lockedRowStart !== -1 && lockedRowEnd !== -1, 'expected a complete Locked profile ListItem tag');
+  const lockedRow = singleBody.slice(lockedRowStart, lockedRowEnd + 2);
+  assert.match(lockedRow, /disabled/, 'expected Locked profile to expose disabled semantics');
+  assert.match(lockedRow, /onPress=/, 'expected the disabled option to remain one disabled ListItem button target rather than being demoted to static content');
+
+  const searchBody = extractFunctionBody(previewsSrc, 'SelectionSheetSearchDemo');
+  assert.match(searchBody, /ref=\{searchInputRef\}/, 'expected Selection Sheet Search to expose the input focus target');
+  assert.match(searchBody, /accessibilityLabel="Clear search"/, 'expected a named clear control in the optional Search specimen');
+  assert.match(searchBody, /minWidth:\s*44[\s\S]{0,80}minHeight:\s*44|minHeight:\s*44[\s\S]{0,80}minWidth:\s*44/, 'expected the Search clear control to retain an independent 44pt hit target');
+  assert.match(searchBody, /searchInputRef\.current\?\.focus\(\)/, 'expected clearing Search to restore input focus after emptying the caller-owned query');
+
+  assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/Dropdown'/, 'must not import the generic template Dropdown component into the Hermex Selection Sheet gallery');
+  assert.doesNotMatch(galleryBody, /<Dropdown[\s>]/, 'must not compose the generic template Dropdown component');
+});
+
 // ─── Controller correction (2026-09-29, Popover Menu rendered-fidelity gaps 1–3) ────────────────
 // A rendered-fidelity check of the family gallery this Task 8 slice already added found three real
 // gaps between what the specimens/copy promise and what the source actually does: (1) the above
@@ -2671,39 +2793,51 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
   assert.match(demoBody, /opacity\.stopAnimation\(\)/, 'expected unmount to stop the in-flight animation rather than let a stale completion fire later');
 });
 
-// Search becomes a Hermex-owned shared foundation API (`.hermexSearch`, a thin wrapper over native
-// `.searchable`) while production screens stay on their existing direct `.searchable` call sites —
-// migration is a separate issue. This is the ownership-flip transaction: Search moves from Native
-// iOS — Hermex into Components — Hermex, its preview becomes an interactive Hermex Search family
-// demonstration (not a bare native reconstruction), and its adoptionStatus truthfully reports zero
-// production adoption.
-test('Search moves to Components — Hermex as a Hermex-owned foundation wrapper (.hermexSearch) over native .searchable, with a truthful zero-adoption status and an interactive family preview', () => {
+// Search becomes a custom Hermex-owned shared foundation component: one canonical `HermexSearchField`
+// plus a `.hermexSearch(...)` convenience modifier that composes it as a persistent top content inset.
+// Native `.searchable` forwarding and `SearchFieldPlacement` are retired for the visible experience —
+// the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, and
+// platform accessibility. Production screens stay on their existing eight direct `.searchable` call
+// sites — migration is a separate issue. The preview becomes an interactive Hermex Search family
+// demonstration with custom Hermex field chrome (not a bare native reconstruction), and its
+// adoptionStatus truthfully reports zero production adoption.
+test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful zero-adoption status, and an interactive family preview with custom chrome', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
 
-  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to name the Hermex-owned .hermexSearch wrapper');
-  assert.match(search, /`\.searchable`|\.searchable\(/, 'expected the Search entry to still name the native .searchable it wraps');
-  assert.match(search, /avoidWhen:\s*'[^']*custom chrome[^']*'/i, 'expected avoidWhen to still forbid custom search-field chrome');
+  assert.match(search, /HermexSearchField/, 'expected the Search entry to name the canonical HermexSearchField component');
+  assert.match(search, /`\.hermexSearch/, 'expected the Search entry to name the Hermex-owned .hermexSearch composition modifier');
+  assert.match(search, /system-backed `TextField`|system-backed TextField/i, 'expected the Search entry to state the native TextField still owns text editing');
+  assert.doesNotMatch(search, /`\.searchable`\s*forwarding|forwards straight to native `\.searchable`/i, 'native .searchable forwarding is retired');
+  assert.doesNotMatch(search, /SearchFieldPlacement/, 'SearchFieldPlacement is retired; Hermex cannot truthfully reproduce native navigation-drawer placement');
 
   const state = extractAdoptionState(search);
-  assert.equal(state, 'foundation-available', 'expected Search to report foundation-available, not native-platform, once the wrapper ships');
-  assert.match(search, /adoptionStatus:\s*\{[\s\S]*?HermexSearch\.swift[\s\S]*?no production call site yet/, 'expected the adoptionStatus detail to name HermexSearch.swift and truthfully report zero production call sites');
-  assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue/i, 'expected the adoptionStatus/notes to state migration is deferred to another issue');
+  assert.equal(state, 'foundation-available', 'expected Search to remain foundation-available, not production-adopted, in this slice');
+  assert.match(search, /eight existing|eight current/i, 'expected the adoptionStatus detail to name the eight unchanged production .searchable callers');
+  assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue|separate slice/i, 'expected the adoptionStatus/notes to state migration is deferred to another slice/issue');
   assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim production adoption');
 
-  assert.match(search, /HermesMobile\/Features\/Shared\/HermexSearch\.swift/, 'expected implementationNotes.sourcePaths to cite the new HermexSearch.swift wrapper');
+  assert.match(search, /HermesMobile\/Features\/Shared\/HermexSearch\.swift/, 'expected implementationNotes.sourcePaths to cite HermexSearch.swift');
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.doesNotMatch(previewsSrc, /export function NativeSearchPreview/, 'expected the retired native-only preview name to be gone');
-  assert.match(search, /<SearchFamilyGallery/, 'expected Search to render the renamed Hermex Search family preview');
+  assert.match(search, /<SearchFamilyGallery/, 'expected Search to render the Hermex Search family preview');
   assert.match(previewsSrc, /export function SearchFamilyGallery/);
   const gallery = extractFunctionBody(previewsSrc, 'SearchFamilyGallery');
   assert.match(gallery, /onChangeText=\{setQuery\}|onChangeText=\{[^}]*setQuery[^}]*\}/, 'expected interactive query entry');
-  assert.match(gallery, /accessibilityLabel="Clear search"/, 'expected a native-style clear action, not custom chrome');
-  assert.match(gallery, /ref=\{searchInputRef\}/, 'expected the native-style search input to expose a focus target');
+  assert.match(gallery, /accessibilityLabel="Clear search"/, 'expected the clear action to name "Clear search"');
+  assert.match(gallery, /minWidth:\s*44[\s\S]{0,80}minHeight:\s*44|minHeight:\s*44[\s\S]{0,80}minWidth:\s*44/, 'expected the clear control to keep an independent 44pt hit target');
+  assert.match(gallery, /ref=\{searchInputRef\}/, 'expected the search input to expose a focus target');
   assert.match(gallery, /searchInputRef\.current\?\.focus\(\)/, 'expected clearing search to restore focus to the input after the clear control unmounts');
-  assert.match(gallery, /No results for/, 'expected a specific no-results demonstration, not a generic empty state');
-  assert.doesNotMatch(gallery, /struct HermexSearchField|HermexSearchBar/, 'must not imply a custom Hermex search-field component');
+  assert.match(gallery, /disabled|isEnabled/i, 'expected a disabled specimen');
+  assert.match(gallery, /onSubmitEditing/, 'expected submit handling via onSubmitEditing');
+  assert.match(gallery, /submitCount === 1 \? ['"]time['"] : ['"]times['"]/, 'expected the live submit caption to say one time and multiple times');
+  assert.match(gallery, /No results for/, 'expected a caller-owned no-results demonstration, not a generic empty state');
+  assert.match(
+    gallery,
+    /custom Hermex|Hermex field chrome|Hermex-owned chrome/i,
+    'expected the gallery caption to describe custom Hermex field chrome, not a bare native reconstruction',
+  );
 });
 
 test('Materials — Hermex holds exactly Adaptive Glass, and Patterns — Hermex holds Content Unavailable, Pending Request, Transcript Activity, and Composer', () => {
@@ -3607,7 +3741,7 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
   const ids = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(ids, [
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-    'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
+    'Inline Reference Link', 'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
     'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
     'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
   ]);
@@ -3658,9 +3792,9 @@ test('the Components — Hermex group\'s computed render order is actually alpha
   const computedOrder = ids.slice().sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
 
   assert.deepEqual(computedOrder.map(labelFor), [
-    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Dialog', 'Disclosure Row', 'Dropdown',
+    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Dialog', 'Disclosure Row',
     'Inline Reference Link', 'List / ListItem', 'Popover Menu', 'Radio', 'Row Divider', 'Search',
-    'Segmented Control', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
+    'Segmented Control', 'Selection Sheet', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');
 });
 
@@ -4565,20 +4699,35 @@ test('ToastFamilyGallery adds a compact interactive motion specimen that toggles
   assert.match(galleryBody, /action=\{\{ label: 'Undo'/);
 });
 
-test('Radio, Dropdown, and Segmented Control name each other as reciprocal alternatives, closing the exclusive-selection disambiguation gap WHEN_TO_USE.md already describes', () => {
+test('Radio, Selection Sheet, and Segmented Control name each other as reciprocal alternatives, closing the exclusive-selection disambiguation gap WHEN_TO_USE.md already describes; retired Hermes Dropdown is named nowhere', () => {
   const src = read(HERMES_SECTIONS_PATH);
 
   const radio = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Radio')));
   assert.ok(radio.includes('Segmented Control'), 'expected Radio to name Segmented Control');
-  assert.ok(radio.includes('Hermes Dropdown'), 'expected Radio to name Hermes Dropdown');
+  assert.ok(radio.includes('Hermes Selection Sheet'), 'expected Radio to name Hermes Selection Sheet');
+  assert.ok(!radio.includes('Hermes Dropdown'), 'expected Radio to no longer name retired Hermes Dropdown');
 
-  const dropdown = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Dropdown')));
-  assert.ok(dropdown.includes('Hermes Radio'), 'expected Dropdown to name Hermes Radio');
-  assert.ok(dropdown.includes('Segmented Control'), 'expected Dropdown to name Segmented Control');
+  const selectionSheet = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Selection Sheet')));
+  assert.ok(selectionSheet.includes('Hermes Radio'), 'expected Selection Sheet to name Hermes Radio');
+  assert.ok(selectionSheet.includes('Segmented Control'), 'expected Selection Sheet to name Segmented Control');
 
   const segmented = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Segmented Control')));
   assert.ok(segmented.includes('Hermes Radio'), 'expected Segmented Control to name Hermes Radio');
-  assert.ok(segmented.includes('Hermes Dropdown'), 'expected Segmented Control to name Hermes Dropdown');
+  assert.ok(segmented.includes('Hermes Selection Sheet'), 'expected Segmented Control to name Hermes Selection Sheet');
+  assert.ok(!segmented.includes('Hermes Dropdown'), 'expected Segmented Control to no longer name retired Hermes Dropdown');
+});
+
+test('Text Input no longer names retired Hermes Dropdown and instead points to Selection Sheet or native Picker for a fixed-option single-selection field', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Text Input');
+  assert.doesNotMatch(section, /Hermes Dropdown/, 'expected Text Input to no longer reference retired Hermes Dropdown anywhere');
+
+  const ref = extractHermesReferenceBlock(section);
+  const alts = extractAlternativeNames(ref);
+  assert.ok(
+    alts.includes('Hermes Selection Sheet') || alts.some((name) => /native Picker/i.test(name)),
+    'expected Text Input alternatives to point to Selection Sheet or native Picker for a fixed-option single-selection field',
+  );
 });
 
 test('List/ListItem, Row Divider, and Skeleton Loading state real selection boundaries instead of adoption disclaimers, and name their real neighbors (Card, Accordion List, native containers, Content Unavailable\'s spinner)', () => {
@@ -4751,4 +4900,304 @@ test('every alternative name across every Hermex catalog entry resolves to a rea
     }
   }
   assert.ok(checkedCount > 15, 'expected the majority of Hermex entries to carry at least one alternative to validate');
+});
+
+// ─── Design system follow-up batch A (DSF-01..DSF-04): button/layout consistency ──────────────────
+// Extracts one top-level style object literal's own body (from its `<key>: {` line up to the next
+// `},`), scoped narrowly so an assertion about one style entry never accidentally matches a
+// same-prefixed neighbor (e.g. `dialogFooter` vs `dialogFooterVertical`/`dialogFooterButton`).
+const extractStyleEntry = (src, key) => {
+  const marker = `${key}: {`;
+  const idx = src.indexOf(marker);
+  assert.notEqual(idx, -1, `expected a '${key}' style entry`);
+  const end = src.indexOf('},', idx);
+  assert.notEqual(end, -1, `expected the '${key}' style entry to close with '},'`);
+  return src.slice(idx, end);
+};
+
+test('Issue #DSF-01: the Dialog catalog specimen centers its header/close row, shrinks the close visual to the compact 24pt XS size, and right-aligns (trailing) the horizontal footer actions', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  const headerRow = extractStyleEntry(previewsSrc, 'dialogHeaderRow');
+  assert.match(headerRow, /alignItems:\s*'center'/, 'expected the Dialog header row to vertically center the heading and close control');
+  assert.doesNotMatch(headerRow, /alignItems:\s*'flex-start'/, 'the header row must no longer use flex-start now that header/close are centered');
+
+  const closeButton = extractStyleEntry(previewsSrc, 'dialogCloseButton');
+  assert.match(closeButton, /width:\s*24/, 'expected the close visual to shrink to the compact 24pt XS size (HermexButtonSize.extraSmall.minHeight)');
+  assert.match(closeButton, /height:\s*24/, 'expected the close visual to shrink to the compact 24pt XS size (HermexButtonSize.extraSmall.minHeight)');
+
+  const footer = extractStyleEntry(previewsSrc, 'dialogFooter');
+  assert.match(footer, /justifyContent:\s*'flex-end'/, 'expected the horizontal Dialog footer to align its actions to the trailing edge');
+});
+
+test('Issue #DSF-02: the Hermex Bottom Sheet catalog footer specimen drops its top border, matching HermexBottomSheet.swift, which has no footer Divider', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const footer = extractStyleEntry(previewsSrc, 'bottomSheetFooter');
+  assert.doesNotMatch(footer, /borderTopWidth/, 'expected the catalog footer to drop its borderTopWidth');
+  assert.doesNotMatch(footer, /borderTopColor/, 'expected the catalog footer to drop its borderTopColor');
+});
+
+test('Issue #DSF-02: the Hermex TopNav catalog specimen\'s icon-slot action composes an adaptive-glass surface alongside its existing icon-first, accessibly-labeled treatment', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const iconSlotButtonBody = extractFunctionBody(previewsSrc, 'iconSlotButton');
+  assert.match(iconSlotButtonBody, /accessibilityLabel=\{label\}/, 'expected the icon-slot action to keep its meaningful accessibility label');
+  assert.match(iconSlotButtonBody, /glass/i, 'expected the icon-slot action to compose an adaptive-glass surface, preferring icons with accessible labels over plain secondary chrome');
+});
+
+test('Issue #DSF-03: the Toast catalog gallery proves its trailing action is a real XS neutral Button primitive, not just prose describing the generic Toast `action` shortcut (which colour-matches the toast\'s own status tint and cannot express a neutral treatment)', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
+  assert.match(galleryBody, /<Button[^>]*size="extraSmall"/s,
+    'expected the trailing-action Toast specimen to render a real, rendered extraSmall Button rather than only relying on the generic Toast action shortcut');
+});
+
+test('Issue #DSF-04: the Hermex Segmented Control catalog\'s fixed-variant track composes a distinct 40pt visual-track background layer (the existing 36pt selected pill plus one HermesSpacing.s2 padding step above and below), not a bare zero vertical padding that produces no visible change, while retaining the 4pt horizontal inset, 44pt segment minimum touch height, and 36pt selected thumb', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  const visualTrack = extractStyleEntry(previewsSrc, 'segmentedFixedVisualTrack');
+  assert.match(visualTrack, /height:\s*40\b/, 'expected a distinct 40pt visual-track background layer framed at 36pt selected pill height + 2pt padding above/below');
+
+  const track = extractStyleEntry(previewsSrc, 'segmentedFixedTrack');
+  assert.match(track, /paddingHorizontal:\s*4\b/, 'expected the 4pt horizontal inset to be retained');
+
+  const touchTarget = extractStyleEntry(previewsSrc, 'segmentedTouchTarget');
+  assert.match(touchTarget, /minHeight:\s*44/, 'expected the 44pt segment minimum touch height to be retained');
+
+  const pill = extractStyleEntry(previewsSrc, 'segmentedPill');
+  assert.match(pill, /height:\s*36/, 'expected the 36pt selected thumb to be retained');
+
+  const previewBody = extractFunctionBody(previewsSrc, 'FixedSegmentedControlPreview');
+  assert.match(previewBody, /segmentedFixedVisualTrack/, 'expected FixedSegmentedControlPreview to compose the 40pt visual-track background layer, not shrink the touch target to match it');
+});
+
+test('Issue #DSF-04: the Segmented Control catalog gallery\'s Fixed caption truthfully names the 40pt visual track, the 36pt selected pill inside it, and the 44pt touch target that extends beyond it, instead of attributing this geometry only to the Scrolling variant', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'SegmentedControlGallery');
+  const scrollingMarker = 'Scrolling — larger mutually-exclusive sets';
+  assert.ok(galleryBody.includes(scrollingMarker), 'expected the gallery to still label its Scrolling section');
+  const fixedSection = galleryBody.split(scrollingMarker)[0];
+  assert.match(fixedSection, /40pt/, 'expected the Fixed caption to name the 40pt visual track');
+  assert.match(fixedSection, /36pt/, 'expected the Fixed caption to name the shared 36pt selected pill, not just the Scrolling caption');
+  assert.match(fixedSection, /44pt/, 'expected the Fixed caption to name the shared 44pt touch target, not just the Scrolling caption');
+  assert.match(fixedSection, /two lines|two-line|wrap/i,
+    'expected the Fixed caption to document the approved equal-width, multi-line accessibility fallback');
+});
+
+// ─── DSF-07/08/09 (Batch B, RED): Card/Radio/Checkbox catalog color parity ──────────────────────
+// Tests-only, written against the design-system-follow-up-plan.md approved mapping before any
+// production/catalog source change. Approved values, derived from HERMES_COLOR_RAMPS.Neutral (light
+// appearance only — dark adaptation is a documented follow-up, not asserted here, since the web
+// catalog renders one static appearance): selected/primary #2D2D2F (Neutral[950]), inverse selected
+// foreground / secondary-adjacent light anchor #F9F9FA (Neutral[50]), unselected/standard border
+// #AEAEB1 (Neutral[400]). Object/constant names below (HERMEX_CARD_COLORS,
+// HERMEX_SELECTION_CONTROL_COLORS) mirror the native HermexCardColors/HermexSelectionControlColors
+// naming this same batch adds to HermexCardTests.swift/HermexRadioTests.swift/HermexCheckboxTests.swift
+// — a naming choice for this required mapping, not a constraint stated in the plan itself.
+
+test('DSF-07 (Batch B, RED): the Hermex Card gallery defines an explicit HERMEX_CARD_COLORS mapping derived from HERMES_COLOR_RAMPS.Neutral, mirroring the native HermexCardColors pairs, instead of hand-typed hex/rgba literals', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const objMatch = sectionsSrc.match(/const HERMEX_CARD_COLORS[\s\S]*?\};/);
+  assert.ok(objMatch, 'expected a top-level HERMEX_CARD_COLORS object in hermesSections.tsx, derived from HERMES_COLOR_RAMPS.Neutral');
+  const obj = objMatch[0];
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*50\s*\]/, 'expected the primary surface to derive from HERMES_COLOR_RAMPS.Neutral[50], mirroring native .adaptive(light: .s50, dark: .s950)');
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*100\s*\]/, 'expected the secondary/compact surface to derive from HERMES_COLOR_RAMPS.Neutral[100], mirroring native .adaptive(light: .s100, dark: .s900)');
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*400\s*\]/, 'expected the standard border to derive from HERMES_COLOR_RAMPS.Neutral[400], mirroring native .adaptive(light: .s400, dark: .s600)');
+  assert.doesNotMatch(obj, /#[0-9a-fA-F]{3,8}\b/, 'expected HERMEX_CARD_COLORS to derive from the ramp, not a hand-typed hex literal');
+});
+
+test('DSF-07 (Batch B, RED): the Hermex Card gallery styles for every cataloged variant (default/glass, request-opaque, outlined) use HERMEX_CARD_COLORS for background/border instead of local raw color literals', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+
+  const cardBox = extractStyleEntry(sectionsSrc, 'cardBox');
+  assert.match(cardBox, /HERMEX_CARD_COLORS/, 'expected cardBox (the default/glass and compact variants\' wrapper) to use HERMEX_CARD_COLORS instead of a raw rgba literal');
+  assert.doesNotMatch(cardBox, /rgba\(/, 'expected the raw rgba background/border literals to be gone from cardBox');
+
+  const cardBoxOpaque = extractStyleEntry(sectionsSrc, 'cardBoxOpaque');
+  assert.match(cardBoxOpaque, /HERMEX_CARD_COLORS/, 'expected cardBoxOpaque (the request-opaque variant) to use HERMEX_CARD_COLORS instead of a raw hex literal');
+  assert.doesNotMatch(cardBoxOpaque, /#[0-9a-fA-F]{3,8}\b/, 'expected the raw hex background/border literal to be gone from cardBoxOpaque');
+
+  // The outlined variant currently relies entirely on the generic template Card's own
+  // DS_SEMANTIC.border.light / DS_SEMANTIC.surface.white default — not an explicit Hermex Color
+  // mapping. DSF-07 requires an explicit mapping for every variant, including outlined, so
+  // CardChromePreview itself must apply a HERMEX_CARD_COLORS-derived style override for it.
+  const cardChromePreviewBody = extractFunctionBody(sectionsSrc, 'CardChromePreview');
+  assert.match(
+    cardChromePreviewBody,
+    /HERMEX_CARD_COLORS/,
+    'expected CardChromePreview to apply an explicit HERMEX_CARD_COLORS-derived style to the outlined Card (e.g. via its style prop), not rely solely on the generic template default'
+  );
+});
+
+test('DSF-07 correction (RED): HERMEX_CARD_COLORS defines an increasedContrastBorder pair derived from the corrected HERMES_COLOR_RAMPS.Neutral[600] light anchor, with the dark counterpart (Neutral[400]) documented in the Hermes Card catalog entry since this static catalog renders only the light appearance', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const objMatch = sectionsSrc.match(/const HERMEX_CARD_COLORS[\s\S]*?\};/);
+  assert.ok(objMatch, 'expected a top-level HERMEX_CARD_COLORS object in hermesSections.tsx');
+  const obj = objMatch[0];
+  assert.match(obj, /increasedContrastBorder/, 'expected HERMEX_CARD_COLORS to define the fourth increasedContrastBorder pair its own Card notes already claim exists (the retired Neutral[500]/Neutral[500] pair was replaced with Neutral[600]/Neutral[400])');
+  assert.match(
+    obj,
+    /increasedContrastBorder:\s*HERMES_COLOR_RAMPS\.Neutral\[\s*600\s*\]/,
+    'expected the Increased Contrast border light anchor to derive from the corrected HERMES_COLOR_RAMPS.Neutral[600] (native light: .s600), not the retired Neutral[500]'
+  );
+
+  const cardSection = extractHermesSection(sectionsSrc, 'Hermes Card');
+  const implementationNotes = extractBraceBlock(cardSection, /implementationNotes:\s*\{/);
+  assert.match(
+    implementationNotes,
+    /Neutral(?:\.s?400|\[\s*400\s*\])|#AEAEB1/,
+    'expected the Hermes Card implementation notes to document the dark Increased Contrast border anchor (Neutral 400 / #AEAEB1), since this static catalog only renders the light Neutral[600] anchor'
+  );
+});
+
+test('DSF-08/09 (Batch B, RED): the generic catalog Radio exposes an optional, backward-compatible color-configuration seam sufficient for Hermex selected/unselected colors, actually consumed by the rendered control, while its own default stays DS_SEMANTIC.emphasis.info when omitted', () => {
+  const implSrc = read('native/components/Radio/Radio.tsx');
+  const colorsPropMatch = implSrc.match(/colors\?:\s*\{([^}]*)\}/s);
+  assert.ok(colorsPropMatch, 'expected an optional `colors` prop on RadioProps');
+  assert.match(colorsPropMatch[1], /selected/, 'expected a `selected` color field');
+  assert.match(colorsPropMatch[1], /unselectedBorder/, 'expected an `unselectedBorder` color field');
+  assert.match(implSrc, /colors\?\.selected/, 'expected the component to actually read colors?.selected when overriding the selected treatment');
+  assert.match(implSrc, /colors\?\.unselectedBorder/, 'expected the component to actually read colors?.unselectedBorder when overriding the unselected treatment');
+  assert.match(implSrc, /DS_SEMANTIC\.emphasis\.info/, 'the generic template default must remain DS_SEMANTIC.emphasis.info when colors is omitted — backward compatible');
+});
+
+test('DSF-08/09 (Batch B, RED): the generic catalog Checkbox exposes an optional, backward-compatible color-configuration seam sufficient for Hermex selected/unselected/inverse colors, actually consumed by the rendered control, while its own default stays DS_SEMANTIC.emphasis.info when omitted', () => {
+  const implSrc = read('native/components/Checkbox/Checkbox.tsx');
+  const colorsPropMatch = implSrc.match(/colors\?:\s*\{([^}]*)\}/s);
+  assert.ok(colorsPropMatch, 'expected an optional `colors` prop on CheckboxProps');
+  assert.match(colorsPropMatch[1], /selected/, 'expected a `selected` color field');
+  assert.match(colorsPropMatch[1], /selectedForeground|inverse/, 'expected an inverse selected-foreground color field (selectedForeground or inverse)');
+  assert.match(colorsPropMatch[1], /unselectedBorder/, 'expected an `unselectedBorder` color field');
+  assert.match(implSrc, /colors\?\.selected/, 'expected the component to actually read colors?.selected when overriding the checked treatment');
+  assert.match(implSrc, /colors\?\.(selectedForeground|inverse)/, 'expected the component to actually read the inverse foreground override for the checkmark');
+  assert.match(implSrc, /colors\?\.unselectedBorder/, 'expected the component to actually read colors?.unselectedBorder when overriding the unchecked treatment');
+  assert.match(implSrc, /DS_SEMANTIC\.emphasis\.info/, 'the generic template default must remain DS_SEMANTIC.emphasis.info when colors is omitted — backward compatible');
+});
+
+test('DSF-08/09 (Batch B, corrected, RED): the Hermex gallery defines one shared HERMEX_SELECTION_CONTROL_COLORS object using the approved Neutral light values (#2D2D2F selected, #F9F9FA inverse, #8E8E93 unselected border)', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const objMatch = previewsSrc.match(/const HERMEX_SELECTION_CONTROL_COLORS[\s\S]*?\};/);
+  assert.ok(objMatch, 'expected a top-level HERMEX_SELECTION_CONTROL_COLORS object');
+  const obj = objMatch[0];
+  assert.match(obj, /'#2D2D2F'/, 'expected the selected value to be Neutral.s950 (#2D2D2F)');
+  assert.match(obj, /'#F9F9FA'/, 'expected the inverse selected-foreground value to be Neutral.s50 (#F9F9FA)');
+  // Corrected from the retired Neutral.s400 (#AEAEB1): the review measured that light anchor at
+  // ~2.1:1 against the light primary surface, below the 3:1 non-text boundary threshold (WCAG
+  // 1.4.11); Neutral.s500 (#8E8E93) is the corrected value, mirroring native HermexSelectionControlColors.
+  assert.match(obj, /'#8E8E93'/, 'expected the unselected-border value to be the corrected Neutral.s500 (#8E8E93), not the retired, under-contrast Neutral.s400 (#AEAEB1)');
+  assert.doesNotMatch(obj, /'#AEAEB1'/, 'the retired, under-contrast Neutral.s400 unselected-border value must be gone');
+});
+
+test('DSF-08 (Batch B, RED): every Hermex Radio specimen — static (unselected/selected/disabled) and grouped interactive — consumes HERMEX_SELECTION_CONTROL_COLORS, and no blue selected state remains in the gallery source', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'RadioFamilyGallery');
+  const groupBody = extractFunctionBody(previewsSrc, 'RadioGroupDemo');
+  const combined = galleryBody + '\n' + groupBody;
+
+  const radioTagCount = (combined.match(/<Radio\b/g) || []).length;
+  const colorsUsageCount = (combined.match(/colors=\{HERMEX_SELECTION_CONTROL_COLORS\}/g) || []).length;
+  assert.equal(radioTagCount, 6, 'expected exactly 6 Radio specimens: 3 static (unselected/selected/disabled) + 3 grouped');
+  assert.equal(colorsUsageCount, radioTagCount, 'expected every Radio specimen to pass colors={HERMEX_SELECTION_CONTROL_COLORS}');
+  assert.doesNotMatch(combined, /DS_SEMANTIC\.emphasis\.info/, 'no blue selected state may remain in the Hermex Radio gallery source — an explanatory swatch alone does not satisfy rendered specimen configuration');
+});
+
+test('DSF-09 (Batch B, RED): every Hermex Checkbox specimen — static (unchecked/checked/disabled), standalone interactive, and row-owned — consumes HERMEX_SELECTION_CONTROL_COLORS, and no blue selected state remains in the gallery source', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'CheckboxFamilyGallery');
+  const interactiveBody = extractFunctionBody(previewsSrc, 'CheckboxInteractiveDemo');
+  const rowOwnedBody = extractFunctionBody(previewsSrc, 'CheckboxRowOwnedDemo');
+  const combined = galleryBody + '\n' + interactiveBody + '\n' + rowOwnedBody;
+
+  const checkboxTagCount = (combined.match(/<Checkbox\b/g) || []).length;
+  const colorsUsageCount = (combined.match(/colors=\{HERMEX_SELECTION_CONTROL_COLORS\}/g) || []).length;
+  assert.equal(checkboxTagCount, 6, 'expected exactly 6 Checkbox specimens: 4 static (unchecked/checked/disabled-unchecked/disabled-checked) + 1 standalone interactive + 1 row-owned');
+  assert.equal(colorsUsageCount, checkboxTagCount, 'expected every Checkbox specimen to pass colors={HERMEX_SELECTION_CONTROL_COLORS}');
+  assert.doesNotMatch(combined, /DS_SEMANTIC\.emphasis\.info/, 'no blue selected state may remain in the Hermex Checkbox gallery source — an explanatory swatch alone does not satisfy rendered specimen configuration');
+});
+
+test('DSF-08/09 correction (RED): Hermes Radio and Hermes Checkbox catalog metadata identify HermexSelectionControlColors as contrast-validated component-scoped pairings, not merely repeating token names, and name the corrected unselectedBorder light anchor', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  for (const id of ['Hermes Checkbox', 'Hermes Radio']) {
+    const section = extractHermesSection(sectionsSrc, id);
+    const implementationNotes = extractBraceBlock(section, /implementationNotes:\s*\{/);
+    assert.match(
+      implementationNotes,
+      /contrast-validated/i,
+      `expected the ${id} implementation notes to explicitly call HermexSelectionControlColors' pairings contrast-validated, not merely repeat their token names`
+    );
+    assert.match(
+      implementationNotes,
+      /Neutral\.s500|Neutral\[\s*500\s*\]|#8E8E93/,
+      `expected the ${id} implementation notes to name the corrected unselectedBorder light anchor (Neutral.s500 / #8E8E93), replacing the retired, under-contrast Neutral.s400`
+    );
+  }
+});
+
+test('DSF-07/08/09 correction (RED): every non-500 Neutral pairing this batch consumes for selection-control and Card borders satisfies hermesColorCatalogData.ts\'s own per-pairing contrast-validation restriction — computed directly from ramp hex values, not a visual-only pass. Does not weaken or replace that restriction\'s own pinned text, which stays asserted separately below', () => {
+  // Mirrors HERMES_COLOR_RAMPS.Neutral in hermesColorCatalogData.ts (pinned by the DSF-07 test
+  // above via a regex against the real file); duplicated here as plain numbers because this test
+  // only needs the contrast math, not the ramp's own source-of-truth definition.
+  const NEUTRAL = { 50: '#F9F9FA', 100: '#F1F1F2', 400: '#AEAEB1', 500: '#8E8E93', 600: '#808084', 900: '#434345', 950: '#2D2D2F' };
+
+  function relativeLuminance(hex) {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.slice(0, 2), 16) / 255;
+    const g = parseInt(clean.slice(2, 4), 16) / 255;
+    const b = parseInt(clean.slice(4, 6), 16) / 255;
+    const linearize = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
+  }
+
+  function contrastRatio(hexA, hexB) {
+    const lumA = relativeLuminance(hexA);
+    const lumB = relativeLuminance(hexB);
+    const lighter = Math.max(lumA, lumB);
+    const darker = Math.min(lumA, lumB);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  // Selection control unselected border (DSF-08/09 correction): light Neutral[500], dark
+  // Neutral[600], against the primary surface pair Card already establishes.
+  assert.ok(contrastRatio(NEUTRAL[500], NEUTRAL[50]) >= 3, `light unselectedBorder Neutral[500] must be >=3:1 against the primary surface, got ${contrastRatio(NEUTRAL[500], NEUTRAL[50]).toFixed(2)}`);
+  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[950]) >= 3, `dark unselectedBorder Neutral[600] must be >=3:1 against the primary surface, got ${contrastRatio(NEUTRAL[600], NEUTRAL[950]).toFixed(2)}`);
+
+  // Selected / selectedForeground: light Neutral[950] vs Neutral[50], dark Neutral[50] vs Neutral[950].
+  assert.ok(contrastRatio(NEUTRAL[950], NEUTRAL[50]) >= 4.5, 'selected/selectedForeground must be >=4.5:1 in light appearance');
+  assert.ok(contrastRatio(NEUTRAL[50], NEUTRAL[950]) >= 4.5, 'selected/selectedForeground must be >=4.5:1 in dark appearance');
+
+  // Card Increased Contrast border (corrected): light Neutral[600], dark Neutral[400], against both
+  // the primary (Neutral[50]/Neutral[950]) and secondary (Neutral[100]/Neutral[900]) Card surfaces.
+  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[50]) >= 3, 'light Increased Contrast border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[100]) >= 3, 'light Increased Contrast border must be >=3:1 against the secondary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[950]) >= 3, 'dark Increased Contrast border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[900]) >= 3, 'dark Increased Contrast border must be >=3:1 against the secondary Card surface');
+
+  // Documents, rather than silently forgets, the pairing this batch retires: the old light
+  // unselectedBorder Neutral[400] measured ~2.1:1 against the primary surface and must not return
+  // as a consumed, unvalidated pairing.
+  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[50]) < 3, 'sanity check: the retired light Neutral[400] unselectedBorder stays below 3:1, confirming why DSF-08/09 replaced it with Neutral[500]');
+});
+
+test('DSF-08/09 (Batch B, RED): the pre-existing explanatory adaptive-fill swatch remains, but is not the only place the approved color appears — real rendered specimens must consume it too', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(previewsSrc, /function AdaptiveSelectedFillSwatch/, 'expected the existing explanatory swatch component to remain');
+  assert.match(previewsSrc, /colors=\{HERMEX_SELECTION_CONTROL_COLORS\}/, 'expected at least one real Radio/Checkbox specimen (not just the swatch) to consume the approved colors');
+});
+
+test('DSF-08/09 rendered parity: the adaptive-fill swatch and family metadata describe Neutral.s950 / Neutral.s50 rather than retired Color.primary black/white', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const swatchBody = extractFunctionBody(previewsSrc, 'AdaptiveSelectedFillSwatch');
+  assert.match(swatchBody, /HERMEX_SELECTION_CONTROL_COLORS\.selected/, 'expected the light swatch to use Neutral.s950 via the shared Hermex mapping');
+  assert.match(swatchBody, /HERMEX_SELECTION_CONTROL_COLORS\.selectedForeground/, 'expected the dark swatch to use Neutral.s50 via the shared Hermex mapping');
+  assert.match(swatchBody, /Light · \{HERMEX_SELECTION_CONTROL_COLORS\.selected\}/, 'expected the rendered light label to show #2D2D2F');
+  assert.match(swatchBody, /Dark · \{HERMEX_SELECTION_CONTROL_COLORS\.selectedForeground\}/, 'expected the rendered dark label to show #F9F9FA');
+  assert.doesNotMatch(swatchBody, /HERMES_SEMANTIC_COLORS|primary\.preview/, 'the swatch must not retain the retired pure black/white Color.primary source');
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  for (const id of ['Hermes Checkbox', 'Hermes Radio']) {
+    const section = extractHermesSection(sectionsSrc, id);
+    assert.match(section, /HermexSelectionControlColors/, `${id} must name the component-scoped adaptive mapping`);
+    assert.match(section, /Neutral\.s950/, `${id} must document the light selected value`);
+    assert.match(section, /Neutral\.s50/, `${id} must document the dark selected value`);
+    assert.doesNotMatch(section, /Color\.primary|black in light appearance|white in dark/, `${id} must not describe the retired pure black\/white contract`);
+  }
 });
