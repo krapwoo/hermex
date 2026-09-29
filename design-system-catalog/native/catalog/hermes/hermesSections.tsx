@@ -52,6 +52,7 @@ import {
   HermexTextInputFamilyGallery,
   InlineReferenceLinkPreview,
   ListItemFamilyGallery,
+  PopoverMenuFamilyGallery,
   RadioFamilyGallery,
   SearchFamilyGallery,
   SegmentedControlGallery,
@@ -86,6 +87,7 @@ export type HermesSectionId =
   | 'Text Input'
   | 'Bottom Sheet'
   | 'Hermes Dialog'
+  | 'Hermes Popover Menu'
   | 'Segmented Control'
   | 'Buttons'
   | 'Hermes Checkbox'
@@ -1484,6 +1486,49 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     },
   },
   {
+    id: 'Hermes Popover Menu',
+    displayName: 'Popover Menu',
+    description:
+      'A fully custom, always trigger-anchored floating menu — `HermexPopoverMenu` (HermexPopoverMenu.swift), presented via the `.hermexPopoverMenu(isPresented:accessibilityLabel:actions:)` view modifier — mounted through the same shared same-window overlay host and `HermexOverlayLifecycle` as Dialog, never a native `Menu`, `.contextMenu`, or `.popover`. It prefers below the trigger, flips above when below doesn\'t fit, and clamps horizontally inside the safe area; it is anchored-only, with no per-size-class fallback to another presentation. Rows are simple, stable-ID actions (title, optional symbol, enabled state, standard/destructive role) rendered through `HermexList(style: .compactOverlay)` + `ListItem` — no nested submenus, toggles, or a persistent selection model in this v1.',
+    whenToUse:
+      'Reach for Popover Menu for a short list of simple, anchored actions on a trigger — a row\'s overflow menu, a "…" button\'s Rename/Duplicate/Delete. Its accessibility label is always caller-supplied — there is no generic hidden default such as "Actions". Use Dialog instead for a full-attention modal decision or confirmation, and Bottom Sheet instead for forms, editable content, or a longer scrolling workflow.',
+    props: [
+      { name: 'isPresented', type: 'Binding<Bool>', required: true, desc: 'Caller-owned presentation state, written back to false only once exit visually completes.' },
+      { name: 'accessibilityLabel', type: 'Text', required: true, desc: 'Required, caller-supplied name for the menu\'s modal accessibility container — never a generic default.' },
+      { name: 'actions', type: '[HermexPopoverMenuAction]', required: true, desc: 'Stable-ID rows: id, title, optional systemImage, isEnabled, role (.standard | .destructive), and one action closure.' },
+    ],
+    a11y: 'Initial VoiceOver focus lands on the first enabled action. The menu is one accessibility-contained modal element with accessibility Escape wired to dismissal. A disabled row stays visible but is never selectable, and a destructive row\'s meaning is always textual (an accessibility hint), never color-only. Tapping outside the menu, or Escape, dismisses it without running an action; activating an enabled row runs its action exactly once, after exit completes — the same exactly-once dismissal/action-completion guarantee as Dialog.',
+    render: () => <PopoverMenuFamilyGallery />,
+    hermesReference: {
+      useWhen: 'Use Popover Menu for a short list of simple, anchored actions on a trigger — it is always trigger-anchored, flips above/below to stay on screen, and clamps horizontally inside the safe area.',
+      avoidWhen: 'Avoid it for a full-attention modal decision or confirmation — use Dialog. Avoid it for forms, editable content, or a longer scrolling workflow — use Bottom Sheet. Avoid it for nested submenus, toggles, or a persistent selection model — none exist in this v1.',
+      alternatives: [
+        { name: 'Dialog', useWhen: 'For a full-attention modal decision or confirmation the user must resolve before continuing.' },
+        { name: 'Bottom Sheet', useWhen: 'For forms, editable content, or a longer mobile workflow that needs scrolling.' },
+      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'HermexPopoverMenu exists (HermexPopoverMenu.swift) and is foundation-available on this branch; zero production screens use it. Every existing production overflow/context menu keeps its own current presentation unchanged — migrating one onto Popover Menu is deferred to a separate adoption issue.',
+      },
+      useSummary: 'A new, foundation-only fully custom menu; no production screen composes it yet in this branch.',
+      implementationNotes: {
+        status: FOUNDATION_ONLY_STATUS,
+        sourcePaths: [
+          'HermesMobile/Features/Shared/HermexPopoverMenu.swift',
+          'HermesMobile/Features/Shared/HermexSameWindowOverlay.swift',
+          'HermesMobile/Features/Shared/HermexOverlayLifecycle.swift',
+          'HermesMobile/Features/Shared/HermexList.swift',
+        ],
+        notes: [
+          'Mounted through HermexSameWindowOverlay (.root bounds) and HermexOverlayLifecycle, the same reusable same-window host and generation-based lifecycle state machine Dialog uses — not a bespoke overlay or dismissal mechanism.',
+          'Rows compose HermexList(style: .compactOverlay) + ListItem — the same transparent, separator-free List style documented in the List / ListItem entry — rather than a hand-built row stack.',
+          'Entry/exit motion reuses the existing HermesMotion.Bundle.overlayEnter/overlayExit bundles and respects Reduce Motion, the same as Dialog; placement geometry (preferred width 280pt, 12pt safe-area margin, 8pt anchor gap) is a pure, testable HermexPopoverPlacement resolver, not a measurement pass.',
+          'Report only: no production call site imports or composes HermexPopoverMenu.swift in this branch; every existing overflow/context action in production keeps its own current presentation unchanged. Migrating one onto Popover Menu is scoped to a separate adoption issue, not this slice.',
+        ],
+      },
+    },
+  },
+  {
     id: 'Search',
     description:
       'A thin Hermex-owned wrapper — `.hermexSearch(text:placement:prompt:)` — over SwiftUI\'s native `.searchable`. It exists as a foundation API only: this branch adds the shared entry point but does not migrate any production screen onto it, so every current search field still calls `.searchable` directly. Native iOS keeps ownership of placement, focus, keyboard integration, clear behavior, dictation, and accessibility either way.',
@@ -1834,6 +1879,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'loading', type: 'boolean', default: 'false', desc: 'Renders the row\'s slots as Shimmer placeholders inside one SkeletonGroup (one "Loading" announcement, not one per slot); never pressable — the same anatomy a commit-pending row uses.' },
       { name: 'hapticFeedbackStyle', type: 'HapticButtonFeedbackStyle?', default: 'nil', desc: 'Opt-in tap feedback for callers preserving an existing haptic contract; nil keeps the row on a plain native Button.' },
       { name: 'HermexList default vertical content margin', type: 'CGFloat', default: 'HermesSpacing.s12 (12)', desc: 'Applied once on the shared container via .contentMargins(.vertical, _, for: .scrollContent) — native List selection, refresh, row insets, separators, swipe/context menus, and keyboard/accessibility behavior are otherwise untouched.' },
+      { name: 'HermexList.Style', type: '.standard | .compactOverlay', default: '.standard', desc: '.standard is the original, still-default container. .compactOverlay is a plain, transparent, separator-free variant — hidden row separators, compact overlay-appropriate insets, and bounded internal scrolling — for a floating menu that supplies its own card surface/shadow. It is exercised by Popover Menu, not applied to any other production or catalog List in this branch.' },
     ],
     a11y: 'A pressable ListItem exposes one combined accessibilityLabel (title + description, overridable) and accessibilityRole="button"; a disabled or loading row is never pressable. A loading row announces "Loading" once via SkeletonGroup instead of once per Shimmer block. Layout adapts to Dynamic Type via ordinary text flow rather than fixed heights.',
     render: () => <ListItemFamilyGallery />,
@@ -1860,6 +1906,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
           'SessionListView.swift\'s main-menu container does not compose HermexList in this branch; it keeps its own existing native SwiftUI List container.',
           'ListItem exposes an explicit, opt-in hapticFeedbackStyle so a future caller can preserve an existing tap-haptic contract instead of silently losing it to the plain Button ListItem otherwise wraps its action in — documented here as an available foundation capability, with no caller yet since ListItem itself has none.',
           'HermexList applies a default 12pt vertical scroll-content margin (.contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)) reusing the existing HermesSpacing.s12 value — a foundation capability, not yet applied to any production List.',
+          'HermexList\'s .compactOverlay style (hidden separators, .plain list style, transparent scroll background, and a 44pt minimum row height) is the container Popover Menu composes for its own floating action rows — see the Popover Menu entry. .standard stays the unchanged default for every existing caller above.',
         ],
       },
     },
@@ -2313,7 +2360,7 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
       'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
       'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-      'Bottom Sheet', 'Hermes Dialog',
+      'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
     ],
   },
   {

@@ -15,7 +15,7 @@
  * uses, deliberately not this repo's own template tokens.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { AccessibilityInfo, Animated, Platform, View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, Dropdown, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
 import { Icon } from '../../../icons/Icon.native';
 import type { IconName } from '../../../icons';
@@ -24,6 +24,7 @@ import { HERMES_COLOR_RAMPS, HERMES_SEMANTIC_COLORS } from './hermesColorCatalog
 import { HERMES_ATTACHMENT_SIZE } from './hermesAttachmentSize';
 import { HERMES_ICON_SIZE } from './hermesIconSize';
 import { HERMES_ICON_AVATAR_PAIRING } from './hermesIconSize';
+import { HERMES_MOTION_BUNDLES } from './hermesTokenProposal';
 
 const preview = StyleSheet.create({
   stack: { gap: 12 },
@@ -199,6 +200,44 @@ const preview = StyleSheet.create({
   dialogFooterVertical: { flexDirection: 'column' },
   dialogFooterButton: { flex: 1 },
   dialogFooterButtonFull: { width: '100%' },
+
+  // Popover Menu — a static trigger + floating compactOverlay List/ListItem card, shown inline for
+  // inspection (same reasoning as the Dialog/Bottom Sheet shells above): production never mounts
+  // this as literal RN, and the real menu is always trigger-anchored, not laid out in document flow.
+  // `flexBasis`/`flexGrow`/`maxWidth`/`minWidth` matches the same responsive convention as
+  // `botMarkPreview` above — a specimen shrinks to fit a narrow section instead of assuming 220px
+  // always fits. `position: 'relative'` anchors the interactive demo's own backdrop (below).
+  popoverSpecimen: { flexBasis: 220, flexGrow: 1, maxWidth: '100%', minWidth: 0, gap: 8, position: 'relative' },
+  popoverAnchorRow: { flexDirection: 'row' },
+  popoverAnchorRowTrailing: { justifyContent: 'flex-end' },
+  popoverTrigger: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.08)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  popoverTriggerText: { fontSize: 15, fontWeight: '700', color: '#1c1c1e' },
+  // `position: 'relative'` gives the surface its own stacking layer so it paints above the
+  // interactive demo's `position: 'absolute'` backdrop regardless of DOM order (CSS always stacks
+  // positioned elements above static ones); harmless for the static specimens, which have no backdrop.
+  popoverSurfaceBelow: {
+    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+    shadowColor: '#000000', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+  },
+  popoverSurfaceAbove: {
+    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+    shadowColor: '#000000', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: -4 },
+  },
+  popoverList: { width: '100%' },
+  popoverDestructiveText: { fontSize: 11, fontWeight: '700', color: '#d70015' },
+  // The interactive demo's own outside-tap dismissal target — `StyleSheet.absoluteFill`, the same
+  // convention Dialog/BottomSheet use for their own backdrops (bounded to this demo's own card, not
+  // the full page, since this is an inline catalog specimen rather than a real floating overlay).
+  popoverBackdrop: { ...StyleSheet.absoluteFill },
+  compactOverlayDemoList: {
+    borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+  },
+
   segmentedFixedTrack: {
     width: 280, flexDirection: 'row', gap: 4, paddingHorizontal: 4,
     borderRadius: 999, backgroundColor: 'rgba(120,120,128,0.16)',
@@ -831,6 +870,227 @@ export function DialogFamilyGallery() {
   );
 }
 
+// ─── Popover Menu — HermexPopoverMenu: a fully custom, always trigger-anchored floating menu
+// mounted through the same shared same-window overlay host and HermexOverlayLifecycle as Dialog,
+// never a native Menu/.contextMenu/.popover. Rows compose the real List/ListItem anatomy through
+// List's new compactOverlay variant. ────────────────────────────────────────────────────────────
+function PopoverMenuSpecimen({
+  label,
+  placement,
+  triggerAlign,
+  maxHeight,
+  children,
+}: {
+  label: string;
+  placement: 'below' | 'above';
+  triggerAlign?: 'leading' | 'trailing';
+  maxHeight?: number;
+  children: ReactNode;
+}) {
+  const trigger = (
+    <View style={[preview.popoverAnchorRow, triggerAlign === 'trailing' && preview.popoverAnchorRowTrailing]}>
+      <View accessibilityLabel="Item actions" style={preview.popoverTrigger}>
+        <Text style={preview.popoverTriggerText}>•••</Text>
+      </View>
+    </View>
+  );
+  const surface = (
+    <View style={placement === 'above' ? preview.popoverSurfaceAbove : preview.popoverSurfaceBelow}>
+      <List variant="compactOverlay" maxHeight={maxHeight} style={preview.popoverList}>
+        {children}
+      </List>
+    </View>
+  );
+  return (
+    <View style={preview.popoverSpecimen}>
+      <Text style={preview.label}>{label}</Text>
+      {/* A static reconstruction, not a real floating overlay — the source order below is what
+          actually renders above/below the trigger, since a plain column has no z-index to fake it. */}
+      {placement === 'above' ? (
+        <>
+          {surface}
+          {trigger}
+        </>
+      ) : (
+        <>
+          {trigger}
+          {surface}
+        </>
+      )}
+    </View>
+  );
+}
+
+// Own small entering/open/exiting phase, mirroring HermexPopoverMenu's real dismiss-then-act
+// ordering (see approved-design.md's Popover Menu dismissal/action-ordering contract) rather than
+// closing and firing an action in the same tick. Reuses the catalog's own existing overlay-exit/
+// enter motion values (HERMES_MOTION_BUNDLES, already imported above) and the same useReduceMotion
+// hook the Segmented Control preview below already defines — no invented duration, no new hook.
+function PopoverMenuInteractiveDemo() {
+  const reduceMotion = useReduceMotion();
+  const [phase, setPhase] = useState<'closed' | 'open' | 'exiting'>('closed');
+  const [lastAction, setLastAction] = useState<string | null>(null);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const pendingActionRef = useRef<string | null>(null);
+  const exitingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    opacity.stopAnimation();
+  }, [opacity]);
+
+  const isOpen = phase !== 'closed';
+
+  const openMenu = () => {
+    if (phase !== 'closed') return;
+    setLastAction(null);
+    setPhase('open');
+    opacity.setValue(0);
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: reduceMotion ? 0 : HERMES_MOTION_BUNDLES['motion.overlay.enter'].durationMs,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  // The one shared exit path for every dismissal source (outside tap, Escape, or an enabled row):
+  // begins the exit transition immediately, then commits the pending action — if any — only once
+  // that transition actually finishes, exactly once. `exitingRef` blocks a second call (a repeat
+  // tap, or Escape during the same exit) from replacing or duplicating the pending action; the
+  // unmount cleanup above stops `opacity` outright, so a completion that would otherwise land after
+  // this demo is gone never fires `setLastAction`/`setPhase` on a dead component.
+  const beginExit = (actionAfterExit: string | null) => {
+    if (phase !== 'open' || exitingRef.current) return;
+    exitingRef.current = true;
+    pendingActionRef.current = actionAfterExit;
+    setPhase('exiting');
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: reduceMotion ? 0 : HERMES_MOTION_BUNDLES['motion.overlay.exit'].durationMs,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      exitingRef.current = false;
+      if (!finished || !mountedRef.current) return;
+      setPhase('closed');
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      if (action != null) setLastAction(action);
+    });
+  };
+
+  // Escape dismissal — web-only, same Platform.OS === 'web' / typeof document guard CatalogShell's
+  // own document-level listeners already use, bound only while open and torn down with the effect
+  // (closing, or a later placement change) so it never leaks past this demo's own lifetime.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') beginExit(null);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  return (
+    <View style={preview.popoverSpecimen}>
+      <Text style={preview.label}>Interactive — open, dismiss, act</Text>
+      {isOpen && (
+        // The outside-tap dismiss target — bounded to this demo's own card (see popoverBackdrop's
+        // own doc comment above), not the full page, since this is an inline catalog specimen
+        // rather than a real floating overlay. Rendered before the trigger/surface below so both
+        // paint above it. `accessible={false}` keeps it out of the accessibility tree; it has no
+        // visible content of its own to announce.
+        <Pressable accessible={false} style={preview.popoverBackdrop} onPress={() => beginExit(null)} />
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Session actions"
+        onPress={() => (isOpen ? beginExit(null) : openMenu())}
+        style={preview.popoverTrigger}
+      >
+        <Text style={preview.popoverTriggerText}>•••</Text>
+      </Pressable>
+      {isOpen && (
+        <Animated.View
+          style={[preview.popoverSurfaceBelow, { opacity }]}
+          pointerEvents={phase === 'open' ? 'auto' : 'none'}
+        >
+          <List variant="compactOverlay" style={preview.popoverList}>
+            <ListItem title="Rename" onPress={() => beginExit('Rename')} />
+            <ListItem title="Delete" onPress={() => beginExit('Delete')} />
+          </List>
+        </Animated.View>
+      )}
+      <Text style={preview.caption}>
+        {lastAction == null
+          ? 'Tap the trigger to open, tap a row to act, or tap outside/Escape to dismiss without acting.'
+          : `Ran "${lastAction}" after exit completed — the same exactly-once action-after-exit dismissal HermexPopoverMenu guarantees.`}
+      </Text>
+    </View>
+  );
+}
+
+export function PopoverMenuFamilyGallery() {
+  return (
+    <View style={preview.stack}>
+      <View style={preview.row}>
+        <PopoverMenuSpecimen label="Below the trigger (preferred placement)" placement="below">
+          <ListItem title="Rename" onPress={() => {}} />
+          <ListItem title="Duplicate" onPress={() => {}} />
+          <ListItem title="Delete" onPress={() => {}} />
+        </PopoverMenuSpecimen>
+
+        <PopoverMenuSpecimen label="Above the trigger (flips when below doesn't fit)" placement="above">
+          <ListItem title="Rename" onPress={() => {}} />
+          <ListItem title="Duplicate" onPress={() => {}} />
+        </PopoverMenuSpecimen>
+
+        <PopoverMenuSpecimen label="Horizontal safe-area clamp (trigger near the trailing edge)" placement="below" triggerAlign="trailing">
+          <ListItem title="Share" onPress={() => {}} />
+          <ListItem title="Delete" disabled onPress={() => {}} />
+        </PopoverMenuSpecimen>
+      </View>
+
+      <View style={preview.row}>
+        <PopoverMenuSpecimen label="Standard, disabled, and destructive rows" placement="below">
+          <ListItem title="Rename" onPress={() => {}} />
+          <ListItem title="Archive" disabled onPress={() => {}} />
+          <ListItem
+            title="Delete"
+            onPress={() => {}}
+            trailing={<Text style={preview.popoverDestructiveText}>Destructive</Text>}
+          />
+        </PopoverMenuSpecimen>
+
+        <PopoverMenuSpecimen label="Constrained height — scrolls internally" placement="below" maxHeight={132}>
+          <ListItem title="Assign to Alex" onPress={() => {}} />
+          <ListItem title="Assign to Priya" onPress={() => {}} />
+          <ListItem title="Assign to Sam" onPress={() => {}} />
+          <ListItem title="Assign to Jordan" onPress={() => {}} />
+          <ListItem title="Assign to Wei" onPress={() => {}} />
+        </PopoverMenuSpecimen>
+
+        <PopoverMenuInteractiveDemo />
+      </View>
+
+      <Text style={preview.caption}>
+        `HermexPopoverMenu` mounts through the same shared same-window overlay host and
+        `HermexOverlayLifecycle` as Dialog — never a native `Menu`, `.contextMenu`, or `.popover` —
+        and is always trigger-anchored: it prefers below the trigger, flips above when below doesn't
+        fit, and clamps horizontally inside the safe area. Shown here as static, inline specimens for
+        inspection (the same convention as the Dialog and Bottom Sheet shells above), except the
+        interactive example, which really opens, closes, and runs its action after exit completes.
+        Rows compose the same real `List`/`ListItem` anatomy as the List / ListItem entry, through
+        List's new transparent, separator-free `compactOverlay` variant; a destructive row's meaning
+        is always textual, never color-only, and a disabled row stays visible but never activates.
+        Tapping outside the menu or pressing Escape dismisses it without running an action.
+      </Text>
+    </View>
+  );
+}
+
 interface SegmentedPreviewOption {
   value: string;
   label: string;
@@ -1094,6 +1354,18 @@ export function ListItemFamilyGallery() {
         selection background, transitions, and the single screen-level horizontal inset are
         caller-owned in production by SessionInteractiveRow, which wraps SessionRowView (not this
         SessionListItem) in SessionListComponents.swift.
+      </Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>compactOverlay style (unchanged standard specimen above; this row demonstrates List's second variant)</Text>
+      <List variant="compactOverlay" maxHeight={140} style={preview.compactOverlayDemoList}>
+        <ListItem title="Rename" onPress={() => {}} />
+        <ListItem title="Duplicate" onPress={() => {}} />
+        <ListItem title="Delete" onPress={() => {}} />
+      </List>
+      <Text style={preview.caption}>
+        `variant="compactOverlay"` renders the same real `List`/`ListItem` anatomy with no separators
+        on a transparent, bounded-height, internally-scrolling container — the exact style Popover
+        Menu composes for its own floating action rows (see the Popover Menu entry). `standard`
+        stays the unchanged default shown in every specimen above.
       </Text>
     </View>
   );

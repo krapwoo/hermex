@@ -2,26 +2,38 @@
 import SwiftUI
 
 /// DEBUG-only lab (`--hermex-overlay-lab`) exercising the unadopted custom same-window overlay
-/// components — today, only `HermexDialog` — in a signed simulator build, so their rendered
-/// behavior (motion, accessibility, Reduce Motion/Transparency, exactly-once dismissal) can be
-/// verified without any production call site. Not reachable in Release builds and not a production
-/// adoption surface (see `HermesMobileApp`).
+/// components — `HermexDialog` and `HermexPopoverMenu` — in a signed simulator build, so their
+/// rendered behavior (motion, accessibility, Reduce Motion/Transparency, exactly-once dismissal) can
+/// be verified without any production call site. Not reachable in Release builds and not a
+/// production adoption surface (see `HermesMobileApp`). `--hermex-overlay-lab-popover` scrolls
+/// straight to the Popover section on launch — a deterministic seam so a fresh relaunch always
+/// brings those fixtures into view without manual scrolling.
 struct HermexOverlayLab: View {
     @State private var forceReduceMotion = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-motion")
     @State private var forceReduceTransparency = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-transparency")
+    private let jumpsToPopoverSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-popover")
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                controls
-                Divider()
-                dialogSection
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    controls
+                    Divider()
+                    dialogSection
+                    Divider()
+                    popoverSection
+                        .id(HermexOverlayLabPopoverSection.scrollAnchorID)
+                }
+                .padding(20)
             }
-            .padding(20)
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(Text(verbatim: "Overlay Lab"))
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                guard jumpsToPopoverSection else { return }
+                proxy.scrollTo(HermexOverlayLabPopoverSection.scrollAnchorID, anchor: .top)
+            }
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(Text(verbatim: "Overlay Lab"))
-        .navigationBarTitleDisplayMode(.inline)
         // SwiftUI exposes no public writable override for these two accessibility settings; the
         // same underscored keys are already used from `HermesMobileTests` on a live hosted window,
         // not only from `#Preview`, so they are safe to force here for a rendered manual pass.
@@ -53,6 +65,30 @@ struct HermexOverlayLab: View {
             HermexOverlayLabAccessibilityOrder()
         }
     }
+
+    private var popoverSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Popover Menu").font(.headline)
+            HermexOverlayLabPopoverBelowFit()
+            HermexOverlayLabPopoverAboveFlip()
+            HStack(spacing: 12) {
+                HermexOverlayLabPopoverLeadingClamp()
+                Spacer()
+                HermexOverlayLabPopoverTrailingClamp()
+            }
+            HermexOverlayLabPopoverLongScroll()
+            HermexOverlayLabPopoverDisabledFirstRow()
+            HermexOverlayLabPopoverDestructiveRow()
+            HermexOverlayLabPopoverOutsideTapDismiss()
+            HermexOverlayLabPopoverDismissThenRun()
+            HermexOverlayLabPopoverAccessibilitySize()
+        }
+    }
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-popover` jumps to on launch.
+private enum HermexOverlayLabPopoverSection {
+    static let scrollAnchorID = "overlay-lab-popover-section"
 }
 
 // ─── 1. Short confirmation, horizontal footer ──────────────────────────────────
@@ -246,4 +282,211 @@ private struct HermexOverlayLabAccessibilityOrder: View {
             }
     }
 }
+
+// ─── Popover Menu fixtures ──────────────────────────────────────────────────────
+
+// ─── 1/2. Anchor near the top: prefers below; near the bottom: flips above ─────
+private struct HermexOverlayLabPopoverBelowFit: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Below fit (top anchor)") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-below-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
+                    HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
+                    HermexPopoverMenuAction(id: "rename", title: "Rename", systemImage: "pencil") {}
+                ]
+            )
+    }
+}
+
+private struct HermexOverlayLabPopoverAboveFlip: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        VStack {
+            Spacer(minLength: 320)
+            Button("Above flip (bottom anchor)") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-popover-above-trigger")
+                .hermexPopoverMenu(
+                    isPresented: $isPresented,
+                    accessibilityLabel: Text("Row actions"),
+                    actions: [
+                        HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
+                        HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
+                        HermexPopoverMenuAction(id: "rename", title: "Rename", systemImage: "pencil") {}
+                    ]
+                )
+        }
+    }
+}
+
+// ─── 3. Horizontal clamp near each side edge ───────────────────────────────────
+private struct HermexOverlayLabPopoverLeadingClamp: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Leading clamp") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-leading-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "pin", title: "Pin", systemImage: "pin") {},
+                    HermexPopoverMenuAction(id: "archive", title: "Archive", systemImage: "archivebox") {}
+                ]
+            )
+    }
+}
+
+private struct HermexOverlayLabPopoverTrailingClamp: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Trailing clamp") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-trailing-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "pin", title: "Pin", systemImage: "pin") {},
+                    HermexPopoverMenuAction(id: "archive", title: "Archive", systemImage: "archivebox") {}
+                ]
+            )
+    }
+}
+
+// ─── 4. Long action list: internal scroll keeps the last action reachable ─────
+private struct HermexOverlayLabPopoverLongScroll: View {
+    @State private var isPresented = false
+    @State private var lastActionRunCount = 0
+
+    private var actions: [HermexPopoverMenuAction] {
+        (1...12).map { index in
+            index == 12
+                ? HermexPopoverMenuAction(id: "last", title: "Last action") { lastActionRunCount += 1 }
+                : HermexPopoverMenuAction(id: index, title: "Action \(index)") {}
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Long list (internal scroll)") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-popover-long-scroll-trigger")
+                .hermexPopoverMenu(isPresented: $isPresented, accessibilityLabel: Text("Row actions"), actions: actions)
+            Text(verbatim: "Last action ran \(lastActionRunCount) times")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-popover-long-scroll-count")
+        }
+    }
+}
+
+// ─── 5. Disabled first row: initial focus moves to the next enabled row ───────
+private struct HermexOverlayLabPopoverDisabledFirstRow: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Disabled first row") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-disabled-first-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "unavailable", title: "Unavailable", isEnabled: false) {},
+                    HermexPopoverMenuAction(id: "available", title: "Available") {}
+                ]
+            )
+    }
+}
+
+// ─── 6. Destructive row semantics ──────────────────────────────────────────────
+private struct HermexOverlayLabPopoverDestructiveRow: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Destructive row") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-destructive-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
+                    HermexPopoverMenuAction(id: "delete", title: "Delete", systemImage: "trash", role: .destructive) {}
+                ]
+            )
+    }
+}
+
+// ─── 7. Outside-tap dismissal: the action counter never advances ──────────────
+private struct HermexOverlayLabPopoverOutsideTapDismiss: View {
+    @State private var isPresented = false
+    @State private var actionRunCount = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Outside-tap dismissal") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-popover-outside-tap-trigger")
+                .hermexPopoverMenu(
+                    isPresented: $isPresented,
+                    accessibilityLabel: Text("Row actions"),
+                    actions: [HermexPopoverMenuAction(id: "run", title: "Run") { actionRunCount += 1 }]
+                )
+            Text(verbatim: "Action ran \(actionRunCount) times")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-popover-outside-tap-count")
+        }
+    }
+}
+
+// ─── 8. Dismiss-then-run counter: the action only changes after exit ──────────
+private struct HermexOverlayLabPopoverDismissThenRun: View {
+    @State private var isPresented = false
+    @State private var actionRunCount = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Dismiss-then-run counter") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-popover-dismiss-then-run-trigger")
+                .hermexPopoverMenu(
+                    isPresented: $isPresented,
+                    accessibilityLabel: Text("Row actions"),
+                    actions: [HermexPopoverMenuAction(id: "archive", title: "Archive") { actionRunCount += 1 }]
+                )
+            Text(verbatim: "Action ran \(actionRunCount) times")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-popover-dismiss-then-run-count")
+        }
+    }
+}
+
+// ─── 9. Largest supported accessibility Dynamic Type size ─────────────────────
+private struct HermexOverlayLabPopoverAccessibilitySize: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button("Largest accessibility text size") { isPresented = true }
+            .accessibilityIdentifier("overlay-lab-popover-accessibility-size-trigger")
+            .hermexPopoverMenu(
+                isPresented: $isPresented,
+                accessibilityLabel: Text("Row actions"),
+                actions: [
+                    HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
+                    HermexPopoverMenuAction(id: "delete", title: "Delete", systemImage: "trash", role: .destructive) {}
+                ]
+            )
+            .dynamicTypeSize(.accessibility5)
+    }
+}
+
+// ─── 10. Rotation while visible and Reduce Motion/Transparency ─────────────────
+// Rotate the simulator while any fixture above is open to exercise
+// `HermexPopoverPlacement`'s live recompute; Reduce Motion/Transparency are forced
+// globally by the lab's own toggles (`controls`), so every fixture above exercises both.
 #endif

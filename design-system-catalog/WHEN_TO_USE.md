@@ -59,6 +59,16 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   long content forces content past the point Dialog is contracted to stay short; reaching for Bottom
   Sheet for a one- or two-action confirmation loses Dialog's forced-attention, non-dismissible
   backdrop.
+- **Popover Menu vs Dialog vs Bottom Sheet** — three Hermex-owned custom-presented surfaces that
+  overlap only in that none is a native `.alert`/`.sheet`/`.popover`. Popover Menu (`HermexPopoverMenu`)
+  is a short list of simple, anchored actions on a trigger (a row's "…" overflow) — it is always
+  trigger-anchored, flips above/below to stay on screen, and clamps horizontally inside the safe
+  area, with no nested submenus, toggles, or persistent selection model. Dialog is for a full-attention
+  modal decision the user must resolve before continuing, not a trigger-anchored action list. Bottom
+  Sheet is for forms, editable content, or a longer scrolling workflow — Popover Menu never scrolls
+  past its own bounded action list and never accepts text input. Reaching for Popover Menu with more
+  than a handful of simple actions, or with a decision needing the user's full attention, belongs on
+  Dialog or Bottom Sheet instead.
 - **Native iOS patterns (Search, Text Input) vs a Hermex-owned wrapper** — Hermex intentionally
   keeps some surfaces on the platform primitive (`.searchable`, `TextField`/`SecureField`/
   `TextEditor`) rather than a custom component. Their `adoptionStatus` is `native-platform`, not

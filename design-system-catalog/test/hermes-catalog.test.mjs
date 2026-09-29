@@ -2039,6 +2039,24 @@ test('List / ListItem and SessionListItem.swift are new, foundation-only in this
   assert.ok(existsSync(path.join(ROOT, '../HermesMobile/Features/SessionList/SessionRowView.swift')), 'SessionRowView.swift must exist in the target worktree');
 });
 
+// Issue #607 (Popover Menu family slice, test-first phase): `HermexList` gains a second, explicit
+// `.compactOverlay` style — plain/transparent chrome, hidden separators, compact overlay-appropriate
+// insets, and bounded internal scrolling — while `.standard` stays the default and keeps its current
+// output. The style is cataloged as part of the List family itself, not only inside Popover Menu.
+// Written before the Swift API and this catalog documentation exist (see HermexListTests.swift), so
+// this is expected to fail red until Task 6/8 land the style and its catalog entry together.
+test('List / ListItem documents the new HermexList .compactOverlay style (standard remains the default) and the List gallery demonstrates it', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'List / ListItem');
+  assert.match(section, /compactOverlay/, 'expected the List / ListItem entry to document the new .compactOverlay style');
+  assert.match(section, /\.standard/, 'expected the entry to name .standard as the preserved default style');
+  assert.match(section, /HermexPopoverMenu|Popover Menu/, 'expected the entry to note compactOverlay is exercised by Popover Menu');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
+  assert.match(body, /compactOverlay/, 'expected the List gallery to demonstrate the compact-overlay style alongside the unchanged standard specimen');
+});
+
 // Correction (2026-09-26 catalog/production reconciliation): Picker Row's retired shared metrics
 // helpers (PickerRowMetrics.minHeight/cornerRadius, pickerSelectionPill(isSelected:)) were replaced
 // in the final production tree by ListItem's own ListItemMetrics.minHeight/.cornerRadius and
@@ -2493,6 +2511,164 @@ test('Issue #607: Dialog becomes a Hermex-owned Components entry (HermexDialog m
   assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/Dialog'/, 'must not import a generic template Dialog component');
   assert.doesNotMatch(body, /<Dialog[\s>]/, 'must not compose a generic template Dialog component');
   assert.doesNotMatch(body, /onPress=\{\(\) => \{\s*\/\/ dismiss/i, 'the backdrop specimen must not simulate background-tap dismissal');
+});
+
+// Issue #607 (Popover Menu family slice, test-first phase): a Hermex-owned Components entry for the
+// not-yet-implemented `HermexPopoverMenu` — a fully custom, always trigger-anchored menu mounted
+// through the same shared same-window overlay host and `HermexOverlayLifecycle` as Dialog, never a
+// native `Menu`/`.contextMenu`/`.popover`. Simple stable-ID action rows only (title, optional symbol,
+// enabled state, standard/destructive role), rendered through `HermexList(style: .compactOverlay)` +
+// `ListItem`. This test is written before `HermexPopoverMenu.swift` and its catalog entry exist, so it
+// is expected to fail red until Task 8 lands both together.
+test('Issue #607: Popover Menu becomes a Hermex-owned Components entry (HermexPopoverMenu mounted through the shared same-window overlay host, always trigger-anchored with above/below flip and safe-area clamp, simple action rows via HermexList(style: .compactOverlay) + ListItem), truthfully claiming zero production adoption and distinguishing itself from Dialog and Bottom Sheet', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /\| 'Hermes Popover Menu'/, "expected 'Hermes Popover Menu' in the HermesSectionId union");
+
+  const section = extractHermesSection(sectionsSrc, 'Hermes Popover Menu');
+  assert.match(section, /displayName:\s*'Popover Menu'/, "expected the visible label to be the plain 'Popover Menu'");
+  assert.match(section, /hermesReference:\s*\{/);
+  assert.match(section, /HermexPopoverMenu/, 'expected the entry to name the Hermex-owned HermexPopoverMenu component');
+  assert.match(section, /hermexPopoverMenu\(isPresented:accessibilityLabel:actions:\)|\.hermexPopoverMenu\(/, 'expected the entry to name the hermexPopoverMenu(...) presentation modifier');
+  assert.match(section, /same-window overlay host|HermexSameWindowOverlay/i, 'expected the entry to document reuse of the shared same-window overlay host');
+  assert.match(section, /HermexOverlayLifecycle/, 'expected the entry to document reuse of the shared overlay lifecycle, not a bespoke one');
+  assert.match(section, /anchored/i, 'expected the entry to state the menu is always trigger-anchored');
+  assert.match(section, /flip/i, 'expected the entry to document the above/below flip');
+  assert.match(section, /safe.area/i, 'expected the entry to document safe-area clamping');
+  assert.doesNotMatch(section, /adapts? (?:into|to) a sheet|adapts? (?:into|to) a dialog/i, 'must state the menu never adapts into a sheet or centered dialog');
+  assert.match(section, /HermexList\(style:\s*\.compactOverlay\)|compactOverlay/, 'expected the entry to document composing HermexList(style: .compactOverlay)');
+  assert.match(section, /ListItem/, 'expected the entry to document reusing ListItem row anatomy');
+  assert.match(section, /accessibilityLabel/, 'expected the entry to document the required caller-supplied accessibility label');
+  assert.match(section, /disabled/i, 'expected the entry to document disabled row behavior');
+  assert.match(section, /destructive/i, 'expected the entry to document destructive row semantics');
+  assert.match(section, /first enabled/i, 'expected the entry to document initial focus moving to the first enabled action');
+  assert.match(section, /Escape/i, 'expected the entry to document accessibility Escape dismissal');
+  assert.match(section, /outside tap|tapping outside/i, 'expected the entry to document outside-tap dismissal without acting');
+  assert.match(section, /exactly once|exactly-once/i, 'expected the entry to document the exactly-once action/dismissal guarantee');
+  assert.match(section, /nested (?:sub)?menus?|submenus?/i, 'expected the entry to state v1 excludes nested submenus');
+  assert.match(section, /toggles?/i, 'expected the entry to state v1 excludes toggles');
+  assert.match(section, /selection model/i, 'expected the entry to state v1 excludes persistent selection models');
+
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /Dialog/, 'expected alternatives to name Dialog for a full-attention modal decision');
+  assert.match(ref, /Bottom Sheet/, 'expected alternatives to name Bottom Sheet for forms/long content');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.length > 0, 'expected at least one structured alternative');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'foundation-available');
+  assert.match(section, /foundation-available on this branch/i, 'expected the adoptionStatus detail to state foundation-available on this branch');
+  assert.match(section, /zero production screens use it/i, 'expected the adoptionStatus detail to truthfully report zero production adoption');
+  assert.match(section, /separate adoption issue/i, 'expected migration to be scoped to a separate adoption issue');
+  assert.doesNotMatch(section, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Popover Menu must not claim production adoption');
+
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexPopoverMenu\.swift/, 'expected implementationNotes.sourcePaths to cite HermexPopoverMenu.swift');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(componentIds.includes('Hermes Popover Menu'), 'expected Hermes Popover Menu to be registered in the Components — Hermex nav group');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(section, /<PopoverMenuFamilyGallery/, 'expected Popover Menu to render its own family gallery');
+  assert.match(previewsSrc, /export function PopoverMenuFamilyGallery/);
+  assert.match(previewsSrc, /function PopoverMenuSpecimen/, 'expected a shared specimen helper for the gallery\'s demonstrated combinations');
+  const specimenBody = extractFunctionBody(previewsSrc, 'PopoverMenuSpecimen');
+  const galleryBody = extractFunctionBody(previewsSrc, 'PopoverMenuFamilyGallery');
+  const body = specimenBody + galleryBody;
+  assert.match(galleryBody, /below/i, 'expected the gallery to demonstrate placement below the trigger');
+  assert.match(galleryBody, /above/i, 'expected the gallery to demonstrate the above-flip placement');
+  assert.match(galleryBody, /clamp/i, 'expected the gallery to demonstrate a horizontal safe-area clamp specimen');
+  assert.match(body, /disabled/i, 'expected the gallery to demonstrate a disabled row');
+  assert.match(body, /destructive/i, 'expected the gallery to demonstrate a destructive row');
+  assert.match(galleryBody, /scroll/i, 'expected the gallery to demonstrate an overflowing/scrolling action list');
+  assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/Popover'/, 'must not import a generic template Popover component');
+  assert.doesNotMatch(previewsSrc, /from '\.\.\/\.\.\/components\/Menu'/, 'must not import a generic template Menu component');
+  assert.doesNotMatch(body, /<Menu[\s>]/, 'must not compose a native-style Menu component');
+});
+
+// ─── Controller correction (2026-09-29, Popover Menu rendered-fidelity gaps 1–3) ────────────────
+// A rendered-fidelity check of the family gallery this Task 8 slice already added found three real
+// gaps between what the specimens/copy promise and what the source actually does: (1) the above
+// placement specimen only swapped styles, never its render order, so it still painted below its
+// trigger just like the below example; (2) the interactive demo's caption promises outside-tap and
+// Escape dismissal that the source never wired up; (3) the same demo claims its action runs "after
+// exit completed" while actually calling setOpen(false) and setLastAction(...) together, with no
+// exit phase at all. These three tests pin down the real fix, not just the promised copy.
+test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 1): the above-placement specimen renders its surface before its trigger in source order (not just a style swap), so it actually paints above the trigger the way the below specimen paints below it', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const specimenBody = extractFunctionBody(previewsSrc, 'PopoverMenuSpecimen');
+
+  const conditionalMatch = specimenBody.match(/placement === 'above'\s*\?\s*\(([\s\S]*?)\)\s*:\s*\(([\s\S]*?)\)\s*;/);
+  assert.ok(conditionalMatch, "expected a `placement === 'above' ? (...) : (...)` conditional actually choosing render order, not only a style lookup");
+  const [, aboveBranch, belowBranch] = conditionalMatch;
+
+  const surfaceIdxAbove = aboveBranch.indexOf('{surface}');
+  const triggerIdxAbove = aboveBranch.indexOf('{trigger}');
+  assert.ok(surfaceIdxAbove !== -1 && triggerIdxAbove !== -1, 'expected both {surface} and {trigger} in the above branch');
+  assert.ok(surfaceIdxAbove < triggerIdxAbove, 'expected the surface before the trigger when placement is "above", so it paints above it');
+
+  const triggerIdxBelow = belowBranch.indexOf('{trigger}');
+  const surfaceIdxBelow = belowBranch.indexOf('{surface}');
+  assert.ok(triggerIdxBelow !== -1 && surfaceIdxBelow !== -1, 'expected both {trigger} and {surface} in the below branch');
+  assert.ok(triggerIdxBelow < surfaceIdxBelow, 'expected the trigger before the surface when placement is "below"');
+
+  assert.match(
+    previewsSrc,
+    /popoverSpecimen:\s*\{[^}]*flexGrow:\s*1[^}]*maxWidth:\s*'100%'/,
+    'expected the popover specimen wrapper (shared by the above/scroll/interactive specimens) to keep the existing responsive flexGrow/maxWidth convention instead of assuming 220px always fits',
+  );
+});
+
+test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 2): the interactive Popover Menu demo wires a real outside-tap backdrop and a real Escape keydown handler instead of only promising both in its caption copy', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const demoBody = extractFunctionBody(previewsSrc, 'PopoverMenuInteractiveDemo');
+
+  const backdropMatch = demoBody.match(/<Pressable\b[\s\S]*?style=\{preview\.popoverBackdrop\}[\s\S]*?\/>/);
+  assert.ok(backdropMatch, 'expected a real backdrop Pressable using the existing preview.popoverBackdrop style, not only the trigger');
+  assert.match(backdropMatch[0], /onPress=\{/, 'expected the backdrop to carry a real dismiss onPress, not be purely decorative');
+
+  assert.match(
+    demoBody,
+    /Platform\.OS\s*!==\s*'web'\s*\|\|\s*typeof document === 'undefined'/,
+    "expected the same Platform.OS === 'web' / typeof document guard CatalogShell already uses before touching document listeners",
+  );
+  assert.match(demoBody, /document\.addEventListener\('keydown',/, 'expected a real keydown listener, not just caption copy promising Escape dismissal');
+  assert.match(demoBody, /event\.key === 'Escape'/, 'expected the keydown handler to check specifically for the Escape key');
+  assert.match(demoBody, /document\.removeEventListener\('keydown',/, "expected the keydown listener to be torn down again, not leaked past the demo's own open state/unmount");
+});
+
+test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): the interactive Popover Menu demo runs its accepted action only after a real exit phase completes, reusing the catalog\'s own overlay-exit motion value, accepts at most one pending action, and cancels it if the demo unmounts mid-exit', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const demoBody = extractFunctionBody(previewsSrc, 'PopoverMenuInteractiveDemo');
+
+  assert.doesNotMatch(
+    demoBody,
+    /setOpen\(false\);\s*setLastAction\(/,
+    'must not close and set the last action together at press time — that is the exact reported bug: no exit phase at all',
+  );
+
+  assert.match(demoBody, /Animated\.timing\(opacity,\s*\{/, 'expected a real Animated.timing transition driving entry/exit, not an immediate setState');
+  assert.match(
+    demoBody,
+    /HERMES_MOTION_BUNDLES\['motion\.overlay\.exit'\]\.durationMs/,
+    "expected the exit duration to reuse the catalog's own existing motion.overlay.exit token instead of an invented number",
+  );
+
+  const renameMatch = demoBody.match(/title="Rename"\s+onPress=\{([^}]*)\}/);
+  const deleteMatch = demoBody.match(/title="Delete"\s+onPress=\{([^}]*)\}/);
+  assert.ok(renameMatch && deleteMatch, 'expected Rename/Delete rows with their own onPress handlers');
+  assert.doesNotMatch(renameMatch[1], /setLastAction/, "Rename's onPress must hand off to the shared exit path, not set lastAction directly");
+  assert.doesNotMatch(deleteMatch[1], /setLastAction/, "Delete's onPress must hand off to the shared exit path, not set lastAction directly");
+
+  const exitFinishMatch = demoBody.match(/\.start\(\(\{\s*finished\s*\}\)\s*=>\s*\{([\s\S]*?)\}\);/);
+  assert.ok(exitFinishMatch, 'expected an exit Animated.timing(...).start(({ finished }) => { ... }) completion callback');
+  assert.match(exitFinishMatch[1], /setLastAction\(/, 'expected lastAction to be committed only inside the exit-complete callback, after the surface has actually left');
+
+  assert.match(demoBody, /useRef\(false\)/, 'expected a ref-based re-entrancy guard so a second exit request cannot replace/duplicate the pending action');
+  assert.match(demoBody, /mountedRef\.current\s*=\s*false/, 'expected an unmount flag so a completing exit cannot commit state after the demo is gone');
+  assert.match(demoBody, /opacity\.stopAnimation\(\)/, 'expected unmount to stop the in-flight animation rather than let a stale completion fire later');
 });
 
 // Search becomes a Hermex-owned shared foundation API (`.hermexSearch`, a thin wrapper over native
@@ -3433,7 +3609,7 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
     'Inline Reference Link', 'Search', 'Text Input', 'Hermes Dropdown', 'Hermes Tooltip', 'Segmented Control',
     'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-    'Bottom Sheet', 'Hermes Dialog',
+    'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
   ]);
 });
 
@@ -3483,7 +3659,7 @@ test('the Components — Hermex group\'s computed render order is actually alpha
 
   assert.deepEqual(computedOrder.map(labelFor), [
     'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Dialog', 'Disclosure Row', 'Dropdown',
-    'Inline Reference Link', 'List / ListItem', 'Radio', 'Row Divider', 'Search',
+    'Inline Reference Link', 'List / ListItem', 'Popover Menu', 'Radio', 'Row Divider', 'Search',
     'Segmented Control', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');
 });

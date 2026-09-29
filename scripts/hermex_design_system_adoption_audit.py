@@ -61,6 +61,7 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermexSameWindowOverlay.swift",
     "HermesMobile/Features/Shared/HermexOverlayLifecycle.swift",
     "HermesMobile/Features/Shared/HermexDialog.swift",
+    "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
     "HermesMobile/Features/Shared/ListItem.swift",
     "HermesMobile/Features/Shared/HermexList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
@@ -93,6 +94,7 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ]),
     ("HermesMobile/Features/Shared/HermexList.swift", [
         r"struct HermexList<[^>]*>\s*:\s*View",
+        r"case compactOverlay",
     ]),
     ("HermesMobile/Features/Shared/HermexButton.swift", [
         r"struct HermexButtonStyle\s*:\s*ButtonStyle",
@@ -127,6 +129,10 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ("HermesMobile/Features/Shared/HermexDialog.swift", [
         r"func hermexDialog[<(]",
         r"enum HermexDialogFooterAxis",
+    ]),
+    ("HermesMobile/Features/Shared/HermexPopoverMenu.swift", [
+        r"func hermexPopoverMenu\(",
+        r"struct HermexPopoverMenuAction",
     ]),
 ]
 

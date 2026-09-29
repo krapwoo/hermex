@@ -37,4 +37,63 @@ final class HermexListTests: XCTestCase {
         }
         XCTAssertFalse(String(describing: type(of: list)).isEmpty)
     }
+
+    // MARK: - `.compactOverlay` style (source contracts)
+    //
+    // `HermexPopoverMenu` composes `HermexList(style: .compactOverlay)`. These contracts pin the
+    // `Style` API — a default `.standard` case that preserves current behavior, plus an explicit
+    // `.compactOverlay` case with plain/transparent chrome, hidden separators, and a minimum
+    // accessible row height — matching the source-contract convention above.
+
+    func testDefaultInitializerRetainsStandardStyle() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        XCTAssertTrue(
+            src.contains("enum Style"),
+            "expected HermexList to expose a Style enum"
+        )
+        XCTAssertTrue(
+            src.contains("style: Style = .standard"),
+            "expected the initializer to default to .standard so existing callers are unaffected"
+        )
+    }
+
+    func testCompactOverlayStyleIsExplicitlyAvailable() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        XCTAssertTrue(
+            src.contains("case compactOverlay"),
+            "expected an explicit .compactOverlay case for overlay-hosted lists such as HermexPopoverMenu"
+        )
+    }
+
+    func testCompactOverlayUsesPlainTransparentContainerAndHiddenSeparators() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        XCTAssertTrue(src.contains(".listStyle(.plain)"), "expected the compact overlay branch to use a plain list style")
+        XCTAssertTrue(src.contains(".scrollContentBackground(.hidden)"), "expected the compact overlay branch to hide native list chrome so the overlay's own material shows through")
+        XCTAssertTrue(src.contains(".listRowSeparator(.hidden)"), "expected the compact overlay branch to hide row separators")
+    }
+
+    func testCompactOverlayKeepsMinimumAccessibleRowHeight() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        XCTAssertTrue(
+            src.contains("44"),
+            "expected the compact overlay branch to preserve at least a 44pt minimum accessible row height"
+        )
+    }
+
+    func testCompactOverlayRowsDoNotCoverTheOwningGlassSurface() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        let compactBranch = try XCTUnwrap(src.components(separatedBy: "case .compactOverlay:").last)
+        XCTAssertTrue(compactBranch.contains(".listRowBackground(Color.clear)"),
+                      "native row backgrounds must not cover the menu's adaptive glass or opaque fallback")
+    }
+
+    func testStandardStyleSourceContractIsUnchanged() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexList.swift")
+        XCTAssertTrue(src.contains("case .standard:"), "expected an explicit .standard branch once the Style enum is introduced")
+        let standardBranch = src.components(separatedBy: "case .standard:").last ?? ""
+        XCTAssertTrue(
+            standardBranch.contains(".contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)"),
+            "expected the .standard branch to preserve the existing 12pt vertical scroll-content margin byte-for-byte"
+        )
+    }
 }

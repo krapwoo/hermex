@@ -78,7 +78,14 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/HermexDivider.swift": "struct HermexDivider: View {}",
     "HermesMobile/Features/Shared/HermexContentUnavailable.swift": "struct HermexContentUnavailable: View {}",
     "HermesMobile/Features/Shared/ListItem.swift": "struct ListItem<Leading: View>: View {}",
-    "HermesMobile/Features/Shared/HermexList.swift": "struct HermexList<Content: View>: View {}",
+    "HermesMobile/Features/Shared/HermexList.swift": (
+        "struct HermexList<Content: View>: View {\n"
+        "    enum Style {\n"
+        "        case standard\n"
+        "        case compactOverlay\n"
+        "    }\n"
+        "}"
+    ),
     "HermesMobile/Features/Shared/SegmentedControl.swift": "struct SegmentedControl<Value: Hashable>: View {}",
     "HermesMobile/Features/Shared/TopNav.swift": "struct TopNav: ToolbarContent {}",
     "HermesMobile/Features/Shared/Banner.swift": "struct Banner: View {}",
@@ -124,6 +131,16 @@ SIMPLE_SNIPPETS = {
         "}\n"
         "extension View {\n"
         "    func hermexDialog() -> some View { self }\n"
+        "}"
+    ),
+    "HermesMobile/Features/Shared/HermexPopoverMenu.swift": (
+        "struct HermexPopoverMenuAction {}\n"
+        "extension View {\n"
+        "    func hermexPopoverMenu(\n"
+        "        isPresented: Binding<Bool>,\n"
+        "        accessibilityLabel: Text,\n"
+        "        actions: [HermexPopoverMenuAction]\n"
+        "    ) -> some View { self }\n"
         "}"
     ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
@@ -327,6 +344,69 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
                 for f in failures
             ),
             failures,
+        )
+
+    # ─── Popover Menu family slice (test-first phase) ────────────────────────────────────────────
+    # `HermexPopoverMenu.swift` and `HermexList`'s `case compactOverlay` do not exist yet — Task 7/8
+    # of the implementation plan ship them, along with the audit's own REQUIRED_FOUNDATION_FILES/
+    # REQUIRED_SNIPPETS additions, in the same PR. Until then these three regressions are expected
+    # to fail red: they pin the contract the *next* audit update must satisfy, not the current one.
+
+    def test_missing_popover_menu_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
+            (
+                "extension View {\n"
+                "    func hermexPopoverMenu() -> some View { self }\n"
+                "}\n"
+                "struct HermexPopoverMenuAction {}\n"
+            ),
+        )
+        (self.root / "HermesMobile/Features/Shared/HermexPopoverMenu.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "HermexPopoverMenu.swift" in f
+                for f in failures
+            ),
+            "expected the audit to require HermexPopoverMenu.swift once the Popover Menu slice "
+            f"lands; currently red because it is not yet a required foundation file: {failures}",
+        )
+
+    def test_drifted_popover_menu_declaration_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
+            "// HermexPopoverMenu renamed away, no hermexPopoverMenu( either",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexPopoverMenu.swift" in f
+                for f in failures
+            ),
+            "expected the audit to pin hermexPopoverMenu(/HermexPopoverMenuAction once the Popover "
+            f"Menu slice lands; currently red because no snippet is required yet: {failures}",
+        )
+
+    def test_hermex_list_missing_compact_overlay_case_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexList.swift",
+            "struct HermexList<Content: View>: View {}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexList.swift" in f and "compactOverlay" in f
+                for f in failures
+            ),
+            "expected the audit to pin `case compactOverlay` once the compact-overlay List style "
+            f"lands; currently red because it is not yet a required snippet: {failures}",
         )
 
     def test_missing_same_window_overlay_foundation_file_fails(self):
