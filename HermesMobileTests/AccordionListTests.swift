@@ -170,6 +170,34 @@ final class AccordionListTests: XCTestCase {
     // gap) — is the one named source both a body row's leading alignment and the internal body-row
     // divider's leading alignment derive from, rather than each reconstructing its own inset.
 
+    // MARK: - DSR3-08: headers without a leading element
+
+    /// `AccordionList` doesn't yet expose a compile-safe path for callers with no header leading
+    /// content, so this pins the required source shape as an explicit XCTest assertion — matching
+    /// `AccordionListMetrics.headerTextLeadingInset` above — rather than a `headerLeading`-omitting
+    /// compile fixture, which would fail the whole test target to compile before the overload exists.
+    func testSourceDefinesANoLeadingInitializerOverloadWhereHeaderLeadingIsEmptyView() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains("extension AccordionList where HeaderLeading == EmptyView"),
+            "expected a compile-safe initializer path for callers with no header leading content, " +
+                "so they never pass an empty placeholder frame manually"
+        )
+        XCTAssertTrue(
+            src.contains("headerLeading: { _ in EmptyView() }"),
+            "expected the no-leading initializer overload to forward an EmptyView headerLeading closure to the designated initializer"
+        )
+    }
+
+    func testBodyLeadingInsetIsZeroWithoutHeaderLeadingAndTheExistingHeaderTextLeadingInsetWhenItExists() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains("hasHeaderLeading ? AccordionListMetrics.headerTextLeadingInset : HermesSpacing.s0"),
+            "expected no-leading mode to use zero Accordion-owned body inset while leading-present mode " +
+                "retains the existing avatar-derived headerTextLeadingInset"
+        )
+    }
+
     func testHeaderTextLeadingInsetIsOneNamedSourceReplacingTheOldPerRowReconstruction() throws {
         let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
         XCTAssertTrue(
@@ -185,19 +213,21 @@ final class AccordionListTests: XCTestCase {
     func testBodyRowLeadingAlignmentDerivesFromTheNamedHeaderTextLeadingInset() throws {
         let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
         XCTAssertTrue(
-            src.contains(".padding(.leading, AccordionListMetrics.headerTextLeadingInset)"),
-            "expected body rows to align to the named headerTextLeadingInset, the same source the header's own text column starts from"
+            src.contains(".padding(.leading, bodyLeadingInset)"),
+            "expected body rows to align to the effective bodyLeadingInset — zero without header leading, " +
+                "the named headerTextLeadingInset when header leading exists"
         )
     }
 
     func testBodyRowDividersAlignToTheSameNamedHeaderTextLeadingInset() throws {
         let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
         XCTAssertTrue(
-            src.contains("bodyDividerLeadingInset = headerTextLeadingInset + HermesSpacing.s12"),
-            "the body-row divider inset must derive from the same named headerTextLeadingInset source plus ListItem's own horizontal inset, not a separately reconstructed body-row inset"
+            src.contains("bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12"),
+            "the body-row divider inset must derive from the effective bodyLeadingInset plus ListItem's " +
+                "own 12pt horizontal inset — equal to ListItem's standard content column when there is no header leading"
         )
         XCTAssertTrue(
-            src.contains("HermexDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)"),
+            src.contains("HermexDivider(leadingInset: bodyDividerLeadingInset)"),
             "dividers between body rows must begin at the body row's actual text-content alignment"
         )
     }

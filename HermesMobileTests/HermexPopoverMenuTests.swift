@@ -432,6 +432,50 @@ import UIKit
         )
     }
 
+    // MARK: - Component-local shell padding (Issue #607, Round 3, Task 4)
+    //
+    // `HermexList.Style.compactOverlay`'s own row horizontal inset and scroll-content margin
+    // collapse to zero (see `HermexListTests`), so the popover now owns its own shell padding around
+    // the list content instead. `HermexPopoverMenuMetrics.contentPadding` does not exist yet — a
+    // source-only contract, matching the established pattern above.
+
+    func testDefinesAComponentLocalContentPaddingOfSixteenPoints() throws {
+        guard let src = try popoverMenuSource() else { return }
+        XCTAssertTrue(
+            src.contains("static let contentPadding: CGFloat = HermesSpacing.s16"),
+            "expected a component-local contentPadding of HermesSpacing.s16, replacing the spacing HermexList.Style.compactOverlay used to own"
+        )
+    }
+
+    func testPreferredContentHeightIncludesTwoShellPaddings() throws {
+        guard let src = try popoverMenuSource() else { return }
+        XCTAssertTrue(
+            src.contains("HermexPopoverMenuMetrics.contentPadding * 2"),
+            "expected the preferred content height estimate to budget for the shell padding on both the top and bottom edge"
+        )
+    }
+
+    func testMenuSurfaceAppliesTheShellPaddingExactlyOnce() throws {
+        guard let src = try popoverMenuSource() else { return }
+        let menuSurfaceBody = try XCTUnwrap(
+            src.components(separatedBy: "private var menuSurface: some View {").last,
+            "expected a menuSurface computed property"
+        )
+        let occurrences = menuSurfaceBody.components(separatedBy: ".padding(HermexPopoverMenuMetrics.contentPadding)").count - 1
+        XCTAssertEqual(
+            occurrences, 1,
+            "expected menuSurface to apply the shell padding exactly once, not per-row and not doubled with any remaining HermexList spacing"
+        )
+    }
+
+    func testPopoverListItemsRequestNoContentInset() throws {
+        guard let src = try popoverMenuSource() else { return }
+        XCTAssertTrue(
+            src.contains("contentInset: .none"),
+            "expected popover rows to opt into ListItemContentInset.none now that the shell owns the surrounding padding"
+        )
+    }
+
     // MARK: - Public construction
 
     func testPublicAPICompilesWithRealActionsAndAccessibilityLabel() {
@@ -573,9 +617,16 @@ import UIKit
             String(describing: type(of: $0)).contains("AnchorView")
                 || String(describing: type(of: $0)).contains("GeometryView")
         }.map { "\(type(of: $0)): \($0.convert($0.bounds, to: window))" }
-        XCTAssertEqual(menu.accessibilityFrame.minY - trigger.accessibilityFrame.maxY,
+        // `.accessibilityElement(children: .contain)` reports the union of the action rows, not the
+        // decorative shell padding around them. Expand that content frame back to the card's visual
+        // frame before asserting the resolver's trigger gap.
+        let menuCardFrame = menu.accessibilityFrame.insetBy(
+            dx: -HermexPopoverMenuMetrics.contentPadding,
+            dy: -HermexPopoverMenuMetrics.contentPadding
+        )
+        XCTAssertEqual(menuCardFrame.minY - trigger.accessibilityFrame.maxY,
                        HermexPopoverMenuMetrics.anchorGap, accuracy: 1,
-                       "the menu must use the trigger's scrolled position, not a cached screen coordinate; trigger=\(trigger.accessibilityFrame), menu=\(menu.accessibilityFrame), offset=\(scroller.contentOffset), readers=\(readerFrames)")
+                       "the menu must use the trigger's scrolled position, not a cached screen coordinate; trigger=\(trigger.accessibilityFrame), menuContent=\(menu.accessibilityFrame), menuCard=\(menuCardFrame), offset=\(scroller.contentOffset), readers=\(readerFrames)")
     }
 
     // MARK: - Test harness

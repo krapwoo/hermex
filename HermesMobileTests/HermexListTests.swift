@@ -96,4 +96,24 @@ final class HermexListTests: XCTestCase {
             "expected the .standard branch to preserve the existing 12pt vertical scroll-content margin byte-for-byte"
         )
     }
+
+    // MARK: - `.compactOverlay` insets go to zero (Issue #607, Round 3, Task 3)
+    //
+    // `HermexPopoverMenu` now owns its own shell padding around the list content (see
+    // `HermexPopoverMenuTests`), so `.compactOverlay`'s own row horizontal inset and scroll-content
+    // margin collapse to zero. The vertical row inset and the 44pt minimum accessible row height are
+    // unrelated to that shell padding and stay exactly as they are.
+
+    func testCompactOverlayRowHorizontalInsetBecomesZero() {
+        XCTAssertEqual(HermexListCompactOverlayMetrics.rowHorizontalInset, HermesSpacing.s0)
+    }
+
+    func testCompactOverlayScrollContentMarginBecomesZero() {
+        XCTAssertEqual(HermexListCompactOverlayMetrics.scrollContentMargin, HermesSpacing.s0)
+    }
+
+    func testCompactOverlayVerticalRowInsetAndMinimumRowHeightStayUnchanged() {
+        XCTAssertEqual(HermexListCompactOverlayMetrics.rowVerticalInset, HermesSpacing.s4)
+        XCTAssertEqual(HermexListCompactOverlayMetrics.minimumRowHeight, 44)
+    }
 }

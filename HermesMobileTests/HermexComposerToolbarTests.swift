@@ -65,6 +65,29 @@ final class HermexComposerToolbarTests: XCTestCase {
         return String(remainder[remainder.startIndex..<nextStructRange.lowerBound])
     }
 
+    /// Isolates the not-yet-existing `HermexComposerToolbarDivider` struct body the same way
+    /// `hermexComposerToolbarRegion()` isolates the toolbar's, so its contracts fail through one
+    /// explicit XCTest assertion rather than a compile error while the type doesn't exist yet.
+    private func hermexComposerToolbarDividerRegion() throws -> String {
+        let src = try requiredSource()
+        guard let structRange = src.range(of: "struct HermexComposerToolbarDivider") else {
+            XCTFail(
+                "expected `struct HermexComposerToolbarDivider` in \(Self.sourcePath) — DSR3-01 "
+                    + "requires an explicit caller-inserted vertical divider"
+            )
+            return ""
+        }
+        let remainder = src[structRange.lowerBound...]
+        guard let nextStructRange = remainder.range(
+            of: #"\nstruct \w"#,
+            options: .regularExpression,
+            range: remainder.index(after: remainder.startIndex)..<remainder.endIndex
+        ) else {
+            return String(remainder)
+        }
+        return String(remainder[remainder.startIndex..<nextStructRange.lowerBound])
+    }
+
     // MARK: - Pure edge-fades math
 
     func testNoFadesWhenContentFits() {
@@ -220,11 +243,17 @@ final class HermexComposerToolbarTests: XCTestCase {
         XCTAssertTrue(region.contains("HermesSpacing.s8"), "expected HermesSpacing.s8 item spacing")
     }
 
-    func testSourceAppliesHorizontalPaddingWithHermesSpacingS16() throws {
+    // DSR3-01: the row content padding is all-around HermesSpacing.s16, not horizontal-only, so the
+    // toolbar's own vertical breathing room matches its horizontal breathing room.
+    func testSourceAppliesAllAroundPaddingWithHermesSpacingS16() throws {
         let region = try hermexComposerToolbarRegion()
         XCTAssertTrue(
+            region.contains(".padding(HermesSpacing.s16)"),
+            "expected .padding(HermesSpacing.s16) applied on all sides"
+        )
+        XCTAssertFalse(
             region.contains(".padding(.horizontal, HermesSpacing.s16)"),
-            "expected .padding(.horizontal, HermesSpacing.s16)"
+            "expected the horizontal-only padding to be replaced by the all-around padding"
         )
     }
 
@@ -306,6 +335,44 @@ final class HermexComposerToolbarTests: XCTestCase {
         XCTAssertTrue(
             region.contains("case .elevated") || region.contains("appearance == .elevated"),
             "expected the background/border/shadow branch to be conditioned on .elevated so .transparent renders none of it"
+        )
+    }
+
+    // MARK: - Source contract: explicit caller-inserted vertical divider (DSR3-01)
+
+    func testSourceDefinesAnExplicitCallerInsertedVerticalDividerView() throws {
+        let region = try hermexComposerToolbarDividerRegion()
+        XCTAssertTrue(
+            region.contains(": View"),
+            "expected HermexComposerToolbarDivider to be a View the caller inserts explicitly between logical control groups"
+        )
+    }
+
+    func testDividerUsesDisplayScaleHairlineWidthAndS24Height() throws {
+        let region = try hermexComposerToolbarDividerRegion()
+        XCTAssertTrue(
+            region.contains("@Environment(\\.displayScale)"),
+            "expected the divider to read displayScale for a hairline width"
+        )
+        XCTAssertNotNil(
+            region.range(of: #"width:\s*1\s*/\s*displayScale"#, options: .regularExpression),
+            "expected a display-scale hairline width"
+        )
+        XCTAssertTrue(
+            region.contains("height: HermesSpacing.s24"),
+            "expected a 24pt visible height"
+        )
+    }
+
+    func testDividerUsesTheExistingDividerColorTreatmentAndIsAccessibilityHidden() throws {
+        let region = try hermexComposerToolbarDividerRegion()
+        XCTAssertTrue(
+            region.contains("Color.primary.opacity(0.12)"),
+            "expected the same foreground-derived color treatment HermexDivider already uses"
+        )
+        XCTAssertTrue(
+            region.contains(".accessibilityHidden(true)"),
+            "expected the divider to be decorative and accessibility-hidden"
         )
     }
 

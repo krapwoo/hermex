@@ -37,7 +37,7 @@ struct HermexComposerToolbar<Content: View>: View {
             HStack(spacing: itemSpacing) {
                 content
             }
-            .padding(.horizontal, HermesSpacing.s16)
+            .padding(HermesSpacing.s16)
             .frame(minHeight: minimumRowHeight, alignment: .leading)
         }
         .scrollIndicators(.hidden)
@@ -128,3 +128,17 @@ struct HermexComposerToolbarEdgeFades: Equatable {
 }
 
 typealias ComposerToolbarEdgeFades = HermexComposerToolbarEdgeFades
+
+/// Explicit caller-inserted vertical divider between logical control groups in a
+/// `HermexComposerToolbar`. Never inserted automatically, so a caller with two adjacent controls
+/// that belong to the same logical group never sees an unwanted separator.
+struct HermexComposerToolbarDivider: View {
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.12))
+            .frame(width: 1 / displayScale, height: HermesSpacing.s24)
+            .accessibilityHidden(true)
+    }
+}

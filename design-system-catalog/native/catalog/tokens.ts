@@ -46,6 +46,18 @@ export const CATALOG_RADIUS = {
  *  inconsistent with everything else on the page). */
 export const CATALOG_MAX_CONTENT_WIDTH = 1200;
 
+/** Hermex's main canvas can present up to three ordinary 402px specimens with two 40px
+ *  (CATALOG_SPECIMEN_GRID_GAP) gaps. The extra 130px accounts for the desktop page inset (48px on
+ *  each side) plus the Hermex card's 16px inset and 1px border on each side. Retained
+ *  template/framework routes keep the 1200px cap above. */
+export const CATALOG_HERMEX_MAX_CONTENT_WIDTH = 1416;
+
+/** The one gap every Variants/States specimen grid uses — SectionBlock's itemized `exampleGrid` and
+ *  HermesComponentFamiliesPreviews' custom `PreviewSpecimenGrid` both import this same constant, so
+ *  the two catalogs' specimen grids can never drift apart. Resolves to the existing CATALOG_SPACE
+ *  `3xl` step (40) rather than introducing a new magic number. */
+export const CATALOG_SPECIMEN_GRID_GAP = CATALOG_SPACE['3xl'];
+
 /** Below this viewport width, `CatalogShell`/`CatalogSidebar`/`SectionBlock` switch from the fixed
  *  240px-sidebar-plus-two-column desktop layout to a stacked narrow layout: the sidebar becomes a
  *  bounded, non-sticky top region, the main column's horizontal padding shrinks, and each section's

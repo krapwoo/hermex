@@ -27,6 +27,10 @@ export interface VariantExample {
    *  instance renders at its natural size regardless of the prop. Independent of the slot's own
    *  `itemsFill` (which applies to every item uniformly); this is a per-item override. @default false */
   fill?: boolean;
+  /** Catalog-authored explanation/caption for this instance — rendered only inside its own anchored
+   *  Details popover (`CatalogSpecimenHeader`), never inline on the main gallery surface. Optional:
+   *  an instance with no explanation renders no Details button at all. */
+  description?: React.ReactNode;
   /** Which real prop value(s) this instance demonstrates, e.g. `{ variant: 'primary' }` or
    *  `{ size: 'large', disabled: true }` — mirrors the actual props passed to `node`. Optional and
    *  additive: SectionBlock only cross-checks a section's enum props against this metadata once at
@@ -136,23 +140,28 @@ export interface SectionDef<TId extends string = string> {
     props?: boolean;
     accessibility?: boolean;
   };
-  /** Reference-oriented Hermex metadata — plain-English usage guidance and destinations, with
-   *  technical provenance collapsed behind `HermesReferenceDetails`'s disclosures. */
+  /** Reference-oriented Hermex metadata — plain-English usage guidance and destinations, shown on
+   *  the main canvas (Screens) and in the shared 600px Details inspector (`CatalogDetailsInspector`,
+   *  rendered via `HermesReferenceDetails`), never rendered inline on the main canvas itself. */
   hermesReference?: HermesReferenceMeta;
 }
 
-/** One real destination in Hermex where a reference entry's token/component actually appears. */
+/** One real destination in Hermex where a reference entry's token/component actually appears. Only
+ *  `screen`/`path` are shown, in the main canvas's Screens card — `effect` is available to the
+ *  machine-readable manifest but is not rendered in the catalog UI (main canvas or inspector), to
+ *  avoid repeating the same destination fact in two places. */
 export interface HermesReferenceDestination {
   /** The user-visible screen name, e.g. "Settings", "Sessions". */
   screen: string;
   /** How to reach it, e.g. "Settings → Appearance". Omit when the screen name alone is enough. */
   path?: string;
-  /** What the reader can see there. */
+  /** What the reader can see there. Manifest-only; not rendered by the catalog UI. */
   effect: string;
 }
 
-/** Technical provenance for a Hermex reference entry — collapsed behind the "Implementation
- *  notes" disclosure, never part of the primary reading flow. */
+/** Technical provenance for a Hermex reference entry — rendered as the Details inspector's own
+ *  "Source" (sourcePaths) and "Implementation notes" (status/notes) sections, never part of the
+ *  main canvas. */
 export interface HermesImplementationNotes {
   status?: string;
   sourcePaths?: string[];
@@ -195,9 +204,9 @@ export interface HermesAdoptionStatus {
   detail: string;
 }
 
-/** Reference-oriented metadata for one Hermex catalog entry — the decision contract (`useWhen`/
- *  `avoidWhen`/`alternatives`/`adoptionStatus`) and real usage guidance/destinations up front,
- *  technical provenance collapsed behind disclosures. */
+/** Reference-oriented metadata for one Hermex catalog entry — verified destinations (`usedIn`) drive
+ *  the main canvas's Screens card; the decision contract (`useWhen`/`avoidWhen`/`alternatives`/
+ *  `adoptionStatus`) plus technical provenance render in the shared Details inspector instead. */
 export interface HermesReferenceMeta {
   /** The deciding condition under which a human or AI should reach for this entry. */
   useWhen?: string;

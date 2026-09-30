@@ -27,18 +27,77 @@ enum ListItemSelectionChrome {
     case indicatorOnly
 }
 
+/// `ListItem`'s content padding. `.standard` is the original, still-default behavior: the row and
+/// its selection pill keep their existing 12pt horizontal inset. `.none` is additive — a caller that
+/// already owns its own surrounding padding (`HermexPopoverMenu`'s shell padding, for instance)
+/// opts into it so the row's content never doubles that padding.
+enum ListItemContentInset: Equatable {
+    case standard
+    case none
+
+    var horizontalPadding: CGFloat {
+        switch self {
+        case .standard: return HermesSpacing.s12
+        case .none: return HermesSpacing.s0
+        }
+    }
+}
+
 extension View {
     /// The selected-row treatment shared by every `ListItem`: a filled `Color.primary` pill with the
     /// inverted foreground that fill needs. The caller owns the row's frame, because the pill can
-    /// wrap content that sits outside the row's own button — a trailing accessory does.
-    func listItemSelectionPill(isSelected: Bool) -> some View {
-        foregroundStyle(isSelected ? Color(.systemBackground) : Color.primary)
-            .padding(.horizontal, HermesSpacing.s12)
+    /// wrap content that sits outside the row's own button — a trailing accessory does. The pill's
+    /// horizontal inset comes from the `contentInset` the caller forwards, so a `.none` row (a
+    /// `HermexPopoverMenu` action, for instance) collapses it to zero.
+    func listItemSelectionPill(isSelected: Bool, contentInset: ListItemContentInset) -> some View {
+        modifier(ListItemSelectionPillModifier(isSelected: isSelected, contentInset: contentInset))
+    }
+}
+
+private struct ListItemSelectionPillModifier: ViewModifier {
+    let isSelected: Bool
+    let contentInset: ListItemContentInset
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(isSelected ? Color(.systemBackground) : Color.primary)
+            .padding(.horizontal, contentInset.horizontalPadding)
             .background(
                 isSelected ? Color.primary : Color.clear,
                 in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
             )
     }
+}
+
+/// The row button's pressed-surface treatment: a color/opacity change only, using
+/// `HermesMotion.Bundle.stateChange` — no scale feedback, unlike `HermesMotion.Bundle.feedbackPress`'s
+/// tactile pattern used elsewhere in the app. A standard selected row keeps its filled selection pill
+/// and gets a contrast-safe opacity adjustment while pressed; every other row (unselected, or an
+/// indicator-only selected row with no filled pill of its own) gets a subtle adaptive Neutral surface
+/// instead. Respects `Environment(\.isEnabled)` so a disabled or pending row shows no pressed feedback.
+struct ListItemButtonStyle: ButtonStyle {
+    let isSelected: Bool
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let isPressed = isEnabled && configuration.isPressed
+        configuration.label
+            .background(
+                isSelected ? Color.clear : (isPressed ? ListItemButtonStyleColors.pressedSurface : Color.clear),
+                in: RoundedRectangle(cornerRadius: ListItemMetrics.cornerRadius, style: .continuous)
+            )
+            .opacity(isSelected && isPressed ? ListItemButtonStyleColors.selectedPressedOpacity : 1)
+            .animation(HermesMotion.animation(for: HermesMotion.Bundle.stateChange), value: isPressed)
+    }
+}
+
+private enum ListItemButtonStyleColors {
+    static let pressedSurface = HermesColorRamp.Neutral.adaptive(
+        light: HermesColorRamp.Neutral.s100,
+        dark: HermesColorRamp.Neutral.s800
+    )
+    static let selectedPressedOpacity: Double = 0.85
 }
 
 /// A reusable list row: optional leading content, a title with an optional title-adjacent accessory
@@ -59,6 +118,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
     var accessibilityValue: Text?
     var state = ListItemState()
     var selectionChrome: ListItemSelectionChrome = .standard
+    var contentInset: ListItemContentInset = .standard
     /// Omit for a plain native `Button`. Set it when a caller needs an explicit tap haptic while
     /// retaining `ListItem`'s shared row anatomy.
     var hapticFeedbackStyle: HapticButtonFeedbackStyle?
@@ -79,7 +139,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
     var body: some View {
         HStack(spacing: HermesSpacing.s12) {
             rowButton
-                .buttonStyle(.plain)
+                .buttonStyle(ListItemButtonStyle(isSelected: state.isSelected && selectionChrome == .standard))
                 .disabled(state.isDisabled || state.isPending)
                 .accessibilityLabel(accessibilityLabel ?? title)
                 .modifier(OptionalAccessibilityValue(value: accessibilityValue))
@@ -87,7 +147,7 @@ struct ListItem<Leading: View, TitleAccessory: View, Trailing: View>: View {
 
             trailingAccessory()
         }
-        .listItemSelectionPill(isSelected: state.isSelected && selectionChrome == .standard)
+        .listItemSelectionPill(isSelected: state.isSelected && selectionChrome == .standard, contentInset: contentInset)
     }
 
     @ViewBuilder
@@ -162,6 +222,7 @@ extension ListItem where Leading == EmptyView {
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
         selectionChrome: ListItemSelectionChrome = .standard,
+        contentInset: ListItemContentInset = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -178,6 +239,7 @@ extension ListItem where Leading == EmptyView {
             accessibilityValue: accessibilityValue,
             state: state,
             selectionChrome: selectionChrome,
+            contentInset: contentInset,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -199,6 +261,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
         selectionChrome: ListItemSelectionChrome = .standard,
+        contentInset: ListItemContentInset = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -214,6 +277,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView {
             accessibilityValue: accessibilityValue,
             state: state,
             selectionChrome: selectionChrome,
+            contentInset: contentInset,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -235,6 +299,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
         selectionChrome: ListItemSelectionChrome = .standard,
+        contentInset: ListItemContentInset = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -249,6 +314,7 @@ extension ListItem where Leading == EmptyView, TitleAccessory == EmptyView, Trai
             accessibilityValue: accessibilityValue,
             state: state,
             selectionChrome: selectionChrome,
+            contentInset: contentInset,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,
@@ -270,6 +336,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
         selectionChrome: ListItemSelectionChrome = .standard,
+        contentInset: ListItemContentInset = .standard,
         hapticFeedbackStyle: HapticButtonFeedbackStyle? = nil,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
@@ -286,6 +353,7 @@ extension ListItem where TitleAccessory == EmptyView, Trailing == EmptyView {
             accessibilityValue: accessibilityValue,
             state: state,
             selectionChrome: selectionChrome,
+            contentInset: contentInset,
             hapticFeedbackStyle: hapticFeedbackStyle,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
@@ -308,6 +376,7 @@ extension ListItem where Trailing == EmptyView {
         accessibilityValue: Text? = nil,
         state: ListItemState = ListItemState(),
         selectionChrome: ListItemSelectionChrome = .standard,
+        contentInset: ListItemContentInset = .standard,
         titleRole: AppFont.Role = .body,
         rowIndicatorSystemImage: String? = nil,
         rowIndicatorSize: CGFloat = HermesIconSize.small,
@@ -324,6 +393,7 @@ extension ListItem where Trailing == EmptyView {
             accessibilityValue: accessibilityValue,
             state: state,
             selectionChrome: selectionChrome,
+            contentInset: contentInset,
             titleRole: titleRole,
             rowIndicatorSystemImage: rowIndicatorSystemImage,
             rowIndicatorSize: rowIndicatorSize,

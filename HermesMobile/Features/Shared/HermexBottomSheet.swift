@@ -96,6 +96,7 @@ struct HermexBottomSheet<
             }
             .padding(.horizontal, HermesSpacing.screenHorizontal)
             .padding(.vertical, HermesSpacing.s12)
+            .frame(maxWidth: .infinity)
             .background(.bar)
         }
     }

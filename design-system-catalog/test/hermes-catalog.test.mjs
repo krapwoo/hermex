@@ -58,7 +58,9 @@ const extractHermesSection = (src, id) => {
 // typically just references a gallery function by name and does not itself contain that function's
 // content.
 function extractFunctionBody(src, functionName) {
-  const headerPattern = new RegExp(`function ${functionName}\\s*\\([^)]*\\)[^{]*\\{`);
+  // `(?:<[^>]*>)?` optionally skips a generic type-parameter list (e.g. `function Foo<TId extends
+  // string>(`) between the function name and its own parameter list.
+  const headerPattern = new RegExp(`function ${functionName}\\s*(?:<[^>]*>)?\\s*\\([^)]*\\)[^{]*\\{`);
   const match = src.match(headerPattern);
   assert.ok(match, `expected a function named ${functionName}`);
   const start = match.index + match[0].length - 1;
@@ -201,6 +203,7 @@ test('Hermex reference metadata and accessible disclosure path exist, and the te
   const typesSrc = read(TYPES_PATH);
   const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
   const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const shellSrc = read(CATALOG_SHELL_PATH);
 
   assert.match(typesSrc, /export interface HermesReferenceDestination/);
   assert.match(typesSrc, /screen:\s*string/);
@@ -214,13 +217,17 @@ test('Hermex reference metadata and accessible disclosure path exist, and the te
   assert.match(typesSrc, /path\?:\s*string/);
   assert.doesNotMatch(typesSrc, /HermesAudit|HermesDisposition|HermesEvidenceLevel/);
 
+  // Round 3 moves HermesReferenceDetails out of SectionBlock's own render and into the shared
+  // Details inspector CatalogShell owns (see the DSR3-03 tests below) — accessible disclosure
+  // machinery (used by the Overview's own compact Implementation notes disclosure) still lives in
+  // HermesReferenceDetails.tsx itself.
   assert.match(detailsSrc, /accessibilityRole="button"/);
   assert.match(detailsSrc, /accessibilityState=\{\{\s*expanded\s*\}\}/);
   assert.match(detailsSrc, /<AnimatedChevron/);
-  assert.match(detailsSrc, /Where it appears/);
   assert.match(detailsSrc, /Implementation notes/);
   assert.match(sectionBlockSrc, /def\.hermesReference/);
-  assert.match(sectionBlockSrc, /<HermesReferenceDetails/);
+  assert.doesNotMatch(sectionBlockSrc, /<HermesReferenceDetails/, 'HermesReferenceDetails now renders inside the shared Details inspector, not SectionBlock\'s own main-canvas render');
+  assert.match(shellSrc, /<HermesReferenceDetails/, 'expected CatalogShell to render HermesReferenceDetails inside its own Details inspector');
   assert.doesNotMatch(sectionBlockSrc, /HermesAuditPanel/);
 
   assert.ok(!existsSync(path.join(ROOT, 'native/catalog/hermes/HermesAuditPanel.tsx')), 'Task 2 removes the temporary audit panel once every entry migrates to hermesReference');
@@ -339,23 +346,25 @@ test('the shared catalog framework defines and applies a narrow-viewport breakpo
   );
 });
 
-test('SectionBlock uses the approved two-column documentation hierarchy: wide Variants/States primary column, narrow Props secondary column (plus Accessibility for a non-Hermex/template section only — a Hermex reference entry moves Accessibility to its own lower supporting card instead)', () => {
+test('SectionBlock uses the approved two-column documentation hierarchy on the retained template/framework routes: wide Variants/States primary column, narrow Props/Accessibility secondary column (a Hermex reference entry never reaches this codepath at all — see HermexSectionCanvas below)', () => {
   const src = read(SECTION_BLOCK_PATH);
+  const generalBody = extractFunctionBody(src, 'SectionBlock');
 
+  assert.doesNotMatch(generalBody, /HermexSectionCanvas\s*\{/, 'the exported SectionBlock function body should only delegate to HermexSectionCanvas, not inline its logic');
   assert.match(
-    src,
+    generalBody,
     /const primaryBlocks: BlockDef\[\] = \[[\s\S]*label: 'Variants'[\s\S]*label: 'States \/ Configurations'/,
     'expected Variants and States / Configurations to stack in the primary column',
   );
   assert.match(
-    src,
+    generalBody,
     /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*label: 'Props'/,
     'expected Props to render in the secondary column',
   );
   assert.match(
-    src,
-    /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*hide\.accessibility\s*\|\|\s*isHermexReference[\s\S]*label: 'Accessibility'/,
-    'expected the secondary-column Accessibility block to be skipped for a Hermex reference entry (isHermexReference), not just when explicitly hidden — it moves to the lower supporting row instead',
+    generalBody,
+    /const secondaryBlocks: BlockDef\[\] = \[[\s\S]*label: 'Accessibility'/,
+    'expected the secondary-column Accessibility block to render unconditionally on the retained routes — a Hermex reference entry never reaches this branch, so there is no longer an isHermexReference guard here',
   );
   assert.match(
     src,
@@ -370,22 +379,13 @@ test('SectionBlock uses the approved two-column documentation hierarchy: wide Va
   assert.doesNotMatch(src, /columnWide/, 'the superseded three-column Props-width special case should be removed');
 });
 
-test('SectionBlock computes a11yContent (with its truthful "No accessibility notes documented." fallback) before the tokenGallery early return, so a token-gallery Hermex entry (e.g. Hermex Colors) can still pass it into its lower Accessibility card', () => {
+test('DSR3-02/03: SectionBlock delegates every def.hermesReference entry to its own HermexSectionCanvas main-canvas layout instead of the retained template/framework two-column hierarchy', () => {
   const src = read(SECTION_BLOCK_PATH);
-  const a11yContentIdx = src.indexOf('const a11yContent');
-  const tokenGalleryReturnIdx = src.indexOf('if (def.tokenGallery)');
-  assert.ok(a11yContentIdx > -1, 'expected a11yContent to be computed in SectionBlock');
-  assert.ok(tokenGalleryReturnIdx > -1, 'expected the def.tokenGallery early return in SectionBlock');
-  assert.ok(
-    a11yContentIdx < tokenGalleryReturnIdx,
-    'expected a11yContent to be computed before the def.tokenGallery early return, not after it',
+  assert.match(
+    src,
+    /if\s*\(def\.hermesReference\)\s*\{\s*return\s*<HermexSectionCanvas/,
+    'expected SectionBlock to delegate a def.hermesReference entry to HermexSectionCanvas',
   );
-});
-
-test('SectionBlock passes a11yContent into HermesReferenceDetails as accessibilityContent, for both the tokenGallery and the general component branch', () => {
-  const src = read(SECTION_BLOCK_PATH);
-  const passages = [...src.matchAll(/<HermesReferenceDetails\s+meta=\{def\.hermesReference!\}\s+accessibilityContent=\{a11yContent\}\s*\/>/g)];
-  assert.ok(passages.length >= 1, 'expected <HermesReferenceDetails meta={def.hermesReference!} accessibilityContent={a11yContent} /> to appear (shared by both the tokenGallery and general-section return paths)');
 });
 
 test('native-preview/dist/index.html restores the react-native-web root height/overflow reset', () => {
@@ -3161,11 +3161,11 @@ test('Adaptive Glass documents all six required states: Liquid Glass, Material f
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Adaptive Glass');
   assert.match(section, /Liquid Glass/);
-  assert.match(section, /Material \(fallback\)|Material fallback/);
-  assert.match(section, /Opaque \(Reduce Transparency\)/);
+  assert.match(section, /Material · Fallback|Material \(fallback\)|Material fallback/);
+  assert.match(section, /Opaque · Reduce Transparency|Opaque \(Reduce Transparency\)/);
   assert.match(section, /Increased Contrast/);
   assert.match(section, /non-interactive/i);
-  assert.match(section, /interactive \(isInteractive: true\)/i);
+  assert.match(section, /interactive · isInteractive|interactive \(isInteractive: true\)/i);
   assert.match(section, /clipped-ancestor fallback/i);
   assert.match(section, /inheritsClipping/);
 });
@@ -4286,13 +4286,128 @@ test('Hermex Spacing renders a decision ladder choosing among the existing 12 st
 
 // ─── #607 follow-up: catalog framework (two-column Variants, five-line Props clamp) ─────────────
 
-test('a Variants specimen box lays out two responsive columns when width permits, falling back to one at narrow widths, but never for a wide itemsFill slot', () => {
+test('a Variants specimen box lays out up to three responsive columns when width permits, falling back naturally as space contracts; on the retained template/framework routes a wide itemsFill slot still stays single-column, but a Hermex main-canvas specimen slot (DSR3-04) opts into the grid even when itemsFill is true; on the retained routes, States/Configurations never opts in — only DSR3-04\'s Hermex main canvas gives States its own grid option', () => {
   const src = read(SECTION_BLOCK_PATH);
+  const generalBody = extractFunctionBody(src, 'SectionBlock');
+  const hermexBody = extractFunctionBody(src, 'HermexSectionCanvas');
   assert.match(src, /twoColumn\?:\s*boolean/, 'expected SlotItems to accept an opt-in twoColumn flag');
-  assert.match(src, /<SlotItems slot=\{def\.variants\} twoColumn \/>/, 'expected only the Variants block to opt in, not States/Configurations');
-  assert.doesNotMatch(src, /<SlotItems slot=\{def\.states\}[^/]*twoColumn/, 'States/Configurations must not opt into the two-column grid');
-  assert.match(src, /useGrid\s*=\s*twoColumn\s*&&\s*!slot\.itemsFill\s*&&\s*!isNarrow\s*&&\s*slot\.items\.length > 1/, 'expected the grid to fall back to one column for a narrow viewport or a wide itemsFill slot');
+  assert.match(generalBody, /<SlotItems slot=\{def\.variants\} twoColumn \/>/, 'expected only the retained routes\' Variants block to opt in, not States/Configurations');
+  assert.doesNotMatch(generalBody, /<SlotItems slot=\{def\.states\}[^/]*twoColumn/, 'the retained template/framework States/Configurations column must not opt into the two-column grid');
+  assert.match(hermexBody, /<SlotItems slot=\{def\.states\} twoColumn specimen \/>/, 'DSR3-04: the Hermex main canvas gives States its own two-column specimen option too');
+  // A wide itemsFill slot only stays single-column on the retained template/framework routes
+  // (no `specimen` prop reaches SlotItems there); a Hermex main-canvas specimen slot (`specimen`
+  // true) opts into the same grid even when `itemsFill` is true, since every specimen is already
+  // capped at SPECIMEN_COLUMN_MAX_WIDTH regardless of `itemsFill`.
+  assert.match(
+    src,
+    /useGrid\s*=\s*twoColumn\s*&&\s*\(specimen\s*\|\|\s*!slot\.itemsFill\)\s*&&\s*slot\.items\.length > 1/,
+    'expected the wrapping grid to apply to multi-item specimen slots while retained-route itemsFill slots remain stacked',
+  );
   assert.match(src, /exampleGrid:\s*\{\s*flexDirection:\s*'row',\s*flexWrap:\s*'wrap'/, 'expected a wrapping row style for the two-column grid');
+  assert.match(
+    src,
+    /exampleGrid:\s*\{[^}]*gap:\s*CATALOG_SPECIMEN_GRID_GAP[^}]*justifyContent:\s*'flex-start'/s,
+    'expected the itemized specimen grid to use the shared 40px specimen-grid gap and keep incomplete rows left-aligned',
+  );
+  assert.match(
+    src,
+    /exampleGridItem:\s*\{[^}]*flexBasis:\s*320[^}]*flexGrow:\s*1[^}]*maxWidth:\s*SPECIMEN_COLUMN_MAX_WIDTH/s,
+    'expected container-driven wrapping to keep each item at a comfortable minimum basis and a 402px maximum instead of forcing two cramped viewport-driven columns',
+  );
+  const slotItems = extractFunctionBody(src, 'SlotItems');
+  assert.doesNotMatch(slotItems, /useWindowDimensions|CATALOG_NARROW_BREAKPOINT|isNarrow/);
+});
+
+test('DSR3-607: an itemized Hermex main-canvas Variants/States group with itemsFill true (e.g. Hermes Card, Pending Request) still renders through the responsive two-column specimen grid, not the single stacked-column itemsFill layout', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const cardSection = extractHermesSection(sectionsSrc, 'Hermes Card');
+  const requestSection = extractHermesSection(sectionsSrc, 'Pending Request');
+  for (const section of [cardSection, requestSection]) {
+    assert.match(section, /itemsFill:\s*true/, 'expected this fixture section to keep demonstrating an itemsFill slot');
+  }
+  // The actual rendering rule lives in SectionBlock, scoped by the `specimen` boundary asserted above
+  // (SlotItems only ever receives `specimen` from HermexSectionCanvas) — this section-data assertion
+  // just pins the real-world fixture the acceptance contract names, so a future edit that removes
+  // these itemsFill groups doesn't silently make the grid rule above untested against a real case.
+  const src = read(SECTION_BLOCK_PATH);
+  assert.match(
+    src,
+    /useGrid\s*=\s*twoColumn\s*&&\s*\(specimen\s*\|\|\s*!slot\.itemsFill\)/,
+    'expected the specimen boundary to be the one place a wide itemsFill slot still reaches the two-column grid',
+  );
+});
+
+test('DSR3-607: a render()-based Hermex gallery may span three 402px columns plus two gaps and its 16px wrapper inset on a wide viewport', () => {
+  const src = read(SECTION_BLOCK_PATH);
+  const hermexBody = extractFunctionBody(src, 'HermexSectionCanvas');
+  assert.match(hermexBody, /isNarrow/, 'expected HermexSectionCanvas to know the current narrow/wide viewport, like SectionBlock already does');
+  assert.match(
+    hermexBody,
+    /def\.render\s*\?\s*\(\s*<View style=\{\[styles\.specimenColumn,\s*styles\.renderSpecimenColumn,\s*!isNarrow\s*&&\s*styles\.renderSpecimenColumnWide\]\}>\s*\{def\.render\(\)\}\s*<\/View>/s,
+    'expected a wide-viewport-only style added alongside the existing specimenColumn/renderSpecimenColumn pair, not a replacement of the narrow-viewport contract',
+  );
+  assert.match(
+    src,
+    /renderSpecimenColumnWide:\s*\{\s*maxWidth:\s*SPECIMEN_COLUMN_MAX_WIDTH\s*\*\s*3\s*\+\s*CATALOG_SPECIMEN_GRID_GAP\s*\*\s*2\s*\+\s*CATALOG_SPACE\.lg\s*\*\s*2\s*\}/,
+    'expected the wide render wrapper to accommodate three 402px columns, two 40px specimen-grid gaps, and its 16px inset on both sides',
+  );
+});
+
+test('DSR3-607: the Hermex main canvas is wide enough for three full 402px columns and gives each card 16px padding without widening retained catalog routes', () => {
+  const tokensSrc = read(TOKENS_PATH);
+  const shellSrc = read(CATALOG_SHELL_PATH);
+  const sectionSrc = read(SECTION_BLOCK_PATH);
+
+  assert.match(tokensSrc, /CATALOG_HERMEX_MAX_CONTENT_WIDTH\s*=\s*1416/);
+  assert.match(shellSrc, /hasHermexSections\s*=\s*sections\.some\(def\s*=>\s*def\.hermesReference\s*!=\s*null\)/);
+  assert.match(shellSrc, /contentContainerStyle=\{\[styles\.mainContent,\s*hasHermexSections\s*&&\s*styles\.mainContentHermex,\s*isNarrow\s*&&\s*styles\.mainContentNarrow\]\}/);
+  assert.match(shellSrc, /mainContentHermex:\s*\{\s*maxWidth:\s*CATALOG_HERMEX_MAX_CONTENT_WIDTH\s*\}/);
+  assert.match(sectionSrc, /<View style=\{\[styles\.card,\s*styles\.hermexCard\]\}>\{content\}<\/View>/);
+  assert.match(sectionSrc, /hermexCard:\s*\{\s*padding:\s*CATALOG_SPACE\.lg\s*\}/);
+});
+
+test('DSR3-607 follow-up: render galleries group independent demonstrations into responsive 402px specimen columns instead of stretching component surfaces across the two-column wrapper', () => {
+  const src = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  assert.match(
+    src,
+    /specimenGroup:\s*\{[^}]*flexBasis:\s*320[^}]*flexGrow:\s*1[^}]*maxWidth:\s*402[^}]*minWidth:\s*0/s,
+    'each ordinary render-gallery specimen group should wrap from a comfortable 320px basis and never exceed 402px',
+  );
+  assert.match(
+    src,
+    /specimenGrid:\s*\{[^}]*gap:\s*CATALOG_SPECIMEN_GRID_GAP[^}]*justifyContent:\s*'flex-start'/s,
+    'render-gallery grids should keep incomplete rows aligned to the leading edge, using the shared 40px specimen-grid gap',
+  );
+  assert.doesNotMatch(
+    src,
+    /<PreviewSpecimen\s+wide>|specimenGroupWide|wide\?:\s*boolean/,
+    'every gallery specimen should participate in the same 402px column system; composed comparisons must use adjacent bounded specimens rather than an unbounded full-row escape hatch',
+  );
+  const gridHelper = extractFunctionBody(src, 'PreviewSpecimenGrid');
+  assert.doesNotMatch(gridHelper, /useWindowDimensions|CATALOG_NARROW_BREAKPOINT/);
+  assert.match(gridHelper, /style=\{preview\.specimenGrid\}/);
+
+  for (const galleryName of [
+    'AccordionListFamilyGallery',
+    'AttachmentTileGallery',
+    'BannerFamilyGallery',
+    'CheckboxFamilyGallery',
+    'ComposerToolbarFamilyGallery',
+    'ListItemFamilyGallery',
+    'SearchFamilyGallery',
+    'SegmentedControlGallery',
+    'SelectionSheetFamilyGallery',
+    'ToastFamilyGallery',
+    'TopNavFamilyGallery',
+  ]) {
+    const gallery = extractFunctionBody(src, galleryName);
+    assert.match(gallery, /<PreviewSpecimenGrid>/, `${galleryName} should arrange its independent demonstrations in the shared responsive specimen grid`);
+    assert.match(gallery, /<PreviewSpecimen(?:\s|>)/, `${galleryName} should bound each independent demonstration as a specimen group`);
+  }
+
+  const transcriptActivity = extractFunctionBody(src, 'TranscriptActivityPreview');
+  assert.match(transcriptActivity, /<PreviewSpecimen\s/, 'the one composed Transcript Activity specimen should remain a single flow while still respecting the 402px bound');
 });
 
 test('a Props row clamps to five lines and only exposes an expand/collapse control once the real content actually exceeds that', () => {
@@ -4421,7 +4536,7 @@ test('Accordion List gallery covers both appearances, all separators, expansion 
   const previews = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previews, 'AccordionListFamilyGallery');
   for (const value of ['card', 'cardless', 'none', 'betweenRows', 'topAndBottom', 'all', 'single', 'multiple']) {
-    assert.match(body, new RegExp(value));
+    assert.match(body, new RegExp(value, 'i'));
   }
   assert.match(body, /Loading sessions/);
   assert.match(body, /No sessions/);
@@ -4523,24 +4638,37 @@ test('types.ts declares the structured Hermex decision-contract fields: HermesAd
   assert.match(meta, /adoptionStatus\?:\s*HermesAdoptionStatus/);
 });
 
-test('HermesReferenceDetails renders the four decision fields under their exact human labels, in the primary reading flow (never behind a Disclosure)', () => {
-  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
-  assert.match(detailsSrc, /Use when/);
-  assert.match(detailsSrc, /Avoid when/);
-  assert.match(detailsSrc, /Alternatives/);
-  assert.match(detailsSrc, /Adoption status/);
-  // "Primary reading flow" means outside any <Disclosure>...</Disclosure> pair — approximated here
-  // by requiring the four labels to appear textually before the file's first Disclosure usage,
-  // since both existing disclosures ("Where it appears", "Implementation notes") are rendered later.
-  const firstDisclosureIdx = detailsSrc.indexOf('<Disclosure label=');
-  assert.ok(firstDisclosureIdx > -1, 'expected at least one <Disclosure> in HermesReferenceDetails');
-  for (const label of ['Use when', 'Avoid when', 'Alternatives', 'Adoption status']) {
-    const idx = detailsSrc.indexOf(label);
-    assert.ok(idx > -1 && idx < firstDisclosureIdx, `expected "${label}" to render before the first Disclosure, not gated behind one`);
-  }
+test('DSR3-02: HermexSectionCanvas never renders the legacy def.whenToUse "VS" note or a file-path chip — that decision guidance and provenance live only in the Details inspector\'s useWhen/Source sections', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const canvasBody = extractFunctionBody(sectionBlockSrc, 'HermexSectionCanvas');
+  assert.doesNotMatch(canvasBody, /WhenToUse/, 'expected no "VS" WhenToUse note on the Hermex main canvas');
+  assert.doesNotMatch(canvasBody, /def\.path/, 'expected no file-path chip on the Hermex main canvas');
 });
 
-test('HermesReferenceDetails always renders the Alternatives field, falling back to a truthful "No direct alternative." note when an entry intentionally has an empty alternatives array, instead of hiding the field entirely', () => {
+// ─── DSR3-03: the flat, one-column Details inspector content (supersedes the Round 2 three
+// supporting-card row and its own per-card SupportingCard disclosure, both removed) ────────────────
+
+test('HermesReferenceDetails renders its eight sections in the exact required flat order: Use when, Avoid when, Alternatives, Props, Accessibility, Adoption status, Source, Implementation notes — with no SupportingCard, no per-section Disclosure, and no side-by-side card row', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  const body = extractFunctionBody(detailsSrc, 'HermesReferenceDetails');
+
+  const order = ['Use when', 'Avoid when', 'Alternatives', 'Props', 'Accessibility', 'Adoption status', 'Source', 'Implementation notes'];
+  const indices = order.map((label) => {
+    const idx = body.indexOf(`label="${label}"`);
+    assert.ok(idx > -1, `expected a DetailsSection labeled "${label}"`);
+    return idx;
+  });
+  for (let i = 1; i < indices.length; i++) {
+    assert.ok(indices[i] > indices[i - 1], `expected "${order[i]}" to render after "${order[i - 1]}"`);
+  }
+
+  assert.doesNotMatch(detailsSrc, /SupportingCard/, 'expected the per-entry SupportingCard component to be fully removed');
+  assert.doesNotMatch(detailsSrc, /Decision & product context/, 'the three-card row heading must not remain');
+  assert.doesNotMatch(detailsSrc, /Where it appears/, 'destinations render only on the main canvas\'s Screens card now, never a second time in the inspector');
+  assert.doesNotMatch(body, /<Disclosure label=/, 'the entry-level Details flow must not gate any of its eight sections behind a per-section Disclosure — the inspector panel itself scrolls');
+});
+
+test('HermesReferenceDetails always renders the Alternatives section, falling back to a truthful "No direct alternative." note when an entry intentionally has an empty alternatives array, instead of hiding the section entirely', () => {
   const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
   assert.match(
     detailsSrc,
@@ -4549,102 +4677,52 @@ test('HermesReferenceDetails always renders the Alternatives field, falling back
   );
   assert.doesNotMatch(
     detailsSrc,
-    /\{alternatives\.length > 0 \? \(\s*<DecisionField label="Alternatives">/,
-    'expected the whole Alternatives DecisionField to no longer be gated behind alternatives.length > 0 — it must render unconditionally, with the fallback covering the empty case',
+    /\{alternatives\.length > 0 \? \(\s*<DetailsSection label="Alternatives">/,
+    'expected the whole Alternatives DetailsSection to no longer be gated behind alternatives.length > 0 — it must render unconditionally, with the fallback covering the empty case',
   );
 });
 
-test('SectionBlock no longer renders the superseded def.whenToUse "VS" note for a Hermex reference entry once it has migrated to the new useWhen/avoidWhen decision contract, avoiding rendering the same fact twice', () => {
-  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
-  assert.match(
-    sectionBlockSrc,
-    /def\.whenToUse\s*&&\s*!def\.hermesReference\?\.useWhen/,
-    'expected the Hermex supporting-content block to suppress the legacy whenToUse note once hermesReference.useWhen covers the same decision',
-  );
-});
-
-// ─── Responsive three-column Hermex reference-details row ───────────────────────────────────────
-
-test('HermesReferenceDetails renders exactly three lower supporting cards, in semantic order Decision & product context, Implementation notes, Accessibility, each a restrained card reusing existing catalog tokens (white surface, hairline border, CATALOG_RADIUS.sm, CATALOG_SPACE.lg padding) distinct from the upper specimen cards', () => {
+test('HermesReferenceDetails renders Props via the shared PropsTable when the entry declares props, and a truthful "This component takes no props." fallback otherwise — the same fallback text the retained template/framework routes already use', () => {
   const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
-
-  const decisionIdx = detailsSrc.indexOf('Decision & product context');
-  const implementationIdx = detailsSrc.indexOf('Implementation notes');
-  const accessibilityIdx = detailsSrc.indexOf('Accessibility');
-  assert.ok(decisionIdx > -1, 'expected a "Decision & product context" supporting-card heading');
-  assert.ok(implementationIdx > -1, 'expected an "Implementation notes" supporting-card heading');
-  assert.ok(accessibilityIdx > -1, 'expected an "Accessibility" supporting-card heading');
-  assert.ok(
-    decisionIdx < implementationIdx && implementationIdx < accessibilityIdx,
-    'expected the three supporting cards in this exact order: Decision & product context, Implementation notes, Accessibility',
-  );
-
-  // Every human label the frozen scope requires stays discoverable in source.
-  for (const label of ['Use when', 'Avoid when', 'Alternatives', 'Adoption status', 'Product context', 'Implementation notes', 'Accessibility']) {
-    assert.ok(detailsSrc.includes(label), `expected the exact human label "${label}" in HermesReferenceDetails`);
-  }
-
-  assert.match(
-    detailsSrc,
-    /backgroundColor:\s*CATALOG_COLOR\.surface\b/,
-    'expected the supporting cards to use the white CATALOG_COLOR.surface token, distinct from the upper specimen cards\' surfaceMuted',
-  );
-  assert.match(
-    detailsSrc,
-    /borderRadius:\s*CATALOG_RADIUS\.sm\b/,
-    'expected the supporting cards to use CATALOG_RADIUS.sm, distinct from the upper specimen cards\' CATALOG_RADIUS.md',
-  );
-  assert.match(
-    detailsSrc,
-    /padding:\s*CATALOG_SPACE\.lg\b/,
-    'expected the supporting cards to use CATALOG_SPACE.lg padding',
-  );
-  assert.match(
-    detailsSrc,
-    /borderColor:\s*CATALOG_COLOR\.borderHairline\b/,
-    'expected the supporting cards to use a hairline border',
-  );
-  assert.doesNotMatch(detailsSrc, /CATALOG_RADIUS\.md/, 'the supporting cards must not reuse the upper specimen cards\' own radius token');
+  assert.match(detailsSrc, /import\s*\{\s*PropsTable\s*\}\s*from\s*'\.\.\/PropsTable'/, 'expected HermesReferenceDetails to import the shared PropsTable');
+  assert.match(detailsSrc, /props\?:\s*PropDef\[\]/, 'expected HermesReferenceDetailsProps to declare an optional props: PropDef[]');
+  assert.match(detailsSrc, /<PropsTable props=\{props\}\s*\/>/, 'expected Props to render through PropsTable');
+  assert.match(detailsSrc, /This component takes no props\./, 'expected the same truthful empty-props fallback as the retained routes');
 });
 
-test('HermesReferenceDetails stacks its three supporting cards into one column, in the same semantic order, below CATALOG_NARROW_BREAKPOINT — reading the live viewport width the same way SectionBlock does', () => {
+test('HermesReferenceDetails\'s Source section renders only implementationNotes.sourcePaths, kept separate from the Implementation notes section (status + notes), matching the flat content order\'s two distinct sections', () => {
   const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
-  assert.match(detailsSrc, /import\s*\{[^}]*\buseWindowDimensions\b[^}]*\}\s*from\s*'react-native'/, 'expected useWindowDimensions imported from react-native');
-  assert.match(
-    detailsSrc,
-    /import\s*\{[^}]*\bCATALOG_NARROW_BREAKPOINT\b[^}]*\}\s*from\s*'\.\.\/tokens'/,
-    'expected CATALOG_NARROW_BREAKPOINT imported from the shared tokens module',
-  );
-  assert.match(detailsSrc, /width\s*<\s*CATALOG_NARROW_BREAKPOINT/, 'expected a narrow-viewport comparison against the shared breakpoint');
-  assert.match(detailsSrc, /flexDirection:\s*'column'/, 'expected a column stack for the narrow-viewport supporting row');
+  const sourceBody = extractFunctionBody(detailsSrc, 'SourceContent');
+  assert.match(sourceBody, /sourcePaths/);
+  assert.doesNotMatch(sourceBody, /\.status\b/, 'Source must not also render implementationNotes.status — that belongs to the separate Implementation notes section');
+
+  const implementationOnlyBody = extractFunctionBody(detailsSrc, 'ImplementationNotesOnlyContent');
+  assert.doesNotMatch(implementationOnlyBody, /sourcePaths/, 'Implementation notes must not repeat sourcePaths — Source already rendered them');
+  assert.match(implementationOnlyBody, /\.status\b/);
+  assert.match(implementationOnlyBody, /\.notes\b/);
 });
 
-test('HermesReferenceDetails no longer collapses Implementation notes behind a Disclosure — its status/source paths/notes/implementationContent are visible directly in their own card — while Where it appears remains an accessible disclosure (aria-expanded, focus treatment, animated chevron)', () => {
-  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
-  const referenceDetailsBody = extractFunctionBody(detailsSrc, 'HermesReferenceDetails');
-  assert.doesNotMatch(
-    referenceDetailsBody,
-    /<Disclosure label="Implementation notes"/,
-    'expected the section reference-details implementation to keep Implementation notes visible in its own card',
-  );
-  assert.match(referenceDetailsBody, /<Disclosure label="Where it appears"/, 'expected the Where it appears Disclosure to remain');
-  assert.match(detailsSrc, /accessibilityRole="button"/);
-  assert.match(detailsSrc, /accessibilityState=\{\{\s*expanded\s*\}\}/);
-  assert.match(detailsSrc, /aria-expanded=\{expanded\}/);
-  assert.match(detailsSrc, /<AnimatedChevron/);
-  assert.match(detailsSrc, /triggerFocused/, 'expected the disclosure trigger to keep its focus-ring treatment');
-});
-
-test('HermesReferenceDetails accepts an accessibilityContent prop (the entry\'s accessibility guidance, with the existing truthful fallback already computed by SectionBlock) and renders it inside the Accessibility supporting card', () => {
+test('HermesReferenceDetails accepts an accessibilityContent prop (the entry\'s accessibility guidance) and renders it inside the Accessibility section, falling back to the same truthful "No accessibility notes documented." text used elsewhere in the catalog', () => {
   const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
   assert.match(
     detailsSrc,
     /accessibilityContent\??:\s*React\.ReactNode/,
-    'expected HermesReferenceDetailsProps to declare an accessibilityContent: React.ReactNode prop (optionally with its own default, for the one non-SectionBlock caller)',
+    'expected HermesReferenceDetailsProps to declare an accessibilityContent: React.ReactNode prop',
   );
-  const accessibilityHeadingIdx = detailsSrc.indexOf('Accessibility');
+  assert.match(detailsSrc, /No accessibility notes documented\./);
+  const accessibilityHeadingIdx = detailsSrc.indexOf('label="Accessibility"');
   const propUsageIdx = detailsSrc.indexOf('accessibilityContent', accessibilityHeadingIdx);
-  assert.ok(propUsageIdx > -1, 'expected accessibilityContent to be rendered after the Accessibility heading');
+  assert.ok(propUsageIdx > -1, 'expected accessibilityContent to be rendered inside the Accessibility DetailsSection');
+});
+
+test('HermesReferenceDetails renders meta.useSummary as supporting text under Use when, never as its own duplicate section (Screens destinations already own the main canvas)', () => {
+  const detailsSrc = read(HERMES_REFERENCE_DETAILS_PATH);
+  const body = extractFunctionBody(detailsSrc, 'HermesReferenceDetails');
+  const useWhenIdx = body.indexOf('label="Use when"');
+  const useSummaryIdx = body.indexOf('meta.useSummary');
+  const avoidWhenIdx = body.indexOf('label="Avoid when"');
+  assert.ok(useWhenIdx > -1 && useSummaryIdx > -1 && avoidWhenIdx > -1, 'expected Use when, useSummary, and Avoid when all present');
+  assert.ok(useWhenIdx < useSummaryIdx && useSummaryIdx < avoidWhenIdx, 'expected useSummary to render inside the Use when section, before Avoid when');
 });
 
 test('the catalog overview keeps its implementation-only evidence compact instead of inheriting empty Decision and Accessibility cards from section reference details', () => {
@@ -5183,7 +5261,7 @@ test('Issue #DSF-04 (corrected for Round 2): the Hermex Segmented Control catalo
 test('Issue #DSF-04: the Segmented Control catalog gallery\'s Fixed caption truthfully names the 40pt visual track, the 36pt selected pill inside it, and the 44pt touch target that extends beyond it, instead of attributing this geometry only to the Scrolling variant', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const galleryBody = extractFunctionBody(previewsSrc, 'SegmentedControlGallery');
-  const scrollingMarker = 'Scrolling — larger mutually-exclusive sets';
+  const scrollingMarker = 'name="Scrolling"';
   assert.ok(galleryBody.includes(scrollingMarker), 'expected the gallery to still label its Scrolling section');
   const fixedSection = galleryBody.split(scrollingMarker)[0];
   assert.match(fixedSection, /40pt/, 'expected the Fixed caption to name the 40pt visual track');
@@ -5613,66 +5691,483 @@ test('README.md and WHEN_TO_USE.md state the Round 2 guidance: Popover Menu is i
   assert.doesNotMatch(whenToUse, /Inline Reference Link/, 'the retired Inline Reference Link must no longer be named as current guidance');
 });
 
-// ─── Supporting-card disclosure (DSR2-09): each of the three lower supporting cards owns its own
-// measured-overflow expand/collapse state instead of always rendering at full, auto-computed height ─
+// ─── DSR3-03 correction: the Round 2 per-card SupportingCard measured-overflow disclosure is fully
+// removed — the Details inspector panel itself scrolls, so no individual section needs its own
+// collapse/expand affordance any more. The catalog overview keeps its own separate, compact,
+// collapsible Implementation notes path (HermesOverviewImplementationDetails/Disclosure), unaffected.
 
-test('HermesReferenceDetails.tsx defines SUPPORTING_CARD_COLLAPSED_HEIGHT = 280, the fixed collapsed height every SupportingCard measures against', () => {
+test('SupportingCard and its SUPPORTING_CARD_COLLAPSED_HEIGHT measured-overflow mechanism are fully removed from HermesReferenceDetails.tsx — the Details inspector panel itself scrolls, so no per-section card needs its own collapse/expand control', () => {
   const src = read(HERMES_REFERENCE_DETAILS_PATH);
-  assert.match(src, /const SUPPORTING_CARD_COLLAPSED_HEIGHT = 280;/);
+  assert.doesNotMatch(src, /SupportingCard/);
+  assert.doesNotMatch(src, /SUPPORTING_CARD_COLLAPSED_HEIGHT/);
+  assert.doesNotMatch(src, /supportingRow|supportingCardNarrow/);
 });
 
-test('SupportingCard owns independent per-card useState(false) expansion state, measures its own content/viewport via onLayout, and never shares row-level expansion state across the three cards', () => {
+test('the catalog overview keeps its own separate, compact, collapsible Implementation notes path (HermesOverviewImplementationDetails/Disclosure) fully unaffected by the entry-level SupportingCard removal', () => {
   const src = read(HERMES_REFERENCE_DETAILS_PATH);
-  const body = extractFunctionBody(src, 'SupportingCard');
-  assert.match(body, /useState\(false\)/, 'expected SupportingCard to own its own useState(false) expansion state');
-  assert.match(body, /viewportHeight/, 'expected SupportingCard to retain the measured available collapsed viewport height');
-  assert.ok((body.match(/onLayout=\{/g) ?? []).length >= 2, 'expected separate onLayout measurement passes for content and viewport');
-  assert.doesNotMatch(body, /ScrollView/, 'must not nest a ScrollView inside SupportingCard — the fixed collapsed viewport clips instead');
-
-  // Every card is an independent instance of the same component (own hook call per render), not a
-  // shared parent-owned boolean array/record keyed by card index — a real anti-pattern check would
-  // require executing the tree, but the source-level signal is the absence of a shared expansion
-  // record threaded down as a prop.
-  const detailsBody = src;
-  assert.doesNotMatch(detailsBody, /expandedCards\[|expandedCardIndex|sharedExpansion/i, 'must not introduce shared row-level expansion state across the three supporting cards');
-});
-
-test('SupportingCard fixes the whole collapsed card at SUPPORTING_CARD_COLLAPSED_HEIGHT, clips its remaining content viewport, and reveals a control only when measured content exceeds that available viewport', () => {
-  const src = read(HERMES_REFERENCE_DETAILS_PATH);
-  const body = extractFunctionBody(src, 'SupportingCard');
-  assert.match(
-    body,
-    /supportingCard[^\n]*!expanded[^\n]*SUPPORTING_CARD_COLLAPSED_HEIGHT|!expanded[^\n]*height:\s*SUPPORTING_CARD_COLLAPSED_HEIGHT/,
-    'expected the whole collapsed SupportingCard, not only its content child, to own the fixed 280px height',
-  );
-  assert.match(body, /overflow:\s*'hidden'/, 'expected the collapsed content viewport to clip overflow');
-  assert.match(body, /contentHeight\s*>\s*viewportHeight/, 'expected measured content to be compared with the measured available viewport, not the whole-card constant');
-});
-
-test('SupportingCard\'s disclosure control is visibly labeled "Show more"/"Show less", exposes accessibilityRole="button", accessibilityState={{ expanded }}, aria-expanded, a heading-qualified accessibility label, focus-state styling, and stays mounted across expansion/collapse', () => {
-  const src = read(HERMES_REFERENCE_DETAILS_PATH);
-  const body = extractFunctionBody(src, 'SupportingCard');
-  assert.match(body, /'Show more'/);
-  assert.match(body, /'Show less'/);
-  assert.match(body, /accessibilityRole="button"/);
-  assert.match(body, /accessibilityState=\{\{\s*expanded\s*\}\}/);
-  assert.match(body, /aria-expanded=\{expanded\}/);
-  assert.match(
-    body,
-    /\$\{expanded \? 'Show less' : 'Show more'\}\s*for\s*\$\{heading\}|`\$\{expanded[\s\S]{0,40}heading/,
-    'expected a heading-qualified accessibility label, e.g. `${expanded ? \'Show less\' : \'Show more\'} for ${heading}`',
-  );
-  assert.match(body, /focused|onFocus=/, 'expected focus-state styling on the disclosure control');
-});
-
-test('the three supporting cards preserve their wide-row / narrow-stacked layout order, and the catalog overview keeps its own separate compact Disclosure path unaffected by the SupportingCard rework', () => {
-  const src = read(HERMES_REFERENCE_DETAILS_PATH);
-  assert.match(src, /supportingRow:\s*\{\s*flexDirection:\s*'row'/, 'expected the wide-viewport row layout to survive');
-  assert.match(src, /supportingRowNarrow:\s*\{\s*flexDirection:\s*'column'/, 'expected the narrow-viewport stacked layout to survive');
-  assert.match(src, /supportingCardNarrow:\s*\{[^}]*flexGrow:\s*0[^}]*flexShrink:\s*0[^}]*flexBasis:\s*'auto'[^}]*\}/s, 'expected stacked narrow cards to disable wide-row flex growth without the zero-basis collapse caused by the flex: 0 shorthand');
-  assert.match(src, /isNarrow\s*&&\s*styles\.supportingCardNarrow/, 'expected every SupportingCard to consume the narrow no-flex style');
-
   assert.match(src, /export function HermesOverviewImplementationDetails/);
   const overviewBody = extractFunctionBody(src, 'HermesOverviewImplementationDetails');
-  assert.match(overviewBody, /<Disclosure label="Implementation notes">/, 'expected the overview to keep its own separate, compact Disclosure path, not the SupportingCard rework');
+  assert.match(overviewBody, /<Disclosure label="Implementation notes">/, 'expected the overview to keep its own separate, compact Disclosure path');
+  assert.match(src, /accessibilityRole="button"/);
+  assert.match(src, /accessibilityState=\{\{\s*expanded\s*\}\}/);
+  assert.match(src, /aria-expanded=\{expanded\}/);
+  assert.match(src, /<AnimatedChevron/);
+});
+
+// ─── DSR3-02/04: the Hermex main canvas — Variants/States/Screens (or Tokens for a token gallery),
+// every specimen column capped at 402px with 16px padding ────────────────────────────────────────
+
+test('DSR3-02/04: SectionBlock defines the exact Hermex main-canvas card labels, the 402px specimen-column cap, and its 16px (CATALOG_SPACE.lg) padding', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  assert.match(sectionBlockSrc, /label: 'Variants'/);
+  assert.match(sectionBlockSrc, /label: 'States'/);
+  assert.match(sectionBlockSrc, /label: 'Screens'/);
+  assert.match(sectionBlockSrc, /No production screens use this yet/);
+  assert.match(sectionBlockSrc, /SPECIMEN_COLUMN_MAX_WIDTH\s*=\s*402/);
+  assert.match(sectionBlockSrc, /padding:\s*CATALOG_SPACE\.lg/);
+  const hermexBody = extractFunctionBody(sectionBlockSrc, 'HermexSectionCanvas');
+  assert.match(
+    hermexBody,
+    /def\.render\s*\?\s*\(\s*<View style=\{\[styles\.specimenColumn,\s*styles\.renderSpecimenColumn,\s*!isNarrow\s*&&\s*styles\.renderSpecimenColumnWide\]\}>\s*\{def\.render\(\)\}\s*<\/View>/s,
+    'expected render()-based Hermex galleries to use the same capped, padded specimen-column contract as itemized variants instead of filling the whole card, widening to two specimen columns on a wide viewport (#607)',
+  );
+  assert.doesNotMatch(sectionBlockSrc, /render\(\)-based entry[\s\S]{0,200}unconstrained by this cap/);
+});
+
+test('DSR3-02: the Hermex main canvas (HermexSectionCanvas) renders no Props or Accessibility card, while the retained template/framework routes (the exported SectionBlock function body) keep both', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const hermexBody = extractFunctionBody(sectionBlockSrc, 'HermexSectionCanvas');
+  assert.doesNotMatch(hermexBody, /label: 'Props'/);
+  assert.doesNotMatch(hermexBody, /label: 'Accessibility'/);
+
+  const generalBody = extractFunctionBody(sectionBlockSrc, 'SectionBlock');
+  assert.match(generalBody, /label: 'Props'/);
+  assert.match(generalBody, /label: 'Accessibility'/);
+});
+
+test('DSR3-02: the Hermex main canvas\'s Screens card renders only destination.screen and destination.path — never destination.effect, a screenshot, a catalog/DEBUG fixture, or a hypothetical destination', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const screensBody = extractFunctionBody(sectionBlockSrc, 'ScreensContent');
+  assert.match(screensBody, /destination\.screen/);
+  assert.match(screensBody, /destination\.path/);
+  assert.doesNotMatch(screensBody, /destination\.effect/);
+  assert.doesNotMatch(screensBody, /screenshot|DEBUG fixture/i);
+  assert.match(screensBody, /No production screens use this yet/, 'expected the exact approved empty copy, with no trailing period');
+  assert.doesNotMatch(screensBody, /No production screens use this yet\./, 'the approved empty copy has no trailing period');
+});
+
+test('DSR3-02: foundation-only Hermes Card exposes no production Screens destinations', () => {
+  const section = extractHermesSection(read(HERMES_SECTIONS_PATH), 'Hermes Card');
+  const reference = extractHermesReferenceBlock(section);
+  const usedIn = reference.match(/usedIn:\s*\[([\s\S]*?)\]/);
+
+  assert.match(reference, /no production call site|no screen imports it yet/i);
+  assert.ok(
+    !usedIn || usedIn[1].trim() === '',
+    'Hermes Card has zero production callers, so its Screens card must use the exact empty state rather than list analogous SectionCard/SettingsCard destinations',
+  );
+});
+
+test('DSR3-02: a Hermex tokenGallery entry\'s main canvas renders only a Tokens card — no Variants, States, or Screens card at all', () => {
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const hermexBody = extractFunctionBody(sectionBlockSrc, 'HermexSectionCanvas');
+  const tokenGalleryIdx = hermexBody.indexOf('if (def.tokenGallery)');
+  assert.ok(tokenGalleryIdx > -1, 'expected an explicit def.tokenGallery branch in HermexSectionCanvas');
+  const tokenGalleryReturnEnd = hermexBody.indexOf('\n  }', tokenGalleryIdx);
+  const tokenGalleryBranch = hermexBody.slice(tokenGalleryIdx, tokenGalleryReturnEnd === -1 ? undefined : tokenGalleryReturnEnd);
+  assert.doesNotMatch(tokenGalleryBranch, /label: 'Variants'|label: 'States'|label: 'Screens'|ScreensContent/);
+  assert.match(tokenGalleryBranch, /fullWidthLabel\s*\?\?\s*'Tokens'/);
+});
+
+test('DSR3-02: the retained template/framework routes (CatalogExample.tsx, CatalogFrameworkExample.tsx) never set hermesReference, so they always render through the unchanged two-column SectionBlock path, never HermexSectionCanvas', () => {
+  const templateSrc = read(CATALOG_EXAMPLE_PATH);
+  assert.doesNotMatch(templateSrc, /hermesReference:/, 'the retained template route must not adopt hermesReference — that would divert it onto the Hermex-only main canvas');
+});
+
+// ─── DSR3-03: the single 600px Details inspector — CatalogShell owns one selected-section state and
+// renders exactly one CatalogDetailsInspector; SectionBlock's Details button is its only trigger ───
+
+test('CatalogDetailsInspector.tsx exports the exact required props type and function component', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(src, /export interface CatalogDetailsInspectorProps\s*\{/);
+  const propsMatch = src.match(/export interface CatalogDetailsInspectorProps\s*\{[\s\S]*?\n\}/);
+  assert.ok(propsMatch, 'expected an exported CatalogDetailsInspectorProps interface');
+  const propsBody = propsMatch[0];
+  assert.match(propsBody, /visible:\s*boolean/);
+  assert.match(propsBody, /title:\s*string/);
+  assert.match(propsBody, /onDismiss:\s*\(\)\s*=>\s*void/);
+  assert.match(propsBody, /children:\s*React\.ReactNode/);
+  assert.match(src, /export function CatalogDetailsInspector\(/);
+});
+
+test('CatalogDetailsInspector uses a 600px desktop max width and the shared narrow-viewport breakpoint for its full-width fallback, aligned to the right edge as an overlay (never pushing/reflowing sibling content)', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(src, /INSPECTOR_MAX_WIDTH\s*=\s*600/);
+  assert.match(src, /maxWidth:\s*INSPECTOR_MAX_WIDTH/);
+  assert.match(src, /width:\s*'100%'/, 'expected the panel to fill up to its own max width rather than a fixed 600px that never shrinks');
+  assert.match(src, /useWindowDimensions\(\)/, 'expected the inspector to read the live viewport width');
+  assert.match(src, /width\s*<\s*CATALOG_NARROW_BREAKPOINT/, 'expected the full-width fallback to activate at the shared narrow breakpoint, not only once the viewport is already narrower than 600px');
+  assert.match(src, /isNarrow\s*&&\s*styles\.panelNarrow/, 'expected the narrow state to select an explicit full-width panel style');
+  assert.match(src, /panelNarrow:\s*\{[^}]*maxWidth:\s*'100%'/s, 'expected the narrow style to remove the 600px desktop cap');
+  assert.match(src, /justifyContent:\s*'flex-end'/, 'expected the panel to align to the trailing/right edge of its absolutely-positioned overlay root');
+  assert.match(src, /StyleSheet\.absoluteFill/, 'expected the overlay root to be an absolutely-positioned fill, never a layout participant that could push sibling content');
+  assert.match(src, /root:\s*\{[^}]*overflow:\s*'hidden'/s, 'expected the overlay root to clip the panel\'s translated enter/exit position so motion never creates page-level horizontal overflow');
+});
+
+test('CatalogDetailsInspector renders a backdrop that dismisses on press, a visible Close button, and an Escape keydown listener, all wired to onDismiss', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(src, /onPress=\{onDismiss\}[\s\S]{0,80}accessibilityLabel="Dismiss"|accessibilityLabel="Dismiss"[\s\S]{0,80}onPress=\{onDismiss\}/);
+  assert.match(src, /accessibilityLabel="Close"/);
+  assert.match(src, /onPress=\{onDismiss\}/);
+  assert.match(src, /event\.key === 'Escape'/);
+  assert.match(src, /onDismiss\(\)/);
+});
+
+test('CatalogDetailsInspector saves the triggering element\'s focus, focuses its own heading on open, traps Tab within the panel while open, and restores the saved focus on close', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(src, /previouslyFocused/);
+  assert.match(src, /document\.activeElement/);
+  assert.match(src, /headingRef/);
+  assert.match(src, /!visible\s*\|\|\s*!mounted/, 'expected initial focus to wait until the inspector content is mounted');
+  assert.match(src, /\[visible,\s*mounted,\s*onDismiss\]/, 'expected the focus effect to rerun when mounted becomes true');
+  assert.match(src, /event\.key !== 'Tab'/);
+  assert.match(src, /FOCUSABLE_SELECTOR/);
+  assert.match(src, /previouslyFocused\.current\?\.focus\?\.\(\)/, 'expected focus to be restored to the saved trigger on close');
+});
+
+test('CatalogDetailsInspector uses the existing Design System motion tokens (DS_MOTION_DURATION/DS_MOTION_EASING) for its enter/exit transition, and drops the spatial transform to an opacity-only change under Reduce Motion', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(src, /import\s*\{\s*DS_MOTION_DURATION,\s*DS_MOTION_EASING\s*\}\s*from\s*'\.\.\/\.\.\/tokens'/);
+  assert.match(src, /if\s*\(!mounted\)\s*return;/, 'expected animation to start only after the inspector is mounted');
+  assert.match(src, /\[visible,\s*mounted,\s*progress,\s*reduceMotion\]/, 'expected enter and exit animation to rerun for visible changes on the mounted surface');
+  assert.match(src, /const exitDuration\s*=\s*reduceMotion\s*\?\s*0\s*:\s*DS_MOTION_DURATION\.fast/);
+  assert.match(src, /setTimeout\(\(\)\s*=>\s*setMounted\(false\),\s*exitDuration\)/, 'expected a token-timed fallback to remove the hidden dialog from the DOM/accessibility tree when RN Web does not deliver Animated.timing\'s finished callback');
+  assert.match(src, /clearTimeout\(timeout\)/);
+  assert.match(src, /reduceMotion\s*\?\s*\[\]\s*:\s*\[\{\s*translateX\s*\}\]/, 'expected Reduce Motion to drop the translateX transform, keeping only the opacity change');
+  assert.match(src, /AccessibilityInfo\.isReduceMotionEnabled/);
+});
+
+test('CatalogDetailsInspector introduces no tabs, nested drawer, portal, or new third-party dependency', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.doesNotMatch(src, /<Modal\b|from 'react-native'\s*;\s*\n[\s\S]*\bModal\b/, 'expected a plain absolutely-positioned overlay, never a rendered React Native Modal');
+  assert.doesNotMatch(src, /\btabs\b|Tab\.Navigator|TabView/i);
+  const importSources = [...src.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
+  for (const source of importSources) {
+    assert.ok(
+      source === 'react' || source === 'react-native' || source.startsWith('.'),
+      `expected only relative and react/react-native imports — no new third-party dependency (found "${source}")`,
+    );
+  }
+});
+
+test('CatalogShell owns exactly one selected-details state and renders exactly one CatalogDetailsInspector; SectionBlock\'s Details button is its only entry point — no per-card button, sticky handle, tabs, or second inspector mechanism', () => {
+  const shellSrc = read(CATALOG_SHELL_PATH);
+  assert.match(shellSrc, /import\s*\{\s*CatalogDetailsInspector\s*\}\s*from\s*'\.\/CatalogDetailsInspector'/);
+  assert.match(shellSrc, /useState<SectionDef<TId>\s*\|\s*null>\(null\)/);
+  const inspectorUsages = [...shellSrc.matchAll(/<CatalogDetailsInspector/g)];
+  assert.strictEqual(inspectorUsages.length, 1, 'expected exactly one CatalogDetailsInspector instance');
+  assert.doesNotMatch(shellSrc, /StickyHandle|TabView|Tab\.Navigator/);
+
+  const sectionBlockSrc = read(SECTION_BLOCK_PATH);
+  const detailsButtonUsages = [...sectionBlockSrc.matchAll(/<HermexDetailsButton/g)];
+  assert.strictEqual(detailsButtonUsages.length, 1, 'expected exactly one Details button call site inside HermexSectionCanvas, not one per card');
+});
+
+test('CatalogShell passes onOpenDetails to SectionBlock only for a Hermex reference entry, and makes the underlying catalog pointer-inert and accessibility-hidden while the inspector is open', () => {
+  const shellSrc = read(CATALOG_SHELL_PATH);
+  assert.match(shellSrc, /onOpenDetails=\{def\.hermesReference\s*\?\s*handleOpenDetails\s*:\s*undefined\}/);
+  assert.match(shellSrc, /pointerEvents=\{selectedDetails\s*\?\s*'none'\s*:\s*'auto'\}/);
+  assert.match(shellSrc, /aria-hidden=\{selectedDetails\s*!=\s*null\}/);
+  assert.match(shellSrc, /importantForAccessibility=\{selectedDetails\s*\?\s*'no-hide-descendants'\s*:\s*'auto'\}/);
+});
+
+test('DSR3-03: the Details inspector\'s flat content order (Use when, Avoid when, Alternatives, Props, Accessibility, Adoption status, Source, Implementation notes) is fed by CatalogShell from the exact same SectionDef/HermesReferenceMeta the main canvas reads — no duplicated catalog-only data record', () => {
+  const shellSrc = read(CATALOG_SHELL_PATH);
+  assert.match(shellSrc, /meta=\{selectedDetails\.hermesReference!\}/);
+  assert.match(shellSrc, /props=\{selectedDetails\.props\}/);
+});
+
+// ─── Task 8: Catalog specimen/metadata/guidance parity for DSR3-01, 05, 06, 07, 08, 09, 10 ─────────
+
+test('DSR3-01: the Composer Toolbar gallery reconstruction uses 16px all-around padding (not the stale 6px) and demonstrates an explicit 24px vertical divider specimen', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const elevatedStyleMatch = previewsSrc.match(/composerToolbarElevated:\s*\{[^}]*\}/);
+  assert.ok(elevatedStyleMatch, 'expected a composerToolbarElevated style');
+  assert.match(elevatedStyleMatch[0], /padding:\s*16\b/, 'expected composerToolbarElevated.padding to be 16 (DSR3-01\'s HermesSpacing.s16 all-around padding)');
+  assert.doesNotMatch(elevatedStyleMatch[0], /padding:\s*6\b/, 'the stale 6px padding must be gone');
+
+  const galleryBody = extractFunctionBody(previewsSrc, 'ComposerToolbarFamilyGallery');
+  assert.match(galleryBody, /Divider/, 'expected an explicit divider specimen inside the Composer Toolbar gallery');
+  assert.match(previewsSrc, /composerToolbarDivider:\s*\{[^}]*height:\s*24\b/s, 'expected a 24px-tall vertical divider style, matching HermexComposerToolbarDivider\'s HermesSpacing.s24 visible height');
+});
+
+test('DSR3-07: List/ListItem demonstrates a rounded, non-scaling pressed reconstruction (ListItemMetrics.cornerRadius / rounded surface, no scaleEffect/transform: scale) alongside the normal state, plus standard/none content-inset guidance', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
+  assert.match(galleryBody, /[Pp]ressed/, 'expected a pressed-state specimen in the List/ListItem gallery');
+  assert.doesNotMatch(previewsSrc, /scaleEffect|transform:\s*\[\{\s*scale/, 'DSR3-07 requires no spatial scale on the pressed treatment');
+  assert.match(galleryBody, /\.standard|contentInset/i, 'expected standard/none content-inset guidance to be documented in the List/ListItem gallery');
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const listSection = extractHermesSection(sectionsSrc, 'List / ListItem');
+  assert.match(listSection, /contentInset/, 'expected List/ListItem\'s catalog metadata (props) to document the new contentInset seam');
+  assert.match(listSection, /\.standard/);
+  assert.match(listSection, /\.none/);
+});
+
+test('DSR3-06: the Popover Menu reconstruction uses one 16px shell inset and does not stack a second horizontal inset on top of it', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(previewsSrc, /popoverSurfaceBelow:\s*\{[^}]*padding:\s*16\b[^}]*\}/s, 'expected the Popover surface to apply one 16px shell inset');
+  assert.match(previewsSrc, /popoverSurfaceAbove:\s*\{[^}]*padding:\s*16\b[^}]*\}/s, 'expected the above-trigger Popover surface to apply the same 16px shell inset');
+  assert.doesNotMatch(previewsSrc, /popoverList:\s*\{[^}]*padding:/s, 'the List wrapper itself must not add a second, stacking horizontal inset on top of the 16px shell inset');
+});
+
+test('DSR3-08: the Accordion List gallery demonstrates both a leading-present and a no-leading header specimen', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'AccordionListFamilyGallery');
+  assert.match(galleryBody, /leading:\s*null/, 'expected a no-leading header specimen (leading: null)');
+  assert.match(previewsSrc, /leading:\s*<Avatar/, 'expected the existing leading-present specimens to remain');
+});
+
+test('DSR3-09: the Selection Sheet gallery demonstrates both a multi-select horizontal and a multi-select vertical footer specimen', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'SelectionSheetFamilyGallery');
+  assert.match(galleryBody, /[Hh]orizontal/, 'expected a multi-select horizontal footer specimen');
+  assert.match(galleryBody, /[Vv]ertical/, 'expected a multi-select vertical footer specimen');
+  assert.match(previewsSrc, /SelectionSheetMultiHorizontalDemo|SelectionSheetMultiVerticalDemo|footerAxis/, 'expected the multi-select footer specimens to be named after the new footerAxis concept');
+});
+
+test('DSR3-05: the Dialog catalog reconstruction\'s dialogCard.gap is 16 (not the stale 12), and HermexDialog.swift\'s own HermexDialogMetrics.contentSpacing is verified as HermesSpacing.s16 for cross-language parity', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const dialogCardMatch = previewsSrc.match(/dialogCard:\s*\{[^}]*\}/);
+  assert.ok(dialogCardMatch, 'expected a dialogCard style');
+  assert.match(dialogCardMatch[0], /gap:\s*16\b/, 'expected dialogCard.gap to be 16');
+  assert.doesNotMatch(dialogCardMatch[0], /gap:\s*12\b/, 'the stale 12px gap must be gone');
+
+  const dialogSwiftSrc = read('../HermesMobile/Features/Shared/HermexDialog.swift');
+  assert.match(dialogSwiftSrc, /static let contentSpacing:\s*CGFloat\s*=\s*HermesSpacing\.s16/, 'expected native HermexDialogMetrics.contentSpacing to remain HermesSpacing.s16 — the catalog reconstruction is the only Dialog code path Lane C\'s scope authorizes changing');
+});
+
+test('DSR3-10: Search retains its verified equal visible-edge insets and 44x44 clear target — this round makes no source change, only re-verifies it', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(previewsSrc, /searchField:\s*\{[^}]*paddingHorizontal:\s*12\b/s, 'expected Search\'s existing 12px horizontal padding (equal visible-edge inset) to remain unchanged');
+  assert.match(previewsSrc, /searchClearTarget[\s\S]{0,400}minWidth:\s*44[\s\S]{0,80}minHeight:\s*44/, 'expected the existing 44x44 clear target to remain unchanged');
+});
+
+test('the metadata/README copy no longer describes three inline supporting cards or collapsed per-entry disclosures — it describes the Screens card and the 600px Details inspector instead', () => {
+  const readme = read('README.md');
+  assert.doesNotMatch(readme, /Decision & product context/);
+  assert.doesNotMatch(readme, /collapsed behind its own disclosures/);
+  assert.doesNotMatch(readme, /a "Where it appears" disclosure/);
+  assert.match(readme, /Details inspector/);
+  assert.match(readme, /600px/);
+  assert.match(readme, /Screens/);
+
+  const typesSrc = read(TYPES_PATH);
+  assert.doesNotMatch(typesSrc, /disclosures/i);
+});
+
+// ─── DSR3-607 (round-3 correction): 40px specimen-grid gap, one shared CatalogSpecimenHeader
+// (specimen name + anchored, non-modal per-specimen Details popover — distinct from the 600px modal
+// CatalogDetailsInspector), and PreviewSpecimen's explicit name/details/fill API ───────────────────
+
+const CATALOG_SPECIMEN_HEADER_PATH = 'native/catalog/CatalogSpecimenHeader.tsx';
+
+test('DSR3-607: CatalogSpecimenHeader exists as the shared specimen name + anchored, non-modal Details popover primitive, capped at 320px and distinct from the 600px modal CatalogDetailsInspector', () => {
+  assert.ok(existsSync(path.join(ROOT, CATALOG_SPECIMEN_HEADER_PATH)), 'expected native/catalog/CatalogSpecimenHeader.tsx to exist');
+  const src = read(CATALOG_SPECIMEN_HEADER_PATH);
+  assert.match(src, /export function CatalogSpecimenHeader/);
+  assert.match(src, /maxWidth:\s*(?:POPOVER_MAX_WIDTH|320)/, 'expected the Details popover capped at 320px');
+  assert.match(src, /POPOVER_MAX_WIDTH\s*=\s*320/);
+  assert.doesNotMatch(src, /from\s+'\.\/CatalogDetailsInspector'/, 'must not import/reuse the section-level 600px modal inspector');
+  assert.doesNotMatch(src, /<Modal\b/, 'must be a plain anchored overlay, never a modal sheet');
+});
+
+test('DSR3-607: CatalogSpecimenHeader renders no Details trigger when no details are supplied, toggles on a second trigger press, exposes an expanded accessibility state, and dismisses on Escape/outside-press while returning focus to the trigger', () => {
+  const src = read(CATALOG_SPECIMEN_HEADER_PATH);
+  assert.match(src, /details\s*!=\s*null\s*&&/, 'expected the Details button to render only when details are supplied');
+  assert.match(src, /setOpen\(\(?\w*\)?\s*=>\s*!/, 'expected pressing the trigger again to toggle it closed');
+  assert.match(src, /accessibilityState=\{\{\s*expanded:\s*open\s*\}\}/);
+  assert.match(src, /aria-expanded=\{open\}/, 'expected an explicit aria-expanded, matching this repo\'s react-native-web escape-hatch convention (see ListItem/AccordionList)');
+  assert.match(src, /key\s*[!=]==\s*'Escape'/, 'expected Escape to dismiss the open popover');
+  assert.match(src, /addEventListener\('mousedown'/, 'expected outside-press dismissal via a document-level pointer listener');
+  assert.match(src, /triggerRef[\s\S]{0,80}\.focus\?\.\(\)/, 'expected focus to return to the trigger on dismissal');
+});
+
+test('DSR3-607: tokens.ts exposes one shared 40px specimen-grid gap constant, resolving to the existing CATALOG_SPACE[\'3xl\'] step rather than a new magic number', () => {
+  const src = read(TOKENS_PATH);
+  assert.match(src, /CATALOG_SPECIMEN_GRID_GAP\s*=\s*CATALOG_SPACE\['3xl'\]/);
+});
+
+test('DSR3-607: SectionBlock\'s itemized specimen grid and HermesComponentFamiliesPreviews\' custom specimen grid both import and use the one shared 40px CATALOG_SPECIMEN_GRID_GAP constant', () => {
+  const sectionSrc = read(SECTION_BLOCK_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(sectionSrc, /import\s*\{[^}]*CATALOG_SPECIMEN_GRID_GAP[^}]*\}\s*from\s*'\.\/tokens'/);
+  assert.match(sectionSrc, /exampleGrid:\s*\{[^}]*gap:\s*CATALOG_SPECIMEN_GRID_GAP[^}]*justifyContent:\s*'flex-start'/s);
+  assert.match(previewsSrc, /import\s*\{[^}]*CATALOG_SPECIMEN_GRID_GAP[^}]*\}\s*from\s*'\.\.\/tokens'/);
+  assert.match(previewsSrc, /specimenGrid:\s*\{[^}]*gap:\s*CATALOG_SPECIMEN_GRID_GAP[^}]*justifyContent:\s*'flex-start'/s);
+});
+
+test('DSR3-607: every ordinary specimen column stays capped at 402px and owns 16px internal padding, on both the itemized and custom specimen grids', () => {
+  const sectionSrc = read(SECTION_BLOCK_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(sectionSrc, /specimenColumn:\s*\{[^}]*maxWidth:\s*SPECIMEN_COLUMN_MAX_WIDTH[^}]*padding:\s*CATALOG_SPACE\.lg/s);
+  assert.match(previewsSrc, /specimenGroup:\s*\{[^}]*maxWidth:\s*402[^}]*padding:\s*16/s);
+});
+
+test('DSR3-607: a block-level itemized specimen (itemsFill true, inside the Hermex specimen grid) stretches to its column\'s inner content width instead of shrink-wrapping', () => {
+  const sectionSrc = read(SECTION_BLOCK_PATH);
+  assert.match(sectionSrc, /exampleGridItemFill:\s*\{[^}]*alignItems:\s*'stretch'/s);
+  assert.match(sectionSrc, /specimen\s*&&\s*slot\.itemsFill\s*\?\s*styles\.exampleGridItemFill\s*:\s*styles\.exampleGridItem/);
+});
+
+test('DSR3-607: PreviewSpecimen takes an explicit name, optional details, and an optional screen-fill flag instead of brittle child inspection, and both SlotItems and PreviewSpecimen render their name/Details through the one shared CatalogSpecimenHeader primitive', () => {
+  const sectionSrc = read(SECTION_BLOCK_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.match(sectionSrc, /import\s*\{\s*CatalogSpecimenHeader\s*\}\s*from\s*'\.\/CatalogSpecimenHeader'/);
+  assert.match(sectionSrc, /<CatalogSpecimenHeader name=\{item\.name\} details=\{item\.description\}\s*\/>/);
+  assert.match(previewsSrc, /import\s*\{\s*CatalogSpecimenHeader\s*\}\s*from\s*'\.\.\/CatalogSpecimenHeader'/);
+  const specimenSignatureMatch = previewsSrc.match(/function PreviewSpecimen\(\{[\s\S]*?\}\)\s*\{/);
+  assert.ok(specimenSignatureMatch, 'expected a PreviewSpecimen function declaration');
+  const specimenSignature = specimenSignatureMatch[0];
+  assert.match(specimenSignature, /name:\s*string/, 'expected an explicit required name prop');
+  assert.match(specimenSignature, /details\?:/, 'expected an optional details prop');
+  assert.match(specimenSignature, /fill\?:\s*boolean/, 'expected an optional screen-fill prop');
+  const specimenFn = extractFunctionBody(previewsSrc, 'PreviewSpecimen');
+  assert.match(specimenFn, /<CatalogSpecimenHeader/, 'expected PreviewSpecimen to render its header through the shared primitive');
+  assert.doesNotMatch(specimenFn, /children\.toString\(\)|React\.Children\.(?:map|forEach|toArray)/, 'must not rely on brittle child inspection to derive a name/caption');
+});
+
+test('DSR3-607: VariantExample carries optional catalog-authored explanation metadata (rendered only via CatalogSpecimenHeader\'s Details popover) instead of inline caption text', () => {
+  const typesSrc = read(TYPES_PATH);
+  const variantExample = typesSrc.match(/export interface VariantExample\s*\{[\s\S]*?\n\}/);
+  assert.ok(variantExample);
+  assert.match(variantExample[0], /description\?:\s*React\.ReactNode/);
+});
+
+test('DSR3-607: the migrated Hermex custom-gallery specimens pass their catalog explanation copy through PreviewSpecimen\'s details prop instead of an inline caption Text sibling', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  for (const galleryName of [
+    'SegmentedControlGallery', 'CheckboxFamilyGallery',
+    'AttachmentTileGallery', 'BannerFamilyGallery', 'TopNavFamilyGallery', 'ComposerToolbarFamilyGallery',
+    'ToastFamilyGallery',
+  ]) {
+    const gallery = extractFunctionBody(previewsSrc, galleryName);
+    assert.doesNotMatch(gallery, /<Text style=\{preview\.caption\}>/, `${galleryName} should move its catalog explanation copy into PreviewSpecimen's details prop, not render it inline`);
+  }
+  // ListItemFamilyGallery keeps a couple of `preview.caption`-styled glyphs (a trailing "›" chevron,
+  // a "✓" picker checkmark) — those are part of the rendered specimen content itself, not catalog
+  // explanation, so only its own long explanatory paragraphs are required to have moved into details.
+  const listItemGallery = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
+  assert.match(listItemGallery, /details=\{[\s\S]*?rendered by this generic RN component/, 'expected the standard-rows explanation inside details');
+  assert.match(listItemGallery, /details=\{[\s\S]*?is not a separate family/, 'expected the picker-configuration explanation inside details');
+  const searchGallery = extractFunctionBody(previewsSrc, 'SearchFamilyGallery');
+  assert.match(searchGallery, /details=\{[\s\S]*?HermexSearchField/, 'expected the Search field\'s explanatory paragraph to move into details, while the live "Submitted N times" status stays inline');
+  assert.match(searchGallery, /Submitted \{submitCount\} \{submitUnit\}/, 'expected the live submit-count status text to remain visible, not moved into Details');
+  const selectionSheetGallery = extractFunctionBody(previewsSrc, 'SelectionSheetFamilyGallery');
+  assert.match(selectionSheetGallery, /details=\{[\s\S]*?query binding/, 'expected Selection Sheet\'s explanatory paragraph to move into details');
+});
+
+test('DSR3-607: the composite Transcript Activity specimen keeps its single semantic flow (one PreviewSpecimen, one composed demo) while moving its own trailing catalog explanation into details', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const transcriptActivity = extractFunctionBody(previewsSrc, 'TranscriptActivityPreview');
+  assert.match(transcriptActivity, /<PreviewSpecimen\s+name="Transcript Activity"/, 'expected the one composed specimen to keep an explicit name');
+  assert.doesNotMatch(transcriptActivity, /<Text style=\{preview\.caption\}>\s*Domain ownership boundary preserved/, 'expected the trailing explanation to move into details, not render inline');
+  assert.match(transcriptActivity, /Turn Summary Disclosure/, 'expected the composite\'s own structural sub-labels to remain visible — they are part of the specimen, not catalog explanation');
+});
+
+// ─── DSR3-607 round 3: specimen `name` values must stay a concise variant/state/configuration
+// identifier — instructional, rationale, comparison, or behavioral-explanation copy belongs in the
+// specimen's own `details`/`description`, never inline in the name rendered on the main gallery
+// surface. This scans every itemized VariantExample `name` (hermesSections.tsx, identified by its
+// preceding sibling `key:` field so unrelated `name:` entries — color swatches, token rows, PropDefs —
+// are not swept in) and every custom PreviewSpecimen `name` (HermesComponentFamiliesPreviews.tsx,
+// including the `AccordionSeparatorDemo` label folded into its templated name) against a fixed list of
+// explanation-like phrases that have leaked into names in the past.
+const SPECIMEN_NAME_FORBIDDEN_PHRASES = [
+  'tap to',
+  'interactive —',
+  'consolidates',
+  'shown when',
+  'composition',
+  'coverage',
+  'rather than',
+  'staged draft',
+  'caller-owned',
+  'minimum target',
+  'past the 20-option threshold',
+];
+
+function assertNoForbiddenNamePhrases(names, sourceLabel) {
+  for (const name of names) {
+    const lower = name.toLowerCase();
+    for (const phrase of SPECIMEN_NAME_FORBIDDEN_PHRASES) {
+      assert.ok(
+        !lower.includes(phrase),
+        `${sourceLabel} name "${name}" contains explanation-like phrase "${phrase}" — move it into details/description, keep the name a concise identifier`,
+      );
+    }
+  }
+}
+
+test('DSR3-607 round 3: every itemized VariantExample name in hermesSections.tsx stays a concise identifier, free of explanation-like phrases', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const names = [...sectionsSrc.matchAll(/key:\s*'[^']*',\s*name:\s*'([^']*)'/g)].map((m) => m[1]);
+  assert.ok(names.length > 0, 'expected to find at least one itemized VariantExample name to check');
+  assertNoForbiddenNamePhrases(names, 'hermesSections.tsx VariantExample');
+});
+
+test('DSR3-607 round 3: every custom PreviewSpecimen name in HermesComponentFamiliesPreviews.tsx stays a concise identifier, free of explanation-like phrases', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const names = [...previewsSrc.matchAll(/<PreviewSpecimen\s+name=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
+    .map((m) => m[1] ?? m[2]);
+  assert.ok(names.length > 0, 'expected to find at least one PreviewSpecimen name to check');
+  assertNoForbiddenNamePhrases(names, 'HermesComponentFamiliesPreviews.tsx PreviewSpecimen');
+  // AccordionSeparatorDemo folds its own `label` prop into a templated PreviewSpecimen name
+  // (`Separator style · ${label}`) — that label must stay concise too, since it renders inline.
+  const separatorLabels = [...previewsSrc.matchAll(/<AccordionSeparatorDemo\s[\s\S]*?label="([^"]*)"/g)].map((m) => m[1]);
+  assert.ok(separatorLabels.length > 0, 'expected to find at least one AccordionSeparatorDemo label to check');
+  assertNoForbiddenNamePhrases(separatorLabels, 'HermesComponentFamiliesPreviews.tsx AccordionSeparatorDemo label');
+});
+
+test('DSR3-607 round 4: remaining long structural labels move their prop anatomy into Details and keep only the concise variant/state name inline', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  assert.doesNotMatch(sectionsSrc, /name:\s*'Clipped-ancestor fallback · inheritsClipping'/);
+  assert.match(sectionsSrc, /name:\s*'Clipped ancestor'/);
+  assert.match(sectionsSrc, /description:\s*'Clipped-ancestor fallback when inheritsClipping is true\.'/);
+
+  assert.doesNotMatch(previewsSrc, /name="Standard navigation — leadingPrimary \+ center \+ trailingPrimary"/);
+  assert.doesNotMatch(previewsSrc, /name="Modal \/ editor — labeled leadingPrimary \+ trailingPrimary"/);
+  assert.doesNotMatch(previewsSrc, /name="Adaptive selected fill \(production HermexCheckbox\)"/);
+  assert.match(previewsSrc, /name="Standard navigation"[\s\S]*?details=\{/);
+  assert.match(previewsSrc, /name="Modal \/ editor"[\s\S]*?details=\{/);
+  assert.match(previewsSrc, /name="Adaptive selected fill"[\s\S]*?details=\{/);
+});
+
+test('DSR3-607 round 4: screen-width Pending Request, Composer Toolbar, and Transcript Activity surfaces fill the specimen column inner width instead of preserving fixed preview widths', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  for (const styleName of ['prCard', 'prBlock', 'prField', 'prChoiceGlass', 'prChoiceOpaque']) {
+    assert.match(
+      sectionsSrc,
+      new RegExp(`${styleName}:\\s*\\{[^}]*width:\\s*'100%'`, 's'),
+      `${styleName} should fill the 402px specimen column minus its 16px padding`,
+    );
+  }
+
+  assert.match(previewsSrc, /logRow:\s*\{[^}]*width:\s*'100%'/s);
+  assert.doesNotMatch(previewsSrc, /maxWidth:\s*240/, 'the overflowing Composer Toolbar surface should fill its column; only its inner content should overflow');
+  assert.doesNotMatch(previewsSrc, /<Card density="compact" style=\{\{ width:\s*240 \}\}>/);
+  assert.match(previewsSrc, /composerToolbarOverflowContent:\s*\{[^}]*minWidth:\s*520[^}]*flexWrap:\s*'nowrap'/s);
+  assert.match(previewsSrc, /name="Elevated — overflowing content"[\s\S]*?style=\{preview\.composerToolbarElevated\}[\s\S]*?style=\{\[preview\.row, preview\.composerToolbarOverflowContent\]\}/);
+  assert.match(previewsSrc, /name="Transparent — inside Card"[\s\S]*?<Card density="compact" style=\{\{ width:\s*'100%' \}\}>/);
+});
+
+test('DSR3-607 round 4: an open specimen Details header raises its stacking context so the anchored popover stays readable above the specimen content it overlays', () => {
+  const src = read(CATALOG_SPECIMEN_HEADER_PATH);
+  assert.match(src, /style=\{\[styles\.root,\s*open\s*&&\s*styles\.rootOpen\]\}/);
+  assert.match(src, /rootOpen:\s*\{[^}]*zIndex:\s*\d+/s);
 });

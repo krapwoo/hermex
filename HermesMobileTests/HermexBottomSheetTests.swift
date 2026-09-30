@@ -199,6 +199,14 @@ final class HermexBottomSheetTests: XCTestCase {
         XCTAssertFalse(src.contains(".presentationDetents("), "detents stay owned by the caller's .sheet")
     }
 
+    func testFooterSurfaceSpansTheSheetWidthForEitherAxis() throws {
+        let src = try hermesBottomSheetSource()
+        XCTAssertTrue(
+            src.contains(".frame(maxWidth: .infinity)\n            .background(.bar)"),
+            "the footer's bar surface must span the sheet instead of shrinking to horizontal actions"
+        )
+    }
+
     func testFooterAxisSupportsHorizontalAndVerticalStacksUsingExistingSpacingTokens() throws {
         let src = try hermesBottomSheetSource()
         XCTAssertTrue(src.contains("enum FooterAxis"))

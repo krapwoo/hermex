@@ -14,7 +14,8 @@ import SwiftUI
 /// `--hermex-overlay-lab-batch-b` scrolls straight to the Batch B follow-up section — deterministic
 /// seams so a fresh relaunch always brings those fixtures into view without manual scrolling.
 /// `--hermex-overlay-lab-batch-b-controls` targets the lower selection-controls subsection when host
-/// scrolling is unavailable. `--hermex-overlay-lab-search` scrolls straight to the Search section,
+/// scrolling is unavailable. `--hermex-overlay-lab-round-3-list-item` targets the Round 3 ListItem
+/// fixture directly. `--hermex-overlay-lab-search` scrolls straight to the Search section,
 /// exercising the custom `HermexSearchField`/`.hermexSearch` foundation the same way.
 /// `--hermex-overlay-lab-selection-sheet` scrolls straight to the Selection Sheet section (Issue
 /// #607, DSF-06), exercising the caller-presented `HermexSelectionSheet` foundation that replaced
@@ -36,6 +37,7 @@ struct HermexOverlayLab: View {
     private let jumpsToFollowupSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-followup")
     private let jumpsToBatchBSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-batch-b")
     private let jumpsToBatchBSelectionControls = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-batch-b-controls")
+    private let jumpsToRound3ListItemSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-round-3-list-item")
     private let jumpsToSearchSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-search")
     private let jumpsToSelectionSheetSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-selection-sheet")
     private let jumpsToBannerSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-banner")
@@ -88,6 +90,8 @@ struct HermexOverlayLab: View {
                     proxy.scrollTo(HermexOverlayLabBatchBSection.scrollAnchorID, anchor: .top)
                 } else if jumpsToBatchBSelectionControls {
                     proxy.scrollTo(HermexOverlayLabBatchBSelectionControls.scrollAnchorID, anchor: .top)
+                } else if jumpsToRound3ListItemSection {
+                    proxy.scrollTo(HermexOverlayLabRound3ListItemSection.scrollAnchorID, anchor: .top)
                 } else if jumpsToSearchSection {
                     proxy.scrollTo(HermexOverlayLabSearchSection.scrollAnchorID, anchor: .top)
                 } else if jumpsToSelectionSheetSection {
@@ -166,6 +170,9 @@ struct HermexOverlayLab: View {
             Text(verbatim: "Batch B Follow-up").font(.headline)
             HermexOverlayLabCardFollowup()
             HermexOverlayLabAccordionFollowup()
+            HermexOverlayLabAccordionNoLeadingFollowup()
+            HermexOverlayLabListItemFollowup()
+                .id(HermexOverlayLabRound3ListItemSection.scrollAnchorID)
             HermexOverlayLabSelectionControlsFollowup()
                 .id(HermexOverlayLabBatchBSelectionControls.scrollAnchorID)
         }
@@ -182,7 +189,8 @@ struct HermexOverlayLab: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(verbatim: "Selection Sheet").font(.headline)
             HermexOverlayLabSelectionSheetSingle()
-            HermexOverlayLabSelectionSheetMulti()
+            HermexOverlayLabSelectionSheetMultiHorizontal()
+            HermexOverlayLabSelectionSheetMultiVertical()
             HermexOverlayLabSelectionSheetSearch()
             HermexOverlayLabSelectionSheetLongList()
             HermexOverlayLabSelectionSheetNoInset()
@@ -246,6 +254,9 @@ struct HermexOverlayLab: View {
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
                 Button("Profile") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
+                HermexComposerToolbarDivider()
+                Button("Attach") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
             }
             .accessibilityIdentifier("overlay-lab-composer-toolbar-elevated-fitting")
 
@@ -263,6 +274,9 @@ struct HermexOverlayLab: View {
                 Button("Model") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
                 Button("Profile") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+                HermexComposerToolbarDivider()
+                Button("Attach") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
             }
             .padding(HermexCardMetrics.contentPadding)
@@ -295,6 +309,11 @@ private enum HermexOverlayLabBatchBSection {
 /// Namespaces the lower Batch B selection-controls scroll target used when host input is unavailable.
 private enum HermexOverlayLabBatchBSelectionControls {
     static let scrollAnchorID = "overlay-lab-batch-b-selection-controls"
+}
+
+/// Namespaces the Round 3 ListItem target used when host scrolling is unavailable.
+private enum HermexOverlayLabRound3ListItemSection {
+    static let scrollAnchorID = "overlay-lab-round-3-list-item-scroll"
 }
 
 /// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-search` jumps to on launch.
@@ -924,6 +943,126 @@ private struct HermexOverlayLabAccordionFollowup: View {
     }
 }
 
+// ─── Accordion List: no-leading Card/Cardless specimens using the HeaderLeading == EmptyView
+// initializer seam (Round 3) — the leading-present Card specimen above is unchanged. ─────────────
+private struct HermexOverlayLabAccordionNoLeadingFollowup: View {
+    private struct Group: Identifiable {
+        let id: String
+        let title: String
+        let rows: [Row]
+    }
+
+    private struct Row: Identifiable {
+        let id: String
+        let title: String
+    }
+
+    private let groups = [
+        Group(
+            id: "hermex-no-leading",
+            title: "Hermex",
+            rows: [
+                Row(id: "session-1", title: "Investigate flaky test"),
+                Row(id: "session-2", title: "Refactor auth module")
+            ]
+        )
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Accordion List (no-leading)").font(.subheadline.weight(.semibold))
+
+            Text(verbatim: "Card").font(.caption).foregroundStyle(.secondary)
+            AccordionList(
+                items: groups,
+                appearance: .card,
+                separatorStyle: .betweenRows,
+                expansion: .localSingle(initiallyExpanded: "hermex-no-leading"),
+                bodyItems: { $0.rows },
+                headerTitle: { Text($0.title) },
+                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerAccessibilityLabel: { Text($0.title) },
+                headerIsDisabled: { _ in false },
+                headerTitleAccessory: { _ in EmptyView() },
+                bodyItem: { _, row in ListItem(title: Text(row.title), action: {}) }
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-accordion-no-leading-card")
+
+            Text(verbatim: "Cardless").font(.caption).foregroundStyle(.secondary)
+            AccordionList(
+                items: groups,
+                appearance: .cardless,
+                separatorStyle: .betweenRows,
+                expansion: .localSingle(initiallyExpanded: nil),
+                bodyItems: { $0.rows },
+                headerTitle: { Text($0.title) },
+                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerAccessibilityLabel: { Text($0.title) },
+                headerIsDisabled: { _ in false },
+                headerTitleAccessory: { _ in EmptyView() },
+                bodyItem: { _, row in ListItem(title: Text(row.title), action: {}) }
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-accordion-no-leading-cardless")
+        }
+        .accessibilityIdentifier("overlay-lab-round-3-accordion-no-leading-section")
+    }
+}
+
+// ─── List Item: press-and-hold rounded feedback, standard vs. indicator-only selected chrome,
+// disabled, and pending — inside a padded/outlined Card (Round 3, rendered verification only). ────
+private struct HermexOverlayLabListItemFollowup: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: HermesSpacing.s8) {
+            Text(verbatim: "List Item (rendered verification)").font(.subheadline.weight(.semibold))
+
+            ListItem(title: Text(verbatim: "Normal row"), action: {})
+                .accessibilityIdentifier("overlay-lab-round-3-list-item-normal")
+
+            Text(verbatim: "Press and hold for rounded background feedback")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            ListItem(
+                title: Text(verbatim: "Interactive row"),
+                action: {}
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-list-item-interactive")
+
+            ListItem(
+                title: Text(verbatim: "Selected (standard chrome)"),
+                state: ListItemState(isSelected: true),
+                action: {}
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-list-item-selected-standard")
+
+            ListItem(
+                title: Text(verbatim: "Selected (indicator-only chrome)"),
+                state: ListItemState(isSelected: true),
+                selectionChrome: .indicatorOnly,
+                action: {},
+                leading: { HermexRadio(isSelected: true, action: nil) }
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-list-item-selected-indicator-only")
+
+            ListItem(
+                title: Text(verbatim: "Disabled row"),
+                state: ListItemState(isDisabled: true),
+                action: {}
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-list-item-disabled")
+
+            ListItem(
+                title: Text(verbatim: "Pending row"),
+                state: ListItemState(isPending: true),
+                action: {}
+            )
+            .accessibilityIdentifier("overlay-lab-round-3-list-item-pending")
+        }
+        .padding(HermexCardMetrics.contentPadding)
+        .hermexCardSurface(.outlined)
+        .accessibilityIdentifier("overlay-lab-round-3-list-item-section")
+    }
+}
+
 // ─── Selection controls: Radio and Checkbox, every real state plus a row-owned indicator ──────
 private struct HermexOverlayLabSelectionControlsFollowup: View {
     @State private var rowOwnedIsChecked = false
@@ -1053,8 +1192,8 @@ private struct HermexOverlayLabSelectionSheetSingle: View {
     }
 }
 
-// ─── Multi selection: two-value baseline, staged draft, Cancel, Done ──────────
-private struct HermexOverlayLabSelectionSheetMulti: View {
+// ─── Multi selection, horizontal footer: two-value baseline, staged draft, Cancel, Done ────────
+private struct HermexOverlayLabSelectionSheetMultiHorizontal: View {
     @State private var isPresented = ProcessInfo.processInfo.arguments.contains(
         "--hermex-overlay-lab-auto-selection-sheet-multi"
     )
@@ -1070,17 +1209,59 @@ private struct HermexOverlayLabSelectionSheetMulti: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Multi selection") { isPresented = true }
-                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-trigger")
+            Button("Multi selection (horizontal footer)") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-horizontal-trigger")
             Text(verbatim: "Committed: \(selections.map(\.rawValue).sorted().joined(separator: ", "))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-committed")
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-horizontal-committed")
         }
-        .accessibilityIdentifier("overlay-lab-selection-sheet-multi")
+        .accessibilityIdentifier("overlay-lab-selection-sheet-multi-horizontal")
         .sheet(isPresented: $isPresented) {
-            HermexSelectionSheet("Model Providers", selections: $selections, options: options)
-                .presentationDetents([.medium, .large])
+            HermexSelectionSheet(
+                "Model Providers",
+                selections: $selections,
+                options: options,
+                footerAxis: .horizontal
+            )
+            .presentationDetents([.medium, .large])
+        }
+    }
+}
+
+// ─── Multi selection, vertical footer: its own state, trigger, and committed-value evidence ───
+private struct HermexOverlayLabSelectionSheetMultiVertical: View {
+    @State private var isPresented = ProcessInfo.processInfo.arguments.contains(
+        "--hermex-overlay-lab-auto-selection-sheet-multi-vertical"
+    )
+    @State private var selections: Set<HermexOverlayLabProvider> = [.anthropic]
+
+    private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
+        [
+            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
+            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
+            HermexSelectionSheetOption(value: .google, title: "Google")
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Multi selection (vertical footer)") { isPresented = true }
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-vertical-trigger")
+            Text(verbatim: "Committed: \(selections.map(\.rawValue).sorted().joined(separator: ", "))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("overlay-lab-selection-sheet-multi-vertical-committed")
+        }
+        .accessibilityIdentifier("overlay-lab-selection-sheet-multi-vertical")
+        .sheet(isPresented: $isPresented) {
+            HermexSelectionSheet(
+                "Model Providers",
+                selections: $selections,
+                options: options,
+                footerAxis: .vertical
+            )
+            .presentationDetents([.medium, .large])
         }
     }
 }

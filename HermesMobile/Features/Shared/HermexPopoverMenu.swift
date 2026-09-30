@@ -17,6 +17,10 @@ enum HermexPopoverMenuMetrics {
     static let preferredWidth: CGFloat = 280
     static let minimumRowHeight: CGFloat = 44
     static let motionOffset: CGFloat = 4
+    /// The shell padding around the compact list, replacing the spacing
+    /// `HermexList.Style.compactOverlay` used to own before its own row inset and scroll-content
+    /// margin collapsed to zero (see `HermexListCompactOverlayMetrics`).
+    static let contentPadding: CGFloat = HermesSpacing.s16
 }
 
 /// Estimates how tall the menu would like to be if every row rendered fully, so
@@ -40,7 +44,7 @@ enum HermexPopoverMenuContentSizing {
 
     static func preferredContentHeight(actionCount: Int, dynamicTypeSize: DynamicTypeSize) -> CGFloat {
         CGFloat(actionCount) * estimatedRowHeight(for: dynamicTypeSize)
-            + HermexListCompactOverlayMetrics.scrollContentMargin * 2
+            + HermexPopoverMenuMetrics.contentPadding * 2
     }
 }
 
@@ -434,6 +438,7 @@ struct HermexPopoverMenu: View {
                 }
             }
         }
+        .padding(HermexPopoverMenuMetrics.contentPadding)
         .frame(width: placement.frame.width, height: placement.frame.height)
         .hermexCardSurface(.glass, cornerRadius: HermesRadius.card)
         .hermesShadow(.popover)
@@ -471,6 +476,7 @@ struct HermexPopoverMenu: View {
             title: Text(action.title),
             titleLineLimit: dynamicTypeSize.isAccessibilitySize ? 3 : 1,
             state: ListItemState(isDisabled: !action.isEnabled),
+            contentInset: .none,
             action: { activate(action) },
             leading: { icon(for: action) }
         )

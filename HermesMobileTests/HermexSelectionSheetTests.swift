@@ -36,6 +36,17 @@ final class HermexSelectionSheetTests: XCTestCase {
             .map { $0.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text)) } ?? 0
     }
 
+    /// A bounded window of `src` starting right after `marker`, used by the DSR3-09 footer-axis
+    /// ordering contracts below to scope a "which comes first" check to one switch-case branch
+    /// without depending on the exact closing-brace shape the branch ends up with.
+    private func boundedRegion(startingAt marker: String, in src: String, maxLength: Int) -> String? {
+        guard let start = src.range(of: marker) else { return nil }
+        let remainder = src[start.upperBound...]
+        let end = remainder.index(remainder.startIndex, offsetBy: maxLength, limitedBy: remainder.endIndex)
+            ?? remainder.endIndex
+        return String(remainder[remainder.startIndex..<end])
+    }
+
     /// Loads the future `HermexSelectionSheet.swift` source if it exists, or records one clear,
     /// explicit XCTest failure and returns `nil` so the caller can bail out safely — never a raw
     /// "file doesn't exist" error that would mask the intended contract being pinned.
@@ -409,6 +420,117 @@ final class HermexSelectionSheetTests: XCTestCase {
             src.contains(".padding(.horizontal, HermesSpacing.screenHorizontal)"),
             "expected Search to no longer own its own screenHorizontal padding — the outer container " +
                 "now applies the content inset's horizontal padding exactly once"
+        )
+    }
+
+    // MARK: - DSR3-09: multi-select Bottom Sheet footer axis, TopNav restructuring, and button styles
+
+    func testDefinesMultiSelectFooterAxis() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("enum HermexSelectionSheetFooterAxis"),
+            "expected the approved footer-axis enum's exact declaration"
+        )
+        XCTAssertTrue(src.contains("case horizontal"), "expected a .horizontal case")
+        XCTAssertTrue(src.contains("case vertical"), "expected a .vertical case")
+    }
+
+    func testMultiInitializerDefaultsFooterAxisToHorizontal() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("footerAxis: HermexSelectionSheetFooterAxis = .horizontal"),
+            "expected the multi-selection initializer to default its footer axis to horizontal"
+        )
+    }
+
+    func testBodyBuildsTwoModeSpecificBottomSheetCompositions() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertEqual(
+            matches(of: #"HermexBottomSheet\("#, in: src), 2,
+            "expected body to branch into two explicit single/multi HermexBottomSheet compositions " +
+                "rather than one unified call shared by both modes"
+        )
+    }
+
+    func testLeadingAndTrailingPrimaryAreUsedOnlyByTheSingleSelectionComposition() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertEqual(
+            matches(of: #"leadingPrimary:\s*\{"#, in: src), 1,
+            "expected exactly one TopNav leadingPrimary Cancel — kept only for the single-selection composition"
+        )
+        XCTAssertFalse(
+            src.contains("trailingPrimary:"),
+            "expected Done to move out of TopNav trailingPrimary — multi-selection now uses the Bottom Sheet footer instead"
+        )
+    }
+
+    func testMultiModeUsesExactlyOneBottomSheetFooterAndSingleModeUsesNone() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertEqual(
+            matches(of: #"footer:\s*\{"#, in: src), 1,
+            "expected the Bottom Sheet footer parameter to be used exactly once — by multi-selection only; single mode must render no footer"
+        )
+    }
+
+    func testFooterCancelUsesTheHermexSecondaryButtonStyle() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains(".buttonStyle(.hermex(.medium, emphasis: .secondary))"),
+            "expected the multi-select footer Cancel action to use the Hermex secondary Button style"
+        )
+    }
+
+    func testFooterDoneUsesTheHermexPrimaryButtonStyle() throws {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains(".buttonStyle(.hermex(.medium, emphasis: .primary))"),
+            "expected the multi-select footer Done action to use the Hermex primary Button style"
+        )
+    }
+
+    func testHorizontalFooterOrdersCancelThenDone() throws {
+        guard let src = selectionSheetSource() else { return }
+        guard let region = boundedRegion(startingAt: "case .horizontal:", in: src, maxLength: 300) else {
+            XCTFail("expected a `case .horizontal:` multi-select footer-axis branch")
+            return
+        }
+        guard let cancelRange = region.range(of: "Cancel"), let doneRange = region.range(of: "Done") else {
+            XCTFail("expected the horizontal footer branch to render both Cancel and Done")
+            return
+        }
+        XCTAssertTrue(
+            cancelRange.lowerBound < doneRange.lowerBound,
+            "expected horizontal multi-select footer order: Cancel then Done"
+        )
+    }
+
+    func testVerticalFooterOrdersDoneThenCancelBothFullWidth() throws {
+        guard let src = selectionSheetSource() else { return }
+        guard let region = boundedRegion(startingAt: "case .vertical:", in: src, maxLength: 700) else {
+            XCTFail("expected a `case .vertical:` multi-select footer-axis branch")
+            return
+        }
+        guard let doneRange = region.range(of: "Done"), let cancelRange = region.range(of: "Cancel") else {
+            XCTFail("expected the vertical footer branch to render both Done and Cancel")
+            return
+        }
+        XCTAssertTrue(
+            doneRange.lowerBound < cancelRange.lowerBound,
+            "expected vertical multi-select footer order: Done then Cancel"
+        )
+        XCTAssertNotNil(
+            region.range(
+                of: #"Button\s*\{\s*commitMultiSelection\(selections:\s*selections\)\s*\}\s*label:\s*\{\s*Text\(\"Done\"\)\s*\.frame\(maxWidth:\s*\.infinity\)\s*\}\s*\.buttonStyle\(\.hermex\(\.medium,\s*emphasis:\s*\.primary\)\)"#,
+                options: .regularExpression
+            ),
+            "expected the Done label to stretch before Hermex Button chrome is applied"
+        )
+        XCTAssertNotNil(
+            region.range(
+                of: #"Button\s*\{\s*dismiss\(\)\s*\}\s*label:\s*\{\s*Text\(\"Cancel\"\)\s*\.frame\(maxWidth:\s*\.infinity\)\s*\}\s*\.buttonStyle\(\.hermex\(\.medium,\s*emphasis:\s*\.secondary\)\)"#,
+                options: .regularExpression
+            ),
+            "expected the Cancel label to stretch before Hermex Button chrome is applied"
         )
     }
 

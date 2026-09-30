@@ -123,12 +123,16 @@ as a documentation shell:
 - `native/catalog/hermes/hermesSections.tsx` — the source of truth: `HermesOverview` (the
   intro/status callout, including the machine-readable manifest disclosure — see below) plus one
   `SectionDef` per Hermex-sourced entry (token group, material, native-iOS pattern, component, or
-  pattern). Every entry carries `hermesReference` metadata (`native/catalog/types.ts`) — a
-  structured decision contract (`useWhen`, `avoidWhen`, a structured `alternatives` list, and a
-  closed-vocabulary `adoptionStatus`), rendered by `HermesReferenceDetails` under the exact labels
-  "Use when" / "Avoid when" / "Alternatives" / "Adoption status" in the primary reading flow — plus
-  real destinations (`usedIn`) and technical provenance (`implementationNotes`: status, source
-  paths, notes) collapsed behind its own disclosures.
+  pattern). Every entry carries `hermesReference` metadata (`native/catalog/types.ts`) — real
+  verified destinations (`usedIn`) render on the entry's own main-canvas **Screens** card (screen
+  name and navigation path only — never `effect`, a screenshot, or a fixture), with the exact copy
+  `No production screens use this yet` when none are verified. The rest of the decision contract
+  (`useWhen`, `avoidWhen`, a structured `alternatives` list, a closed-vocabulary `adoptionStatus`),
+  `Props`, `Accessibility`, `Source`, and `Implementation notes` render in the one shared
+  **Details inspector** every section header's single `Details` button opens — a 600px right-edge
+  overlay (`CatalogDetailsInspector`, owned by `CatalogShell`) that never reflows the main canvas —
+  in that exact flat order, via `HermesReferenceDetails`. Neither the main canvas nor the inspector
+  repeats the other's content.
 - `native/catalog/hermes/hermesTokenProposal.ts` — a separate, catalog-only **normalized token
   proposal** (approved 2026-09-18): consolidated motion primitives/bundles and spacing/radius/icon/
   control/stroke/layout scales Hermex's production Swift has not adopted — nothing here is imported

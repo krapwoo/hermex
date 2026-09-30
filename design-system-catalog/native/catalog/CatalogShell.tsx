@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,25 @@ import {
   type NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { CATALOG_TYPE, CATALOG_COLOR, CATALOG_SPACE, CATALOG_MAX_CONTENT_WIDTH, CATALOG_NARROW_BREAKPOINT } from './tokens';
+import {
+  CATALOG_TYPE,
+  CATALOG_COLOR,
+  CATALOG_SPACE,
+  CATALOG_MAX_CONTENT_WIDTH,
+  CATALOG_HERMEX_MAX_CONTENT_WIDTH,
+  CATALOG_NARROW_BREAKPOINT,
+} from './tokens';
 import { CatalogSidebar } from './CatalogSidebar';
 import { SectionBlock } from './SectionBlock';
+import { CatalogDetailsInspector } from './CatalogDetailsInspector';
+import { HermesReferenceDetails } from './hermes/HermesReferenceDetails';
 import { sortIds, type NavGroup, type SectionDef } from './types';
+
+// `aria-hidden`/`importantForAccessibility` cover native for hiding the underlying catalog from
+// assistive tech while the Details inspector is open; react-native-web has no case for
+// `importantForAccessibility` on its own, so `aria-hidden` is applied explicitly too — same
+// escape-hatch convention as CatalogSidebar's own `aria-current` cast.
+const InertableView = View as unknown as ComponentType<ComponentProps<typeof View> & { 'aria-hidden'?: boolean }>;
 
 /** Stable per-section DOM anchor id (web only) — set as each section wrapper's `nativeID` (which
  *  react-native-web renders as the DOM `id` attribute), so web scrolling/scroll-spy can find a
@@ -96,6 +111,10 @@ export function CatalogShell<TId extends string>({
   subtitle?: string;
 }) {
   const subtitle = subtitleOverride ?? `${appName} · ${sections.length} components & tokens`;
+  // Hermex's reference canvas may use three ordinary 402px specimen columns. Keep that wider measure
+  // local to a catalog that actually contains Hermex reference entries so retained template/framework
+  // routes preserve their established 1200px layout.
+  const hasHermexSections = sections.some(def => def.hermesReference != null);
   // Below CATALOG_NARROW_BREAKPOINT, the sidebar-beside-main desktop layout has too little room
   // left for the main column (e.g. ~150px on a 390px phone once the fixed 240px sidebar is
   // subtracted) — narrow enough that the page title wraps character-by-character. Stack sidebar
@@ -128,6 +147,13 @@ export function CatalogShell<TId extends string>({
   }));
   const [active, setActive] = useState<TId>(sections[0]?.id);
   const offsets = useRef<Partial<Record<TId, number>>>({});
+  // DSR3-03: the one Details inspector state this whole catalog owns — which SectionDef (always a
+  // Hermex reference entry; SectionBlock only wires `onOpenDetails` for one) is currently open, or
+  // `null` when closed. Never unmounts the main ScrollView while open, so its scroll position is
+  // untouched by opening/closing the inspector.
+  const [selectedDetails, setSelectedDetails] = useState<SectionDef<TId> | null>(null);
+  const handleOpenDetails = useCallback((def: SectionDef<TId>) => setSelectedDetails(def), []);
+  const handleCloseDetails = useCallback(() => setSelectedDetails(null), []);
   // Scroll-spy should sit out a nav-click's own animated scroll — that animation fires the same
   // onScroll event dozens of times on its way to the target, and without this guard the sidebar
   // highlight races through every section it passes before landing on the clicked one. `onPress`
@@ -320,45 +346,75 @@ export function CatalogShell<TId extends string>({
   return (
     <SafeAreaProvider>
       <View style={[styles.root, isNarrow && styles.rootNarrow]}>
-        <CatalogSidebar logo={appName} caption={title} groups={groups} active={active} onPress={scrollTo} labelFor={labelFor} />
-
-        <ScrollView
-          ref={scrollRef}
-          style={styles.main}
-          contentContainerStyle={[styles.mainContent, isNarrow && styles.mainContentNarrow]}
-          onScroll={handleScroll}
-          scrollEventThrottle={50}
-          showsVerticalScrollIndicator={false}
+        {/* DSR3-03: pointer-inert and accessibility-hidden while the Details inspector is open —
+            CatalogDetailsInspector itself only owns the overlay shell (backdrop, focus, Escape); it
+            has no reference to this sibling content, so CatalogShell applies the underlay's own
+            inert state here instead. */}
+        <InertableView
+          style={[styles.underlay, isNarrow && styles.underlayNarrow]}
+          pointerEvents={selectedDetails ? 'none' : 'auto'}
+          aria-hidden={selectedDetails != null}
+          importantForAccessibility={selectedDetails ? 'no-hide-descendants' : 'auto'}
         >
-          <Text style={[styles.pageTitle, isNarrow && styles.pageTitleNarrow]}>{title}</Text>
-          <Text style={styles.pageSubtitle}>{subtitle}</Text>
+          <CatalogSidebar logo={appName} caption={title} groups={groups} active={active} onPress={scrollTo} labelFor={labelFor} />
 
-          <View style={styles.dividerLine} />
+          <ScrollView
+            ref={scrollRef}
+            style={styles.main}
+            contentContainerStyle={[styles.mainContent, hasHermexSections && styles.mainContentHermex, isNarrow && styles.mainContentNarrow]}
+            onScroll={handleScroll}
+            scrollEventThrottle={50}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={[styles.pageTitle, isNarrow && styles.pageTitleNarrow]}>{title}</Text>
+            <Text style={styles.pageSubtitle}>{subtitle}</Text>
 
-          {intro && <View style={styles.introSlot}>{intro()}</View>}
+            <View style={styles.dividerLine} />
 
-          {orderedGroups.map((group, gi) => group.defs.length > 0 && (
-            // A React.Fragment (not a View) — every section's own View must stay a direct child of
-            // the ScrollView's content so its onLayout `y` (relative to its *immediate* parent) is
-            // still the section's true absolute scroll offset, not just its offset within a nested
-            // per-group wrapper.
-            <React.Fragment key={group.label}>
-              {group.defs.map((def, i) => (
-                <View
-                  key={def.id}
-                  nativeID={sectionAnchorId(def.id)}
-                  onLayout={e => handleLayout(def.id, e.nativeEvent.layout.y)}
-                >
-                  <SectionBlock def={def} groupLabel={group.label} />
-                  {i < group.defs.length - 1 && <View style={styles.sectionDivider} />}
-                </View>
-              ))}
-              {gi < orderedGroups.length - 1 && <View style={styles.sectionDivider} />}
-            </React.Fragment>
-          ))}
+            {intro && <View style={styles.introSlot}>{intro()}</View>}
 
-          <View style={{ height: 80 }} />
-        </ScrollView>
+            {orderedGroups.map((group, gi) => group.defs.length > 0 && (
+              // A React.Fragment (not a View) — every section's own View must stay a direct child of
+              // the ScrollView's content so its onLayout `y` (relative to its *immediate* parent) is
+              // still the section's true absolute scroll offset, not just its offset within a nested
+              // per-group wrapper.
+              <React.Fragment key={group.label}>
+                {group.defs.map((def, i) => (
+                  <View
+                    key={def.id}
+                    nativeID={sectionAnchorId(def.id)}
+                    onLayout={e => handleLayout(def.id, e.nativeEvent.layout.y)}
+                  >
+                    {/* onOpenDetails is passed only for a Hermex reference entry — the retained
+                        template/framework routes never set hermesReference, so SectionBlock never
+                        renders a Details button for them regardless of this prop. */}
+                    <SectionBlock def={def} groupLabel={group.label} onOpenDetails={def.hermesReference ? handleOpenDetails : undefined} />
+                    {i < group.defs.length - 1 && <View style={styles.sectionDivider} />}
+                  </View>
+                ))}
+                {gi < orderedGroups.length - 1 && <View style={styles.sectionDivider} />}
+              </React.Fragment>
+            ))}
+
+            <View style={{ height: 80 }} />
+          </ScrollView>
+        </InertableView>
+
+        <CatalogDetailsInspector
+          visible={selectedDetails != null}
+          title={selectedDetails ? (selectedDetails.displayName ?? selectedDetails.id) : ''}
+          onDismiss={handleCloseDetails}
+        >
+          {selectedDetails && (
+            <HermesReferenceDetails
+              meta={selectedDetails.hermesReference!}
+              props={selectedDetails.props}
+              accessibilityContent={
+                selectedDetails.a11y ? <Text style={styles.detailsA11yText}>{selectedDetails.a11y}</Text> : undefined
+              }
+            />
+          )}
+        </CatalogDetailsInspector>
       </View>
     </SafeAreaProvider>
   );
@@ -371,6 +427,12 @@ const styles = StyleSheet.create({
     backgroundColor: CATALOG_COLOR.pageBackground,
     minHeight: '100%',
   },
+  // Wraps the sidebar + main ScrollView together so CatalogShell can make exactly this content
+  // pointer-inert/accessibility-hidden while the Details inspector (a sibling, absolutely positioned
+  // over the whole root) is open — mirrors `root`'s own row/narrow-column switch, since these two
+  // were direct children of `root` before the inspector needed a shared inert target.
+  underlay: { flex: 1, flexDirection: 'row' },
+  underlayNarrow: { flexDirection: 'column' },
   main: { flex: 1 },
   mainContent: {
     paddingHorizontal: 48,
@@ -381,6 +443,7 @@ const styles = StyleSheet.create({
     maxWidth: CATALOG_MAX_CONTENT_WIDTH,
     width: '100%',
   },
+  mainContentHermex: { maxWidth: CATALOG_HERMEX_MAX_CONTENT_WIDTH },
   // Narrow-viewport overrides (< CATALOG_NARROW_BREAKPOINT) — stack sidebar above main instead of
   // beside it, and shrink the main column's own padding to leave a readable width on a phone-size
   // viewport rather than the desktop's much larger fixed inset.
@@ -392,4 +455,5 @@ const styles = StyleSheet.create({
   dividerLine: { height: 1, backgroundColor: CATALOG_COLOR.borderHairline, marginBottom: 48 },
   introSlot: { marginBottom: 48 },
   sectionDivider: { height: 1, backgroundColor: CATALOG_COLOR.border, marginVertical: 48 },
+  detailsA11yText: { fontSize: CATALOG_TYPE.sm, color: CATALOG_COLOR.textMuted, lineHeight: 18 },
 });

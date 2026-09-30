@@ -20,16 +20,37 @@ import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, 
 import { Icon } from '../../../icons/Icon.native';
 import type { IconName } from '../../../icons';
 import { DS_ICON_SIZE, DS_RADIUS } from '../../../tokens';
+import { CATALOG_SPECIMEN_GRID_GAP } from '../tokens';
+import { CatalogSpecimenHeader } from '../CatalogSpecimenHeader';
 import { HERMES_COLOR_RAMPS, HERMES_SEMANTIC_COLORS } from './hermesColorCatalogData';
 import { HERMES_ATTACHMENT_SIZE } from './hermesAttachmentSize';
 import { HERMES_ICON_SIZE } from './hermesIconSize';
 import { HERMES_ICON_AVATAR_PAIRING } from './hermesIconSize';
 import { HERMES_MOTION_BUNDLES } from './hermesTokenProposal';
 
+
 const preview = StyleSheet.create({
   stack: { gap: 12 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' },
+  // #607 round-3 correction: the shared 40px specimen-grid gap (CATALOG_SPECIMEN_GRID_GAP), the same
+  // constant SectionBlock's own itemized exampleGrid imports, so the two catalogs' specimen grids
+  // can never drift apart.
+  specimenGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: CATALOG_SPECIMEN_GRID_GAP, alignItems: 'flex-start', justifyContent: 'flex-start' },
+  // Every specimen column owns 16px internal padding (matches SectionBlock's own specimenColumn).
+  specimenGroup: { flexBasis: 320, flexGrow: 1, maxWidth: 402, minWidth: 0, gap: 12, padding: 16 },
+  // Screen-fill intent (PreviewSpecimen's `fill` prop) — explicit `alignItems: 'stretch'` for a
+  // block-level component (Accordion List, Attachment, Banner, Composer/Toolbar, Input/Search, Lists,
+  // Selection Sheet, Toast, Top Nav) that should stretch to the column's inner content width instead
+  // of shrink-wrapping. Every View already defaults to 'stretch', so this mainly documents intent;
+  // a handful of recon components (e.g. Top Nav's shell) also switch their own fixed width to '100%'
+  // under this same flag — see their own call sites.
+  specimenGroupFill: { alignItems: 'stretch' },
   caption: { fontSize: 11, color: '#8a8a8a', lineHeight: 16 },
+  // #607 round-3 correction: catalog-authored explanation copy moved behind PreviewSpecimen's
+  // `details` prop uses this distinct style — visually identical to `caption` above, but kept as its
+  // own identifier so a specimen's `details` content is never confused with (or accidentally left
+  // behind as) inline main-surface caption text.
+  detailsText: { fontSize: 11, color: '#8a8a8a', lineHeight: 16 },
   label: { fontSize: 11, fontWeight: '700', color: '#1c1c1e' },
 
   // Divider
@@ -105,14 +126,14 @@ const preview = StyleSheet.create({
   // TopNav — a bounded, clipped frame so the full-width bar reads as one contained specimen rather
   // than stretching to the whole documentation column.
   topNavShell: {
-    width: 320, borderRadius: 12, overflow: 'hidden',
+    width: '100%', borderRadius: 12, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
   },
   topNavActionButton: { minWidth: 44, minHeight: 44 },
 
   // Disclosure / Log Row
   logRow: {
-    width: 260, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32,
+    width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32,
     paddingVertical: 4,
   },
   logIconSlot: { width: 20, alignItems: 'center' },
@@ -132,9 +153,17 @@ const preview = StyleSheet.create({
     backgroundColor: HERMES_COLOR_RAMPS.Blue[100], borderRadius: 6, paddingHorizontal: 4,
   },
   // Composer Toolbar — the elevated appearance's own adaptive surface/radius/shadow reconstruction.
+  // DSR3-01: 16px all-around padding (HermesSpacing.s16), replacing the stale 6px.
   composerToolbarElevated: {
-    borderRadius: 12, backgroundColor: '#ffffff', padding: 6,
+    borderRadius: 12, backgroundColor: '#ffffff', padding: 16,
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+  },
+  composerToolbarOverflowContent: { minWidth: 520, flexWrap: 'nowrap' },
+  // DSR3-01: HermexComposerToolbarDivider — hairline width, HermesSpacing.s24 (24pt) visible height,
+  // vertically centered, decorative/accessibility-hidden, scrolls with the toolbar's own content. A
+  // caller inserts it explicitly between logical control groups; the toolbar never adds one itself.
+  composerToolbarDivider: {
+    width: StyleSheet.hairlineWidth, height: 24, backgroundColor: 'rgba(0,0,0,0.18)', alignSelf: 'center',
   },
 
   // Static Skeleton (production-faithful — no animation)
@@ -152,7 +181,7 @@ const preview = StyleSheet.create({
   // Search — the custom Hermex-owned HermexSearchField reconstruction: own adaptive Neutral surface
   // and border (resting vs. focused vs. disabled) rather than a bare native `.searchable` mock.
   searchField: {
-    width: 280, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
+    width: '100%', minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, borderRadius: DS_RADIUS.medium,
     backgroundColor: HERMES_COLOR_RAMPS.Neutral[100],
     // Resting/focused border roles mirror the shared HERMEX_SURFACE_BORDER_COLORS reconstruction
@@ -230,8 +259,10 @@ const preview = StyleSheet.create({
     width: '100%', minHeight: 220, borderRadius: 20, overflow: 'hidden',
     backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: 20,
   },
+  // DSR3-05: gap 16, matching native HermexDialogMetrics.contentSpacing (HermesSpacing.s16) — the
+  // stale 12px gap here was the only actual drift; native spacing was already correct.
   dialogCard: {
-    width: '100%', borderRadius: 20, backgroundColor: '#ffffff', padding: 20, gap: 12,
+    width: '100%', borderRadius: 20, backgroundColor: '#ffffff', padding: 20, gap: 16,
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
   },
   dialogHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
@@ -265,16 +296,23 @@ const preview = StyleSheet.create({
   // `position: 'relative'` gives the surface its own stacking layer so it paints above the
   // interactive demo's `position: 'absolute'` backdrop regardless of DOM order (CSS always stacks
   // positioned elements above static ones); harmless for the static specimens, which have no backdrop.
+  // DSR3-06: one 16px shell inset (HermexPopoverMenuMetrics.contentPadding), applied once here on
+  // the surface — `popoverList` below adds no horizontal inset of its own, avoiding a stacked
+  // 16+12 double inset. Native additionally composes ListItem's own rows with `contentInset: .none`
+  // for the same reason; this generic reconstruction's ListItem has no equivalent inset toggle, so
+  // its own fixed row inset is what renders inside this one 16px boundary.
   popoverSurfaceBelow: {
-    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden',
+    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden', padding: 16,
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
     shadowColor: '#000000', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
   },
   popoverSurfaceAbove: {
-    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden',
+    position: 'relative', borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden', padding: 16,
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
     shadowColor: '#000000', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: -4 },
   },
+  // No horizontal padding here — the 16px shell inset lives on the surface above; adding one here too
+  // would stack a second, doubled inset on top of it.
   popoverList: { width: '100%' },
   popoverDestructiveText: { fontSize: 11, fontWeight: '700', color: '#d70015' },
   // The interactive demo's own outside-tap dismissal target — `StyleSheet.absoluteFill`, the same
@@ -325,6 +363,15 @@ const preview = StyleSheet.create({
   streamDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34C759' },
   attentionText: { fontSize: 11, color: '#FF3B30', fontWeight: '600' },
 
+  // DSR3-07: ListItem's rounded, non-scaling pressed reconstruction — the generic template
+  // ListItem's own pressed style is a plain full-bleed rectangle fill; this recon demonstrates the
+  // real ListItemButtonStyle instead: a rounded (ListItemMetrics.cornerRadius) Neutral pressed fill,
+  // no spatial scale. `listItemPressedRowInsetNone` demonstrates `contentInset: .none` (Popover
+  // Menu's own composition) beside the `.standard` default.
+  listItemPressedRow: { borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16 },
+  listItemPressedRowInsetNone: { paddingHorizontal: 0 },
+  listItemPressedRowActive: { backgroundColor: 'rgba(120,120,128,0.16)' },
+
   // Checkbox/Radio — component-scoped adaptive Neutral selected-fill swatch (same Light/Dark frame precedent
   // as HermesSemanticColorReference.tsx's SampleFrame, kept local since it's a one-off two-frame
   // pair rather than a full role gallery).
@@ -338,6 +385,39 @@ const preview = StyleSheet.create({
   adaptiveSwatchCircle: { width: 20, height: 20, borderRadius: 10 },
   adaptiveSwatchLabel: { fontSize: 9, fontWeight: '700', color: '#8a8a8a', fontFamily: 'Menlo' },
 });
+
+function PreviewSpecimenGrid({ children }: { children: ReactNode }) {
+  return <View style={preview.specimenGrid}>{children}</View>;
+}
+
+/** One bounded, 402px-capped, 16px-padded specimen column — the main gallery surface shows only
+ *  `name` and the rendered `children`; any catalog-authored explanation/caption goes in `details`,
+ *  rendered exclusively inside the shared `CatalogSpecimenHeader`'s anchored Details popover, never
+ *  inline. `fill` is this specimen's screen-fill intent: true for a component meant to occupy a
+ *  phone/screen row (Accordion List, Attachment, Banner, Composer/Toolbar, Input/Search, Lists,
+ *  Selection Sheet, Toast, Top Nav), which should stretch to the column's own inner content width;
+ *  omitted (default false) for a compact, intrinsically-sized specimen. Derives its name/caption from
+ *  explicit props rather than inspecting `children` — the previous inline `<Text style={preview
+ *  .label}>`/`<Text style={preview.caption}>` convention this replaces relied on visible string
+ *  content and child order, which this API makes structural instead. */
+function PreviewSpecimen({
+  name,
+  details,
+  fill,
+  children,
+}: {
+  name: string;
+  details?: ReactNode;
+  fill?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <View style={[preview.specimenGroup, fill && preview.specimenGroupFill]}>
+      <CatalogSpecimenHeader name={name} details={details} />
+      {children}
+    </View>
+  );
+}
 
 // The approved Neutral color mapping (DSF-08/DSF-09, corrected), mirroring native
 // HermexSelectionControlColors: every Hermex Radio/Checkbox specimen below passes this instead of
@@ -624,8 +704,8 @@ export function SearchFamilyGallery() {
     : SEARCH_FAMILY_SAMPLE_SESSIONS.filter((session) => session.toLowerCase().includes(trimmed));
   const submitUnit = submitCount === 1 ? 'time' : 'times';
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Enabled — HermexSearchField</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen name="Enabled — HermexSearchField" fill>
       <View
         style={[preview.searchField, isFocused && preview.searchFieldFocused]}
         accessibilityRole="search"
@@ -669,7 +749,20 @@ export function SearchFamilyGallery() {
         <Text style={preview.caption}>No results for “{query}”.</Text>
       )}
 
-      <Text style={preview.label}>Disabled</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Disabled"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The custom Hermex-owned `HermexSearchField` — its own adaptive Neutral surface and border
+            (resting, focused, disabled), not a bare native `.searchable` reconstruction. Results, filtering,
+            and the no-results state above stay caller-owned; the field itself only owns chrome, local
+            focus, the clear control, and keyboard-submit wiring. `.hermexSearch(...)` composes this exact
+            field as a persistent top content inset — it is not a second implementation.
+          </Text>
+        }
+      >
       <View
         style={[preview.searchField, preview.searchFieldDisabled]}
         accessibilityRole="search"
@@ -683,15 +776,8 @@ export function SearchFamilyGallery() {
           style={preview.searchFieldInput}
         />
       </View>
-
-      <Text style={preview.caption}>
-        The custom Hermex-owned `HermexSearchField` — its own adaptive Neutral surface and border
-        (resting, focused, disabled), not a bare native `.searchable` reconstruction. Results, filtering,
-        and the no-results state above stay caller-owned; the field itself only owns chrome, local
-        focus, the clear control, and keyboard-submit wiring. `.hermexSearch(...)` composes this exact
-        field as a persistent top content inset — it is not a second implementation.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -1221,7 +1307,10 @@ export function PopoverMenuFamilyGallery() {
         Rows compose the same real `List`/`ListItem` anatomy as the List / ListItem entry, through
         List's new transparent, separator-free `compactOverlay` variant; a destructive row's meaning
         is always textual, never color-only, and a disabled row stays visible but never activates.
-        Tapping outside the menu or pressing Escape dismisses it without running an action.
+        The surface applies one 16pt internal padding (`HermexPopoverMenuMetrics.contentPadding`) —
+        rows compose `contentInset: .none` so that single 16pt boundary is never doubled by a second,
+        stacked row-level inset. Tapping outside the menu or pressing Escape dismisses it without
+        running an action.
       </Text>
     </View>
   );
@@ -1336,7 +1425,7 @@ function ScrollingSegmentedControlPreview() {
   ];
   const [value, setValue] = useState('ready');
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: 420 }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxWidth: 402 }}>
       <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
         {options.map((option) => {
           const selected = option.value === value;
@@ -1356,25 +1445,35 @@ function ScrollingSegmentedControlPreview() {
 
 export function SegmentedControlGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Fixed — custom Hermex equal-width control</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Fixed"
+        details={
+          <Text style={preview.detailsText}>
+            Used by Tasks, Usage window selection, and the Cost/Tokens selector. A distinct 40pt
+            visual-track background sits behind the row (the 36pt selected pill plus one padding step
+            above and below), while each option's interactive row keeps the full 44pt touch target that
+            extends beyond it. At accessibility text sizes the equal-width segments grow vertically and
+            labels may wrap to two centered lines rather than clipping or shrinking. Each option preserves
+            native Button semantics while Hermex owns the track, selected pill, typography, and motion.
+          </Text>
+        }
+      >
       <FixedSegmentedControlPreview />
-      <Text style={preview.caption}>
-        Used by Tasks, Usage window selection, and the Cost/Tokens selector. A distinct 40pt
-        visual-track background sits behind the row (the 36pt selected pill plus one padding step
-        above and below), while each option's interactive row keeps the full 44pt touch target that
-        extends beyond it. At accessibility text sizes the equal-width segments grow vertically and
-        labels may wrap to two centered lines rather than clipping or shrinking. Each option preserves
-        native Button semantics while Hermex owns the track, selected pill, typography, and motion.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Scrolling — larger mutually-exclusive sets</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Scrolling"
+        details={
+          <Text style={preview.detailsText}>
+            Used by Kanban when the status set no longer fits an equal-width control. The selected pill
+            transitions between options, uses a compact 36pt visual height inside a 44pt touch target,
+            and switches instantly when Reduce Motion is enabled.
+          </Text>
+        }
+      >
       <ScrollingSegmentedControlPreview />
-      <Text style={preview.caption}>
-        Used by Kanban when the status set no longer fits an equal-width control. The selected pill
-        transitions between options, uses a compact 36pt visual height inside a 44pt touch target,
-        and switches instantly when Reduce Motion is enabled.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -1416,7 +1515,21 @@ export function ShimmerFamilyGallery() {
 // ─── List / ListItem ──────────────────────────────────────────────────────────
 export function ListItemFamilyGallery() {
   return (
-    <View style={preview.stack}>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Standard rows"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Every documented slot rendered by this generic RN component, including the title-adjacent
+            accessory, an accessibility-label override on the first row, and the loading row above (one
+            "Loading" announcement via SkeletonGroup, not one per Shimmer block). The first row's trailing
+            "Archive" Button stays independently focusable and tappable even though the row itself is also
+            pressable — the trailing accessory sits outside the row's own selecting Pressable, so an
+            accessible Pressable never swallows it.
+          </Text>
+        }
+      >
       <List>
         <ListItem
           leading={<Avatar initials="JS" size={32} />}
@@ -1438,15 +1551,20 @@ export function ListItemFamilyGallery() {
         <ListItem title="Archived" disabled trailing={<Text style={preview.caption}>›</Text>} />
         <ListItem leading={<Avatar initials="?" size={32} />} title="Loading…" loading />
       </List>
-      <Text style={preview.caption}>
-        Every documented slot rendered by this generic RN component, including the title-adjacent
-        accessory, an accessibility-label override on the first row, and the loading row above (one
-        "Loading" announcement via SkeletonGroup, not one per Shimmer block). The first row's trailing
-        "Archive" Button stays independently focusable and tappable even though the row itself is also
-        pressable — the trailing accessory sits outside the row's own selecting Pressable, so an
-        accessible Pressable never swallows it.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Picker configuration (folds in the retired Picker Row family)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Picker configuration"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            A picker is not a separate family — it is ListItem used with the real `selected`
+            accessibility state and a trailing checkmark, a distinct `commitPending` state once a choice
+            is submitted (real content stays visible, unlike the `loading` skeleton above it), and the
+            existing loading/disabled states. Model, profile, task-configuration, and skill pickers all
+            target this configuration rather than a standalone Picker Row component.
+          </Text>
+        }
+      >
       <List>
         <ListItem
           title="GPT-5.1"
@@ -1459,14 +1577,27 @@ export function ListItemFamilyGallery() {
         <ListItem title="Fetching models…" loading />
         <ListItem title="Unavailable model" disabled />
       </List>
-      <Text style={preview.caption}>
-        A picker is not a separate family — it is ListItem used with the real `selected`
-        accessibility state and a trailing checkmark, a distinct `commitPending` state once a choice
-        is submitted (real content stays visible, unlike the `loading` skeleton above it), and the
-        existing loading/disabled states. Model, profile, task-configuration, and skill pickers all
-        target this configuration rather than a standalone Picker Row component.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>SessionListItem composition</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="SessionListItem"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            This SessionListItem composition is a new, foundation-only demonstration with no production
+            call site — it composes ListItem's leading/title/description/metadata/trailing slots with
+            session-specific anatomy: a streaming indicator dot (titleAccessory), an attention-status
+            metadata line, and responsive reflow at narrow widths. Production's live session row is
+            SessionRowView, which keeps its title plain and shows the match as a separate highlighted
+            excerpt line beneath the title (`SessionSearchExcerpt.highlighted`). This generic ListItem
+            preview does not model that dedicated excerpt line; its titleAccessory badge demonstrates
+            only the separate title-adjacent slot, not search highlighting. Native Button wrapping,
+            swipe actions, context menus,
+            selection background, transitions, and the single screen-level horizontal inset are
+            caller-owned in production by SessionInteractiveRow, which wraps SessionRowView (not this
+            SessionListItem) in SessionListComponents.swift.
+          </Text>
+        }
+      >
       <List>
         <ListItem
           leading={<Avatar initials="HM" size={32} backgroundColor="#3478F6" />}
@@ -1484,33 +1615,69 @@ export function ListItemFamilyGallery() {
           trailingText="1d"
         />
       </List>
-      <Text style={preview.caption}>
-        This SessionListItem composition is a new, foundation-only demonstration with no production
-        call site — it composes ListItem's leading/title/description/metadata/trailing slots with
-        session-specific anatomy: a streaming indicator dot (titleAccessory), an attention-status
-        metadata line, and responsive reflow at narrow widths. Production's live session row is
-        SessionRowView, which keeps its title plain and shows the match as a separate highlighted
-        excerpt line beneath the title (`SessionSearchExcerpt.highlighted`). This generic ListItem
-        preview does not model that dedicated excerpt line; its titleAccessory badge demonstrates
-        only the separate title-adjacent slot, not search highlighting. Native Button wrapping,
-        swipe actions, context menus,
-        selection background, transitions, and the single screen-level horizontal inset are
-        caller-owned in production by SessionInteractiveRow, which wraps SessionRowView (not this
-        SessionListItem) in SessionListComponents.swift.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>compactOverlay style (unchanged standard specimen above; this row demonstrates List's second variant)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="compactOverlay style"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            `variant="compactOverlay"` renders the same real `List`/`ListItem` anatomy with no separators
+            on a transparent, bounded-height, internally-scrolling container — the exact style Popover
+            Menu composes for its own floating action rows (see the Popover Menu entry). `standard`
+            stays the unchanged default shown in every specimen above.
+          </Text>
+        }
+      >
       <List variant="compactOverlay" maxHeight={140} style={preview.compactOverlayDemoList}>
         <ListItem title="Rename" onPress={() => {}} />
         <ListItem title="Duplicate" onPress={() => {}} />
         <ListItem title="Delete" onPress={() => {}} />
       </List>
-      <Text style={preview.caption}>
-        `variant="compactOverlay"` renders the same real `List`/`ListItem` anatomy with no separators
-        on a transparent, bounded-height, internally-scrolling container — the exact style Popover
-        Menu composes for its own floating action rows (see the Popover Menu entry). `standard`
-        stays the unchanged default shown in every specimen above.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Pressed feedback · Content inset"
+        details={
+          <Text style={preview.detailsText}>
+            Press and hold either demo below to see the pressed feedback. Every tappable row's pressed
+            surface is a rounded rectangle at `ListItemMetrics.cornerRadius`
+            — never the plain full-bleed rectangle fill this generic template's own `pressed` style still
+            uses — with no spatial scale, transitioning color/opacity over `HermesMotion.Bundle
+            .stateChange` (150ms). `contentInset: .standard` (left) keeps ListItem's existing horizontal
+            inset; `contentInset: .none` (right) removes it — the composition Popover Menu uses so its
+            own 16pt shell inset is never doubled (see the Popover Menu entry). Disabled and pending rows
+            show no pressed feedback at all.
+          </Text>
+        }
+      >
+      <View style={preview.row}>
+        <ListItemPressedRowDemo label="Standard inset" inset="standard" />
+        <ListItemPressedRowDemo label="None inset (Popover composition)" inset="none" />
+      </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
+  );
+}
+
+// DSR3-07: a hand-built recon of ListItem's real rounded pressed `ButtonStyle` — the generic
+// template's own ListItem has no such style (a plain rectangle `pressed` fill, no rounding, no
+// content-inset seam), so this demonstrates the real Hermex treatment directly rather than a
+// bolted-on prop this shared component doesn't have.
+function ListItemPressedRowDemo({ label, inset }: { label: string; inset: 'standard' | 'none' }) {
+  const [pressed, setPressed] = useState(false);
+  return (
+    <Pressable
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={[
+        preview.listItemPressedRow,
+        inset === 'none' && preview.listItemPressedRowInsetNone,
+        pressed && preview.listItemPressedRowActive,
+      ]}
+    >
+      <Text style={preview.label}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -1592,87 +1759,121 @@ function AccordionListCardlessSingleDemo() {
   );
 }
 
+// DSR3-08: no-leading header mode — `leading: null` (no avatar/icon slot at all). Header title starts
+// at ListItem's own standard content column, and body rows/dividers align to that same column
+// instead of the avatar-derived indentation the leading-present demos above use.
+function AccordionListNoLeadingDemo() {
+  const [expandedIds, setExpandedIds] = useState<string[]>(['hermex']);
+  return (
+    <AccordionList
+      items={ACCORDION_PROJECTS}
+      appearance="card"
+      separatorStyle="betweenRows"
+      mode="multiple"
+      expandedIds={expandedIds}
+      onExpandedIdsChange={setExpandedIds}
+      getHeader={(project) => ({ title: project.title, description: `${project.sessions.length} sessions`, leading: null })}
+      getBodyItems={(project) => project.sessions}
+      renderBodyItem={(_project, session) => (
+        <ListItem key={session.id} title={session.title} description={session.description} />
+      )}
+    />
+  );
+}
+
+function AccordionSeparatorDemo({
+  separatorStyle,
+  label,
+  details,
+}: {
+  separatorStyle: 'none' | 'betweenRows' | 'topAndBottom' | 'all';
+  label: string;
+  details?: ReactNode;
+}) {
+  return (
+    <PreviewSpecimen name={`Separator style · ${label}`} details={details} fill>
+      <AccordionList
+        items={ACCORDION_PROJECTS.slice(0, 1)}
+        appearance="cardless"
+        separatorStyle={separatorStyle}
+        mode="multiple"
+        initialExpandedIds={['hermex']}
+        getHeader={(project) => ({ title: project.title, leading: <Avatar iconName="briefcase" size="small" /> })}
+        getBodyItems={(project) => project.sessions}
+        renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
+      />
+    </PreviewSpecimen>
+  );
+}
+
 export function AccordionListFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Card · multiple (interactive — tap a header)</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Card · Multiple"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Interactive — tap a header to expand or collapse it. Header titles use label typography
+            (semibold); session/body titles stay on the regular body
+            weight, so the project header reads visibly stronger than the sessions it discloses. The card
+            composes the shared Card component (outlined surface) for its 16pt horizontal content
+            padding; the chevron renders at the 20pt (medium) icon-size step; and body expansion/
+            collapse visibly animates (respecting Reduce Motion) instead of snapping open or shut.
+          </Text>
+        }
+      >
       <AccordionListCardMultipleDemo />
-      <Text style={preview.caption}>
-        Header titles use label typography (semibold); session/body titles stay on the regular body
-        weight, so the project header reads visibly stronger than the sessions it discloses. The card
-        composes the shared Card component (outlined surface) for its 16pt horizontal content
-        padding; the chevron renders at the 20pt (medium) icon-size step; and body expansion/
-        collapse visibly animates (respecting Reduce Motion) instead of snapping open or shut.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Cardless · single (interactive — opening one closes the other)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Cardless · Single"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Interactive — opening one header closes the other. Collapsed cardless project headers share
+            one divider between adjacent rows; expanding a
+            second header collapses the first back to zero-or-one open, and tapping the open header
+            again collapses it to none. Cardless adds no Accordion-level horizontal outer padding — only
+            ListItem's own row insets apply. The divider directly under an open header spans the full
+            available width; the divider between two session rows begins at their own text column
+            (avatar width + header/body gap + ListItem's own horizontal inset), not the row's outer edge.
+          </Text>
+        }
+      >
       <AccordionListCardlessSingleDemo />
-      <Text style={preview.caption}>
-        Collapsed cardless project headers share one divider between adjacent rows; expanding a
-        second header collapses the first back to zero-or-one open, and tapping the open header
-        again collapses it to none. Cardless adds no Accordion-level horizontal outer padding — only
-        ListItem's own row insets apply. The divider directly under an open header spans the full
-        available width; the divider between two session rows begins at their own text column
-        (avatar width + header/body gap + ListItem's own horizontal inset), not the row's outer edge.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Separator styles: none · betweenRows · topAndBottom · all</Text>
-      <View style={preview.row}>
-        <View style={{ width: 220 }}>
-          <Text style={preview.caption}>none</Text>
-          <AccordionList
-            items={ACCORDION_PROJECTS.slice(0, 1)}
-            appearance="cardless"
-            separatorStyle="none"
-            mode="multiple"
-            initialExpandedIds={['hermex']}
-            getHeader={(project) => ({ title: project.title, leading: <Avatar iconName="briefcase" size="small" /> })}
-            getBodyItems={(project) => project.sessions}
-            renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
-          />
-        </View>
-        <View style={{ width: 220 }}>
-          <Text style={preview.caption}>betweenRows</Text>
-          <AccordionList
-            items={ACCORDION_PROJECTS.slice(0, 1)}
-            appearance="cardless"
-            separatorStyle="betweenRows"
-            mode="multiple"
-            initialExpandedIds={['hermex']}
-            getHeader={(project) => ({ title: project.title, leading: <Avatar iconName="briefcase" size="small" /> })}
-            getBodyItems={(project) => project.sessions}
-            renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
-          />
-        </View>
-        <View style={{ width: 220 }}>
-          <Text style={preview.caption}>topAndBottom — the top line sits above the header, cardless collapsed rows keep sharing a single boundary between projects</Text>
-          <AccordionList
-            items={ACCORDION_PROJECTS.slice(0, 1)}
-            appearance="cardless"
-            separatorStyle="topAndBottom"
-            mode="multiple"
-            initialExpandedIds={['hermex']}
-            getHeader={(project) => ({ title: project.title, leading: <Avatar iconName="briefcase" size="small" /> })}
-            getBodyItems={(project) => project.sessions}
-            renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
-          />
-        </View>
-        <View style={{ width: 220 }}>
-          <Text style={preview.caption}>all</Text>
-          <AccordionList
-            items={ACCORDION_PROJECTS.slice(0, 1)}
-            appearance="cardless"
-            separatorStyle="all"
-            mode="multiple"
-            initialExpandedIds={['hermex']}
-            getHeader={(project) => ({ title: project.title, leading: <Avatar iconName="briefcase" size="small" /> })}
-            getBodyItems={(project) => project.sessions}
-            renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
-          />
-        </View>
-      </View>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Disabled header</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Card · Multiple · No leading"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Interactive — tap a header to expand or collapse it. `leading: null` (no leading initializer)
+            removes the avatar-width-derived indentation
+            entirely: the header title starts at ListItem's own standard content column, body rows keep
+            their own standard inset, and the divider between two body rows aligns to that same column
+            instead of the leading-present demos' avatar-derived one above.
+          </Text>
+        }
+      >
+      <AccordionListNoLeadingDemo />
+      </PreviewSpecimen>
+      <AccordionSeparatorDemo separatorStyle="none" label="none" />
+      <AccordionSeparatorDemo separatorStyle="betweenRows" label="betweenRows" />
+      <AccordionSeparatorDemo
+        separatorStyle="topAndBottom"
+        label="topAndBottom"
+        details={
+          <Text style={preview.detailsText}>
+            A top line renders above the header; collapsed cardless rows share one project boundary.
+          </Text>
+        }
+      />
+      <AccordionSeparatorDemo separatorStyle="all" label="all" />
+      <PreviewSpecimen
+        name="Disabled header"
+        fill
+        details={<Text style={preview.detailsText}>A disabled header never toggles, regardless of tap or accessibility action.</Text>}
+      >
       <AccordionList
         items={[{ id: 'archived', title: 'Archived project', sessions: [] as AccordionSessionRow[] }]}
         appearance="card"
@@ -1688,9 +1889,19 @@ export function AccordionListFamilyGallery() {
         getBodyItems={(project) => project.sessions}
         renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} />}
       />
-      <Text style={preview.caption}>A disabled header never toggles, regardless of tap or accessibility action.</Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Caller-composed loading, empty, and “Show all” body rows</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Loading · Empty · Show all"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The component renders every body row a caller supplies, including loading, empty, and
+            “Show all” rows — it never caps row count or invents its own product messaging. Body rows
+            also align to the header title column, matching the header's leading avatar width plus the
+            shared row gap.
+          </Text>
+        }
+      >
       <AccordionList
         items={[
           { id: 'loading', title: 'Loading project', sessions: [{ id: 'loading-row', title: 'Loading sessions…' }] },
@@ -1712,13 +1923,8 @@ export function AccordionListFamilyGallery() {
         getBodyItems={(project) => project.sessions}
         renderBodyItem={(_project, session) => <ListItem key={session.id} title={session.title} description={session.description} />}
       />
-      <Text style={preview.caption}>
-        The component renders every body row a caller supplies, including loading, empty, and
-        “Show all” rows — it never caps row count or invents its own product messaging. Body rows
-        also align to the header title column, matching the header's leading avatar width plus the
-        shared row gap.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -1759,43 +1965,62 @@ function CheckboxRowOwnedDemo() {
 
 export function CheckboxFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Unchecked · Checked</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen name="Unchecked · Checked">
       <View style={preview.row}>
         <Checkbox checked={false} onChange={() => {}} label="Unchecked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
         <Checkbox checked={true} onChange={() => {}} label="Checked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>Disabled</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen name="Disabled">
       <View style={preview.row}>
         <Checkbox checked={false} onChange={() => {}} disabled label="Disabled, unchecked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
         <Checkbox checked={true} onChange={() => {}} disabled label="Disabled, checked" colors={HERMEX_SELECTION_CONTROL_COLORS} />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>Interactive (tap to toggle; Tab to focus)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Interactive"
+        details={
+          <Text style={preview.detailsText}>
+            Tap to toggle; Tab to focus. Tab reaches the box and shows a focus ring around it; a tap or
+            Space/Enter toggles it — the
+            real, live generic catalog Checkbox this entry documents directly, not a static picture.
+          </Text>
+        }
+      >
       <CheckboxInteractiveDemo />
-      <Text style={preview.caption}>
-        Tab reaches the box and shows a focus ring around it; a tap or Space/Enter toggles it — the
-        real, live generic catalog Checkbox this entry documents directly, not a static picture.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Adaptive selected fill (production HermexCheckbox)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Adaptive selected fill"
+        details={
+          <Text style={preview.detailsText}>
+            Production HermexCheckbox fills and borders the checked box with the adaptive semantic
+            Neutral mapping — deep Neutral.s950 in light appearance and near-white Neutral.s50 in dark — not
+            a fixed accent color; the checkmark uses the inverse Neutral pair so it remains legible
+            against either. Every Checkbox specimen above now passes that same light-appearance mapping
+            via the shared colors prop, matching native instead of the reusable template's own unrelated
+            blue default.
+          </Text>
+        }
+      >
       <AdaptiveSelectedFillSwatch shape="square" />
-      <Text style={preview.caption}>
-        Production HermexCheckbox fills and borders the checked box with the adaptive semantic
-        Neutral mapping — deep Neutral.s950 in light appearance and near-white Neutral.s50 in dark — not
-        a fixed accent color; the checkmark uses the inverse Neutral pair so it remains legible
-        against either. Every Checkbox specimen above now passes that same light-appearance mapping
-        via the shared colors prop, matching native instead of the reusable template's own unrelated
-        blue default.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Row-owned indicator (multi-select list)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Row-owned indicator (multi-select list)"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Each row's own Pressable owns the tap and exposes `accessibilityState.selected`; the leading
+            Checkbox omits `onChange`, so it renders the identical box/checkmark visual as a
+            non-interactive, accessibility-hidden indicator rather than a second control nested inside the
+            row — the same one-control-per-row rule ListItem's picker checkmark (see List / ListItem)
+            already follows, applied here to a multi-select rather than a single-select choice.
+          </Text>
+        }
+      >
       <CheckboxRowOwnedDemo />
-      <Text style={preview.caption}>
-        Each row's own Pressable owns the tap and exposes `accessibilityState.selected`; the leading
-        Checkbox omits `onChange`, so it renders the identical box/checkmark visual as a
-        non-interactive, accessibility-hidden indicator rather than a second control nested inside the
-        row — the same one-control-per-row rule ListItem's picker checkmark (see List / ListItem)
-        already follows, applied here to a multi-select rather than a single-select choice.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -1810,8 +2035,22 @@ export function AttachmentTileGallery() {
   const messageFileNameWidth = { maxWidth: HERMES_ATTACHMENT_SIZE.messageGridCell - HERMES_ATTACHMENT_SIZE.messageFileTextInset };
 
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Message attachment · Composer attachment (Compact Card composition)</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Message attachment · Composer attachment"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Both normal (non-mini) tiles compose Compact Card for their outer surface. The 118×118pt
+            message tile mirrors GridAttachmentCell's centered glyph, filename, and extension stack; its
+            filename width is messageGridCell minus messageFileTextInset (18pt). The composer tile uses
+            the fileIconPanelWidth × fileIconPanelHeight (58×68pt) icon panel and is fixed to
+            composerFileTileWidth × composerFileTileMinHeight (222×92pt; 280×112pt under accessibility
+            text sizes), with composerFileTextWidth (128pt; 160pt accessibility). It adds a real remove
+            Button overlapping the corner by removeOverlap (6pt); the sent message tile does not.
+          </Text>
+        }
+      >
       <View style={preview.row}>
         <Card density="compact" style={[preview.messageFileTile, gridCellSize]}>
           <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Red[500]} />
@@ -1851,17 +2090,18 @@ export function AttachmentTileGallery() {
           />
         </View>
       </View>
-      <Text style={preview.caption}>
-        Both normal (non-mini) tiles compose Compact Card for their outer surface. The 118×118pt
-        message tile mirrors GridAttachmentCell's centered glyph, filename, and extension stack; its
-        filename width is messageGridCell minus messageFileTextInset (18pt). The composer tile uses
-        the fileIconPanelWidth × fileIconPanelHeight (58×68pt) icon panel and is fixed to
-        composerFileTileWidth × composerFileTileMinHeight (222×92pt; 280×112pt under accessibility
-        text sizes), with composerFileTextWidth (128pt; 160pt accessibility). It adds a real remove
-        Button overlapping the corner by removeOverlap (6pt); the sent message tile does not.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Accessibility composer geometry</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Accessibility composer geometry"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Accessibility text sizes expand the icon panel to
+            fileIconPanelWidthAccessibility × fileIconPanelHeightAccessibility (76×84pt), preserving the
+            full extension label instead of truncating it inside the fixed default panel.
+          </Text>
+        }
+      >
       <View style={preview.row}>
         <Card
           density="compact"
@@ -1883,13 +2123,17 @@ export function AttachmentTileGallery() {
           </View>
         </Card>
       </View>
-      <Text style={preview.caption}>
-        Accessibility text sizes expand the icon panel to
-        fileIconPanelWidthAccessibility × fileIconPanelHeightAccessibility (76×84pt), preserving the
-        full extension label instead of truncating it inside the fixed default panel.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Compact attachment preview (mini-thumbnail — outside Card)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Compact attachment preview · Outside Card"
+        details={
+          <Text style={preview.detailsText}>
+            The mini-preview is sized directly from HermesAttachmentSize.compactPreview (30×30pt) and
+            stays a plain, tappable thumbnail — deliberately not Card/Compact Card anatomy, since neither
+            Card's default 16pt padding nor Compact Card's own padding fits that geometry.
+          </Text>
+        }
+      >
       <View style={preview.row}>
         <Pressable
           accessibilityRole="button"
@@ -1903,13 +2147,28 @@ export function AttachmentTileGallery() {
           <Icon name="paperclip" size={DS_ICON_SIZE.sm} color={HERMES_COLOR_RAMPS.Blue[500]} />
         </Pressable>
       </View>
-      <Text style={preview.caption}>
-        The mini-preview is sized directly from HermesAttachmentSize.compactPreview (30×30pt) and
-        stays a plain, tappable thumbnail — deliberately not Card/Compact Card anatomy, since neither
-        Card's default 16pt padding nor Compact Card's own padding fits that geometry.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>File fallback · Loading · Failure</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="File fallback · Loading · Failure"
+        fill
+        details={
+          <View style={{ gap: 8 }}>
+            <Text style={preview.detailsText}>
+              File fallback (no extension match, Neutral 500), an in-flight loading state — a single
+              full-box Shimmer placeholder sized to the same messageGridCell box it stands in for, not a
+              hand-built tile — and an upload-failure state (archive, Orange 500) with a real Icon badge
+              plus a Retry Button. The loading Shimmer stands in for indefinite loading only — not a
+              measurable upload percentage, which the production tile shows separately. AttachmentFileType
+              still owns the icon/tint/label mapping; each surface keeps its own tile layout, upload/retry,
+              and remove/preview interaction.
+            </Text>
+            <Text style={preview.detailsText}>
+              Each tile is one combined accessibility element naming the attachment and its type/detail/
+              state (e.g. "diagram.png, PNG, upload failed").
+            </Text>
+          </View>
+        }
+      >
       <View style={preview.row}>
         <View style={[preview.tileBox, gridCellSize]}>
           <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Neutral[500]} />
@@ -1929,42 +2188,47 @@ export function AttachmentTileGallery() {
           <Button label="Retry" size="extraSmall" variant="tertiary" onPress={() => {}} style={preview.attachmentRetry} />
         </View>
       </View>
-      <Text style={preview.caption}>
-        File fallback (no extension match, Neutral 500), an in-flight loading state — a single
-        full-box Shimmer placeholder sized to the same messageGridCell box it stands in for, not a
-        hand-built tile — and an upload-failure state (archive, Orange 500) with a real Icon badge
-        plus a Retry Button. The loading Shimmer stands in for indefinite loading only — not a
-        measurable upload percentage, which the production tile shows separately. AttachmentFileType
-        still owns the icon/tint/label mapping; each surface keeps its own tile layout, upload/retry,
-        and remove/preview interaction.
-      </Text>
-      <Text style={preview.caption}>
-        Each tile is one combined accessibility element naming the attachment and its type/detail/
-        state (e.g. "diagram.png, PNG, upload failed").
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
 // ─── Banner ───────────────────────────────────────────────────────────────────
 export function BannerFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Information · Warning · Error · Success</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen name="Information · Warning · Error · Success" fill>
       <View style={{ gap: 8 }}>
         <Banner variant="info" title="Information" description="An in-flow status update." />
         <Banner variant="warning" title="Warning" description="Something needs attention soon." />
         <Banner variant="negative" title="Error" description="Something failed." />
         <Banner variant="positive" title="Success" description="The action completed." />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>Offline (consolidates the Session-list and Chat offline-cache notices)</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Offline"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            One shared Offline Banner replaces the two near-duplicate offline-cache notices (Sessions
+            list and Chat transcript), which previously differed in copy (hyphen vs. em dash), padding,
+            and whether their icon was hidden from VoiceOver.
+          </Text>
+        }
+      >
       <Banner variant="neutral" icon="alert-circle" title="Offline — viewing cached version" />
-      <Text style={preview.caption}>
-        One shared Offline Banner replaces the two near-duplicate offline-cache notices (Sessions
-        list and Chat transcript), which previously differed in copy (hyphen vs. em dash), padding,
-        and whether their icon was hidden from VoiceOver.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Optional action · Inset vs. full-width</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Optional action · Inset vs. full-width"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            A decorative status icon is hidden from VoiceOver by default (the surrounding row/title
+            already announces the same fact); pass a meaningful icon override only when the glyph itself
+            carries information the title text doesn't.
+          </Text>
+        }
+      >
       <View style={{ gap: 8 }}>
         <Banner
           variant="warning"
@@ -1976,25 +2240,27 @@ export function BannerFamilyGallery() {
           <Banner variant="info" title="Inset presentation" description="Padded inside its container, not edge-to-edge." />
         </View>
       </View>
-      <Text style={preview.caption}>
-        A decorative status icon is hidden from VoiceOver by default (the surrounding row/title
-        already announces the same fact); pass a meaningful icon override only when the glyph itself
-        carries information the title text doesn't.
-      </Text>
-      <Text style={[preview.label, { marginTop: 8 }]}>Description only — composer-style error composition</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Description only"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Title and description are independently caller-optional on the native HermexBanner, not an
+            interactive show/hide toggle. This foundation-only specimen demonstrates a description-only,
+            inset error composition by omitting the title prop entirely, never by passing an empty title;
+            it is not a production Chat composer adoption claim.
+          </Text>
+        }
+      >
       <View style={{ paddingHorizontal: 16 }}>
         <Banner
           variant="negative"
           description="The Hermes server hit an internal error. Check the server logs, then try again."
         />
       </View>
-      <Text style={preview.caption}>
-        Title and description are independently caller-optional on the native HermexBanner, not an
-        interactive show/hide toggle. This foundation-only specimen demonstrates a description-only,
-        inset error composition by omitting the title prop entirely, never by passing an empty title;
-        it is not a production Chat composer adoption claim.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -2007,8 +2273,12 @@ function iconSlotButton(iconName: IconName, label: string) {
 
 export function TopNavFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Standard navigation — leadingPrimary + center + trailingPrimary</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Standard navigation"
+        details={<Text style={preview.detailsText}>Uses leadingPrimary, a centered title, and trailingPrimary.</Text>}
+        fill
+      >
       <View style={preview.topNavShell}>
         <TopNav
           title="Sessions"
@@ -2016,8 +2286,12 @@ export function TopNavFamilyGallery() {
           trailingPrimary={iconSlotButton('search', 'Search')}
         />
       </View>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Modal / editor — labeled leadingPrimary + trailingPrimary</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Modal / editor"
+        details={<Text style={preview.detailsText}>Uses a labeled leadingPrimary action and trailingPrimary action.</Text>}
+        fill
+      >
       <View style={preview.topNavShell}>
         <TopNav
           title="New Task"
@@ -2025,8 +2299,19 @@ export function TopNavFamilyGallery() {
           trailingPrimary={<Button variant="secondary" size="small" label="Save" onPress={() => {}} style={preview.topNavActionButton} />}
         />
       </View>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Populated two-leading / two-trailing coverage</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Populated two-leading / two-trailing"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Reading order stays semantic on both sides — the primary action sits closest to the screen
+            edge, the secondary action closest to the title — so slot order never has to be inferred from
+            layout alone. Both sides always reserve the same two-slot minimum width, whether zero, one, or
+            two of their slots are populated, so the centered title/`center` content never shifts.
+          </Text>
+        }
+      >
       <View style={preview.topNavShell}>
         <TopNav
           title="quarterly-report.pdf"
@@ -2036,14 +2321,22 @@ export function TopNavFamilyGallery() {
           trailingPrimary={iconSlotButton('menu', 'More options')}
         />
       </View>
-      <Text style={preview.caption}>
-        Reading order stays semantic on both sides — the primary action sits closest to the screen
-        edge, the secondary action closest to the title — so slot order never has to be inferred from
-        layout alone. Both sides always reserve the same two-slot minimum width, whether zero, one, or
-        two of their slots are populated, so the centered title/`center` content never shifts.
-      </Text>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Long title truncates rather than overlapping actions</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Long title truncation"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The long title truncates rather than overlapping the actions on either side. Production
+            renders this anatomy through native `ToolbarContent`; a simple screen with no custom
+            leading/trailing actions may just set a native navigation title instead of composing TopNav
+            at all. Bottom and keyboard toolbars are a separate concern, out of scope for TopNav.
+            Every slot's action keeps its own accessibilityLabel and a ≥44×44pt hit target regardless of
+            how many of the four optional slots are populated; the centered title/`center` content always
+            truncates (`numberOfLines={1}`) rather than overlapping the reserved slot areas.
+          </Text>
+        }
+      >
       <View style={preview.topNavShell}>
         <TopNav
           title="A very long conversation title that would otherwise collide with the actions on either side"
@@ -2051,15 +2344,8 @@ export function TopNavFamilyGallery() {
           trailingPrimary={iconSlotButton('search', 'Search')}
         />
       </View>
-      <Text style={preview.caption}>
-        Production renders this anatomy through native `ToolbarContent`; a simple screen with no
-        custom leading/trailing actions may just set a native navigation title instead of composing
-        TopNav at all. Bottom and keyboard toolbars are a separate concern, out of scope for TopNav.
-        Every slot's action keeps its own accessibilityLabel and a ≥44×44pt hit target regardless of
-        how many of the four optional slots are populated; the centered title/`center` content always
-        truncates (`numberOfLines={1}`) rather than overlapping the reserved slot areas.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -2137,7 +2423,18 @@ export function TranscriptActivityPreview() {
   const [logExpanded, setLogExpanded] = useState(false);
 
   return (
-    <View style={preview.stack}>
+    <PreviewSpecimen
+      name="Transcript Activity"
+      fill
+      details={
+        <Text style={preview.detailsText}>
+          Domain ownership boundary preserved: turn-folding logic, assistant message content rendering,
+          and message metadata stay owned by their existing production types — this composite only
+          documents how Turn Summary Disclosure, the Activity Disclosure Row, the grouped-tool-history
+          control, assistant message content, and message metadata relate to each other.
+        </Text>
+      }
+    >
       <Text style={preview.label}>Turn Summary Disclosure</Text>
       <Pressable
         onPress={() => setTurnExpanded((value) => !value)}
@@ -2194,13 +2491,7 @@ export function TranscriptActivityPreview() {
           <Text style={preview.caption}>Claude Opus 5 · 12:04 PM</Text>
         </View>
       )}
-      <Text style={preview.caption}>
-        Domain ownership boundary preserved: turn-folding logic, assistant message content rendering,
-        and message metadata stay owned by their existing production types — this composite only
-        documents how Turn Summary Disclosure, the Activity Disclosure Row, the grouped-tool-history
-        control, assistant message content, and message metadata relate to each other.
-      </Text>
-    </View>
+    </PreviewSpecimen>
   );
 }
 
@@ -2289,26 +2580,26 @@ export function ComposerPatternPreview() {
  */
 export function ComposerToolbarFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Elevated — fitting content</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen name="Elevated — fitting content" fill>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={preview.composerToolbarElevated}>
         <View style={preview.row}>
           <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
           <Button label="Profile" size="small" variant="secondary" onPress={() => {}} />
         </View>
       </ScrollView>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Elevated — overflowing content</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[preview.composerToolbarElevated, { maxWidth: 240 }]}>
-        <View style={preview.row}>
+      </PreviewSpecimen>
+      <PreviewSpecimen name="Elevated — overflowing content" fill>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={preview.composerToolbarElevated}>
+        <View style={[preview.row, preview.composerToolbarOverflowContent]}>
           {['Model', 'Profile', 'Branch', 'History', 'Settings'].map((label) => (
             <Button key={label} label={label} size="small" variant="secondary" onPress={() => {}} />
           ))}
         </View>
       </ScrollView>
-
-      <Text style={[preview.label, { marginTop: 8 }]}>Transparent — inside Card</Text>
-      <Card density="compact" style={{ width: 240 }}>
+      </PreviewSpecimen>
+      <PreviewSpecimen name="Transparent — inside Card" fill>
+      <Card density="compact" style={{ width: '100%' }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={preview.row}>
             <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
@@ -2316,17 +2607,35 @@ export function ComposerToolbarFamilyGallery() {
           </View>
         </ScrollView>
       </Card>
-
-      <Text style={preview.caption}>
-        One `ScrollView(.horizontal)` row with edge fades that reveal only where content is hidden
-        behind that edge, and a Reduce-Motion-safe fade animation. Elevated draws its own adaptive
-        surface, radius, and shadow; transparent leaves the surface to the caller (here, a Card).
-        Arbitrary caller content — never a Send or Stop control, which this shared foundation never
-        demonstrates or owns. Foundation-available; zero production screens have adopted it — the
-        current Chat/Bots composer toolbars keep their own separate, feature-local
-        ComposerToolbarScroller unchanged.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Elevated · Divider"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            One `ScrollView(.horizontal)` row with `HermesSpacing.s16` padding on all sides (not only
+            horizontal) and edge fades that reveal only where content is hidden behind that edge, with a
+            Reduce-Motion-safe fade animation. Elevated draws its own adaptive surface, radius, and
+            shadow; transparent leaves the surface to the caller (here, a Card). Arbitrary caller
+            content — never a Send or Stop control, which this shared foundation never demonstrates or
+            owns. A caller inserts `HermexComposerToolbarDivider` explicitly between logical control
+            groups (last example) — a hairline, 24pt-tall, vertically centered, decorative divider that
+            scrolls with the row's own content; the toolbar never inserts one automatically. Foundation-
+            available; zero production screens have adopted it — the current Chat/Bots composer toolbars
+            keep their own separate, feature-local ComposerToolbarScroller unchanged.
+          </Text>
+        }
+      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={preview.composerToolbarElevated}>
+        <View style={preview.row}>
+          <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
+          <Button label="Profile" size="small" variant="secondary" onPress={() => {}} />
+          <Divider style={preview.composerToolbarDivider} />
+          <Button label="Branch" size="small" variant="secondary" onPress={() => {}} />
+        </View>
+      </ScrollView>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -2350,42 +2659,60 @@ function ToastMotionDemo() {
 
 export function ToastFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Motion (tap to replay the slide-in/out)</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Motion"
+        fill
+        details={<Text style={preview.detailsText}>Tap the button to replay the Toast's slide-in/out.</Text>}
+      >
       <ToastMotionDemo />
-      <Text style={[preview.label, { marginTop: 8 }]}>
-        HermexToast's dark semantic surfaces — white icon/message content
-      </Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Dark semantic surfaces"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            HermexToast's own dark semantic ramp, with white icon/message content.
+          </Text>
+        }
+      >
       <View style={{ gap: 8 }}>
         <Toast message="Synced with server" iconName="circle-check" style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }} />
         <Toast message="Cached offline data may be stale" iconName="info" style={{ backgroundColor: HERMES_COLOR_RAMPS.Blue[700] }} />
         <Toast message="Reconnecting…" iconName="triangle-alert" style={{ backgroundColor: HERMES_COLOR_RAMPS.Orange[800] }} />
         <Toast message="Could not send message" iconName="circle-slash" style={{ backgroundColor: HERMES_COLOR_RAMPS.Red[700] }} />
       </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>With a trailing action — plain white text, 44pt minimum target</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="With a trailing action"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
+            Production HermexToast is the message/icon/action card alone — animation and lifecycle live
+            in the separate `hermexToast(isPresented:toast:)` presentation modifier that overlays it, left
+            entirely caller-owned rather than baked into the toast view itself. That modifier's default
+            motion enters by moving down from the top edge combined with opacity and exits back toward
+            the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
+            Reduce Motion drops the move and falls back to an opacity-only state change. Each surface
+            above overrides the generic Toast's own light-tinted `variant` styles with the exact fixed
+            ramp step HermexToast uses natively — Blue.s700 (information), Green.s800 (success),
+            Orange.s800 (warning), and Red.s700 (error) — leaving its default white icon/message/action
+            colors untouched, since no `variant` is passed. HermexToast's own trailing action is a plain
+            white `Button(action.title)`, styled `.foregroundStyle(.white)`, never a filled capsule or a
+            separate neutral-button composition, and keeps a 44pt minimum tap target via the generic
+            ghost Button's own hitSlop.
+          </Text>
+        }
+      >
       <Toast
         message="Session archived"
         iconName="circle-check"
         style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }}
         action={{ label: 'Undo', onPress: () => {} }}
       />
-      <Text style={preview.caption}>
-        The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
-        Production HermexToast is the message/icon/action card alone — animation and lifecycle live
-        in the separate `hermexToast(isPresented:toast:)` presentation modifier that overlays it, left
-        entirely caller-owned rather than baked into the toast view itself. That modifier's default
-        motion enters by moving down from the top edge combined with opacity and exits back toward
-        the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
-        Reduce Motion drops the move and falls back to an opacity-only state change. Each surface
-        above overrides the generic Toast's own light-tinted `variant` styles with the exact fixed
-        ramp step HermexToast uses natively — Blue.s700 (information), Green.s800 (success),
-        Orange.s800 (warning), and Red.s700 (error) — leaving its default white icon/message/action
-        colors untouched, since no `variant` is passed. HermexToast's own trailing action is a plain
-        white `Button(action.title)`, styled `.foregroundStyle(.white)`, never a filled capsule or a
-        separate neutral-button composition, and keeps a 44pt minimum tap target via the generic
-        ghost Button's own hitSlop.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }
 
@@ -2529,7 +2856,12 @@ function SelectionSheetSingleDemo() {
   );
 }
 
-function SelectionSheetMultiDemo() {
+// DSR3-09: multi-selection moves Cancel/Done out of TopNav and into HermexBottomSheet's own pinned
+// footer, with an explicit horizontal/vertical `footerAxis` (default horizontal). Horizontal order is
+// Cancel then Done; vertical order is Done above Cancel, each stretched full width — reusing the same
+// real bottomSheetShell/bottomSheetFooter reconstruction as the Bottom Sheet entry itself, since this
+// is now genuinely a Bottom Sheet footer, not a bare row of buttons floating below the list.
+function SelectionSheetMultiFooterDemo({ axis }: { axis: 'horizontal' | 'vertical' }) {
   const committedBaseline = ['writing', 'research'];
   const [committed, setCommitted] = useState<string[]>(committedBaseline);
   const [draft, setDraft] = useState<string[]>(committedBaseline);
@@ -2540,21 +2872,36 @@ function SelectionSheetMultiDemo() {
   };
 
   return (
-    <View style={preview.stack}>
-      <List>
-        {SELECTION_SHEET_SKILL_OPTIONS.map((option) => (
-          <ListItem
-            key={option.value}
-            leading={<Checkbox checked={draft.includes(option.value)} colors={HERMEX_SELECTION_CONTROL_COLORS} />}
-            title={option.label}
-            selected={draft.includes(option.value)}
-            onPress={() => toggle(option.value)}
-          />
-        ))}
-      </List>
-      <View style={preview.row}>
-        <Button label="Cancel" size="extraSmall" variant="tertiary" onPress={() => setDraft(committed)} />
-        <Button label="Done" size="extraSmall" variant="secondary" onPress={() => setCommitted(draft)} />
+    // Selection Sheet is a screen-row (fill) family — width: '100%' overrides the shared
+    // bottomSheetSpecimen's own fixed 320px, which the (non-fill) Bottom Sheet gallery keeps.
+    <View style={[preview.bottomSheetSpecimen, { width: '100%' }]}>
+      <View style={preview.bottomSheetShell}>
+        <View style={preview.bottomSheetBody}>
+          <List>
+            {SELECTION_SHEET_SKILL_OPTIONS.map((option) => (
+              <ListItem
+                key={option.value}
+                leading={<Checkbox checked={draft.includes(option.value)} colors={HERMEX_SELECTION_CONTROL_COLORS} />}
+                title={option.label}
+                selected={draft.includes(option.value)}
+                onPress={() => toggle(option.value)}
+              />
+            ))}
+          </List>
+        </View>
+        <View style={[preview.bottomSheetFooter, axis === 'vertical' && preview.bottomSheetFooterVertical]}>
+          {axis === 'horizontal' ? (
+            <>
+              <Button variant="tertiary" label="Cancel" onPress={() => setDraft(committed)} style={preview.bottomSheetFooterButton} />
+              <Button variant="secondary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButton} />
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButtonFull} />
+              <Button variant="tertiary" label="Cancel" onPress={() => setDraft(committed)} style={preview.bottomSheetFooterButtonFull} />
+            </>
+          )}
+        </View>
       </View>
       <Text style={preview.caption}>
         Row taps edit only the local draft — {isDirty ? 'dirty: draft differs from the committed baseline' : 'clean: draft matches the committed baseline'}.
@@ -2610,12 +2957,6 @@ function SelectionSheetSearchDemo() {
       ) : (
         <Text style={preview.caption}>No results</Text>
       )}
-      <Text style={preview.caption}>
-        The caller owns the query binding and filters the visible options array it passes in —
-        Selection Sheet never matches, debounces, or loads results on its own. Clearing the query
-        restores every option; an unmatched query shows this exact generic copy, "No results", never
-        echoing the query back.
-      </Text>
     </View>
   );
 }
@@ -2641,22 +2982,72 @@ function SelectionSheetLongListDemo() {
 
 export function SelectionSheetFamilyGallery() {
   return (
-    <View style={preview.stack}>
-      <Text style={preview.label}>Single selection — current value, commit-on-tap, disabled option</Text>
+    <PreviewSpecimenGrid>
+      <PreviewSpecimen
+        name="Single selection"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Shows the current value, commit-on-tap selection, and a disabled option.
+          </Text>
+        }
+      >
       <SelectionSheetSingleDemo />
-      <Text style={[preview.label, { marginTop: 8 }]}>Multi selection — staged draft, Cancel discards, Done commits</Text>
-      <SelectionSheetMultiDemo />
-      <Text style={[preview.label, { marginTop: 8 }]}>Optional caller-controlled Search — caller-owned filtering, "No results" empty state</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Multi selection · Horizontal footer"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Selections stage as a draft; Cancel discards the draft, Done commits it.
+          </Text>
+        }
+      >
+      <SelectionSheetMultiFooterDemo axis="horizontal" />
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Multi selection · Vertical footer"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            Selections stage as a draft; Cancel discards the draft, Done commits it.
+          </Text>
+        }
+      >
+      <SelectionSheetMultiFooterDemo axis="vertical" />
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Optional caller-controlled Search"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The caller owns the query binding and filters the visible options array it passes in —
+            Selection Sheet never matches, debounces, or loads results on its own. Clearing the query
+            restores every option; an unmatched query shows this exact generic copy, "No results", never
+            echoing the query back.
+          </Text>
+        }
+      >
       <SelectionSheetSearchDemo />
-      <Text style={[preview.label, { marginTop: 8 }]}>Long list — 24 options (past the 20-option threshold), bounded internal scroll</Text>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Long list · 24 options"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            24 options — past the 20-option threshold — inside a bounded, internally scrolling list.
+            Every specimen above reconstructs `HermexSelectionSheet`'s presented content only. Native
+            `.sheet` presentation, detents, drag indicator, compact adaptation, and — for Search — the
+            query binding, visible-options filtering, loading, and error state all stay caller-owned in
+            production; this gallery's own wrapping page is standing in for that caller, not for a second
+            presentation system. Multi-selection's Cancel/Done now live in the sheet's own pinned footer
+            (not TopNav), with an explicit `footerAxis`: horizontal orders Cancel then Done; vertical
+            orders Done above Cancel, each stretched full width.
+          </Text>
+        }
+      >
       <SelectionSheetLongListDemo />
-      <Text style={preview.caption}>
-        Every specimen above reconstructs `HermexSelectionSheet`'s presented content only. Native
-        `.sheet` presentation, detents, drag indicator, compact adaptation, and — for Search — the
-        query binding, visible-options filtering, loading, and error state all stay caller-owned in
-        production; this gallery's own wrapping page is standing in for that caller, not for a second
-        presentation system.
-      </Text>
-    </View>
+      </PreviewSpecimen>
+    </PreviewSpecimenGrid>
   );
 }

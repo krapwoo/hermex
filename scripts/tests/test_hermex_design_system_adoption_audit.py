@@ -72,13 +72,28 @@ SIMPLE_SNIPPETS = {
     ),
     "HermesMobile/Features/Shared/HermexCheckbox.swift": "struct HermexCheckbox: View {}",
     "HermesMobile/Features/Shared/HermexRadio.swift": "struct HermexRadio: View {}",
+    "HermesMobile/Features/Shared/AccordionList.swift": (
+        "struct AccordionList<Item: Identifiable>: View {}\n"
+        "extension AccordionList where HeaderLeading == EmptyView {\n"
+        "    init() {}\n"
+        "}"
+    ),
     "HermesMobile/Features/Shared/HermexSelectionSheet.swift": (
         "import SwiftUI\n"
         "struct HermexSelectionSheetOption<Value: Hashable>: Identifiable {\n"
         "    let value: Value\n"
         "    var id: Value { value }\n"
         "}\n"
+        "enum HermexSelectionSheetFooterAxis: Equatable {\n"
+        "    case horizontal\n"
+        "    case vertical\n"
+        "}\n"
         "struct HermexSelectionSheet<Value: Hashable>: View {\n"
+        "    init(\n"
+        "        _ title: LocalizedStringKey,\n"
+        "        selections: Binding<Set<Value>>,\n"
+        "        footerAxis: HermexSelectionSheetFooterAxis = .horizontal\n"
+        "    ) {}\n"
         "    var body: some View {\n"
         "        HermexBottomSheet(\"Select\") { EmptyView() }\n"
         "    }\n"
@@ -89,13 +104,24 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/HermexAvatar.swift": "struct HermexAvatar: View {}",
     "HermesMobile/Features/Shared/HermexDivider.swift": "struct HermexDivider: View {}",
     "HermesMobile/Features/Shared/HermexContentUnavailable.swift": "struct HermexContentUnavailable: View {}",
-    "HermesMobile/Features/Shared/ListItem.swift": "struct ListItem<Leading: View>: View {}",
+    "HermesMobile/Features/Shared/ListItem.swift": (
+        "struct ListItem<Leading: View>: View {}\n"
+        "enum ListItemContentInset: Equatable {\n"
+        "    case standard\n"
+        "    case none\n"
+        "}\n"
+        "struct ListItemButtonStyle: ButtonStyle {}"
+    ),
     "HermesMobile/Features/Shared/HermexList.swift": (
         "struct HermexList<Content: View>: View {\n"
         "    enum Style {\n"
         "        case standard\n"
         "        case compactOverlay\n"
         "    }\n"
+        "}\n"
+        "enum HermexListCompactOverlayMetrics {\n"
+        "    static let rowHorizontalInset: CGFloat = HermesSpacing.s0\n"
+        "    static let scrollContentMargin: CGFloat = HermesSpacing.s0\n"
         "}"
     ),
     "HermesMobile/Features/Shared/SegmentedControl.swift": "struct SegmentedControl<Value: Hashable>: View {}",
@@ -112,7 +138,8 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/HermexComposerToolbar.swift": (
         "enum HermexComposerToolbarAppearance {}\n"
         "struct HermexComposerToolbar<Content: View>: View {}\n"
-        "struct HermexComposerToolbarEdgeFades {}"
+        "struct HermexComposerToolbarEdgeFades {}\n"
+        "struct HermexComposerToolbarDivider: View {}"
     ),
     "HermesMobile/Features/Chat/TranscriptLogRowView.swift": "enum TranscriptLogRowMetrics {}",
     "HermesMobile/Features/Shared/Tag.swift": "struct Tag: View {}",
@@ -167,13 +194,17 @@ SIMPLE_SNIPPETS = {
     ),
     "HermesMobile/Features/Shared/HermexPopoverMenu.swift": (
         "struct HermexPopoverMenuAction {}\n"
+        "enum HermexPopoverMenuMetrics {\n"
+        "    static let contentPadding: CGFloat = HermesSpacing.s16\n"
+        "}\n"
         "extension View {\n"
         "    func hermexPopoverMenu(\n"
         "        isPresented: Binding<Bool>,\n"
         "        accessibilityLabel: Text,\n"
         "        actions: [HermexPopoverMenuAction]\n"
         "    ) -> some View { self }\n"
-        "}"
+        "}\n"
+        "// row usage: ListItem(..., contentInset: .none, ...)\n"
     ),
     "HermesMobile/Config/HermesColor.swift": "enum HermesColorRamp {}",
     "HermesMobile/Config/HermesMotion.swift": "enum HermesMotion {}",
@@ -530,6 +561,290 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
                 for f in failures
             ),
             failures,
+        )
+
+    # ─── Round 3 shared integration slice ────────────────────────────────────────────────────────
+    # `ListItemContentInset`/`ListItemButtonStyle` (ListItem.swift), the compact-overlay zero
+    # horizontal inset/margin (HermexList.swift), `HermexPopoverMenuMetrics.contentPadding` plus the
+    # Popover row's `contentInset: .none` (HermexPopoverMenu.swift), `HermexComposerToolbarDivider`
+    # (HermexComposerToolbar.swift), `AccordionList.swift` itself plus its `HeaderLeading == EmptyView`
+    # initializer seam, and `HermexSelectionSheetFooterAxis` plus the default `.horizontal` multi
+    # initializer seam (HermexSelectionSheet.swift) all became load-bearing in Round 3. Each of these
+    # pins the contract so it fails closed if that declaration disappears again.
+
+    def test_list_item_missing_content_inset_enum_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/ListItem.swift",
+            "struct ListItem<Leading: View>: View {}\nstruct ListItemButtonStyle: ButtonStyle {}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "ListItem.swift" in f and "ListItemContentInset" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_list_item_missing_button_style_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/ListItem.swift",
+            "struct ListItem<Leading: View>: View {}\nenum ListItemContentInset: Equatable {\n    case standard\n    case none\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "ListItem.swift" in f and "ListItemButtonStyle" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_hermex_list_compact_overlay_missing_zero_row_horizontal_inset_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexList.swift",
+            (
+                "struct HermexList<Content: View>: View {\n"
+                "    enum Style {\n"
+                "        case standard\n"
+                "        case compactOverlay\n"
+                "    }\n"
+                "}\n"
+                "enum HermexListCompactOverlayMetrics {\n"
+                "    static let scrollContentMargin: CGFloat = HermesSpacing.s0\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexList.swift" in f and "rowHorizontalInset" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_hermex_list_compact_overlay_missing_zero_scroll_content_margin_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexList.swift",
+            (
+                "struct HermexList<Content: View>: View {\n"
+                "    enum Style {\n"
+                "        case standard\n"
+                "        case compactOverlay\n"
+                "    }\n"
+                "}\n"
+                "enum HermexListCompactOverlayMetrics {\n"
+                "    static let rowHorizontalInset: CGFloat = HermesSpacing.s0\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexList.swift" in f and "scrollContentMargin" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_hermex_popover_menu_missing_content_padding_constant_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
+            (
+                "struct HermexPopoverMenuAction {}\n"
+                "extension View {\n"
+                "    func hermexPopoverMenu(\n"
+                "        isPresented: Binding<Bool>,\n"
+                "        accessibilityLabel: Text,\n"
+                "        actions: [HermexPopoverMenuAction]\n"
+                "    ) -> some View { self }\n"
+                "}\n"
+                "// row usage: ListItem(..., contentInset: .none, ...)\n"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexPopoverMenu.swift" in f and "contentPadding" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_hermex_popover_menu_missing_row_content_inset_none_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
+            (
+                "struct HermexPopoverMenuAction {}\n"
+                "enum HermexPopoverMenuMetrics {\n"
+                "    static let contentPadding: CGFloat = HermesSpacing.s16\n"
+                "}\n"
+                "extension View {\n"
+                "    func hermexPopoverMenu(\n"
+                "        isPresented: Binding<Bool>,\n"
+                "        accessibilityLabel: Text,\n"
+                "        actions: [HermexPopoverMenuAction]\n"
+                "    ) -> some View { self }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "HermexPopoverMenu.swift" in f and "contentInset" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_composer_toolbar_missing_divider_struct_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
+            (
+                "enum HermexComposerToolbarAppearance {}\n"
+                "struct HermexComposerToolbar<Content: View>: View {}\n"
+                "struct HermexComposerToolbarEdgeFades {}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f
+                and "HermexComposerToolbar.swift" in f
+                and "HermexComposerToolbarDivider" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_missing_accordion_list_foundation_file_fails(self):
+        build_valid_fixture_tree(self.root)
+        (self.root / "HermesMobile/Features/Shared/AccordionList.swift").unlink()
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing required foundation file" in f and "AccordionList.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_drifted_accordion_list_declaration_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/AccordionList.swift",
+            "// AccordionList renamed away, no HeaderLeading == EmptyView seam either",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f and "AccordionList.swift" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_accordion_list_missing_no_leading_header_seam_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/AccordionList.swift",
+            "struct AccordionList<Item: Identifiable>: View {}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f
+                and "AccordionList.swift" in f
+                and "HeaderLeading" in f
+                for f in failures
+            ),
+            "expected the audit to require the HeaderLeading == EmptyView no-leading initializer seam: "
+            f"{failures}",
+        )
+
+    def test_selection_sheet_missing_footer_axis_enum_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
+            (
+                "import SwiftUI\n"
+                "struct HermexSelectionSheetOption<Value: Hashable>: Identifiable {\n"
+                "    let value: Value\n"
+                "    var id: Value { value }\n"
+                "}\n"
+                "struct HermexSelectionSheet<Value: Hashable>: View {\n"
+                "    var body: some View {\n"
+                "        HermexBottomSheet(\"Select\") { EmptyView() }\n"
+                "    }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f
+                and "HermexSelectionSheet.swift" in f
+                and "HermexSelectionSheetFooterAxis" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_selection_sheet_missing_default_horizontal_multi_seam_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
+            (
+                "import SwiftUI\n"
+                "struct HermexSelectionSheetOption<Value: Hashable>: Identifiable {\n"
+                "    let value: Value\n"
+                "    var id: Value { value }\n"
+                "}\n"
+                "enum HermexSelectionSheetFooterAxis: Equatable {\n"
+                "    case horizontal\n"
+                "    case vertical\n"
+                "}\n"
+                "struct HermexSelectionSheet<Value: Hashable>: View {\n"
+                "    init(\n"
+                "        _ title: LocalizedStringKey,\n"
+                "        selections: Binding<Set<Value>>,\n"
+                "        footerAxis: HermexSelectionSheetFooterAxis\n"
+                "    ) {}\n"
+                "    var body: some View {\n"
+                "        HermexBottomSheet(\"Select\") { EmptyView() }\n"
+                "    }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "missing load-bearing snippet" in f
+                and "HermexSelectionSheet.swift" in f
+                and "horizontal" in f
+                for f in failures
+            ),
+            "expected the audit to require the default .horizontal multi initializer seam: "
+            f"{failures}",
         )
 
     def test_icon_scale_drift_fails(self):
@@ -1081,6 +1396,134 @@ class DSR2_15BannerTests(unittest.TestCase):
         self.assertIn("HermesMobile/Features/Shared/HermexBanner.swift", catalog_source)
         self.assertNotIn("HermesMobile/Features/Chat/ChatComposerView.swift", catalog_source)
         self.assertNotIn("HermesMobile/Features/Shared/Banner.swift", catalog_source)
+
+
+class Round3SharedIntegrationTests(unittest.TestCase):
+    """Fixture-independent contracts for the Round 3 shared integration work: the DEBUG Overlay Lab
+    gains rendered-verification specimens for ListItem's press-and-hold/selected-chrome states, an
+    explicit `HermexComposerToolbarDivider()` between caller-owned control groups, AccordionList's
+    no-leading Card/Cardless specimens, and horizontal/vertical multi-selection Selection Sheet
+    specimens — and `.hermexPopoverMenu(`/`HermexSelectionSheet(`/`HermexComposerToolbarDivider(` stay
+    confined to their own foundation source plus the lab, mirroring
+    `test_composer_toolbar_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab` and
+    `test_hermex_banner_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab` above.
+    These read the real repository directly, not the temp fixture tree."""
+
+    @staticmethod
+    def _overlay_lab_source() -> str:
+        return (REPO_ROOT / "HermesMobile/Features/Shared/HermexOverlayLab.swift").read_text(encoding="utf-8")
+
+    @staticmethod
+    def _confined_call_sites(pattern: re.Pattern, allowed: set[str]) -> tuple[list[str], int]:
+        offenders = []
+        overlay_lab_count = 0
+        for swift_path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
+            rel_path = str(swift_path.relative_to(REPO_ROOT))
+            count = len(pattern.findall(swift_path.read_text(encoding="utf-8")))
+            if not count:
+                continue
+            if rel_path == "HermesMobile/Features/Shared/HermexOverlayLab.swift":
+                overlay_lab_count = count
+            if rel_path not in allowed:
+                offenders.append(rel_path)
+        return offenders, overlay_lab_count
+
+    def test_overlay_lab_exposes_round_3_list_item_rendered_verification_specimens(self):
+        src = self._overlay_lab_source()
+        self.assertIn("--hermex-overlay-lab-round-3-list-item", src)
+        self.assertIn("HermexOverlayLabRound3ListItemSection.scrollAnchorID", src)
+        for identifier in [
+            "overlay-lab-round-3-list-item-normal",
+            "overlay-lab-round-3-list-item-interactive",
+            "overlay-lab-round-3-list-item-selected-standard",
+            "overlay-lab-round-3-list-item-selected-indicator-only",
+            "overlay-lab-round-3-list-item-disabled",
+            "overlay-lab-round-3-list-item-pending",
+        ]:
+            self.assertIn(identifier, src, f"expected a stable Round 3 identifier for {identifier}")
+        self.assertIn(
+            "selectionChrome: .indicatorOnly",
+            src,
+            "expected the indicator-only selected specimen to compose an existing Checkbox/Radio visual "
+            "without a duplicate selected pill/checkmark",
+        )
+        self.assertTrue(
+            "HermexRadio(" in src or "HermexCheckbox(" in src,
+            "expected the indicator-only specimen to compose HermexRadio or HermexCheckbox",
+        )
+
+    def test_overlay_lab_composer_toolbar_specimens_use_an_explicit_divider(self):
+        src = self._overlay_lab_source()
+        self.assertIn(
+            "HermexComposerToolbarDivider()",
+            src,
+            "expected the elevated fitting and transparent Card specimens to place an explicit divider "
+            "between two caller-owned control groups",
+        )
+
+    def test_overlay_lab_exposes_a_no_leading_accordion_card_and_cardless_specimen(self):
+        src = self._overlay_lab_source()
+        for identifier in [
+            "overlay-lab-round-3-accordion-no-leading-card",
+            "overlay-lab-round-3-accordion-no-leading-cardless",
+        ]:
+            self.assertIn(identifier, src, f"expected a stable Round 3 identifier for {identifier}")
+        # Preserve the existing leading-present Card specimen (Batch B follow-up) unchanged.
+        self.assertIn("overlay-lab-batch-b-accordion-card", src)
+
+    def test_overlay_lab_exposes_horizontal_and_vertical_multi_selection_sheet_specimens(self):
+        src = self._overlay_lab_source()
+        self.assertIn("footerAxis: .horizontal", src)
+        self.assertIn("footerAxis: .vertical", src)
+        self.assertIn("--hermex-overlay-lab-auto-selection-sheet-multi-vertical", src)
+        for identifier in [
+            "overlay-lab-selection-sheet-multi-horizontal-trigger",
+            "overlay-lab-selection-sheet-multi-horizontal-committed",
+            "overlay-lab-selection-sheet-multi-vertical-trigger",
+            "overlay-lab-selection-sheet-multi-vertical-committed",
+        ]:
+            self.assertIn(identifier, src, f"expected a stable identifier for {identifier}")
+        # Preserve the existing single-selection fixture unchanged.
+        self.assertIn("overlay-lab-selection-sheet-single-trigger", src)
+
+    def test_composer_toolbar_divider_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+        pattern = re.compile(r"HermexComposerToolbarDivider\(")
+        allowed = {
+            "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
+            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
+        }
+        offenders, overlay_lab_count = self._confined_call_sites(pattern, allowed)
+        self.assertEqual(offenders, [], f"HermexComposerToolbarDivider( must only be called from {sorted(allowed)}")
+        self.assertGreater(
+            overlay_lab_count, 0,
+            "expected the DEBUG overlay lab to adopt HermexComposerToolbarDivider with at least one real specimen",
+        )
+
+    def test_popover_menu_modifier_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+        pattern = re.compile(r"\.hermexPopoverMenu\(")
+        allowed = {
+            "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
+            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
+        }
+        offenders, overlay_lab_count = self._confined_call_sites(pattern, allowed)
+        self.assertEqual(offenders, [], f".hermexPopoverMenu( must only be called from {sorted(allowed)}")
+        self.assertGreater(
+            overlay_lab_count, 0,
+            "expected the DEBUG overlay lab to adopt .hermexPopoverMenu with at least one real specimen",
+        )
+
+    def test_selection_sheet_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+        pattern = re.compile(r"HermexSelectionSheet\(")
+        allowed = {
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift",
+            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
+        }
+        offenders, overlay_lab_count = self._confined_call_sites(pattern, allowed)
+        self.assertEqual(offenders, [], f"HermexSelectionSheet( must only be called from {sorted(allowed)}")
+        self.assertGreater(
+            overlay_lab_count, 0,
+            "expected the DEBUG overlay lab to adopt HermexSelectionSheet with at least one real specimen",
+        )
 
 
 class CliTests(unittest.TestCase):

@@ -64,6 +64,7 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermexPopoverMenu.swift",
     "HermesMobile/Features/Shared/ListItem.swift",
     "HermesMobile/Features/Shared/HermexList.swift",
+    "HermesMobile/Features/Shared/AccordionList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
     "HermesMobile/Features/Shared/TopNav.swift",
     "HermesMobile/Features/Shared/HermexBanner.swift",
@@ -94,10 +95,18 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ]),
     ("HermesMobile/Features/Shared/ListItem.swift", [
         r"struct ListItem<[^>]*>\s*:\s*View",
+        r"enum ListItemContentInset\s*:\s*Equatable",
+        r"struct ListItemButtonStyle\s*:\s*ButtonStyle",
     ]),
     ("HermesMobile/Features/Shared/HermexList.swift", [
         r"struct HermexList<[^>]*>\s*:\s*View",
         r"case compactOverlay",
+        r"rowHorizontalInset:\s*CGFloat\s*=\s*HermesSpacing\.s0",
+        r"scrollContentMargin:\s*CGFloat\s*=\s*HermesSpacing\.s0",
+    ]),
+    ("HermesMobile/Features/Shared/AccordionList.swift", [
+        r"struct AccordionList<[^>]*>\s*:\s*View",
+        r"extension AccordionList where HeaderLeading == EmptyView",
     ]),
     ("HermesMobile/Features/Shared/HermexButton.swift", [
         r"struct HermexButtonStyle\s*:\s*ButtonStyle",
@@ -139,11 +148,15 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ("HermesMobile/Features/Shared/HermexPopoverMenu.swift", [
         r"func hermexPopoverMenu\(",
         r"struct HermexPopoverMenuAction",
+        r"static let contentPadding:\s*CGFloat\s*=\s*HermesSpacing\.s16",
+        r"contentInset:\s*\.none",
     ]),
     ("HermesMobile/Features/Shared/HermexSelectionSheet.swift", [
         r"struct HermexSelectionSheetOption<",
         r"struct HermexSelectionSheet<",
         r"HermexBottomSheet\(",
+        r"enum HermexSelectionSheetFooterAxis\s*:\s*Equatable",
+        r"footerAxis:\s*HermexSelectionSheetFooterAxis\s*=\s*\.horizontal",
     ]),
     ("HermesMobile/Features/Shared/HermexBanner.swift", [
         r"struct HermexBanner\s*:\s*View",
@@ -158,6 +171,7 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
         r"struct HermexComposerToolbar<[^>]*>\s*:\s*View",
         r"enum HermexComposerToolbarAppearance",
         r"struct HermexComposerToolbarEdgeFades",
+        r"struct HermexComposerToolbarDivider\s*:\s*View",
     ]),
     ("HermesMobile/Features/Chat/TranscriptLogRowView.swift", [
         r"TranscriptLogRowMetrics",

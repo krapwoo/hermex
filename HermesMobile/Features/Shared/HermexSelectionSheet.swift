@@ -64,6 +64,15 @@ private enum HermexSelectionSheetMode<Value: Hashable> {
     case multi(Binding<Set<Value>>)
 }
 
+/// How the multi-selection footer's Cancel/Done actions arrange: side-by-side or stacked. Maps
+/// onto the existing `HermexBottomSheet.FooterAxis` at the call site rather than changing Bottom
+/// Sheet itself. The single-selection composition renders no footer, so this only ever affects
+/// multi-selection.
+enum HermexSelectionSheetFooterAxis: Equatable {
+    case horizontal
+    case vertical
+}
+
 /// Caller-selected outer horizontal inset applied once to the shared Search/list/empty-state
 /// container. Not an arbitrary CGFloat — a closed, semantic choice between the standard screen
 /// margin and no inset at all.
@@ -93,6 +102,7 @@ struct HermexSelectionSheet<Value: Hashable>: View {
     private let options: [HermexSelectionSheetOption<Value>]
     private let search: HermexSelectionSheetSearch?
     private let contentInset: HermexSelectionSheetContentInset
+    private let footerAxis: HermexSelectionSheetFooterAxis
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: HermexSelectionSheetDraft<Value>?
@@ -111,6 +121,7 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         self.options = options
         self.search = search
         self.contentInset = contentInset
+        self.footerAxis = .horizontal
         self._draft = State(initialValue: nil)
     }
 
@@ -120,32 +131,71 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         selections: Binding<Set<Value>>,
         options: [HermexSelectionSheetOption<Value>],
         search: HermexSelectionSheetSearch? = nil,
-        contentInset: HermexSelectionSheetContentInset = .standard
+        contentInset: HermexSelectionSheetContentInset = .standard,
+        footerAxis: HermexSelectionSheetFooterAxis = .horizontal
     ) {
         self.title = title
         self.mode = .multi(selections)
         self.options = options
         self.search = search
         self.contentInset = contentInset
+        self.footerAxis = footerAxis
         self._draft = State(initialValue: HermexSelectionSheetDraft(baseline: selections.wrappedValue))
     }
 
+    @ViewBuilder
     var body: some View {
+        switch mode {
+        case .single:
+            singleSelectionSheet
+        case .multi(let selections):
+            multiSelectionSheet(selections: selections)
+        }
+    }
+
+    private var singleSelectionSheet: some View {
         HermexBottomSheet(title) {
             sheetContent
         } leadingPrimary: {
             Button("Cancel") { dismiss() }
                 .accessibilityIdentifier("hermex-selection-sheet-cancel")
-        } trailingPrimary: {
-            doneButton
+        }
+    }
+
+    private func multiSelectionSheet(selections: Binding<Set<Value>>) -> some View {
+        HermexBottomSheet(
+            title,
+            footerAxis: footerAxis == .horizontal ? .horizontal : .vertical
+        ) {
+            sheetContent
+        } footer: {
+            multiFooter(selections: selections)
         }
     }
 
     @ViewBuilder
-    private var doneButton: some View {
-        if case .multi(let selections) = mode {
+    private func multiFooter(selections: Binding<Set<Value>>) -> some View {
+        switch footerAxis {
+        case .horizontal:
+            Button("Cancel") { dismiss() }
+                .buttonStyle(.hermex(.medium, emphasis: .secondary))
+                .accessibilityIdentifier("hermex-selection-sheet-cancel")
             Button("Done") { commitMultiSelection(selections: selections) }
+                .buttonStyle(.hermex(.medium, emphasis: .primary))
                 .accessibilityIdentifier("hermex-selection-sheet-done")
+        case .vertical:
+            Button { commitMultiSelection(selections: selections) } label: {
+                Text("Done")
+                    .frame(maxWidth: .infinity)
+            }
+                .buttonStyle(.hermex(.medium, emphasis: .primary))
+                .accessibilityIdentifier("hermex-selection-sheet-done")
+            Button { dismiss() } label: {
+                Text("Cancel")
+                    .frame(maxWidth: .infinity)
+            }
+                .buttonStyle(.hermex(.medium, emphasis: .secondary))
+                .accessibilityIdentifier("hermex-selection-sheet-cancel")
         }
     }
 

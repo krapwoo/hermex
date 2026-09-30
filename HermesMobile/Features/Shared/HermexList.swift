@@ -6,12 +6,16 @@ import SwiftUI
 /// numbers `HermexList` renders with, instead of re-deriving them.
 enum HermexListCompactOverlayMetrics {
     static let rowVerticalInset: CGFloat = HermesSpacing.s4
-    static let rowHorizontalInset: CGFloat = HermesSpacing.s8
+    /// `HermexPopoverMenu` now owns the shell padding this used to provide (see
+    /// `HermexPopoverMenuMetrics.contentPadding`), so the row itself adds none of its own.
+    static let rowHorizontalInset: CGFloat = HermesSpacing.s0
     /// The minimum accessible row height `.compactOverlay` guarantees. This is a List-level floor,
     /// independent of `ListItemMetrics.minHeight` (48pt) — a caller's row content can be taller,
     /// never shorter.
     static let minimumRowHeight: CGFloat = 44
-    static let scrollContentMargin: CGFloat = HermesSpacing.s8
+    /// `HermexPopoverMenu` now owns the shell padding this used to provide (see
+    /// `HermexPopoverMenuMetrics.contentPadding`), so the scroll content itself adds none of its own.
+    static let scrollContentMargin: CGFloat = HermesSpacing.s0
 }
 
 /// The shared native List container. It deliberately keeps SwiftUI List semantics—navigation,

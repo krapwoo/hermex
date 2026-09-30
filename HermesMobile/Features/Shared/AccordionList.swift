@@ -66,10 +66,6 @@ private enum AccordionListMetrics {
     /// named source both a body row's leading alignment and the internal body-row divider's leading
     /// alignment derive from, rather than each reconstructing its own inset.
     static let headerTextLeadingInset = HermesAvatarSize.small.rawValue + HermesSpacing.s12
-    /// Where a divider between body rows begins: `headerTextLeadingInset` plus `ListItem`'s own
-    /// horizontal inset (`listItemSelectionPill`'s `HermesSpacing.s12`), so the divider starts at the
-    /// row's actual text-content column rather than the row's outer frame.
-    static let bodyDividerLeadingInset = headerTextLeadingInset + HermesSpacing.s12
 }
 
 /// Marks a view as valid `AccordionList` header/body row content: the shared `ListItem` anatomy,
@@ -109,6 +105,13 @@ struct AccordionList<
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var localSingleID: Item.ID?
     @State private var localMultipleIDs: Set<Item.ID>
+
+    /// The one leading-presence rule: `HeaderLeading` is `EmptyView` only for the no-leading
+    /// initializer path, so this is the single source both header rendering and body-row/divider
+    /// geometry read to decide whether a leading column exists.
+    private var hasHeaderLeading: Bool {
+        ObjectIdentifier(HeaderLeading.self) != ObjectIdentifier(EmptyView.self)
+    }
 
     init(
         items: [Item],
@@ -263,6 +266,8 @@ struct AccordionList<
     private func groupRows(_ item: Item) -> some View {
         let expanded = isExpanded(item.id)
         let rows = bodyItems(item)
+        let bodyLeadingInset = hasHeaderLeading ? AccordionListMetrics.headerTextLeadingInset : HermesSpacing.s0
+        let bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12
 
         header(for: item, expanded: expanded)
 
@@ -273,7 +278,7 @@ struct AccordionList<
 
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                 bodyItem(item, row)
-                    .padding(.leading, AccordionListMetrics.headerTextLeadingInset)
+                    .padding(.leading, bodyLeadingInset)
                     .transition(
                         reduceMotion
                             ? .identity
@@ -288,7 +293,7 @@ struct AccordionList<
                     )
 
                 if separatorStyle.showsInternalDividers, index < rows.index(before: rows.endIndex) {
-                    HermexDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)
+                    HermexDivider(leadingInset: bodyDividerLeadingInset)
                 }
             }
         }
@@ -306,13 +311,49 @@ struct AccordionList<
             rowIndicatorSize: HermesIconSize.medium,
             action: { toggle(item) },
             leading: {
-                headerLeading(item)
-                    .frame(
-                        width: HermesAvatarSize.small.rawValue,
-                        height: HermesAvatarSize.small.rawValue
-                    )
+                if hasHeaderLeading {
+                    headerLeading(item)
+                        .frame(
+                            width: HermesAvatarSize.small.rawValue,
+                            height: HermesAvatarSize.small.rawValue
+                        )
+                }
             },
             titleAccessory: { headerTitleAccessory(item) }
+        )
+    }
+}
+
+/// Compile-safe initializer path for callers with no header leading content: forwards an
+/// `EmptyView` `headerLeading` closure to the designated initializer rather than requiring every
+/// no-leading caller to pass an empty placeholder frame manually.
+extension AccordionList where HeaderLeading == EmptyView {
+    init(
+        items: [Item],
+        appearance: AccordionListAppearance,
+        separatorStyle: AccordionListSeparatorStyle,
+        expansion: AccordionListExpansion<Item.ID>,
+        bodyItems: @escaping (Item) -> [BodyItem],
+        headerTitle: @escaping (Item) -> Text,
+        headerSubtitle: @escaping (Item) -> Text?,
+        headerAccessibilityLabel: @escaping (Item) -> Text?,
+        headerIsDisabled: @escaping (Item) -> Bool,
+        @ViewBuilder headerTitleAccessory: @escaping (Item) -> HeaderTitleAccessory,
+        @ViewBuilder bodyItem: @escaping (Item, BodyItem) -> BodyRow
+    ) {
+        self.init(
+            items: items,
+            appearance: appearance,
+            separatorStyle: separatorStyle,
+            expansion: expansion,
+            bodyItems: bodyItems,
+            headerTitle: headerTitle,
+            headerSubtitle: headerSubtitle,
+            headerAccessibilityLabel: headerAccessibilityLabel,
+            headerIsDisabled: headerIsDisabled,
+            headerLeading: { _ in EmptyView() },
+            headerTitleAccessory: headerTitleAccessory,
+            bodyItem: bodyItem
         )
     }
 }
