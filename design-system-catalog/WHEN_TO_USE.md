@@ -30,22 +30,29 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   confirmation the caller dismisses after a short interval — it has no internal timer or
   auto-dismiss (HermexToast.swift), so the caller's own binding is what clears it; Banner stays
   in-flow until the condition it describes resolves. Reaching for the wrong one shows either a
-  message that never clears, or a persistent condition that silently disappears.
+  message that never clears, or a persistent condition that silently disappears. The native
+  HermexBanner (HermesMobile/Features/Shared/HermexBanner.swift) takes an independently
+  caller-optional `title` and `description` — at least one is required, and omitting one is a
+  content choice, not an interactive collapse/disclosure state. It remains foundation-available
+  with zero production call sites in this branch; the catalog's description-only composer-style
+  specimen demonstrates valid composition without claiming that ChatComposerView.swift or another
+  production surface has adopted it.
 - **Checkbox vs Radio vs Segmented Control** — Checkbox records an independent multi-select fact;
   Radio is one-of-many exclusive selection; Segmented Control is also exclusive selection, but as a
   primary, prominent view switch rather than a list-style choice. Picking Checkbox for exclusive
   selection lets two conflicting states coexist; picking Radio for an independent fact silently
   un-checks a sibling the user meant to keep checked.
-- **Tag vs Inline Reference Link** — both can look like a small pill of text. Tag is always
-  display-only; Inline Reference Link is always tappable, with real link/control semantics. Styling
-  a tappable element like a Tag (or vice versa) breaks the affordance VoiceOver and sighted users
-  both rely on.
-- **Card vs Disclosure Row vs Hermes Tooltip vs Accordion List** — all show supplementary detail,
-  differing in how much and how persistently. Card is a standalone, always-visible surface;
-  Disclosure Row is one collapsed line that expands into longer detail; Hermes Tooltip is a
-  tap-triggered aside anchored to a control; Accordion List is a *collection* of expandable
-  `ListItem` rows, not a single expandable surface — reach for it over Disclosure Row specifically
-  when the pattern repeats across a list, not for one status line.
+- **Tag vs Buttons** — Tag is always display-only, never tappable; a tappable element uses a real
+  control or link component (Buttons), never Tag or tag-like styling. Styling a tappable element
+  like a Tag (or vice versa) breaks the affordance VoiceOver and sighted users both rely on.
+- **Card vs Transcript Log Row vs Hermes Tooltip vs Accordion List** — all show supplementary
+  detail, differing in how much and how persistently. Card is a standalone, always-visible surface;
+  Transcript Log Row (the real, production-adopted `TranscriptLogRowView`) is one collapsed line
+  with a summary, optional status, and copy-on-long-press that expands into a bounded, scrollable
+  detail body; Hermes Tooltip is a tap-triggered aside anchored to a control; Accordion List is a
+  *collection* of independently expandable `ListItem` rows, not a single expandable surface — reach
+  for it over Transcript Log Row specifically when the pattern repeats across a list, not for one
+  status line.
 - **List / ListItem vs Hermes Card** — a homogeneous set of peer rows (settings, search results,
   sessions) is List/ListItem, which supplies the shared surface and dividers; a standalone
   self-contained unit sitting alongside differently-shaped content is a Card.
@@ -59,20 +66,35 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   long content forces content past the point Dialog is contracted to stay short; reaching for Bottom
   Sheet for a one- or two-action confirmation loses Dialog's forced-attention, non-dismissible
   backdrop.
-- **Popover Menu vs Dialog vs Bottom Sheet** — three Hermex-owned custom-presented surfaces that
-  overlap only in that none is a native `.alert`/`.sheet`/`.popover`. Popover Menu (`HermexPopoverMenu`)
-  is a short list of simple, anchored actions on a trigger (a row's "…" overflow) — it is always
-  trigger-anchored, flips above/below to stay on screen, and clamps horizontally inside the safe
-  area, with no nested submenus, toggles, or persistent selection model. Dialog is for a full-attention
-  modal decision the user must resolve before continuing, not a trigger-anchored action list. Bottom
-  Sheet is for forms, editable content, or a longer scrolling workflow — Popover Menu never scrolls
-  past its own bounded action list and never accepts text input. Reaching for Popover Menu with more
-  than a handful of simple actions, or with a decision needing the user's full attention, belongs on
-  Dialog or Bottom Sheet instead.
-- **Native iOS patterns (Search, Text Input) vs a Hermex-owned wrapper** — Hermex intentionally
-  keeps some surfaces on the platform primitive (`.searchable`, `TextField`/`SecureField`/
-  `TextEditor`) rather than a custom component. Their `adoptionStatus` is `native-platform`, not
-  `foundation-available` — there is no Hermex-owned alternative to adopt later, by design.
+- **Popover Menu vs Dialog vs Bottom Sheet vs Hermes Selection Sheet** — Popover Menu
+  (`HermexPopoverMenu`) is immediate-action-only: a short list of simple, anchored actions on a
+  trigger (a row's "…" overflow) that run once and dismiss — it is always trigger-anchored, flips
+  above/below to stay on screen, and clamps horizontally inside the safe area, with no nested
+  submenus, toggles, or persistent selection model of its own. Route any persistent selection to a
+  caller-presented Hermes Selection Sheet or a dedicated picker sheet instead. Dialog is for a
+  full-attention modal decision the user must resolve before continuing, not a trigger-anchored
+  action list. Bottom Sheet is for forms, editable content, or a longer scrolling workflow — Popover
+  Menu never scrolls past its own bounded action list and never accepts text input. Reaching for
+  Popover Menu with more than a handful of simple actions, or with a decision needing the user's
+  full attention, belongs on Dialog or Bottom Sheet instead.
+- **Text Input's Default, Password, and Code variants** — Text Input has exactly three approved
+  variants, Default, Password, and Code: `HermexTextField` is Default, `HermexSecureField` is
+  Password, and `HermexCodeInput` is Code, each forwarding to exactly one native editor. Code takes
+  a 4–8 digit caller-owned string, supports paste and one-time-code autofill, and never submits on
+  its own — the caller decides when to act on a complete code.
+- **Composer Toolbar** — `HermexComposerToolbar` is a new, foundation-available Components entry
+  with zero production adoption: the current Chat/Bots composer toolbars keep their own separate,
+  unmigrated `ComposerToolbarScroller` unchanged. It is one horizontally scrollable row of arbitrary
+  caller content in an elevated or transparent appearance, and never owns a Send/Stop-style action.
+- **Composer Chip** — documented inside the Composer pattern, not as a standalone component: it is
+  production's real, already-adopted inline text-embedded reference subsystem
+  (`ComposerChipToken`/`ComposerChipRendering`/`ComposerChipTextView`) for a recognized skill,
+  workspace file, bot mention, or quote rendered inline with editable/transcript text. There is no
+  standalone chip component to adopt — every reference renders through one uniform chip image today.
+- **Native iOS patterns (Search) vs a Hermex-owned wrapper** — Hermex intentionally keeps some
+  surfaces on the platform primitive (`.searchable`) rather than a custom component. Their
+  `adoptionStatus` is `native-platform`, not `foundation-available` — there is no Hermex-owned
+  alternative to adopt later, by design.
 
 ## Reading an entry's `adoptionStatus`
 

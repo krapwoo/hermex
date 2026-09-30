@@ -66,11 +66,14 @@ REQUIRED_FOUNDATION_FILES = [
     "HermesMobile/Features/Shared/HermexList.swift",
     "HermesMobile/Features/Shared/SegmentedControl.swift",
     "HermesMobile/Features/Shared/TopNav.swift",
-    "HermesMobile/Features/Shared/Banner.swift",
+    "HermesMobile/Features/Shared/HermexBanner.swift",
     "HermesMobile/Features/Shared/Tag.swift",
     "HermesMobile/Features/Shared/AttachmentFileType.swift",
     "HermesMobile/Features/Shared/AttachmentTile.swift",
     "HermesMobile/Features/Shared/SkeletonPlaceholder.swift",
+    "HermesMobile/Features/Shared/HermexSurfaceBorder.swift",
+    "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
+    "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
 ]
 
 # ─── Load-bearing API snippets ────────────────────────────────────────────────────────────────────
@@ -114,7 +117,9 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
     ("HermesMobile/Features/Shared/HermexTextInput.swift", [
         r"struct HermexTextField\s*:\s*View",
         r"struct HermexSecureField\s*:\s*View",
-        r"struct HermexNumberField<[^>]*>\s*:\s*View",
+        r"struct HermexCodeInput\s*:\s*View",
+        r"enum HermexCodeInputNormalizer",
+        r"enum HermexCodeInputLayout",
     ]),
     ("HermesMobile/Features/Shared/HermexBottomSheet.swift", [
         r"struct HermexBottomSheet<[^>]*>\s*:\s*View",
@@ -139,6 +144,23 @@ REQUIRED_SNIPPETS: list[tuple[str, list[str]]] = [
         r"struct HermexSelectionSheetOption<",
         r"struct HermexSelectionSheet<",
         r"HermexBottomSheet\(",
+    ]),
+    ("HermesMobile/Features/Shared/HermexBanner.swift", [
+        r"struct HermexBanner\s*:\s*View",
+        r"let title:\s*Text\?",
+        r"let description:\s*Text\?",
+    ]),
+    ("HermesMobile/Features/Shared/HermexSurfaceBorder.swift", [
+        r"enum HermexSurfaceBorderRamp",
+        r"enum HermexSurfaceBorderColors",
+    ]),
+    ("HermesMobile/Features/Shared/HermexComposerToolbar.swift", [
+        r"struct HermexComposerToolbar<[^>]*>\s*:\s*View",
+        r"enum HermexComposerToolbarAppearance",
+        r"struct HermexComposerToolbarEdgeFades",
+    ]),
+    ("HermesMobile/Features/Chat/TranscriptLogRowView.swift", [
+        r"TranscriptLogRowMetrics",
     ]),
 ]
 

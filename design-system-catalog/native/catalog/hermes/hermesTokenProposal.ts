@@ -232,7 +232,7 @@ export const HERMES_LAYOUT: Record<'layout.readable.800' | 'layout.readable.1000
 /** A retained component-content-window exception, not a scale step — do not fold into spacing or
  *  radius. */
 export const HERMES_RETAINED_BODY_WINDOW_HEIGHT: TokenFact = {
-  name: 'DisclosureRowMetrics.bodyWindowHeight',
+  name: 'TranscriptLogRowMetrics.bodyWindowHeight',
   value: '240pt',
   classification: 'Retained component exception',
   use: 'Fixed content-window cap an expanded transcript log body scrolls inside.',

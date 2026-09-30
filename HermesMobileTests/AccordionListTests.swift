@@ -163,11 +163,38 @@ final class AccordionListTests: XCTestCase {
         )
     }
 
-    func testBodyRowDividersAlignToBodyRowTextContentNotFullWidth() throws {
+    // MARK: - DSR2-02: header text-column, body-row alignment, and divider alignment derive from one
+    // named source
+    //
+    // `headerTextLeadingInset` — the header row's own text-column start (avatar width + header/body
+    // gap) — is the one named source both a body row's leading alignment and the internal body-row
+    // divider's leading alignment derive from, rather than each reconstructing its own inset.
+
+    func testHeaderTextLeadingInsetIsOneNamedSourceReplacingTheOldPerRowReconstruction() throws {
         let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
         XCTAssertTrue(
-            src.contains("bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12"),
-            "the body-row divider inset must derive from the existing avatar width + header/body gap + ListItem's own horizontal inset, not a hardcoded number"
+            src.contains("static let headerTextLeadingInset = HermesAvatarSize.small.rawValue + HermesSpacing.s12"),
+            "expected one named headerTextLeadingInset metric — the header row's own text-column start — instead of a metric that only body rows referenced"
+        )
+        XCTAssertFalse(
+            src.contains("static let bodyLeadingInset"),
+            "bodyLeadingInset is retired in favor of the single named headerTextLeadingInset source"
+        )
+    }
+
+    func testBodyRowLeadingAlignmentDerivesFromTheNamedHeaderTextLeadingInset() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains(".padding(.leading, AccordionListMetrics.headerTextLeadingInset)"),
+            "expected body rows to align to the named headerTextLeadingInset, the same source the header's own text column starts from"
+        )
+    }
+
+    func testBodyRowDividersAlignToTheSameNamedHeaderTextLeadingInset() throws {
+        let src = try source("HermesMobile/Features/Shared/AccordionList.swift")
+        XCTAssertTrue(
+            src.contains("bodyDividerLeadingInset = headerTextLeadingInset + HermesSpacing.s12"),
+            "the body-row divider inset must derive from the same named headerTextLeadingInset source plus ListItem's own horizontal inset, not a separately reconstructed body-row inset"
         )
         XCTAssertTrue(
             src.contains("HermexDivider(leadingInset: AccordionListMetrics.bodyDividerLeadingInset)"),

@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -99,7 +100,21 @@ SIMPLE_SNIPPETS = {
     ),
     "HermesMobile/Features/Shared/SegmentedControl.swift": "struct SegmentedControl<Value: Hashable>: View {}",
     "HermesMobile/Features/Shared/TopNav.swift": "struct TopNav: ToolbarContent {}",
-    "HermesMobile/Features/Shared/Banner.swift": "struct Banner: View {}",
+    "HermesMobile/Features/Shared/HermexBanner.swift": (
+        "struct HermexBanner: View {\n"
+        "    let title: Text?\n"
+        "    let description: Text?\n"
+        "}"
+    ),
+    "HermesMobile/Features/Shared/HermexSurfaceBorder.swift": (
+        "enum HermexSurfaceBorderRamp {}\nenum HermexSurfaceBorderColors {}"
+    ),
+    "HermesMobile/Features/Shared/HermexComposerToolbar.swift": (
+        "enum HermexComposerToolbarAppearance {}\n"
+        "struct HermexComposerToolbar<Content: View>: View {}\n"
+        "struct HermexComposerToolbarEdgeFades {}"
+    ),
+    "HermesMobile/Features/Chat/TranscriptLogRowView.swift": "enum TranscriptLogRowMetrics {}",
     "HermesMobile/Features/Shared/Tag.swift": "struct Tag: View {}",
     "HermesMobile/Features/Shared/AttachmentFileType.swift": "enum AttachmentFileType {}",
     "HermesMobile/Features/Shared/AttachmentTile.swift": "struct AttachmentTile: View {}",
@@ -123,8 +138,9 @@ SIMPLE_SNIPPETS = {
     "HermesMobile/Features/Shared/HermexTextInput.swift": (
         "struct HermexTextField: View {}\n"
         "struct HermexSecureField: View {}\n"
-        "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
-        "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+        "enum HermexCodeInputNormalizer {}\n"
+        "enum HermexCodeInputLayout {}\n"
+        "struct HermexCodeInput: View {}"
     ),
     "HermesMobile/Features/Shared/HermexBottomSheet.swift": (
         "struct HermexBottomSheet<Content: View>: View {\n"
@@ -702,8 +718,9 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
                 "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
                 "}\n"
                 "struct HermexSecureField: View {}\n"
-                "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
-                "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+                "struct HermexCodeInput: View {}\n"
+                "enum HermexCodeInputNormalizer {}\n"
+                "enum HermexCodeInputLayout {}"
             ),
         )
         failures = audit.run(self.root)
@@ -788,8 +805,9 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
                 "struct HermexSecureField: View {\n"
                 "    var body: some View { SecureField(\"x\", text: .constant(\"\")) }\n"
                 "}\n"
-                "struct HermexNumberField<Value, Format: ParseableFormatStyle>: View "
-                "where Format.FormatInput == Value, Format.FormatOutput == String {}"
+                "struct HermexCodeInput: View {}\n"
+                "enum HermexCodeInputNormalizer {}\n"
+                "enum HermexCodeInputLayout {}"
             ),
         )
         failures = audit.run(self.root)
@@ -871,6 +889,198 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         write(self.root, "HermesMobile/Features/Tasks/TasksView.swift", "struct TasksView: View {}")
         failures = audit.run(self.root)
         self.assertFalse(any("TasksView.swift" in f for f in failures), failures)
+
+
+class Task6TaxonomyRetirementTests(unittest.TestCase):
+    """Fixture-independent contracts for the approved final taxonomy (hermex-dsf-round-2-content-r1):
+    Text Input's Code variant replaces Number Field, Disclosure Row/Inline Reference Link are fully
+    retired, Transcript Log Row and Composer Toolbar are the new/renamed foundation contracts, and
+    Popover Menu stays free of a selection API. These read the real repository and the real audit
+    module state directly (not the temp fixture tree `RequiredFilesAndSnippetsTests` builds), mirroring
+    `test_the_audit_module_no_longer_declares_the_retired_hermex_dropdown_foundation_requirement`
+    and `test_passes_against_the_real_repository` above.
+    """
+
+    def test_required_foundation_files_include_surface_border_composer_toolbar_and_transcript_log_row_view(self):
+        for expected in [
+            "HermesMobile/Features/Shared/HermexSurfaceBorder.swift",
+            "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
+            "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
+        ]:
+            self.assertIn(
+                expected,
+                audit.REQUIRED_FOUNDATION_FILES,
+                f"expected {expected} to be a required foundation file once Task 6 lands",
+            )
+
+    def test_text_input_required_snippets_pin_code_input_and_exclude_number_field(self):
+        snippets_by_path = dict(audit.REQUIRED_SNIPPETS)
+        patterns = snippets_by_path.get("HermesMobile/Features/Shared/HermexTextInput.swift")
+        self.assertIsNotNone(patterns, "expected required snippets for HermexTextInput.swift")
+        joined = "\n".join(patterns)
+        for expected in [
+            "HermexTextField",
+            "HermexSecureField",
+            "HermexCodeInput",
+            "HermexCodeInputNormalizer",
+            "HermexCodeInputLayout",
+        ]:
+            self.assertIn(expected, joined, f"expected a required snippet naming {expected}")
+        self.assertNotIn("HermexNumberField", joined, "expected the retired HermexNumberField snippet to be gone")
+
+    def test_hermex_number_field_disclosure_row_and_its_tests_are_fully_retired_from_the_real_repository(self):
+        for retired_path in [
+            "HermesMobile/Features/Chat/DisclosureRow.swift",
+            "HermesMobileTests/DisclosureRowBodyWindowTests.swift",
+        ]:
+            self.assertFalse(
+                (REPO_ROOT / retired_path).exists(),
+                f"expected {retired_path} to be deleted, with no shim or deprecation wrapper retained",
+            )
+        text_input_source = (
+            REPO_ROOT / "HermesMobile/Features/Shared/HermexTextInput.swift"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("HermexNumberField", text_input_source)
+        self.assertNotIn("ParseableFormatStyle", text_input_source)
+
+    def test_catalog_no_longer_registers_inline_reference_link_or_disclosure_row_as_active_entries(self):
+        catalog_source = (
+            REPO_ROOT / "design-system-catalog/native/catalog/hermes/hermesSections.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("Inline Reference Link", catalog_source)
+        self.assertNotIn("id: 'Disclosure Row'", catalog_source)
+        self.assertNotIn("DisclosureRowMetrics", catalog_source)
+        self.assertIn("Transcript Log Row", catalog_source)
+
+    def test_hermex_popover_menu_remains_free_of_a_selection_api(self):
+        popover_source = (
+            REPO_ROOT / "HermesMobile/Features/Shared/HermexPopoverMenu.swift"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("HermexSelectionPopover", popover_source)
+        self.assertIn("struct HermexPopoverMenuAction", popover_source)
+
+    def test_composer_toolbar_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+        pattern = re.compile(r"HermexComposerToolbar\(")
+        allowed = {
+            "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
+            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
+        }
+        offenders = []
+        overlay_lab_count = 0
+        for swift_path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
+            rel_path = str(swift_path.relative_to(REPO_ROOT))
+            count = len(pattern.findall(swift_path.read_text(encoding="utf-8")))
+            if not count:
+                continue
+            if rel_path == "HermesMobile/Features/Shared/HermexOverlayLab.swift":
+                overlay_lab_count = count
+            if rel_path not in allowed:
+                offenders.append(rel_path)
+        self.assertEqual(offenders, [], f"HermexComposerToolbar( must only be called from {sorted(allowed)}")
+        self.assertGreater(
+            overlay_lab_count, 0,
+            "expected the DEBUG overlay lab to adopt HermexComposerToolbar with at least one real specimen",
+        )
+
+    def test_new_foundation_and_test_files_have_xcode_project_membership(self):
+        pbxproj = (REPO_ROOT / "HermesMobile.xcodeproj/project.pbxproj").read_text(encoding="utf-8")
+        for filename in [
+            "HermexSurfaceBorder.swift",
+            "HermexComposerToolbar.swift",
+            "HermexSurfaceBorderTests.swift",
+            "HermexComposerToolbarTests.swift",
+            "HermexCodeInputTests.swift",
+        ]:
+            self.assertIn(filename, pbxproj, f"expected {filename} to have Xcode project membership")
+
+
+class DSR2_15BannerTests(unittest.TestCase):
+    """Fixture-independent contracts for the foundation-only DSR2-15 Banner family: `HermexBanner`
+    replaces the legacy Banner source/tests, title and description remain independently optional,
+    the DEBUG overlay lab renders the real component, and production sources gain no new call site."""
+
+    def test_the_audit_module_will_need_to_swap_the_retired_banner_foundation_requirement_for_hermex_banner(self):
+        # Pins the wished-for REQUIRED_FOUNDATION_FILES swap (test-first phase): a later audit-script
+        # task must remove the retired Banner.swift path and add HermexBanner.swift in its place, the
+        # same swap already made for HermexDropdown -> HermexSelectionSheet in RequiredFilesAndSnippetsTests.
+        self.assertIn(
+            "HermesMobile/Features/Shared/HermexBanner.swift",
+            audit.REQUIRED_FOUNDATION_FILES,
+            "expected HermexBanner.swift to become a required foundation file once DSR2-15 lands",
+        )
+        self.assertNotIn(
+            "HermesMobile/Features/Shared/Banner.swift",
+            audit.REQUIRED_FOUNDATION_FILES,
+            "expected the retired Banner.swift to be removed from REQUIRED_FOUNDATION_FILES once HermexBanner.swift replaces it",
+        )
+
+    def test_legacy_banner_source_and_tests_are_fully_retired_from_the_real_repository(self):
+        for retired_path in [
+            "HermesMobile/Features/Shared/Banner.swift",
+            "HermesMobileTests/BannerTests.swift",
+        ]:
+            self.assertFalse(
+                (REPO_ROOT / retired_path).exists(),
+                f"expected {retired_path} to be deleted, with no shim or deprecation wrapper retained",
+            )
+        pbxproj = (REPO_ROOT / "HermesMobile.xcodeproj/project.pbxproj").read_text(encoding="utf-8")
+        self.assertIsNone(
+            re.search(r"(?<!Hermex)Banner\.swift\b", pbxproj),
+            "expected no active pbxproj reference to the legacy production Banner.swift",
+        )
+        self.assertIsNone(
+            re.search(r"(?<!Hermex)BannerTests\.swift\b", pbxproj),
+            "expected no active pbxproj reference to the legacy BannerTests.swift",
+        )
+
+    def test_hermex_banner_and_its_tests_have_xcode_project_membership(self):
+        pbxproj = (REPO_ROOT / "HermesMobile.xcodeproj/project.pbxproj").read_text(encoding="utf-8")
+        for filename in ["HermexBanner.swift", "HermexBannerTests.swift"]:
+            self.assertIn(filename, pbxproj, f"expected {filename} to have Xcode project membership")
+
+    def test_hermex_banner_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+        pattern = re.compile(r"HermexBanner\(")
+        allowed = {
+            "HermesMobile/Features/Shared/HermexBanner.swift",
+            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
+        }
+        offenders = []
+        overlay_lab_count = 0
+        for swift_path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
+            rel_path = str(swift_path.relative_to(REPO_ROOT))
+            count = len(pattern.findall(swift_path.read_text(encoding="utf-8")))
+            if not count:
+                continue
+            if rel_path == "HermesMobile/Features/Shared/HermexOverlayLab.swift":
+                overlay_lab_count = count
+            if rel_path not in allowed:
+                offenders.append(rel_path)
+        self.assertEqual(offenders, [], f"HermexBanner( must only be called from {sorted(allowed)}")
+        self.assertGreater(
+            overlay_lab_count, 0,
+            "expected the DEBUG overlay lab to adopt HermexBanner with at least one real specimen",
+        )
+
+
+    def test_hermex_banner_is_not_adopted_by_bot_composers_or_the_offline_cache_notice_sources(self):
+        for rel_path in [
+            "HermesMobile/Features/Bots/BotChatComposerView.swift",
+            "HermesMobile/Features/Bots/BotRoomComposerView.swift",
+            "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift",
+            "HermesMobile/Features/SessionList/SessionListComponents.swift",
+        ]:
+            text = (REPO_ROOT / rel_path).read_text(encoding="utf-8")
+            self.assertNotIn(
+                "HermexBanner(", text, f"{rel_path} must not adopt HermexBanner in this bounded slice"
+            )
+
+    def test_catalog_states_hermex_banner_as_foundation_only_with_zero_production_adoption(self):
+        catalog_source = (
+            REPO_ROOT / "design-system-catalog/native/catalog/hermes/hermesSections.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertIn("HermesMobile/Features/Shared/HermexBanner.swift", catalog_source)
+        self.assertNotIn("HermesMobile/Features/Chat/ChatComposerView.swift", catalog_source)
+        self.assertNotIn("HermesMobile/Features/Shared/Banner.swift", catalog_source)
 
 
 class CliTests(unittest.TestCase):

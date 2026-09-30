@@ -2,13 +2,16 @@ import XCTest
 import SwiftUI
 @testable import HermesMobile
 
-/// Contracts for the three thin Hermex-owned Text Input wrappers (`HermexTextInput.swift`):
-/// `HermexTextField` forwards to native `TextField`, `HermexSecureField` forwards to native
-/// `SecureField`, and `HermexNumberField` forwards to native SwiftUI's typed
-/// `TextField(value:format:)` path. None of the three draw their own chrome. A SwiftUI view tree
-/// isn't inspectable at runtime without a rendering harness, so this is a compile contract plus a
-/// source contract that pins the forwarding calls and the absence of custom chrome, validation, or
-/// manual number parsing.
+/// Contracts for the Hermex-owned Default and Password Text Input components
+/// (`HermexTextInput.swift`): `HermexTextField` and `HermexSecureField` each keep a native
+/// `TextField`/`SecureField` editor but own canonical Hermex presentation — a persistent visible
+/// label, optional prompt, optional helper text, optional caller-owned error text that replaces
+/// helper text, an `isEnabled` toggle with local focus resignation, and shared resting/focused/
+/// Increased Contrast borders at Hermex field radius/spacing/minimum height. `HermexNumberField` is
+/// removed. A SwiftUI view tree isn't inspectable at runtime without a rendering harness, so this is
+/// a compile contract plus a source contract that pins the native forwarding, the canonical chrome,
+/// and the absence of validation logic, error auto-clear, password reveal, a multiline wrapper, a
+/// typed Number Field, and an enum-driven mega component.
 final class HermexTextInputTests: XCTestCase {
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
@@ -28,7 +31,7 @@ final class HermexTextInputTests: XCTestCase {
     // MARK: - Compile contracts
 
     @MainActor
-    func testHermexTextFieldCompilesWithATitleAndATextBinding() {
+    func testHermexTextFieldCompilesWithALabelAndATextBinding() {
         struct Host: View {
             @State var value = ""
             var body: some View {
@@ -40,7 +43,7 @@ final class HermexTextInputTests: XCTestCase {
     }
 
     @MainActor
-    func testHermexSecureFieldCompilesWithATitleAndATextBinding() {
+    func testHermexSecureFieldCompilesWithALabelAndATextBinding() {
         struct Host: View {
             @State var value = ""
             var body: some View {
@@ -52,29 +55,29 @@ final class HermexTextInputTests: XCTestCase {
     }
 
     @MainActor
-    func testHermexNumberFieldCompilesWithACallerSuppliedParseableFormatStyle() {
-        struct Host: View {
-            @State var value: Int = 0
-            var body: some View {
-                HermexNumberField("Quantity", value: $value, format: .number)
-            }
-        }
-        let host = Host()
-        XCTAssertFalse(String(describing: type(of: host)).isEmpty)
-    }
-
-    @MainActor
-    func testAllThreeWrappersCompileWithAnExplicitNativeTextPrompt() {
+    func testBothFieldsCompileWithPromptHelperErrorAndDisabledArguments() {
         struct Host: View {
             @State var text = ""
             @State var secret = ""
-            @State var number = 0
 
             var body: some View {
                 VStack {
-                    HermexTextField("Name", text: $text, prompt: Text("Enter a name"))
-                    HermexSecureField("Password", text: $secret, prompt: Text("Enter a password"))
-                    HermexNumberField("Quantity", value: $number, format: .number, prompt: Text("Enter a quantity"))
+                    HermexTextField(
+                        "Name",
+                        text: $text,
+                        prompt: Text("Enter a name"),
+                        helperText: Text("As it appears on your ID"),
+                        errorText: Text("Name is required"),
+                        isEnabled: false
+                    )
+                    HermexSecureField(
+                        "Password",
+                        text: $secret,
+                        prompt: Text("Enter a password"),
+                        helperText: Text("At least 8 characters"),
+                        errorText: Text("Password is too short"),
+                        isEnabled: false
+                    )
                 }
             }
         }
@@ -82,56 +85,127 @@ final class HermexTextInputTests: XCTestCase {
         XCTAssertFalse(String(describing: type(of: host)).isEmpty)
     }
 
-    // MARK: - Source contracts: thin forwarding wrappers, no custom chrome
+    @MainActor
+    func testBothFieldsDefaultToEnabledWhenIsEnabledIsOmitted() {
+        struct Host: View {
+            @State var text = ""
+            @State var secret = ""
+            var body: some View {
+                VStack {
+                    HermexTextField("Name", text: $text)
+                    HermexSecureField("Password", text: $secret)
+                }
+            }
+        }
+        let host = Host()
+        XCTAssertFalse(String(describing: type(of: host)).isEmpty)
+    }
 
-    func testHermexTextFieldForwardsDirectlyToNativeTextField() throws {
+    // MARK: - Source contracts: native editors remain the editing authority
+
+    func testHermexTextFieldWrapsANativeTextField() throws {
         let src = try hermexTextInputSource()
         XCTAssertTrue(src.contains("struct HermexTextField"))
-        XCTAssertTrue(src.contains("TextField(titleKey, text: $text, prompt: prompt)"), "expected the wrapper to forward to native TextField")
+        XCTAssertTrue(src.contains("TextField("), "expected HermexTextField to keep a native TextField editor")
     }
 
-    func testHermexSecureFieldForwardsDirectlyToNativeSecureField() throws {
+    func testHermexSecureFieldWrapsANativeSecureField() throws {
         let src = try hermexTextInputSource()
         XCTAssertTrue(src.contains("struct HermexSecureField"))
-        XCTAssertTrue(src.contains("SecureField(titleKey, text: $text, prompt: prompt)"), "expected the wrapper to forward to native SecureField")
+        XCTAssertTrue(src.contains("SecureField("), "expected HermexSecureField to keep a native SecureField editor")
     }
 
-    func testAllThreeWrappersForwardAnOptionalNativeTextPrompt() throws {
-        let src = try hermexTextInputSource()
-        XCTAssertTrue(src.contains("prompt: Text? = nil"), "expected callers to be able to omit a native Text prompt")
-        XCTAssertTrue(src.contains("TextField(titleKey, text: $text, prompt: prompt)"))
-        XCTAssertTrue(src.contains("SecureField(titleKey, text: $text, prompt: prompt)"))
-        XCTAssertTrue(src.contains("TextField(titleKey, value: $value, format: format, prompt: prompt)"))
-    }
+    // MARK: - Source contracts: shared field shell instead of duplicated chrome
 
-    func testHermexNumberFieldUsesTheTypedFormatStylePathNotAStringBinding() throws {
+    func testTextFieldAndSecureFieldShareAPrivateFieldShellRatherThanDuplicatingChrome() throws {
         let src = try hermexTextInputSource()
-        XCTAssertTrue(src.contains("struct HermexNumberField"))
-        XCTAssertTrue(src.contains("ParseableFormatStyle"), "expected a caller-supplied native parseable format style")
-        XCTAssertTrue(
-            src.contains("TextField(titleKey, value: $value, format: format, prompt: prompt)"),
-            "expected the wrapper to forward to native TextField(value:format:)"
+        XCTAssertNotNil(
+            src.range(of: #"private struct Hermex\w*Shell"#, options: .regularExpression),
+            "expected a single shared private field-shell type used by both HermexTextField and HermexSecureField, instead of each duplicating its own label/helper/error chrome"
         )
     }
 
-    func testHermexNumberFieldAvoidsManualStringParsingOrAForcedNumericKeyboard() throws {
+    // MARK: - Source contracts: shared borders, radius, spacing, minimum height
+
+    func testFieldShellConsumesSharedSurfaceBorderRoles() throws {
         let src = try hermexTextInputSource()
-        XCTAssertFalse(src.contains("NumberFormatter()"), "must not manually parse numbers")
-        XCTAssertFalse(src.contains("keyboardType(.numberPad)"), "must not force a numeric keyboard")
-        XCTAssertFalse(src.contains("keyboardType(.decimalPad)"), "must not force a numeric keyboard")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.resting"), "expected the shared resting border role")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.focused"), "expected the shared focused border role")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.increasedContrast"), "expected the shared Increased Contrast border role")
     }
 
-    func testIntroducesNoCustomFieldChromeValidationOrKeyboardPolicy() throws {
+    func testFieldShellUsesHermesFieldRadiusAndS12Spacing() throws {
         let src = try hermexTextInputSource()
-        XCTAssertFalse(src.contains(".border("), "must not draw custom border chrome")
-        XCTAssertFalse(src.contains("keyboardType("), "keyboard configuration stays with the caller")
-        XCTAssertFalse(src.contains("textContentType("), "content type stays with the caller")
-        XCTAssertFalse(src.contains("autocorrectionDisabled"), "autocorrection policy stays with the caller")
-        XCTAssertFalse(src.contains("textInputAutocapitalization"), "capitalization policy stays with the caller")
-        XCTAssertFalse(src.contains("onSubmit("), "submit handling stays with the caller")
-        XCTAssertFalse(src.contains("focused("), "focus ownership stays with the caller")
-        XCTAssertFalse(src.contains("helperText"), "must not introduce helper text chrome")
-        XCTAssertFalse(src.contains("errorText"), "must not introduce error text chrome")
+        XCTAssertTrue(src.contains("HermesRadius.field"), "expected the Hermex field radius token")
+        XCTAssertTrue(src.contains("HermesSpacing.s12"), "expected Hermex field spacing token HermesSpacing.s12")
+    }
+
+    func testFieldShellEnforcesA44PointMinimumFieldHeight() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(
+            src.contains("44") && (src.contains("minHeight") || src.contains("frame(") ),
+            "expected a 44pt minimum field height"
+        )
+    }
+
+    // MARK: - Source contracts: local focus and focus resignation when disabled
+
+    func testFieldShellOwnsLocalFocusState() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("@FocusState"), "expected the field shell to own local focus state")
+    }
+
+    func testFieldShellResignsFocusWhenDisabled() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(
+            src.contains("onChange(of: isEnabled)"),
+            "expected the field to resign focus in response to isEnabled becoming false"
+        )
+    }
+
+    // MARK: - Source contracts: visible label, helper text, and error precedence
+
+    func testFieldShellRendersAPersistentVisibleLabel() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("Text(label)") || src.contains("Text(titleKey)"), "expected a persistent visible label above the field")
+    }
+
+    func testFieldShellAcceptsOptionalHelperTextAndOptionalErrorText() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertTrue(src.contains("helperText: Text?"), "expected an optional caller-supplied helper text")
+        XCTAssertTrue(src.contains("errorText: Text?"), "expected an optional caller-supplied error text")
+    }
+
+    func testErrorTextTakesPrecedenceOverHelperTextWhenBothArePresent() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertNotNil(
+            src.range(of: #"if let errorText[\s\S]*?\}[\s\S]*?else if let helperText"#, options: .regularExpression),
+            "expected errorText to replace helperText below the field rather than both rendering together"
+        )
+    }
+
+    // MARK: - Source contracts: no validation logic, error auto-clear, or password reveal
+
+    func testHermexTextInputIntroducesNoValidationLogicOrErrorAutoClear() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertFalse(src.contains("isValid"), "must not introduce validation logic")
+        XCTAssertFalse(src.contains("onChange(of: text)"), "must not auto-clear errors as the caller types")
+    }
+
+    func testHermexSecureFieldIntroducesNoPasswordRevealToggle() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertFalse(src.contains("isSecureTextEntry"), "must not add a password reveal toggle")
+        XCTAssertFalse(src.contains("eye.slash"), "must not add a password reveal toggle")
+        XCTAssertFalse(src.contains("SF Symbol"), "must not add a password reveal toggle")
+    }
+
+    // MARK: - Source contracts: Number Field removed, no multiline wrapper, no mega component
+
+    func testHermexNumberFieldIsRemoved() throws {
+        let src = try hermexTextInputSource()
+        XCTAssertFalse(src.contains("HermexNumberField"), "expected HermexNumberField to be removed")
+        XCTAssertFalse(src.contains("ParseableFormatStyle"), "expected the removed typed Number Field's format-style path to be gone")
+        XCTAssertFalse(src.contains("TextField(titleKey, value:"), "expected the removed typed TextField(value:) path to be gone")
     }
 
     func testDoesNotAddAMultilineComponentOrCollapseIntoOneEnumDrivenComponent() throws {
@@ -140,5 +214,41 @@ final class HermexTextInputTests: XCTestCase {
         XCTAssertFalse(src.contains("struct HermexTextInput:"), "must not collapse into one enum-driven mega component")
         XCTAssertFalse(src.contains("struct HermexTextInput "), "must not collapse into one enum-driven mega component")
         XCTAssertFalse(src.contains("enum HermexTextInputVariant"), "must not collapse into one enum-driven mega component")
+    }
+
+    // MARK: - DEBUG lab reachability (DSR2-06): stable, real-component Default/Password/Code
+    // specimens for deterministic host-automation verification, mirroring the pattern already
+    // established for Selection Sheet/Toast/Dialog/Popover Menu in HermexOverlayLab.swift.
+
+    private func hermexOverlayLabSource() throws -> String {
+        try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+    }
+
+    func testRemainsReachableFromTheDebugOverlayLabWithADedicatedTextInputSection() throws {
+        let src = try hermexOverlayLabSource()
+        XCTAssertTrue(
+            src.contains("--hermex-overlay-lab-text-input"),
+            "expected a deterministic launch flag scrolling straight to the Text Input fixtures"
+        )
+        XCTAssertTrue(
+            src.contains("overlay-lab-text-input-section"),
+            "expected a deterministic scroll anchor for the Text Input section"
+        )
+    }
+
+    func testDebugLabExposesStableDefaultAndPasswordFixtureIdentifiers() throws {
+        let src = try hermexOverlayLabSource()
+        XCTAssertTrue(src.contains("overlay-lab-text-input-default"), "expected a stable identifier for the Default specimen")
+        XCTAssertTrue(src.contains("overlay-lab-text-input-password"), "expected a stable identifier for the Password specimen")
+    }
+
+    func testDebugLabExposesStableCodeInputFixtureIdentifiersAtFourSixAndEightDigits() throws {
+        let src = try hermexOverlayLabSource()
+        XCTAssertTrue(src.contains("overlay-lab-code-input-4"), "expected a stable identifier for the 4-digit Code specimen")
+        XCTAssertTrue(src.contains("overlay-lab-code-input-6-partial"), "expected a stable identifier for the partially-filled 6-digit Code specimen")
+        XCTAssertTrue(src.contains("overlay-lab-code-input-6-complete"), "expected a stable identifier for the complete 6-digit Code specimen")
+        XCTAssertTrue(src.contains("overlay-lab-code-input-error"), "expected a stable identifier for the errored Code specimen")
+        XCTAssertTrue(src.contains("overlay-lab-code-input-disabled"), "expected a stable identifier for the disabled Code specimen")
+        XCTAssertTrue(src.contains("overlay-lab-code-input-8"), "expected a stable identifier for the 8-digit Code specimen")
     }
 }

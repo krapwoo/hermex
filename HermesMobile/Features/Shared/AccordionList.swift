@@ -62,12 +62,14 @@ enum AccordionListExpansionResolver {
 
 private enum AccordionListMetrics {
     static let groupSpacing = HermesSpacing.s8
-    static let bodyLeadingInset = HermesAvatarSize.small.rawValue + HermesSpacing.s12
-    /// Where a divider between body rows begins: the same leading inset a body row's own content
-    /// carries (`bodyLeadingInset`) plus `ListItem`'s own horizontal inset
-    /// (`listItemSelectionPill`'s `HermesSpacing.s12`), so the divider starts at the row's actual
-    /// text-content column rather than the row's outer frame.
-    static let bodyDividerLeadingInset = bodyLeadingInset + HermesSpacing.s12
+    /// The header row's own text-column start (avatar width plus the header/body gap) — the one
+    /// named source both a body row's leading alignment and the internal body-row divider's leading
+    /// alignment derive from, rather than each reconstructing its own inset.
+    static let headerTextLeadingInset = HermesAvatarSize.small.rawValue + HermesSpacing.s12
+    /// Where a divider between body rows begins: `headerTextLeadingInset` plus `ListItem`'s own
+    /// horizontal inset (`listItemSelectionPill`'s `HermesSpacing.s12`), so the divider starts at the
+    /// row's actual text-content column rather than the row's outer frame.
+    static let bodyDividerLeadingInset = headerTextLeadingInset + HermesSpacing.s12
 }
 
 /// Marks a view as valid `AccordionList` header/body row content: the shared `ListItem` anatomy,
@@ -271,7 +273,7 @@ struct AccordionList<
 
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                 bodyItem(item, row)
-                    .padding(.leading, AccordionListMetrics.bodyLeadingInset)
+                    .padding(.leading, AccordionListMetrics.headerTextLeadingInset)
                     .transition(
                         reduceMotion
                             ? .identity

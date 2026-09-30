@@ -198,7 +198,7 @@ extension Text {
     /// (proven by `AppFontDynamicTypeRenderTests`, which measured identical
     /// rendered widths at `.large` and `.accessibility3` under that
     /// approach). Callers pass their own `@Environment(\.dynamicTypeSize)`
-    /// value explicitly, exactly as `DisclosureRow` does.
+    /// value explicitly, exactly as `TranscriptLogRowView` does.
     func appFont(_ role: AppFont.Role, dynamicTypeSize: DynamicTypeSize) -> Text {
         let traitCollection = UITraitCollection(preferredContentSizeCategory: dynamicTypeSize.appFontContentSizeCategory)
         let scaledSize = AppFont.scaledFont(role: role, traitCollection: traitCollection).pointSize

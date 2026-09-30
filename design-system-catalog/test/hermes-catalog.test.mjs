@@ -249,10 +249,12 @@ test('UI-facing catalog text never describes a locally adopted token family as "
   );
 });
 
-test('catalog implementation status describes the in-repository foundation-only candidate without mutable branch or publication claims', () => {
+test('catalog implementation status describes the in-repository candidate and points to entry-level adoption truth without mutable publication claims', () => {
   const src = read(HERMES_SECTIONS_PATH);
-  assert.match(src, /foundation-only\s+Design System candidate/i);
-  assert.match(src, /Production-screen adoption is intentionally\s+excluded from this slice/i);
+  assert.match(src, /Design System candidate/i);
+  assert.match(src, /bounded production adoptions are named|each entry[^.]*adoption status/i);
+  assert.doesNotMatch(src, /Production-screen adoption is intentionally\s+excluded from this slice/i);
+  assert.doesNotMatch(src, /Production-screen migration\/adoption is not included in this branch/i);
   assert.match(src, /design-system-catalog\//);
   assert.doesNotMatch(src, /issue\/607-shared-design-system|issue\/607-foundation-base/);
   assert.doesNotMatch(src, /contributor-fork branch|current migration candidate|no pull request|TestFlight upload|release, or deployment/i);
@@ -1224,14 +1226,14 @@ test('every primary Hermex entry declares hermesReference (never the removed her
     'Hermes Avatar',
     'Row Divider',
     'Tag',
-    'Inline Reference Link',
     'Search',
     'Segmented Control',
     'Buttons',
     'Hermes TopNav',
     'Skeleton Loading',
     'List / ListItem',
-    'Disclosure Row',
+    'Transcript Log Row',
+    'Composer Toolbar',
     'Transcript Activity',
     'Composer',
     'Hermex Typography',
@@ -1859,7 +1861,7 @@ test('Tag is display-only, documents every Tag.Size case as a new foundation-onl
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Tag');
   assert.match(section, /always display-only/i);
-  assert.match(section, /Inline Reference Link/);
+  assert.doesNotMatch(section, /Inline Reference Link/, 'Inline Reference Link is fully retired and must no longer be named as Tag\'s interactive counterpart');
   assert.doesNotMatch(section, /accessibilityRole="link"|onPress/, 'Tag must document no interactive prop, example, or styling');
   for (const size of ['.compact', '.regular', '.prominent']) {
     assert.ok(section.includes(size), `expected the ${size} size case to be documented`);
@@ -1898,21 +1900,21 @@ test('Correction (production reconciliation): the Tag gallery has no micro size 
   assert.match(body, /size: compact \(8\/2 padding\)/);
 });
 
-test('Inline Reference Link is a real focusable link, distinct from Tag — link semantics, no capsule styling, and a documented pressed/focus contrast', () => {
-  const src = read(HERMES_SECTIONS_PATH);
-  const section = extractHermesSection(src, 'Inline Reference Link');
-  assert.match(section, /accessibilityRole:\s*"?link"?|accessibilityRole.*link/i);
-  assert.match(section, /keyboard-focusable/i);
-  assert.match(section, /Tag/);
-  assert.match(section, /<InlineReferenceLinkPreview/);
+// Issue #607 (Round 2, hermex-dsf-round-2-content-r1): Inline Reference Link is retired outright —
+// its own ComposerChipRendering evidence is now documented inside Composer's own Composer Chip
+// subsystem coverage (see the Composer Chip tests below), not as a standalone tappable-link entry.
+test('Inline Reference Link no longer exists as a Component — no section id, no HermesSectionId union entry, no nav entry, and no preview export/import/render reference anywhere in the catalog', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.doesNotMatch(sectionsSrc, /'Inline Reference Link'/, 'no reference to the retired Inline Reference Link id may remain, including in the HermesSectionId union, nav, or alternatives');
+  assert.doesNotMatch(sectionsSrc, /<InlineReferenceLinkPreview/, 'no section may still render the retired preview');
+  assert.doesNotMatch(sectionsSrc, /InlineReferenceLinkPreview/, 'no import of the retired preview may remain');
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  assert.doesNotMatch(navBlockMatch[0], /Inline Reference Link/);
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
-  assert.match(previewsSrc, /export function InlineReferenceLinkPreview/);
-  const previewBody = extractFunctionBody(previewsSrc, 'InlineReferenceLinkPreview');
-  assert.match(previewBody, /accessibilityRole="link"/);
-  assert.match(previewBody, /onFocus=/);
-  assert.match(previewBody, /onPressIn=/);
-  assert.doesNotMatch(previewBody, /backgroundColor:|borderRadius:\s*999/, 'must carry no capsule-style fill/outline at any state');
+  assert.doesNotMatch(previewsSrc, /export function InlineReferenceLinkPreview/, 'the retired preview component must be deleted, not left as dead code');
 });
 
 test('Buttons documents every HermexButtonPressOnlyStyle.Chrome case and every HermexButtonEmphasis value as a new, foundation-only pair of ButtonStyles, names the shared applyingHermexButtonPressFeedback helper and optional haptics, and truthfully states that production\'s ChatTactileButtonStyle/.chatTactile and ChatDecisionButtonStyle/.chatDecision remain the real, current, unmigrated implementation', () => {
@@ -2084,23 +2086,60 @@ test('Picker Row no longer exists as a standalone family — no section id, no n
   assert.doesNotMatch(previewsSrc, /export function PickerRowPreview/);
 });
 
-test('Correction (final-review truthfulness pass): the Disclosure Row preview caption truthfully distinguishes the adopted production TranscriptLogRowView from the new, foundation-only DisclosureRow reconstruction', () => {
-  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
-  const body = extractFunctionBody(previewsSrc, 'DisclosureLogRowPreview');
-  assert.doesNotMatch(
-    body,
-    /TranscriptLogRowView\.swift no longer exists|retired TranscriptLogRowView|renamed to DisclosureRow/i,
-    'TranscriptLogRowView.swift genuinely still exists and is the real, adopted production component — it was never retired or renamed',
-  );
-  assert.doesNotMatch(body, /One DisclosureRow, three call sites/, 'must not claim DisclosureRow itself is used at the three production call sites');
-  assert.match(body, /TranscriptLogRowView/, 'expected the caption to name TranscriptLogRowView as production\'s real, adopted row at the three call sites');
-  assert.match(body, /foundation-only/i, 'expected the caption to state DisclosureRow is a new, foundation-only reconstruction');
+// Issue #607 (Round 2, hermex-dsf-round-2-content-r1): Disclosure Row is retired outright, replaced
+// by Transcript Log Row — a production-adopted entry documenting the real, adopted
+// TranscriptLogRowView.swift directly, with no separate foundation-only DisclosureRow.swift
+// reconstruction, no DisclosureRowMetrics duplicate, and no "Disclosure Row" catalog contract left
+// anywhere in the file.
+test('Transcript Log Row replaces Disclosure Row entirely: production-adopted status, TranscriptLogRowView.swift as the only source path, and no surviving Disclosure Row/DisclosureRow.swift/DisclosureRowMetrics catalog contract', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  assert.doesNotMatch(src, /'Disclosure Row'/, 'no reference to the retired Disclosure Row id may remain, including in the HermesSectionId union, nav, or alternatives');
+  assert.doesNotMatch(src, /HermesMobile\/Features\/Chat\/DisclosureRow\.swift/, 'DisclosureRow.swift is deleted and must not be cited as a source path');
+  assert.doesNotMatch(src, /DisclosureRowMetrics/, 'DisclosureRowMetrics no longer exists and must not be cited anywhere');
+
+  const section = extractHermesSection(src, 'Transcript Log Row');
+  assert.match(section, /HermesMobile\/Features\/Chat\/TranscriptLogRowView\.swift/, 'expected TranscriptLogRowView.swift as the real, adopted source path');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'production-adopted', 'expected Transcript Log Row to state production-adopted status, since TranscriptLogRowView.swift is the real, unchanged, already-adopted row');
+
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /compact transcript activity|summary.*detail.*status.*copy|bounded expandable body/is, 'expected useWhen to describe compact transcript activity with a summary/detail/status/copy/bounded expandable body');
+  assert.match(ref, /independently expandable collection/i, 'expected avoidWhen to route a general independently-expandable collection elsewhere');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Accordion List'), 'expected Accordion List as a structured alternative');
 });
 
-// Correction (production reconciliation): DisclosureRow.swift uses one token-sized downward chevron
-// and rotates it upward from the actual expansion state. The catalog follows the same state model
-// instead of swapping glyphs or rendering an arbitrary fixed direction.
-test('Correction (production reconciliation): the Disclosure Row preview rotates one downward shared Icon upward from actual expansion state', () => {
+test('Transcript Log Row preserves the real production copy/accessibility contract: the exact "Copied"/"Copy" strings and both expanded/collapsed accessibility hints', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Transcript Log Row');
+  assert.match(section, /Copied/);
+  assert.match(section, /Copy/);
+  assert.match(section, /Double tap to hide details\. Long press to copy\./, 'expected the exact expanded-state accessibility hint TranscriptLogRowView.swift uses');
+  assert.match(section, /Double tap to show details\. Long press to copy\./, 'expected the exact collapsed-state accessibility hint TranscriptLogRowView.swift uses');
+});
+
+// DSR2-11: production's bodyIndent is a derived metric (iconWidth + rowSpacing = 20 + 8 = 28pt), not
+// the stale pre-migration 26pt literal it replaced — both catalog records must agree with the code.
+test('Correction (DSR2-11): both catalog records of TranscriptLogRowMetrics.bodyIndent state 28pt (iconWidth 20 + HermesSpacing.s8 8), matching the native TranscriptLogRowView.swift computed value, with no surviving 26pt record', () => {
+  const nativeSrc = read('../HermesMobile/Features/Chat/TranscriptLogRowView.swift');
+  assert.match(nativeSrc, /static let iconWidth: CGFloat = 20/, 'expected the native iconWidth to still be 20');
+  assert.match(nativeSrc, /static let rowSpacing: CGFloat = HermesSpacing\.s8/, 'expected the native rowSpacing to still derive from HermesSpacing.s8');
+  assert.match(nativeSrc, /static let bodyIndent: CGFloat = iconWidth \+ rowSpacing/, 'expected bodyIndent to still be derived, not a literal');
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const records = [...sectionsSrc.matchAll(/\{\s*name:\s*'TranscriptLogRowMetrics\.bodyIndent'[\s\S]*?\},/g)].map((m) => m[0]);
+  assert.equal(records.length, 2, 'expected exactly two catalog records of TranscriptLogRowMetrics.bodyIndent (the human props table and the machine GEOMETRY_FACTS table)');
+  for (const record of records) {
+    assert.doesNotMatch(record, /26pt|default:\s*'26'/, 'stale 26pt bodyIndent value must not remain in either record');
+    assert.match(record, /28pt|default:\s*'28'/, 'expected the corrected 28pt bodyIndent value in every record');
+  }
+});
+
+// Correction (production reconciliation), carried forward for Round 2: production's row uses one
+// token-sized downward chevron and rotates it upward from the actual expansion state. The catalog
+// follows the same state model instead of swapping glyphs or rendering an arbitrary fixed direction.
+test('Correction (production reconciliation): the Transcript Log Row preview rotates one downward shared Icon upward from actual expansion state', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(previewsSrc, /import\s*\{[^}]*\bDS_ICON_SIZE\b[^}]*\}\s*from\s*'\.\.\/\.\.\/\.\.\/tokens'/, 'expected DS_ICON_SIZE to be imported rather than an arbitrary chevron size literal');
   const chevronBody = extractFunctionBody(previewsSrc, 'DisclosureChevron');
@@ -2108,43 +2147,33 @@ test('Correction (production reconciliation): the Disclosure Row preview rotates
   assert.match(chevronBody, /rotate:\s*expanded\s*\?\s*'180deg'\s*:\s*'0deg'/);
   assert.doesNotMatch(chevronBody, /chevron-up/, 'rotation, not a second icon, owns the expanded state');
 
-  for (const fnName of ['DisclosureLogRowPreview', 'TranscriptActivityPreview']) {
+  for (const fnName of ['TranscriptLogRowPreview', 'TranscriptActivityPreview']) {
     const body = extractFunctionBody(previewsSrc, fnName);
     assert.doesNotMatch(body, /['"]⌄['"]|['"]›['"]/, `expected ${fnName} to render no chevron glyph literal`);
     assert.match(body, /<DisclosureChevron expanded=\{[^}]+\}\s*\/>/, `expected ${fnName} to pass actual expansion state to the shared chevron`);
   }
 
-  const section = extractHermesSection(read(HERMES_SECTIONS_PATH), 'Disclosure Row');
+  const section = extractHermesSection(read(HERMES_SECTIONS_PATH), 'Transcript Log Row');
   assert.doesNotMatch(section, /logChevron/, 'the removed logChevron style must not still be referenced');
+  assert.match(section, /<TranscriptLogRowPreview/);
+
+  assert.match(previewsSrc, /export function TranscriptLogRowPreview/);
 });
 
-test('Disclosure Row documents DisclosureRow.swift as a new, foundation-only reconstruction, and truthfully names the real, adopted TranscriptLogRowView.swift (which genuinely still exists and is not "retired") as the actual production row used by tool-call log, reasoning block, and bot activity call sites', () => {
-  const src = read(HERMES_SECTIONS_PATH);
-  const section = extractHermesSection(src, 'Disclosure Row');
-  assert.match(section, /HermesMobile\/Features\/Chat\/DisclosureRow\.swift/);
-  assert.match(section, /HermesMobile\/Features\/Chat\/TranscriptLogRowView\.swift/, 'TranscriptLogRowView.swift genuinely still exists and is the real, adopted production component');
-  assert.doesNotMatch(section, /TranscriptLogRowView\.swift no longer exists|renamed to DisclosureRow/i, 'must not claim TranscriptLogRowView.swift was renamed or no longer exists');
-  assert.match(section, /DisclosureRowMetrics/);
-  assert.match(section, /<DisclosureLogRowPreview/);
-
-  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
-  assert.match(previewsSrc, /export function DisclosureLogRowPreview/);
-});
-
-test('Correction (design-system-foundation truthfulness pass): the reusable-geometry facts table cites the real, adopted TranscriptLogRowMetrics/TranscriptLogRowView.swift — which genuinely still exists and was never renamed — alongside DisclosureRowMetrics/DisclosureRow.swift as its new, foundation-only duplicate, and the Hermex Radius & Geometry section follows suit', () => {
+test('the reusable-geometry facts table and Hermex Radius & Geometry cite only the real, adopted TranscriptLogRowMetrics/TranscriptLogRowView.swift — no DisclosureRowMetrics duplicate survives anywhere', () => {
   const src = read(HERMES_SECTIONS_PATH);
   assert.match(src, /TranscriptLogRowMetrics/, 'TranscriptLogRowMetrics is the real, adopted symbol in TranscriptLogRowView.swift and must be cited as the geometry facts\' authoritative source');
   assert.match(src, /HermesMobile\/Features\/Chat\/TranscriptLogRowView\.swift/, 'TranscriptLogRowView.swift genuinely still exists in this worktree');
-  assert.doesNotMatch(src, /TranscriptLogRowView\.swift no longer exists|renamed to DisclosureRow/i, 'must not claim TranscriptLogRowView.swift was renamed or removed');
+  assert.doesNotMatch(src, /DisclosureRowMetrics/, 'DisclosureRowMetrics no longer exists and must not be cited as a duplicate source');
 
   const geometrySection = extractHermesSection(src, 'Hermex Radius & Geometry');
   assert.match(geometrySection, /TranscriptLogRowMetrics/);
 });
 
-test('Correction (production reconciliation): the still-unadopted Radius/Geometry proposal\'s retained-exception fact also cites DisclosureRowMetrics, not the retired TranscriptLogRowMetrics', () => {
+test('the still-unadopted Radius/Geometry proposal\'s retained-exception fact cites TranscriptLogRowMetrics, not the retired DisclosureRowMetrics', () => {
   const proposal = read(HERMES_TOKEN_PROPOSAL_PATH);
-  assert.doesNotMatch(proposal, /TranscriptLogRowMetrics/, 'TranscriptLogRowMetrics was renamed to DisclosureRowMetrics in the final production tree');
-  assert.match(proposal, /name:\s*'DisclosureRowMetrics\.bodyWindowHeight'/);
+  assert.doesNotMatch(proposal, /DisclosureRowMetrics/, 'DisclosureRowMetrics no longer exists in the final production tree');
+  assert.match(proposal, /name:\s*'TranscriptLogRowMetrics\.bodyWindowHeight'/);
 });
 
 test('Attachment documents the new, foundation-only AttachmentFileType/AttachmentTile family, Compact Card composition, and the mini-preview staying outside Card, without claiming a production call site', () => {
@@ -2179,34 +2208,47 @@ test('Correction (design-system-foundation truthfulness pass): Attachment states
   assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ChatComposerAttachmentStripView\.swift/, 'ChatComposerAttachmentStripView.swift does not import AttachmentFileType.swift/AttachmentTile.swift and must not be cited as a caller');
 });
 
-test('Correction (design-system-foundation truthfulness pass): Banner states the offline-cache consolidation as foundation-only — ChatView.swift and SessionListView.swift each keep their own separate, pre-existing offline notice, not Banner.offlineCache()', () => {
+// DSR2-15: HermexBanner replaces the legacy Banner.swift as a foundation/catalog component only.
+// Existing composer and offline-cache production surfaces remain unchanged.
+test('Banner remains foundation-available with zero production call sites, while ChatView.swift and SessionListView.swift keep their independent offline notices', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Hermes Banner');
-  assert.match(section, /foundation-only/i);
-  assert.match(section, /HermesMobile\/Features\/Shared\/Banner\.swift/);
-  assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ChatView\.swift/, 'ChatView.swift does not import Banner.swift and must not be cited as a caller');
-  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListView\.swift/, 'SessionListView.swift does not import Banner.swift and must not be cited as a caller');
-  assert.match(section, /ChatView\.swift and SessionListView\.swift each still implement their own offline-cache notice independently/i);
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.match(ref, /adoptionStatus:\s*FOUNDATION_AVAILABLE_ADOPTION/, 'expected Banner to remain foundation-available with zero production adoption');
+  assert.doesNotMatch(ref, /partially-adopted|main chat composer('s)? error branch/i, 'must not claim a production Banner adoption');
+
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexBanner\.swift/, 'expected the native source path to be HermexBanner.swift');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ChatComposerView\.swift/, 'ChatComposerView.swift must not be cited as a Banner caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Shared\/Banner\.swift/, 'expected the stale Banner.swift source path to be gone');
+
+  assert.doesNotMatch(section, /HermesMobile\/Features\/Chat\/ChatView\.swift/, 'ChatView.swift does not import HermexBanner.swift and must not be cited as a caller');
+  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListView\.swift/, 'SessionListView.swift does not import HermexBanner.swift and must not be cited as a caller');
+  assert.match(section, /ChatView\.swift and SessionListView\.swift each still implement their own offline-cache notice independently/i, 'expected the offline-cache consolidation narrative itself to remain foundation-only, unaffected by the composer adoption');
+
+  assert.match(section, /zero production|foundation-only|not adopted/i, 'expected implementation notes to state the foundation-only boundary');
 });
 
-// Correction (design-system-foundation truthfulness pass): ComposerChipToken.isInteractiveReference
-// and ComposerChipVisualStyle do not exist anywhere in production source — ComposerChipToken.swift
-// and ComposerChipRendering.swift render every reference kind through one uniform baked-image chip.
-// Inline Reference Link must state this truthfully, not claim an adopted rendering/accessibility split.
-test('Correction (design-system-foundation truthfulness pass): Inline Reference Link states there is no ComposerChipVisualStyle/isInteractiveReference split in production — every reference renders through one uniform chip', () => {
+// Correction (design-system-foundation truthfulness pass), carried forward under Round 2's Composer
+// Chip documentation: ComposerChipToken.isInteractiveReference and ComposerChipVisualStyle do not
+// exist anywhere in production source — ComposerChipToken.swift and ComposerChipRendering.swift
+// render every reference kind through one uniform baked-image chip. Composer's own Composer Chip
+// coverage (not a standalone Inline Reference Link entry, which is retired) must state this truthfully.
+test('Correction (design-system-foundation truthfulness pass): Composer\'s Composer Chip documentation states there is no ComposerChipVisualStyle/isInteractiveReference split in production — every reference renders through one uniform chip', () => {
   const src = read(HERMES_SECTIONS_PATH);
-  const section = extractHermesSection(src, 'Inline Reference Link');
+  const section = extractHermesSection(src, 'Composer');
   assert.match(section, /no ComposerChipVisualStyle type, no isInteractiveReference property/i);
   assert.match(section, /HermesMobile\/Features\/Chat\/ComposerChipRendering\.swift/);
 });
 
-// Controller correction (2026-09-26, gap 1): Reference Chip was superseded — it named the same
-// ComposerChipRendering drawing path Tag and Inline Reference Link already document their own halves
-// of (inert skill/bot references vs. tappable file references), so keeping it as a third, separate
+// Controller correction (2026-09-26, gap 1), retitled for Round 2: Reference Chip was superseded — it
+// named the same ComposerChipRendering drawing path Tag's display-only capsule pills and Composer's
+// own Composer Chip subsystem coverage already document their own halves of (inert skill/bot/file/
+// quote references vs. a separate, unrelated capsule styling), so keeping it as a third, separate
 // Components entry duplicated the taxonomy the approved specification actually adopted (§4.6). It
 // must no longer exist as its own section id, nav entry, preview export, or active-family reference;
-// the ComposerChipRendering evidence itself must survive, split across Tag/Inline Reference Link.
-test('Reference Chip no longer exists as a standalone Component — no section id, no nav entry, no preview export — and Tag/Inline Reference Link carry the ComposerChipRendering split instead', () => {
+// the ComposerChipRendering evidence itself must survive, split across Tag/Composer.
+test('Reference Chip no longer exists as a standalone Component — no section id, no nav entry, no preview export — and Tag/Composer carry the ComposerChipRendering split instead', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /id:\s*'Reference Chip'/, 'Reference Chip must no longer be a registered SectionDef');
   assert.doesNotMatch(sectionsSrc, /'Reference Chip'/, 'no reference to the retired Reference Chip id may remain, including in the HermesSectionId union or nav');
@@ -2219,16 +2261,16 @@ test('Reference Chip no longer exists as a standalone Component — no section i
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.doesNotMatch(previewsSrc, /export function ReferenceChipPreview/, 'the retired preview component must be deleted, not left as dead code');
 
-  // Tag and Inline Reference Link both reference the real, unified ComposerChipRendering drawing
-  // path — truthfully, as one uniform chip renderer with no distinct visual/interactive split today,
-  // not as evidence of an adopted Tag/Inline-Reference-Link migration.
+  // Tag and Composer both reference the real, unified ComposerChipRendering drawing path —
+  // truthfully, as one uniform chip renderer with no distinct visual/interactive split today, not as
+  // evidence of an adopted Tag/Composer-Chip migration.
   const tagSection = extractHermesSection(sectionsSrc, 'Tag');
   assert.match(tagSection, /ComposerChipRendering\.swift/, 'expected Tag to reference the real composer chip rendering path');
   assert.match(tagSection, /pre-existing, separately-implemented capsule styling|separate, pre-existing drawing path/i);
 
-  const linkSection = extractHermesSection(sectionsSrc, 'Inline Reference Link');
-  assert.match(linkSection, /ComposerChipRendering\.swift/, 'expected Inline Reference Link to reference the real composer chip rendering path');
-  assert.match(linkSection, /uniform baked-image chip/i);
+  const composerSection = extractHermesSection(sectionsSrc, 'Composer');
+  assert.match(composerSection, /ComposerChipRendering\.swift/, 'expected Composer\'s own Composer Chip documentation to reference the real composer chip rendering path');
+  assert.match(composerSection, /uniform baked-image chip/i);
 });
 
 test('every Hermex-owned component-family section is reachable from Components — Hermex; native TopNav stays outside it', () => {
@@ -2241,8 +2283,8 @@ test('every Hermex-owned component-family section is reachable from Components �
 
   for (const id of [
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Row Divider', 'Tag',
-    'Inline Reference Link', 'Search', 'Buttons', 'Hermes Checkbox', 'Skeleton Loading',
-    'List / ListItem', 'Disclosure Row',
+    'Search', 'Buttons', 'Hermes Checkbox', 'Skeleton Loading',
+    'List / ListItem', 'Transcript Log Row', 'Composer Toolbar',
   ]) {
     assert.ok(ids.includes(id), `expected "${id}" in the Components — Hermex nav group`);
   }
@@ -2309,27 +2351,38 @@ test('the generic catalog Checkbox supports an omittable onChange for a row-owne
 // under Native iOS — Hermex documenting the real native SwiftUI controls (TextField, SecureField,
 // TextEditor, `.searchable`) with an honest native-style reconstruction instead.
 //
-// Issue #607 (Text Input family slice): Text Input itself now becomes a Hermex-owned Components entry
-// once three thin foundation wrappers — HermexTextField, HermexSecureField, HermexNumberField
-// (HermexTextInput.swift) — ship over native TextField/SecureField/TextField(value:format:), the same
-// ownership-flip pattern Search went through for `.hermexSearch` over `.searchable`. Multiline stays
-// truthfully native (TextEditor, not a newly owned wrapper) and Search stays its own separate
-// Components family rather than a Text Input variant.
-test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermexTextField/HermexSecureField/HermexNumberField over native TextField/SecureField/TextField(value:format:)), truthfully keeping TextEditor native and Search separate', () => {
+// Issue #607 (Text Input family slice, Round 2 final taxonomy — hermex-dsf-round-2-content-r1): Text
+// Input's variants are exactly Default, Password, and Code — HermexTextField, HermexSecureField, and
+// HermexCodeInput (HermexTextInput.swift) — over native TextField/SecureField/a 4–8-digit native
+// TextField-backed one-time-code entry, the same ownership-flip pattern Search went through for
+// `.hermexSearch` over `.searchable`. The retired HermexNumberField/ParseableFormatStyle typed-number
+// path and any "Number" variant guidance are gone. Multiline stays truthfully native (TextEditor, not
+// a newly owned wrapper) and Search stays its own separate Components family rather than a Text Input
+// variant.
+test('Issue #607 (Round 2 final taxonomy): Text Input has exactly three variants — Default (HermexTextField), Password (HermexSecureField), and Code (HermexCodeInput) — with no HermexNumberField/ParseableFormatStyle/typed-number-formatting/Number-variant guidance anywhere', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /\| 'Input Field'/, "the retired 'Input Field' id must no longer appear in the HermesSectionId union");
   assert.match(sectionsSrc, /\| 'Text Input'/, "expected 'Text Input' in the HermesSectionId union");
 
   const section = extractHermesSection(sectionsSrc, 'Text Input');
   assert.match(section, /hermesReference:\s*\{/);
-  assert.match(section, /HermexTextField/, 'expected the entry to name the Hermex-owned HermexTextField wrapper');
-  assert.match(section, /HermexSecureField/, 'expected the entry to name the Hermex-owned HermexSecureField wrapper');
-  assert.match(section, /HermexNumberField/, 'expected the entry to name the Hermex-owned HermexNumberField wrapper');
-  assert.match(section, /HermexTextField\(_:text:prompt:\)/, 'expected the catalog API to include HermexTextField\'s optional native prompt');
-  assert.match(section, /HermexSecureField\(_:text:prompt:\)/, 'expected the catalog API to include HermexSecureField\'s optional native prompt');
-  assert.match(section, /HermexNumberField\(_:value:format:prompt:\)/, 'expected the catalog API to include HermexNumberField\'s optional native prompt');
-  assert.match(section, /optional native `Text` prompt/i, 'expected the catalog to explain that prompt forwarding stays native');
-  assert.match(section, /TextField\(value:format:\)|TextField\(_:value:format:\)/, 'expected the entry to name the native typed TextField(value:format:) path HermexNumberField forwards to');
+  assert.match(section, /HermexTextField/, 'expected the entry to name the Hermex-owned HermexTextField wrapper (Default variant)');
+  assert.match(section, /HermexSecureField/, 'expected the entry to name the Hermex-owned HermexSecureField wrapper (Password variant)');
+  assert.match(section, /HermexCodeInput/, 'expected the entry to name the Hermex-owned HermexCodeInput component (Code variant)');
+  assert.match(section, /\bDefault\b/, 'expected the Default variant to be named exactly');
+  assert.match(section, /\bPassword\b/, 'expected the Password variant to be named exactly');
+  assert.match(section, /\bCode\b/, 'expected the Code variant to be named exactly');
+
+  assert.doesNotMatch(section, /HermexNumberField/, 'expected HermexNumberField to be fully removed');
+  assert.doesNotMatch(section, /ParseableFormatStyle/, 'expected the removed typed Number Field\'s format-style path to be gone');
+  assert.doesNotMatch(section, /TextField\(value:format:\)|TextField\(_:value:format:\)/, 'expected the retired native typed TextField(value:format:) path to no longer be named');
+  assert.doesNotMatch(section, /Number [Vv]ariant|['"]Number['"]/, 'expected no Number variant guidance to remain');
+
+  assert.match(section, /\b4.{0,3}8\b.*digit|4–8 digits|between 4 and 8 digits/i, 'expected the Code variant to document a 4–8 digit length range');
+  assert.match(section, /paste|autofill|one[- ]time[- ]code/i, 'expected the Code variant to document paste/one-time-code autofill');
+  assert.match(section, /one (?:native )?editor|single (?:native )?TextField/i, 'expected the Code variant to document exactly one native editing surface');
+  assert.doesNotMatch(section, /auto-submit|onComplete/i, 'expected no auto-submit implication for the Code variant');
+
   assert.match(section, /TextEditor/, 'expected TextEditor to remain named as a truthful native multiline alternative');
   assert.doesNotMatch(section, /<InputField\b/, 'must not render the generic template InputField as if it were production UI');
   assert.doesNotMatch(section, /<NativeTextInputPreview/, 'expected the retired native-only preview name to be gone from this entry\'s render reference');
@@ -2381,8 +2434,66 @@ test('Issue #607: Text Input becomes a Hermex-owned Components entry (HermexText
   assert.match(body, /secureTextEntry/, 'expected an interactive secure-entry example');
   assert.doesNotMatch(body, /multiline/, 'must not demonstrate a multiline variant — TextEditor stays native, not a Text Input variant');
   assert.doesNotMatch(body, /accessibilityRole="search"/, 'must not demonstrate a search variant — Search stays its own family, not a Text Input variant');
-  assert.doesNotMatch(body, /keyboardType=/, 'the number reconstruction must not imply that HermexNumberField forces a keyboard policy');
+  assert.doesNotMatch(body, /keyboardType=/, 'the Default/Password specimens must not imply a caller-facing typed-number keyboard policy — the retired Number variant is gone');
   assert.match(body, /onChangeText/, 'expected interactive entry, not a static mock');
+
+  const codeSpecimenBody = extractFunctionBody(previewsSrc, 'HermexCodeInputSpecimen');
+  assert.match(codeSpecimenBody, /keyboardType="number-pad"/, 'expected the approved Code variant to demonstrate the approved numeric keyboard intent');
+  assert.match(codeSpecimenBody, /textContentType="oneTimeCode"/, 'expected the approved Code variant to demonstrate one-time-code content type');
+  assert.doesNotMatch(previewsSrc, /keyboardType="decimal-pad"|keyboardType="numeric"/, 'must not reintroduce a locale-formatted typed-number keyboard policy anywhere in the catalog');
+});
+
+// DSR2-06 (correction): the Code Input specimen must actually reconstruct the approved component —
+// one native TextInput editor per specimen, a decorative digit-box row hidden from accessibility,
+// lengths 4/6/8, partial/complete/error/disabled states, and mutually exclusive helper/error text —
+// not a bare TextField with both a helper and an error caption shown at once.
+test('Correction (DSR2-06): the Code Input catalog specimen reconstructs one native TextInput per specimen behind a decorative, accessibility-hidden digit-box row, across lengths 4/6/8 and partial/complete/error/disabled states, with helper and error text mutually exclusive', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const specimenBody = extractFunctionBody(previewsSrc, 'HermexCodeInputSpecimen');
+
+  assert.match(specimenBody, /<TextInput/, 'expected exactly one native TextInput editor per specimen');
+  assert.match(specimenBody, /accessibilityElementsHidden/, 'expected the decorative digit-box row to be hidden from assistive technology');
+  assert.match(specimenBody, /importantForAccessibility="no-hide-descendants"/, 'expected the decorative digit-box row to be hidden from assistive technology on Android/web');
+  assert.match(specimenBody, /onChangeText/, 'expected interactive entry, not a static mock');
+  assert.match(specimenBody, /replace\(\/\[\^0-9\]\/g,\s*''\)/, 'expected ASCII-digit-only filtering on entry');
+  assert.match(specimenBody, /\.slice\(0,\s*length\)/, 'expected excess digits to be truncated to the configured length');
+  assert.doesNotMatch(specimenBody, /onSubmitEditing|onComplete/, 'expected no auto-submit implication when the configured length is reached');
+
+  // Helper and error must be mutually exclusive — an error-ternary followed by a helper-ternary,
+  // never both rendered unconditionally in the same specimen.
+  assert.match(specimenBody, /errorText\s*\?[\s\S]*?:\s*helperText\s*\?/, 'expected error text to replace helper text, never both shown at once');
+
+  const galleryBody = extractFunctionBody(previewsSrc, 'HermexTextInputFamilyGallery');
+  for (const length of [4, 6, 8]) {
+    assert.match(galleryBody, new RegExp(`length=\\{${length}\\}`), `expected a Code Input specimen at length ${length}`);
+  }
+  assert.match(galleryBody, /partial/i, 'expected a partial-entry state to be demonstrated');
+  assert.match(galleryBody, /complete/i, 'expected a complete-entry state to be demonstrated');
+  assert.match(galleryBody, /errorText="Enter all 6 digits\."/, 'expected the approved error state to be demonstrated');
+  assert.match(galleryBody, /disabled\b/, 'expected a disabled state to be demonstrated');
+});
+
+// Issue #607 (Round 2 final taxonomy, DSR2-06): the exact approved Default/Password/Code samples —
+// label/prompt pairs for Default and Password, and label/helper/error text for Code.
+test('Text Input\'s three variant samples carry the exact approved labels/prompts/helper/error text: Default ("Name" / "Enter your name"), Password ("Password" / "Enter your password"), Code ("Verification code" / "Enter the 6-digit code." / "Enter all 6 digits.")', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Text Input');
+
+  assert.match(section, /Name/);
+  assert.match(section, /Enter your name/);
+  assert.match(section, /Password/);
+  assert.match(section, /Enter your password/);
+  assert.match(section, /Verification code/);
+  assert.match(section, /Enter the 6-digit code\./);
+  assert.match(section, /Enter all 6 digits\./);
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'HermexTextInputFamilyGallery');
+  assert.match(body, /Name/);
+  assert.match(body, /Enter your name/);
+  assert.match(body, /Password/);
+  assert.match(body, /Enter your password/);
+  assert.match(body, /Verification code/);
 });
 
 // Issue #607 (Bottom Sheet family slice): a Hermex-owned Components entry for HermexBottomSheet — a
@@ -3295,8 +3406,8 @@ test('Correction (attachment parity): ComposerPatternPreview\'s embedded Attachm
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ComposerPatternPreview');
   // Scoped to just the embedded Attachment example's own <Card>...</Card> markup, not the whole
-  // function body — ComposerPatternPreview also renders an Inline Reference Link example
-  // immediately after it, which legitimately keeps its own raw hex per that family's own styling.
+  // function body — ComposerPatternPreview also renders a Composer Chip example immediately after
+  // it, which legitimately keeps its own raw hex per that subsystem's own styling.
   const cardStart = body.indexOf('<Card density="compact"');
   assert.notEqual(cardStart, -1, 'expected the Composer pattern to render a Card density="compact" Attachment example');
   const cardEnd = body.indexOf('</Card>', cardStart);
@@ -3336,6 +3447,64 @@ test('Banner documents Information, Warning, Error, Success, and Offline variant
   assert.match(body, /action=\{\{/, 'expected an optional action example');
   assert.match(body, /Inset presentation/);
   assert.doesNotMatch(body, /accessibilityHidden/, 'decorative-icon semantics come from Banner\'s own default, not a per-preview override');
+});
+
+// DSR2-15: title and description are independently caller-optional on the native HermexBanner —
+// title+description, title-only, and description-only are all supported content combinations, with
+// no interactive collapse/disclosure state (omission is a caller content choice). The preview must
+// demonstrate all three combinations plus a composer-style error composition example, and must
+// never render an empty title placeholder for the description-only case.
+test('Banner\'s human copy and preview name the native HermexBanner API and demonstrate title+description, title-only, description-only, and a composer-style error composition, with no production-adoption claim or empty title placeholder', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Banner');
+
+  assert.match(section, /HermexBanner/, 'expected the human copy to name the native HermexBanner API');
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexBanner\.swift/, 'expected the human copy/source paths to cite HermexBanner.swift');
+  assert.doesNotMatch(section, /collapsible|interactive collapse|disclosure/i, 'expected guidance to describe caller-configurable omission, not an interactive collapse/disclosure state');
+  assert.match(section, /(caller|independently)[^.]*optional/i, 'expected guidance to state title/description are independently caller-optional');
+
+  assert.match(section, /name:\s*'title'/, 'expected props to document an optional title');
+  assert.match(section, /name:\s*'description'/, 'expected props to document an optional description');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'BannerFamilyGallery');
+
+  // Scope title/description presence to each individual <Banner ... /> element's own attribute
+  // list, not the whole gallery body — a whole-body regex can't tell "this element has title but
+  // not description" from "some element somewhere has title, some other element has description".
+  const bannerTags = [...body.matchAll(/<Banner\b[^>]*\/?>/gs)].map((m) => m[0]);
+  assert.ok(bannerTags.length > 0, 'expected at least one <Banner ... /> element in the gallery');
+  const hasTitle = (tag) => /\btitle=/.test(tag);
+  const hasDescription = (tag) => /\bdescription=/.test(tag);
+  assert.ok(bannerTags.some((tag) => hasTitle(tag) && hasDescription(tag)), 'expected a title+description example');
+  assert.ok(bannerTags.some((tag) => hasTitle(tag) && !hasDescription(tag)), 'expected a title-only example');
+  assert.ok(bannerTags.some((tag) => !hasTitle(tag) && hasDescription(tag)), 'expected a description-only example');
+  assert.ok(
+    bannerTags.every((tag) => !/title=""/.test(tag)),
+    'expected the description-only example to omit the title prop entirely, never pass an empty title placeholder',
+  );
+  assert.match(body, /composer/i, 'expected the preview to demonstrate a composer-style error composition example');
+  assert.doesNotMatch(section, /partially-adopted|main chat composer('s)? error branch/i, 'the composition example must not be presented as production adoption');
+
+  // Correction (DSR2-15): a whole-body attribute check alone can't tell whether an omitted prop
+  // actually renders nothing — the generic Banner previously defaulted a missing title/description to
+  // a placeholder string, so the "title-only"/"description-only" specimens rendered the other
+  // region's placeholder anyway. Assert the root cause is fixed in the component itself.
+  const bannerSrc = read('native/components/Banner/Banner.tsx');
+  assert.doesNotMatch(bannerSrc, /title\s*=\s*'Banner title'/, 'must not default title to a placeholder string');
+  assert.doesNotMatch(bannerSrc, /description\s*=\s*'Description text goes here'/, 'must not default description to a placeholder string');
+  assert.match(bannerSrc, /\{title \? \(/, 'expected the standard callout\'s title to render only when a title is actually supplied, not an always-rendered Text node');
+});
+
+test('Banner\'s hermesReference has no production usedIn entry and cites only its foundation source', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Banner');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.doesNotMatch(ref, /usedIn:\s*\[/, 'expected no production usedIn entries for foundation-only Banner');
+  assert.match(ref, /HermesMobile\/Features\/Shared\/HermexBanner\.swift/, 'expected implementationNotes.sourcePaths to include HermexBanner.swift');
+  assert.doesNotMatch(ref, /HermesMobile\/Features\/Chat\/ChatComposerView\.swift/, 'expected no production source path');
+  assert.match(ref, /zero production|foundation-only|not adopted/i, 'expected the zero-adoption boundary to be explicit');
 });
 
 test('Buttons documents extra-small through large sizes, all four content configurations, and disabled/pending states', () => {
@@ -3426,19 +3595,19 @@ test('List / ListItem documents an accessibility-label override and Dynamic Type
   assert.match(section, /Dynamic Type/);
 });
 
-test('Disclosure Row documents its Buttons and Divider composition alongside Hermex typography/spacing/radius/motion', () => {
+test('Transcript Log Row documents its Buttons and Divider composition alongside Hermex typography/spacing/radius/motion', () => {
   const src = read(HERMES_SECTIONS_PATH);
-  const section = extractHermesSection(src, 'Disclosure Row');
+  const section = extractHermesSection(src, 'Transcript Log Row');
   assert.match(section, /Hermex typography, spacing, radius, motion, Buttons, and Divider/);
 });
 
-// Controller correction (2026-09-26, gap 5): the Disclosure Row preview rendered a disconnected,
-// underlined "Expand/Collapse" text control below a non-interactive log row — the row itself never
-// exposed accessibilityRole/expanded state and wasn't what a user would actually press. The real
-// production row (TranscriptLogRowView) is itself the tappable disclosure.
-test('Correction (gap 5): the Disclosure Row preview is itself the interactive, Button-like disclosure row — no disconnected underlined Expand/Collapse control — and exposes real expanded/collapsed accessibility state', () => {
+// Controller correction (2026-09-26, gap 5), carried forward for Round 2: the preview rendered a
+// disconnected, underlined "Expand/Collapse" text control below a non-interactive log row — the row
+// itself never exposed accessibilityRole/expanded state and wasn't what a user would actually press.
+// The real production row (TranscriptLogRowView) is itself the tappable disclosure.
+test('Correction (gap 5): the Transcript Log Row preview is itself the interactive, Button-like disclosure row — no disconnected underlined Expand/Collapse control — and exposes real expanded/collapsed accessibility state', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
-  const body = extractFunctionBody(previewsSrc, 'DisclosureLogRowPreview');
+  const body = extractFunctionBody(previewsSrc, 'TranscriptLogRowPreview');
   assert.doesNotMatch(body, /textDecorationLine:\s*'underline'/, 'the disconnected underlined Expand/Collapse text control must be removed');
   assert.doesNotMatch(body, />\s*\{expanded \? 'Collapse' : 'Expand'\}/, 'no separate "Collapse"/"Expand" text label toggling the row from outside it');
   assert.match(body, /<Pressable/, 'expected the log row to be a real Pressable');
@@ -3586,10 +3755,10 @@ test('Transcript Activity documents Turn Summary Disclosure, the Activity Disclo
   assert.match(section, /Domain ownership boundary preserved/);
 });
 
-test('Composer documents composition of the composer surface, Input Field, Buttons, Tag, Inline Reference Link, Attachment, Adaptive Glass, and status/validation feedback, while preserving domain ownership of text editing, draft persistence, and send/stop lifecycle', () => {
+test('Composer documents composition of the composer surface, Input Field, Buttons, Tag, Composer Chip, Attachment, Adaptive Glass, and status/validation feedback, while preserving domain ownership of text editing, draft persistence, and send/stop lifecycle', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Composer');
-  assert.match(section, /composer surface, an input field, Buttons, Tag, Inline Reference Link, Attachment, Adaptive Glass/);
+  assert.match(section, /composer surface, an input field, Buttons, Tag, Composer Chip, Attachment, Adaptive Glass/);
   assert.match(section, /text editing, keyboard interaction, draft persistence, attachments, runtime selection, voice input, and send\/stop lifecycle/);
   assert.match(section, /<ComposerPatternPreview/);
 
@@ -3597,14 +3766,40 @@ test('Composer documents composition of the composer surface, Input Field, Butto
   assert.match(previewsSrc, /export function ComposerPatternPreview/);
 });
 
+// Issue #607 (Round 2): Composer documents the Composer Chip subsystem inline (production ownership,
+// not a standalone HermexComposerChip API) — recognized skill/workspace-file/bot-mention/quote inline
+// with editable/transcript text, distinct from a standalone action/destination/status/filter/
+// attachment outside text, with Button/List-ListItem/Tag/Attachment as alternatives.
+test('Composer documents Composer Chip as an inline text-embedded subsystem owned by production (not a standalone HermexComposerChip API), citing ComposerChipToken/ComposerChipRendering/ComposerChipTextView, with use/avoid guidance and Button/List-ListItem/Tag/Attachment alternatives', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Composer');
+  assert.match(section, /Composer Chip/);
+  assert.doesNotMatch(section, /struct HermexComposerChip|HermexComposerChip\(/, 'must not document a standalone HermexComposerChip API — Composer Chip stays a production subsystem, not a new Hermex component');
+  for (const sourcePath of [
+    'HermesMobile/Features/Chat/ComposerChipToken.swift',
+    'HermesMobile/Features/Chat/ComposerChipRendering.swift',
+    'HermesMobile/Features/Chat/ComposerChipTextView.swift',
+  ]) {
+    assert.match(section, new RegExp(sourcePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `expected Composer Chip documentation to cite ${sourcePath}`);
+  }
+  assert.match(section, /recognized skill,? workspace file,? bot mention,? or quote/i, 'expected use guidance for a recognized skill/workspace file/bot mention/quote inline with editable/transcript text');
+  assert.match(section, /standalone action, destination, status, filter, or attachment/i, 'expected avoid guidance for a standalone action/destination/status/filter/attachment outside text');
+
+  const ref = extractHermesReferenceBlock(section);
+  const alts = extractAlternativeNames(ref);
+  for (const expected of ['Buttons', 'List / ListItem', 'Tag', 'Attachment']) {
+    assert.ok(alts.includes(expected), `expected Composer Chip's alternatives to include "${expected}"`);
+  }
+});
+
 // Controller correction (2026-09-26, gap 6): Transcript Activity rendered the same single log row
-// (DisclosureLogRowPreview) as the standalone Disclosure Row entry, plus prose — not a composite of
-// its five documented pieces. It needs its own preview genuinely composing all five.
-test('Correction (gap 6): Transcript Activity renders a real composite preview of Turn Summary Disclosure, the Activity Disclosure Row, a grouped-tool-history control, assistant message content, and message metadata — not the standalone Disclosure Row preview reused verbatim', () => {
+// (now TranscriptLogRowPreview) as the standalone Transcript Log Row entry, plus prose — not a
+// composite of its five documented pieces. It needs its own preview genuinely composing all five.
+test('Correction (gap 6): Transcript Activity renders a real composite preview of Turn Summary Disclosure, the Activity Disclosure Row, a grouped-tool-history control, assistant message content, and message metadata — not the standalone Transcript Log Row preview reused verbatim', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(sectionsSrc, 'Transcript Activity');
-  assert.match(section, /<TranscriptActivityPreview/, 'expected Transcript Activity to render its own composite preview, not <DisclosureLogRowPreview />');
-  assert.doesNotMatch(section, /<DisclosureLogRowPreview/, 'must no longer reuse the standalone Disclosure Row preview verbatim as this pattern\'s own render');
+  assert.match(section, /<TranscriptActivityPreview/, 'expected Transcript Activity to render its own composite preview, not <TranscriptLogRowPreview />');
+  assert.doesNotMatch(section, /<TranscriptLogRowPreview/, 'must no longer reuse the standalone Transcript Log Row preview verbatim as this pattern\'s own render');
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(previewsSrc, /export function TranscriptActivityPreview/);
@@ -3620,21 +3815,25 @@ test('Correction (gap 6): Transcript Activity renders a real composite preview o
 
 // Controller correction (2026-09-26, gap 6): the Composer preview mocked its input as bare Text (not
 // a real text field), its send action as a plain View (not the real Button), and never demonstrated
-// Tag or Inline Reference Link at all — three of the eight composed pieces the section's own copy
-// already claims were missing from the rendered preview.
+// Tag or a chip reference at all — three of the eight composed pieces the section's own copy already
+// claims were missing from the rendered preview.
 //
 // Correction (#607 follow-up 2): the composer text field originally composed the generic template
 // InputField, which visibly claims a floating-label look production doesn't use. It now composes a
 // native-style TextInput reconstruction instead (see the Text Input entry), so this contract checks
 // for that reconstruction rather than the generic InputField.
-test('Correction (gap 6): the Composer preview visibly composes a native-style text input reconstruction, the real Button, Tag, Inline Reference Link, and Card-based Attachment, labels its Adaptive Glass treatment, and shows status/validation feedback', () => {
+//
+// Issue #607 (Round 2): the retired Inline Reference Link example is replaced by a real Composer
+// Chip example, rendered inline with text rather than as a standalone focusable link.
+test('Correction (gap 6): the Composer preview visibly composes a native-style text input reconstruction, the real Button, Tag, a Composer Chip example, and Card-based Attachment, labels its Adaptive Glass treatment, and shows status/validation feedback', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ComposerPatternPreview');
   assert.doesNotMatch(body, /<InputField\b/, 'must no longer compose the generic template InputField');
   assert.match(body, /<TextInput\b/, 'expected the composer text field to compose a native-style TextInput reconstruction, not a bare Text placeholder');
   assert.match(body, /<Button\b/, 'expected the send action to compose the real generic Button, not a plain View');
   assert.match(body, /<Card density="compact"/, 'expected the composer\'s attachment tile to compose the real Card, per Attachment\'s own Compact Card composition');
-  assert.match(body, /accessibilityRole="link"/, 'expected a real Inline Reference Link example (link semantics), not just an Attachment tile');
+  assert.match(body, /Composer Chip/i, 'expected a real Composer Chip example, rendered inline with text');
+  assert.doesNotMatch(body, /accessibilityRole="link"/, 'the retired Inline Reference Link\'s standalone focusable-link example must not survive');
   assert.match(body, /Adaptive Glass/, 'expected the composer surface\'s glass treatment to be explicitly labeled, not just implied by an untitled translucent background');
   assert.match(body, /(?:invalid|too long|validation|warning)/i, 'expected explicit validation/status feedback beyond a single "Draft saved" status tag');
 
@@ -3741,9 +3940,9 @@ test('the Components — Hermex nav group preserves Hermex-owned family order wh
   const ids = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(ids, [
     'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-    'Inline Reference Link', 'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
-    'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-    'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
+    'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
+    'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Transcript Log Row',
+    'Composer Toolbar', 'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
   ]);
 });
 
@@ -3792,9 +3991,9 @@ test('the Components — Hermex group\'s computed render order is actually alpha
   const computedOrder = ids.slice().sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
 
   assert.deepEqual(computedOrder.map(labelFor), [
-    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Dialog', 'Disclosure Row',
-    'Inline Reference Link', 'List / ListItem', 'Popover Menu', 'Radio', 'Row Divider', 'Search',
-    'Segmented Control', 'Selection Sheet', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip',
+    'Accordion List', 'Attachment', 'Avatar', 'Banner', 'Bottom Sheet', 'Buttons', 'Card', 'Checkbox', 'Composer Toolbar', 'Dialog',
+    'List / ListItem', 'Popover Menu', 'Radio', 'Row Divider', 'Search',
+    'Segmented Control', 'Selection Sheet', 'Skeleton Loading', 'Tag', 'Text Input', 'Toast', 'Tooltip', 'Transcript Log Row',
   ], 'expected the computed labelFor+sortIds order to be truly alphabetical by display name');
 });
 
@@ -3956,12 +4155,11 @@ test('Correction (attachment parity): the Attachment remove/close control uses a
 });
 
 // ─── Foundation branch-status summary (replaces the former production-adoption matrix) ───────────
-// Required correction 1: the branch is foundation-only. New Design System tokens/components are
-// available in the repository candidate, but production-screen migration/adoption is intentionally
-// excluded. These tests pin down the truthful replacement for the removed screen-by-screen
-// PRODUCTION_ADOPTION_AUDIT table.
+// Required correction 1: most additions remain foundation-only, while bounded production adoptions
+// are stated explicitly per entry. These tests pin down the truthful replacement for the removed
+// screen-by-screen PRODUCTION_ADOPTION_AUDIT table.
 
-test('the catalog replaces the former screen-by-screen production-adoption matrix with a compact, truthful branch-status summary — foundation-only, not a per-screen adoption audit', () => {
+test('the catalog replaces the former screen-by-screen production-adoption matrix with a compact, truthful branch-status summary — foundation-first with bounded exceptions, not a per-screen adoption audit', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(sectionsSrc, /PRODUCTION_ADOPTION_AUDIT/, 'the screen-by-screen adoption matrix must be removed');
   assert.doesNotMatch(sectionsSrc, /HermesProductionAdoptionAuditTable/, 'the screen-by-screen adoption table component must be removed');
@@ -3973,7 +4171,7 @@ test('the catalog replaces the former screen-by-screen production-adoption matri
   assert.doesNotMatch(sectionsSrc, /id:\s*'[^']*[Aa]doption [Aa]udit[^']*'/, 'the branch-status summary must not be registered as its own nav-linked SectionDef — it belongs in the overview, not repeated per component');
 
   assert.match(sectionsSrc, /Foundation APIs\/components\/tokens are available in the current repository candidate/i);
-  assert.match(sectionsSrc, /Production-screen migration\/adoption is not included in this branch/i);
+  assert.match(sectionsSrc, /Existing\s+production\s+use\s+and\s+any\s+bounded\s+migration\s+in\s+this\s+work\s+are\s+stated\s+explicitly\s+per\s+entry/i);
   assert.match(sectionsSrc, /Branch status/i);
   assert.doesNotMatch(sectionsSrc, /screen-by-screen snapshot of how much of the design system each screen uses/i, 'must not still claim to audit per-screen adoption');
 
@@ -3992,7 +4190,7 @@ test('the catalog replaces the former screen-by-screen production-adoption matri
   }
 });
 
-test('the foundation branch-status table names the one verified real adoption (AppTheme.swift/HermesProductPalette) and states every new component family has no production call site', () => {
+test('the foundation branch-status table names current verified adoption exceptions without claiming that every component has zero production call sites', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const tableMatch = sectionsSrc.match(/const FOUNDATION_BRANCH_STATUS: FoundationStatusRow\[\] = \[[\s\S]*?\n\];/);
   assert.ok(tableMatch, 'expected a FOUNDATION_BRANCH_STATUS array literal');
@@ -4000,7 +4198,10 @@ test('the foundation branch-status table names the one verified real adoption (A
   assert.match(table, /AppTheme\.swift/);
   assert.match(table, /HermesProductPalette/);
   assert.match(table, /No production screen reads from them yet/i);
-  assert.match(table, /None has a production call site in this branch/i);
+  assert.match(table, /HermexBanner/i, 'expected Banner foundation availability to be named');
+  assert.doesNotMatch(table, /main chat composer/i, 'must not claim a new Banner production adoption');
+  assert.match(table, /TranscriptLogRowView|Transcript Log Row/i, 'expected the pre-existing production Transcript Log Row adoption to be named');
+  assert.doesNotMatch(table, /None has a production call site in this branch/i, 'must not retain the now-false zero-adoption claim');
 });
 
 // ─── #607 correction slice: Content Unavailable, HermexList, HermesUsageSize — foundation-only ────
@@ -4688,14 +4889,18 @@ test('ToastFamilyGallery adds a compact interactive motion specimen that toggles
   assert.match(demoBody, /useState/, 'expected the demo to own real toggle state, not a static prop');
   assert.match(demoBody, /onPress=\{\(\) => setVisible/, 'expected a real control that flips the toggle state');
   assert.match(demoBody, /visible=\{visible\}/, 'expected the demo to drive the generic Toast\'s own visible prop from that state');
+  assert.match(demoBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Green\[800\]/, 'expected the motion demo to use the same approved dark success surface as the static HermexToast specimen');
+  assert.doesNotMatch(demoBody, /variant="success"/, 'the motion demo must not fall back to the generic Toast\'s retired light success treatment');
 
   const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
   assert.match(galleryBody, /<ToastMotionDemo/, 'expected the motion demo wired into the existing Toast family gallery');
-  // Existing static specimens must survive alongside the new interactive one.
-  assert.match(galleryBody, /variant="success"/);
-  assert.match(galleryBody, /variant="informational"/);
-  assert.match(galleryBody, /variant="warning"/);
-  assert.match(galleryBody, /variant="negative"/);
+  // Correction (DSR2-08): the four static specimens survive, but as the approved dark semantic
+  // surfaces (Blue.s700/Green.s800/Orange.s800/Red.s700), not the generic Toast's own light-tinted
+  // `variant` styles — see the dedicated DSR2-08 test above for the background-override assertions.
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Blue\[700\]/);
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Green\[800\]/);
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Orange\[800\]/);
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Red\[700\]/);
   assert.match(galleryBody, /action=\{\{ label: 'Undo'/);
 });
 
@@ -4766,15 +4971,15 @@ test('Content Unavailable documents its real Swift .loading variant end-to-end: 
   assert.match(src, /variant === 'loading'/, 'expected the ContentUnavailablePreview reconstruction to render a distinct loading (spinner-only) branch');
 });
 
-test('Buttons states a real component-owned-chrome/file-link avoidWhen (not adoption-only), names its production/Inline-Reference-Link alternatives, and its whenToUse sentence about Yes/No/Approve/Deny no longer contradicts itself', () => {
+test('Buttons states a real component-owned-chrome avoidWhen (not adoption-only), names its production alternative, no longer names the retired Inline Reference Link, and its whenToUse sentence about Yes/No/Approve/Deny no longer contradicts itself', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Buttons');
   const ref = extractHermesReferenceBlock(section);
 
-  assert.match(ref, /Inline Reference Link/, 'expected avoidWhen or alternatives to name Inline Reference Link for a tappable file reference');
+  assert.doesNotMatch(ref, /Inline Reference Link/, 'Inline Reference Link is fully retired and must no longer be named in Buttons\' avoidWhen or alternatives');
   const alts = extractAlternativeNames(ref);
   assert.ok(alts.some((n) => /ChatTactileButtonStyle|ChatDecisionButtonStyle/.test(n)), 'expected Buttons to name its real production analog as an alternative');
-  assert.ok(alts.includes('Inline Reference Link'), 'expected Inline Reference Link as a structured alternative');
+  assert.ok(!alts.includes('Inline Reference Link'), 'expected the retired Inline Reference Link to no longer be a structured alternative');
 
   assert.doesNotMatch(
     section,
@@ -4798,18 +5003,17 @@ test('Checkbox names native Toggle (never the nonexistent "Switch"), and its alt
   }
 });
 
-test('Disclosure Row, Search, and Attachment name the design-time neighbors their own avoidWhen/description already implies', () => {
+test('Transcript Log Row, Search, and Attachment name the design-time neighbors their own avoidWhen/description already implies', () => {
   const src = read(HERMES_SECTIONS_PATH);
 
-  const disclosure = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Disclosure Row')));
-  assert.ok(disclosure.includes('Accordion List'), 'expected Disclosure Row to name Accordion List (Accordion List already names Disclosure Row)');
-  assert.ok(disclosure.some((n) => /TranscriptLogRowView/.test(n)), 'expected Disclosure Row to name its adopted production analog');
+  const disclosure = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Transcript Log Row')));
+  assert.ok(disclosure.includes('Accordion List'), 'expected Transcript Log Row to name Accordion List (Accordion List already names Disclosure Row)');
 
   const search = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Search')));
   assert.ok(search.includes('Text Input'), 'expected Search to name Text Input for an inline filter field');
 
   const attachment = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Attachment')));
-  assert.ok(attachment.includes('Inline Reference Link'), 'expected Attachment to name Inline Reference Link for a tappable file name');
+  assert.ok(!attachment.includes('Inline Reference Link'), 'the retired Inline Reference Link must no longer be named by Attachment');
 });
 
 test('Pending Request, Transcript Activity, Composer, and Hermex Font state real boundaries/conditions instead of an adoption note, a cross-reference, or a circular restatement', () => {
@@ -4823,7 +5027,7 @@ test('Pending Request, Transcript Activity, Composer, and Hermex Font state real
   const transcriptRef = extractHermesReferenceBlock(transcript);
   assert.doesNotMatch(transcriptRef, /useWhen:\s*'Use it to understand how a transcript turn\\'s collapsible pieces relate to one another\.'/, 'useWhen must become an actionable rule, not "understand how ... relate"');
   assert.match(transcriptRef, /TranscriptLogRowView/, 'expected useWhen to point implementers at TranscriptLogRowView for any individual row');
-  assert.match(transcriptRef, /one collapsible row/i, 'expected the Disclosure Row alternative to state a real condition, not a bare cross-reference');
+  assert.match(transcriptRef, /one collapsible row/i, 'expected the Transcript Log Row alternative to state a real condition, not a bare cross-reference');
 
   const composer = extractAlternativeNames(extractHermesReferenceBlock(extractHermesSection(src, 'Composer')));
   assert.ok(composer.includes('Text Input'), 'expected Composer to name Text Input for a field outside the chat composer');
@@ -4944,21 +5148,27 @@ test('Issue #DSF-02: the Hermex TopNav catalog specimen\'s icon-slot action comp
   assert.match(iconSlotButtonBody, /glass/i, 'expected the icon-slot action to compose an adaptive-glass surface, preferring icons with accessible labels over plain secondary chrome');
 });
 
-test('Issue #DSF-03: the Toast catalog gallery proves its trailing action is a real XS neutral Button primitive, not just prose describing the generic Toast `action` shortcut (which colour-matches the toast\'s own status tint and cannot express a neutral treatment)', () => {
+test('Correction (DSR2-08, supersedes Issue #DSF-03): the Toast catalog gallery no longer renders an extraSmall neutral Button trailing action — HermexToast\'s real trailing action is plain white text, so the gallery demonstrates it via the generic Toast\'s own status-matching `action` shortcut over a dark override background, not a separate Button composition', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
-  assert.match(galleryBody, /<Button[^>]*size="extraSmall"/s,
-    'expected the trailing-action Toast specimen to render a real, rendered extraSmall Button rather than only relying on the generic Toast action shortcut');
+  assert.doesNotMatch(galleryBody, /<Button[^>]*size="extraSmall"/s,
+    'expected the retired extraSmall neutral Button trailing-action specimen to be removed');
+  assert.doesNotMatch(galleryBody, /actionNode/, 'expected the retired actionNode story to be removed');
+  assert.match(galleryBody, /action=\{\{ label: 'Undo'/, 'expected the plain white trailing action to still be demonstrated via the built-in action shortcut');
 });
 
-test('Issue #DSF-04: the Hermex Segmented Control catalog\'s fixed-variant track composes a distinct 40pt visual-track background layer (the existing 36pt selected pill plus one HermesSpacing.s2 padding step above and below), not a bare zero vertical padding that produces no visible change, while retaining the 4pt horizontal inset, 44pt segment minimum touch height, and 36pt selected thumb', () => {
+// Correction (Round 2, DSR2-XX): production's SegmentedControlMetrics.trackInset is HermesSpacing.s2
+// (2pt), matching the existing 2pt vertical visual-track padding — a fixed 2pt inset on all sides,
+// not the previously-pinned 4pt horizontal figure, which no longer matches production source.
+test('Issue #DSF-04 (corrected for Round 2): the Hermex Segmented Control catalog\'s fixed-variant track composes a distinct 40pt visual-track background layer (the existing 36pt selected pill plus one HermesSpacing.s2 padding step above and below), not a bare zero vertical padding that produces no visible change, while retaining the fixed 2pt inset on all sides, 44pt segment minimum touch height, and 36pt selected thumb', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
 
   const visualTrack = extractStyleEntry(previewsSrc, 'segmentedFixedVisualTrack');
   assert.match(visualTrack, /height:\s*40\b/, 'expected a distinct 40pt visual-track background layer framed at 36pt selected pill height + 2pt padding above/below');
 
   const track = extractStyleEntry(previewsSrc, 'segmentedFixedTrack');
-  assert.match(track, /paddingHorizontal:\s*4\b/, 'expected the 4pt horizontal inset to be retained');
+  assert.match(track, /paddingHorizontal:\s*2\b/, 'expected the fixed 2pt horizontal inset (HermesSpacing.s2, matching SegmentedControlMetrics.trackInset), not the stale 4pt figure');
+  assert.doesNotMatch(track, /paddingHorizontal:\s*4\b/, 'the stale 4pt horizontal inset must no longer be documented');
 
   const touchTarget = extractStyleEntry(previewsSrc, 'segmentedTouchTarget');
   assert.match(touchTarget, /minHeight:\s*44/, 'expected the 44pt segment minimum touch height to be retained');
@@ -5200,4 +5410,269 @@ test('DSF-08/09 rendered parity: the adaptive-fill swatch and family metadata de
     assert.match(section, /Neutral\.s50/, `${id} must document the dark selected value`);
     assert.doesNotMatch(section, /Color\.primary|black in light appearance|white in dark/, `${id} must not describe the retired pure black\/white contract`);
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// ─── Round 2 (hermex-dsf-round-2-content-r1): Composer Toolbar, Popover Menu selection guidance,
+// shared surface-border geometry reuse, and manifest/README/WHEN_TO_USE completeness ────────────
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+
+test('Composer Toolbar is a new, foundation-available, zero-adoption Components — Hermex entry documenting HermexComposerToolbar.swift\'s elevated/transparent appearances, fitting/overflowing examples, arbitrary caller content, and one horizontally scrollable row, with no Send/Stop example or ownership', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.match(sectionsSrc, /\| 'Composer Toolbar'/, "expected 'Composer Toolbar' in the HermesSectionId union");
+
+  const section = extractHermesSection(sectionsSrc, 'Composer Toolbar');
+  assert.match(section, /hermesReference:\s*\{/);
+  assert.match(section, /displayName:\s*'Composer Toolbar'/);
+  assert.match(section, /HermesMobile\/Features\/Shared\/HermexComposerToolbar\.swift/, 'expected the real foundation source path');
+  assert.match(section, /elevated/i, 'expected the elevated appearance to be documented');
+  assert.match(section, /transparent/i, 'expected the transparent appearance to be documented');
+  assert.match(section, /(?:fitting|fits)/i, 'expected a fitting-content example');
+  assert.match(section, /overflow/i, 'expected an overflowing-content example');
+  assert.match(section, /arbitrary caller content/i, 'expected the entry to document arbitrary caller-supplied content');
+  assert.match(section, /one horizontally scrollable row|single horizontally scrollable row/i, 'expected the entry to document one horizontally scrollable row');
+  assert.doesNotMatch(section, /\bSend\b/, 'must not demonstrate or claim ownership of a Send control');
+  assert.doesNotMatch(section, /\bStop\b/, 'must not demonstrate or claim ownership of a Stop control');
+
+  const state = extractAdoptionState(section);
+  assert.equal(state, 'foundation-available', 'expected foundation-available status');
+  assert.match(section, /zero production (?:screens|call sites|adoption)/i, 'expected the adoptionStatus detail to explicitly state zero production adoption');
+
+  const ref = extractHermesReferenceBlock(section);
+  const alts = extractAlternativeNames(ref);
+  for (const expected of ['Buttons', 'Hermes Selection Sheet', 'Hermes TopNav']) {
+    assert.ok(alts.includes(expected), `expected Composer Toolbar's alternatives to include "${expected}" (Buttons, Selection Sheet, and TopNav)`);
+  }
+
+  const navBlockMatch = sectionsSrc.match(/export const hermesNav:[^;]*;/s);
+  assert.ok(navBlockMatch, 'expected an exported hermesNav array');
+  const componentsGroupMatch = navBlockMatch[0].match(/label:\s*'Components',[\s\S]*?ids:\s*\[([\s\S]*?)\]/);
+  assert.ok(componentsGroupMatch, 'expected the Components — Hermex nav group');
+  const componentIds = [...componentsGroupMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(componentIds.includes('Composer Toolbar'), 'expected Composer Toolbar to be registered in the Components — Hermex nav group');
+});
+
+test('Popover Menu directs a persistent selection to a caller-presented Selection Sheet or a dedicated picker sheet, and names no HermexSelectionPopover', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Hermes Popover Menu');
+  const ref = extractHermesReferenceBlock(section);
+  assert.match(ref, /persistent selection/i, 'expected avoidWhen to name persistent selection as out of scope');
+  assert.match(ref, /caller-presented (?:Selection Sheet|Hermes Selection Sheet)|dedicated picker sheet/i, 'expected avoidWhen/alternatives to direct persistent selection to a caller-presented Selection Sheet or a dedicated picker sheet');
+  assert.doesNotMatch(sectionsSrc, /HermexSelectionPopover/, 'HermexSelectionPopover must not exist anywhere in the catalog');
+});
+
+test('Selection Sheet documents contentInset with .standard and .none, the 16pt standard default, and no arbitrary CGFloat inset API', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Hermes Selection Sheet');
+  assert.match(section, /contentInset/, 'expected contentInset to be documented');
+  assert.match(section, /\.standard/, 'expected the .standard case to be documented');
+  assert.match(section, /\.none/, 'expected the .none case to be documented');
+  assert.match(section, /16pt/, 'expected the 16pt standard default to be documented');
+  assert.doesNotMatch(section, /contentInset:\s*CGFloat|contentInset:\s*number/, 'must not document an arbitrary CGFloat/number contentInset API');
+});
+
+test('Toast documents all four semantic surfaces (information/success/warning/error) using Blue.s700/Green.s800/Orange.s800/Red.s700, with white icon/message/action content', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Hermes Toast');
+  for (const semantic of ['information', 'success', 'warning', 'error']) {
+    assert.match(section, new RegExp(semantic, 'i'), `expected the ${semantic} semantic to be documented`);
+  }
+  assert.match(section, /Blue\.s700|Blue\[700\]/);
+  assert.match(section, /Green\.s800|Green\[800\]/);
+  assert.match(section, /Orange\.s800|Orange\[800\]/);
+  assert.match(section, /Red\.s700|Red\[700\]/);
+  assert.match(section, /white/i, 'expected white icon/message/action content to be documented');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
+
+  // Correction (DSR2-08/DSR2-13): the gallery must actually render the approved dark ramp
+  // backgrounds — not the generic Toast's own light-tinted `variant` styles, which the props/notes
+  // above no longer claim. Assert the real style override, not just documentation prose.
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Blue\[700\]/, 'expected the information specimen to override the background with Blue[700]');
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Green\[800\]/, 'expected a success specimen to override the background with Green[800]');
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Orange\[800\]/, 'expected the warning specimen to override the background with Orange[800]');
+  assert.match(galleryBody, /backgroundColor:\s*HERMES_COLOR_RAMPS\.Red\[700\]/, 'expected the error specimen to override the background with Red[700]');
+  assert.doesNotMatch(galleryBody, /variant="informational"|variant="success"|variant="warning"|variant="negative"/, 'expected the retired light-tinted variant specimens to be gone, not surviving alongside the dark override');
+
+  // Correction: the retired extraSmall-neutral-HermexButton/actionNode story must be gone.
+  assert.doesNotMatch(galleryBody, /actionNode/, 'expected the retired actionNode/extraSmall neutral Button specimen to be removed');
+  assert.doesNotMatch(galleryBody, /size="extraSmall"/, 'expected no extraSmall Button composition to remain in the Toast gallery');
+  assert.match(galleryBody, /action=\{\{/, 'expected the plain white trailing action to still be demonstrated via the built-in action shortcut');
+});
+
+// A shared catalog surface-border reconstruction — mirroring native HermexSurfaceBorderColors
+// (resting/focused/increasedContrast anchored at HermesColorRamp.Neutral.s600/s700/s800 light
+// values) — replaces each specimen's own local, conflicting border mapping.
+test('a shared HERMEX_SURFACE_BORDER_COLORS reconstruction maps resting/focused/increasedContrast from HERMES_COLOR_RAMPS.Neutral[600]/[700]/[800] and is reused by Card, Search, Text Input, and Code Input specimens, replacing local conflicting mappings', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const objMatch = sectionsSrc.match(/const HERMEX_SURFACE_BORDER_COLORS[\s\S]*?\};/);
+  assert.ok(objMatch, 'expected a shared top-level HERMEX_SURFACE_BORDER_COLORS object, mirroring native HermexSurfaceBorderColors');
+  const obj = objMatch[0];
+  assert.match(obj, /resting/i, 'expected a resting border role');
+  assert.match(obj, /focused/i, 'expected a focused border role');
+  assert.match(obj, /increasedContrast/i, 'expected an increasedContrast border role');
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*600\s*\]/, 'expected the resting anchor to derive from Neutral[600], mirroring native HermexSurfaceBorderRamp.restingLight');
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*700\s*\]/, 'expected the focused anchor to derive from Neutral[700], mirroring native HermexSurfaceBorderRamp.focusedLight');
+  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*800\s*\]/, 'expected the increasedContrast anchor to derive from Neutral[800], mirroring native HermexSurfaceBorderRamp.increasedContrastLight');
+
+  const cardSection = extractHermesSection(sectionsSrc, 'Hermes Card');
+  assert.match(cardSection + sectionsSrc, /HERMEX_SURFACE_BORDER_COLORS/, 'expected Card to reuse the shared surface-border mapping');
+
+  const searchSection = extractHermesSection(sectionsSrc, 'Search');
+  assert.match(searchSection + sectionsSrc, /HERMEX_SURFACE_BORDER_COLORS/, 'expected Search to reuse the shared surface-border mapping');
+
+  const textInputSection = extractHermesSection(sectionsSrc, 'Text Input');
+  assert.match(textInputSection + sectionsSrc, /HERMEX_SURFACE_BORDER_COLORS/, 'expected Text Input (including its Code Input specimen) to reuse the shared surface-border mapping');
+});
+
+test('Search\'s clear-control and magnifier visible edge insets match while the clear target remains 44pt', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'SearchFamilyGallery');
+  assert.match(body, /minWidth:\s*44[\s\S]{0,80}minHeight:\s*44|minHeight:\s*44[\s\S]{0,80}minWidth:\s*44/, 'expected the clear control to keep its independent 44pt hit target');
+  assert.match(body, /preview\.searchClearTarget/, 'expected the clear control to use the shared searchClearTarget alignment style, not a one-off inline style');
+
+  // Correction (DSR2-03/DSR2-14): the two dead style entries this test previously checked
+  // (searchMagnifierIcon/searchClearIcon) were never referenced by any rendered element, so they
+  // could not fail on the actual specimen. Assert the live styles the rendered elements really
+  // consume instead: the clear glyph aligns flush with its 44pt target's trailing edge (so the
+  // target can expand inward without adding visible trailing whitespace), and the field's own
+  // paddingHorizontal is the single source of both the magnifier's and the clear glyph's visible
+  // edge inset — so they necessarily match without a second, independently-tuned inset.
+  assert.doesNotMatch(previewsSrc, /searchMagnifierIcon/, 'expected the unused searchMagnifierIcon style to be removed');
+  assert.doesNotMatch(previewsSrc, /searchClearIcon:/, 'expected the unused searchClearIcon style to be removed');
+
+  const targetMatch = previewsSrc.match(/searchClearTarget:\s*\{([^}]*)\}/);
+  assert.ok(targetMatch, 'expected a searchClearTarget style entry');
+  assert.match(targetMatch[1], /alignItems:\s*'flex-end'/, 'expected the clear glyph to align flush with its target\'s trailing edge, not centered');
+
+  const fieldMatch = previewsSrc.match(/searchField:\s*\{([\s\S]*?)\n\s*\},/);
+  assert.ok(fieldMatch, 'expected a searchField style entry');
+  assert.match(fieldMatch[1], /paddingHorizontal:\s*12/, 'expected the field\'s own 12pt horizontal padding to be the single source of both icons\' visible edge inset');
+});
+
+test('Accordion List\'s header and body text columns align from the same derived geometry', () => {
+  const accordionSrc = read(ACCORDION_LIST_PATH);
+  const indentMatch = accordionSrc.match(/(?:headerTextIndent|bodyTextIndent|textColumnIndent)\s*=\s*([^;\n]+)/);
+  assert.ok(indentMatch, 'expected a single derived indent value shared by the header and body text columns');
+  assert.match(accordionSrc, /AVATAR_SIZE\.small\s*\+\s*DS_SPACING\[600\]/, 'expected the shared indent to derive from the same AVATAR_SIZE.small + DS_SPACING[600] geometry already used for the header chevron column');
+});
+
+// ─── Manifest/metadata completeness (DSR2-XX): every affected entry carries a complete decision
+// contract, and every cited source path actually exists in the repository ─────────────────────────
+
+test('every entry affected by Round 2 (Text Input, Transcript Log Row, Composer, Composer Toolbar, Hermes Popover Menu, Hermes Selection Sheet, Hermes Toast) declares nonempty useWhen/avoidWhen/alternatives/adoptionStatus and accessibility guidance', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  for (const id of ['Text Input', 'Transcript Log Row', 'Composer', 'Composer Toolbar', 'Hermes Popover Menu', 'Hermes Selection Sheet', 'Hermes Toast']) {
+    const section = extractHermesSection(sectionsSrc, id);
+    const ref = extractHermesReferenceBlock(section);
+    assert.match(ref, /useWhen:\s*'[^']+'/, `expected "${id}" to declare a nonempty useWhen`);
+    assert.match(ref, /avoidWhen:\s*'[^']+'/, `expected "${id}" to declare a nonempty avoidWhen`);
+    const alts = extractAlternativeNames(ref);
+    assert.ok(alts.length > 0, `expected "${id}" to declare at least one alternative`);
+    assert.match(ref, /adoptionStatus:\s*\{/, `expected "${id}" to declare adoptionStatus`);
+    assert.match(section, /a11y:|accessibility/i, `expected "${id}" to carry accessibility guidance`);
+  }
+});
+
+test('every Round 2 source path cited by implementationNotes.sourcePaths actually exists in the repository', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  for (const id of ['Text Input', 'Transcript Log Row', 'Composer Toolbar']) {
+    const section = extractHermesSection(sectionsSrc, id);
+    const implementationNotes = extractBraceBlock(section, /implementationNotes:\s*\{/);
+    const sourcePathsMatch = implementationNotes.match(/sourcePaths:\s*\[([\s\S]*?)\]/);
+    assert.ok(sourcePathsMatch, `expected "${id}" to declare implementationNotes.sourcePaths`);
+    const sourcePaths = [...sourcePathsMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    assert.ok(sourcePaths.length > 0, `expected "${id}" to cite at least one source path`);
+    for (const sourcePath of sourcePaths) {
+      assert.ok(existsSync(path.join(ROOT, '..', sourcePath)), `expected cited source path "${sourcePath}" (from "${id}") to exist in the repository`);
+    }
+  }
+});
+
+test('the manifest builder and its schema remain unchanged — the new Round 2 sections are derived from the same human adoptionStatus data, not a duplicated constant or a new query/generated tool', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  const typesSrc = read(TYPES_PATH);
+  assert.match(manifestSrc, /export function buildComponentManifest/, 'expected the existing manifest builder to remain the single source of truth');
+  assert.doesNotMatch(manifestSrc, /require\(['"]child_process['"]\)|execSync|spawnSync/, 'must not introduce new query/generated tooling into the manifest builder');
+  assert.match(typesSrc, /adoptionStatus/, 'expected the manifest schema (types.ts) to remain referenced, not replaced');
+});
+
+// ─── README / WHEN_TO_USE guidance updates ──────────────────────────────────────────────────────
+
+test('README.md and WHEN_TO_USE.md state the Round 2 guidance: Popover Menu is immediate-action-only with persistent selection routed to Selection Sheet, Text Input variants are Default/Password/Code, Transcript Log Row replaces Disclosure Row, Composer Toolbar is foundation-available with zero production adoption, and Composer Chip is documented inside Composer with no standalone HermexComposerChip', () => {
+  const whenToUse = read('WHEN_TO_USE.md');
+  assert.match(whenToUse, /immediate.action/i, 'expected WHEN_TO_USE.md to state Popover Menu is immediate-action-only');
+  assert.match(whenToUse, /Selection Sheet/i, 'expected WHEN_TO_USE.md to route persistent selection to Selection Sheet or a dedicated sheet');
+  assert.match(whenToUse, /Default.{0,5}Password.{0,5}Code|Default,? Password,? and Code/i, 'expected WHEN_TO_USE.md to state Text Input\'s Default/Password/Code variants');
+  assert.match(whenToUse, /Transcript Log Row/i, 'expected WHEN_TO_USE.md to name Transcript Log Row as Disclosure Row\'s replacement');
+  assert.match(whenToUse, /Composer Toolbar/i, 'expected WHEN_TO_USE.md to name Composer Toolbar as foundation-available with zero production adoption');
+  assert.match(whenToUse, /Composer Chip/i, 'expected WHEN_TO_USE.md to document Composer Chip inside Composer');
+  assert.doesNotMatch(whenToUse, /HermexComposerChip/, 'must not claim a standalone HermexComposerChip API exists');
+  assert.doesNotMatch(whenToUse, /Disclosure Row/, 'the retired Disclosure Row must no longer be named as current guidance');
+  assert.doesNotMatch(whenToUse, /Inline Reference Link/, 'the retired Inline Reference Link must no longer be named as current guidance');
+});
+
+// ─── Supporting-card disclosure (DSR2-09): each of the three lower supporting cards owns its own
+// measured-overflow expand/collapse state instead of always rendering at full, auto-computed height ─
+
+test('HermesReferenceDetails.tsx defines SUPPORTING_CARD_COLLAPSED_HEIGHT = 280, the fixed collapsed height every SupportingCard measures against', () => {
+  const src = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(src, /const SUPPORTING_CARD_COLLAPSED_HEIGHT = 280;/);
+});
+
+test('SupportingCard owns independent per-card useState(false) expansion state, measures its own content/viewport via onLayout, and never shares row-level expansion state across the three cards', () => {
+  const src = read(HERMES_REFERENCE_DETAILS_PATH);
+  const body = extractFunctionBody(src, 'SupportingCard');
+  assert.match(body, /useState\(false\)/, 'expected SupportingCard to own its own useState(false) expansion state');
+  assert.match(body, /viewportHeight/, 'expected SupportingCard to retain the measured available collapsed viewport height');
+  assert.ok((body.match(/onLayout=\{/g) ?? []).length >= 2, 'expected separate onLayout measurement passes for content and viewport');
+  assert.doesNotMatch(body, /ScrollView/, 'must not nest a ScrollView inside SupportingCard — the fixed collapsed viewport clips instead');
+
+  // Every card is an independent instance of the same component (own hook call per render), not a
+  // shared parent-owned boolean array/record keyed by card index — a real anti-pattern check would
+  // require executing the tree, but the source-level signal is the absence of a shared expansion
+  // record threaded down as a prop.
+  const detailsBody = src;
+  assert.doesNotMatch(detailsBody, /expandedCards\[|expandedCardIndex|sharedExpansion/i, 'must not introduce shared row-level expansion state across the three supporting cards');
+});
+
+test('SupportingCard fixes the whole collapsed card at SUPPORTING_CARD_COLLAPSED_HEIGHT, clips its remaining content viewport, and reveals a control only when measured content exceeds that available viewport', () => {
+  const src = read(HERMES_REFERENCE_DETAILS_PATH);
+  const body = extractFunctionBody(src, 'SupportingCard');
+  assert.match(
+    body,
+    /supportingCard[^\n]*!expanded[^\n]*SUPPORTING_CARD_COLLAPSED_HEIGHT|!expanded[^\n]*height:\s*SUPPORTING_CARD_COLLAPSED_HEIGHT/,
+    'expected the whole collapsed SupportingCard, not only its content child, to own the fixed 280px height',
+  );
+  assert.match(body, /overflow:\s*'hidden'/, 'expected the collapsed content viewport to clip overflow');
+  assert.match(body, /contentHeight\s*>\s*viewportHeight/, 'expected measured content to be compared with the measured available viewport, not the whole-card constant');
+});
+
+test('SupportingCard\'s disclosure control is visibly labeled "Show more"/"Show less", exposes accessibilityRole="button", accessibilityState={{ expanded }}, aria-expanded, a heading-qualified accessibility label, focus-state styling, and stays mounted across expansion/collapse', () => {
+  const src = read(HERMES_REFERENCE_DETAILS_PATH);
+  const body = extractFunctionBody(src, 'SupportingCard');
+  assert.match(body, /'Show more'/);
+  assert.match(body, /'Show less'/);
+  assert.match(body, /accessibilityRole="button"/);
+  assert.match(body, /accessibilityState=\{\{\s*expanded\s*\}\}/);
+  assert.match(body, /aria-expanded=\{expanded\}/);
+  assert.match(
+    body,
+    /\$\{expanded \? 'Show less' : 'Show more'\}\s*for\s*\$\{heading\}|`\$\{expanded[\s\S]{0,40}heading/,
+    'expected a heading-qualified accessibility label, e.g. `${expanded ? \'Show less\' : \'Show more\'} for ${heading}`',
+  );
+  assert.match(body, /focused|onFocus=/, 'expected focus-state styling on the disclosure control');
+});
+
+test('the three supporting cards preserve their wide-row / narrow-stacked layout order, and the catalog overview keeps its own separate compact Disclosure path unaffected by the SupportingCard rework', () => {
+  const src = read(HERMES_REFERENCE_DETAILS_PATH);
+  assert.match(src, /supportingRow:\s*\{\s*flexDirection:\s*'row'/, 'expected the wide-viewport row layout to survive');
+  assert.match(src, /supportingRowNarrow:\s*\{\s*flexDirection:\s*'column'/, 'expected the narrow-viewport stacked layout to survive');
+  assert.match(src, /supportingCardNarrow:\s*\{[^}]*flexGrow:\s*0[^}]*flexShrink:\s*0[^}]*flexBasis:\s*'auto'[^}]*\}/s, 'expected stacked narrow cards to disable wide-row flex growth without the zero-basis collapse caused by the flex: 0 shorthand');
+  assert.match(src, /isNarrow\s*&&\s*styles\.supportingCardNarrow/, 'expected every SupportingCard to consume the narrow no-flex style');
+
+  assert.match(src, /export function HermesOverviewImplementationDetails/);
+  const overviewBody = extractFunctionBody(src, 'HermesOverviewImplementationDetails');
+  assert.match(overviewBody, /<Disclosure label="Implementation notes">/, 'expected the overview to keep its own separate, compact Disclosure path, not the SupportingCard rework');
 });

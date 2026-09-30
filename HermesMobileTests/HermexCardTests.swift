@@ -54,29 +54,18 @@ final class HermexCardTests: XCTestCase {
         XCTAssertTrue(src.contains("material: .translucentOverScrim"))
     }
 
-    // MARK: - DSF-07 (Batch B, corrected): HermexCardColors — the approved component-scoped Neutral
-    // mapping
+    // MARK: - DSR2-01: Card consumes shared border roles instead of retaining component-local
+    // resting/focus/contrast mappings
     //
-    // Approved exact mapping (design-system-follow-up-plan.md, DSF-07, corrected per review):
-    //   primary surface            Neutral.adaptive(light: Neutral.s50,  dark: Neutral.s950)
-    //   secondary/compact surface  Neutral.adaptive(light: Neutral.s100, dark: Neutral.s900)
-    //   standard border            Neutral.adaptive(light: Neutral.s400, dark: Neutral.s600)
-    //   increased-contrast border  Neutral.adaptive(light: Neutral.s600, dark: Neutral.s400)
-    //
-    // The Increased Contrast pair was originally Neutral.s500/s500; the review found that pair
-    // untested against 3:1 and revised it to s600 light / s400 dark, which
-    // testIncreasedContrastBorderMeetsThreeToOneAgainstBothCardSurfacesInLightAndDarkAppearances below
-    // proves meets 3:1 against both the primary and secondary Card surfaces in both appearances.
-    //
-    // A rendered Color value can't be inspected without a rendering harness (see this file's own
-    // header note), so these are source contracts, mirroring every other test in this file. Member
-    // names (primarySurface/secondarySurface/standardBorder/increasedContrastBorder) are this batch's
-    // own naming choice for the required mapping, not a constraint stated in the plan itself; the
-    // implementer may rename them, but must update these tests in the same change if so.
+    // `HermexCardColors` retains only its two surface roles (primary/secondary); the standard and
+    // Increased Contrast border roles move to the shared `HermexSurfaceBorderColors.resting` /
+    // `.increasedContrast` foundation (contracted in `HermexSurfaceBorderTests`) so Card and Search
+    // stop each owning their own border mapping. A rendered `Color` value can't be inspected without
+    // a rendering harness, so these stay source contracts, mirroring every other test in this file.
 
-    func testHermexCardColorsDefinesTheFourApprovedAdaptiveNeutralPairs() throws {
+    func testHermexCardColorsRetainsOnlyItsTwoSurfaceRolesWithNoBorderDeclarations() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
-        XCTAssertTrue(src.contains("enum HermexCardColors"), "expected a component-scoped HermexCardColors mapping")
+        XCTAssertTrue(src.contains("enum HermexCardColors"), "expected HermexCardColors to remain, holding only surface roles")
         XCTAssertNotNil(
             src.range(of: #"static let primarySurface\b[\s\S]*?HermesColorRamp\.Neutral\.adaptive\(\s*light:\s*HermesColorRamp\.Neutral\.s50,\s*dark:\s*HermesColorRamp\.Neutral\.s950\s*\)"#, options: .regularExpression),
             "expected .primarySurface == Neutral.adaptive(light: Neutral.s50, dark: Neutral.s950)"
@@ -85,84 +74,34 @@ final class HermexCardTests: XCTestCase {
             src.range(of: #"static let secondarySurface\b[\s\S]*?HermesColorRamp\.Neutral\.adaptive\(\s*light:\s*HermesColorRamp\.Neutral\.s100,\s*dark:\s*HermesColorRamp\.Neutral\.s900\s*\)"#, options: .regularExpression),
             "expected .secondarySurface == Neutral.adaptive(light: Neutral.s100, dark: Neutral.s900)"
         )
-        XCTAssertNotNil(
-            src.range(of: #"static let standardBorder\b[\s\S]*?HermesColorRamp\.Neutral\.adaptive\(\s*light:\s*HermesColorRamp\.Neutral\.s400,\s*dark:\s*HermesColorRamp\.Neutral\.s600\s*\)"#, options: .regularExpression),
-            "expected .standardBorder == Neutral.adaptive(light: Neutral.s400, dark: Neutral.s600)"
+        XCTAssertFalse(
+            src.contains("static let standardBorder"),
+            "border roles move to the shared HermexSurfaceBorderColors foundation; HermexCardColors must retain only surface roles"
         )
-        XCTAssertNotNil(
-            src.range(of: #"static let increasedContrastBorder\b[\s\S]*?HermesColorRamp\.Neutral\.adaptive\(\s*light:\s*HermesColorRamp\.Neutral\.s600,\s*dark:\s*HermesColorRamp\.Neutral\.s400\s*\)"#, options: .regularExpression),
-            "expected .increasedContrastBorder == Neutral.adaptive(light: Neutral.s600, dark: Neutral.s400) — the corrected pair, replacing the retired untested s500/s500 pair"
+        XCTAssertFalse(
+            src.contains("static let increasedContrastBorder"),
+            "border roles move to the shared HermexSurfaceBorderColors foundation; HermexCardColors must retain only surface roles"
         )
     }
 
-    /// WCAG 2.x contrast ratio computed directly from the ramp's own hex values — the same "pure
-    /// source-of-truth calculation" pattern this file already uses for pure value contracts, since a
-    /// rendered `Color` can't be inspected without a rendering harness. Proves the corrected
-    /// Increased Contrast border (light Neutral.s600, dark Neutral.s400) is non-decorative-boundary
-    /// compliant (>=3:1, WCAG 1.4.11) against both Card surfaces it must apply to, in both
-    /// appearances — the exact gap the review found unproven for the retired s500/s500 pair.
-    func testIncreasedContrastBorderMeetsThreeToOneAgainstBothCardSurfacesInLightAndDarkAppearances() {
-        let lightBorder = HermesColorRamp.Neutral.s600.hex
-        let darkBorder = HermesColorRamp.Neutral.s400.hex
-        let lightPrimarySurface = HermesColorRamp.Neutral.s50.hex
-        let lightSecondarySurface = HermesColorRamp.Neutral.s100.hex
-        let darkPrimarySurface = HermesColorRamp.Neutral.s950.hex
-        let darkSecondarySurface = HermesColorRamp.Neutral.s900.hex
-
-        XCTAssertGreaterThanOrEqual(contrastRatio(lightBorder, lightPrimarySurface), 3.0,
-                                    "light Increased Contrast border (s600) must be >=3:1 against the primary Card surface (s50)")
-        XCTAssertGreaterThanOrEqual(contrastRatio(lightBorder, lightSecondarySurface), 3.0,
-                                    "light Increased Contrast border (s600) must be >=3:1 against the secondary Card surface (s100)")
-        XCTAssertGreaterThanOrEqual(contrastRatio(darkBorder, darkPrimarySurface), 3.0,
-                                    "dark Increased Contrast border (s400) must be >=3:1 against the primary Card surface (s950)")
-        XCTAssertGreaterThanOrEqual(contrastRatio(darkBorder, darkSecondarySurface), 3.0,
-                                    "dark Increased Contrast border (s400) must be >=3:1 against the secondary Card surface (s900)")
-    }
-
-    // MARK: - Contrast helper (test-only)
-    //
-    // A minimal WCAG 2.x relative-luminance/contrast-ratio calculator over #RRGGBB hex strings.
-    // Test-only: production never needs to compute a contrast ratio at runtime, only to consume a
-    // pre-validated ramp pairing.
-
-    private func relativeLuminance(hex: String) -> Double {
-        let digits = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
-        let scanner = Scanner(string: digits)
-        var value: UInt64 = 0
-        scanner.scanHexInt64(&value)
-        let r = Double((value & 0xFF0000) >> 16) / 255
-        let g = Double((value & 0x00FF00) >> 8) / 255
-        let b = Double(value & 0x0000FF) / 255
-        func linearize(_ channel: Double) -> Double {
-            channel <= 0.03928 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
-        }
-        return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
-    }
-
-    private func contrastRatio(_ hexA: String, _ hexB: String) -> Double {
-        let luminanceA = relativeLuminance(hex: hexA)
-        let luminanceB = relativeLuminance(hex: hexB)
-        let lighter = max(luminanceA, luminanceB)
-        let darker = min(luminanceA, luminanceB)
-        return (lighter + 0.05) / (darker + 0.05)
-    }
-
-    func testGlassSurfaceUsesTheTokenizedPrimaryUnderlayAndStandardOrIncreasedContrastBorderWhilePreservingAdaptiveGlassBehavior() throws {
+    func testGlassSurfaceUsesTheTokenizedPrimaryUnderlayAndSharedRestingOrIncreasedContrastBorderWhilePreservingAdaptiveGlassBehavior() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
         guard let caseRange = src.range(of: #"case \.glass:[\s\S]*?case \.outlined:"#, options: .regularExpression) else {
             return XCTFail("expected a `case .glass:` branch in HermexCardSurfaceModifier")
         }
         let glassCase = String(src[caseRange])
         XCTAssertTrue(glassCase.contains("HermexCardColors.primarySurface"), "expected the glass underlay/fallback fill to use HermexCardColors.primarySurface")
-        XCTAssertTrue(glassCase.contains("HermexCardColors.standardBorder"), "expected the standard-contrast stroke to use HermexCardColors.standardBorder")
-        XCTAssertTrue(glassCase.contains("HermexCardColors.increasedContrastBorder"), "expected the Increased Contrast stroke to use HermexCardColors.increasedContrastBorder")
+        XCTAssertTrue(glassCase.contains("HermexSurfaceBorderColors.resting"), "expected the resting-contrast stroke to use the shared HermexSurfaceBorderColors.resting role")
+        XCTAssertTrue(glassCase.contains("HermexSurfaceBorderColors.increasedContrast"), "expected the Increased Contrast stroke to use the shared HermexSurfaceBorderColors.increasedContrast role")
+        XCTAssertFalse(glassCase.contains("HermexCardColors.standardBorder"), "the retired component-local standardBorder must be gone from the glass case")
+        XCTAssertFalse(glassCase.contains("HermexCardColors.increasedContrastBorder"), "the retired component-local increasedContrastBorder must be gone from the glass case")
         XCTAssertTrue(glassCase.contains(".adaptiveGlass("), "must preserve Adaptive Glass/material behavior")
         XCTAssertTrue(glassCase.contains("reduceTransparency"), "must preserve the Reduce Transparency solid fallback")
         XCTAssertFalse(glassCase.contains("secondarySystemBackground"), "the retired platform color must be gone from the glass case")
         XCTAssertFalse(glassCase.contains("Color.primary.opacity"), "the retired Color.primary.opacity border recipe must be gone from the glass case")
     }
 
-    func testOutlinedSurfaceUsesTheTokenizedPrimaryBackgroundAndAStandardOrIncreasedContrastBorder() throws {
+    func testOutlinedSurfaceUsesTheTokenizedPrimaryBackgroundAndASharedRestingOrIncreasedContrastBorder() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
         guard let caseRange = src.range(of: #"case \.outlined:[\s\S]*?\n    \}"#, options: .regularExpression) else {
             return XCTFail("expected a `case .outlined:` branch in HermexCardSurfaceModifier")
@@ -170,14 +109,16 @@ final class HermexCardTests: XCTestCase {
         let outlinedCase = String(src[caseRange])
         XCTAssertTrue(outlinedCase.contains("HermexCardColors.primarySurface"), "expected the outlined background to use HermexCardColors.primarySurface")
         XCTAssertTrue(
-            outlinedCase.contains("HermexCardColors.standardBorder") || outlinedCase.contains("HermexCardColors.increasedContrastBorder"),
-            "expected the outlined border to use a tokenized HermexCardColors border"
+            outlinedCase.contains("HermexSurfaceBorderColors.resting") || outlinedCase.contains("HermexSurfaceBorderColors.increasedContrast"),
+            "expected the outlined border to use a shared HermexSurfaceBorderColors role"
         )
+        XCTAssertFalse(outlinedCase.contains("HermexCardColors.standardBorder"), "the retired component-local standardBorder must be gone from the outlined case")
+        XCTAssertFalse(outlinedCase.contains("HermexCardColors.increasedContrastBorder"), "the retired component-local increasedContrastBorder must be gone from the outlined case")
         XCTAssertFalse(outlinedCase.contains("Color(.systemBackground)"), "the retired platform background must be gone from the outlined case")
         XCTAssertFalse(outlinedCase.contains("Color(.separator)"), "the retired platform border must be gone from the outlined case")
     }
 
-    func testCompactCardSurfaceDefaultsToTheTokenizedSecondaryBackgroundAndTokenizedStandardBorder() throws {
+    func testCompactCardSurfaceDefaultsToTheTokenizedSecondaryBackgroundAndTheSharedRestingBorderWithoutTheRetiredBorderOpacityRecipe() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
         XCTAssertTrue(
             src.contains("fill: Color = HermexCardColors.secondarySurface"),
@@ -199,29 +140,35 @@ final class HermexCardTests: XCTestCase {
         }
         let modifier = String(src[modifierStart..<requestStart])
         XCTAssertTrue(modifier.contains("@Environment(\\.colorSchemeContrast) private var colorSchemeContrast"))
-        XCTAssertTrue(modifier.contains("HermexCardColors.standardBorder"), "expected the compact hairline border to use HermexCardColors.standardBorder at normal contrast")
-        XCTAssertTrue(modifier.contains("HermexCardColors.increasedContrastBorder"), "expected the compact hairline border to use HermexCardColors.increasedContrastBorder under Increased Contrast")
-        XCTAssertTrue(
+        XCTAssertTrue(modifier.contains("HermexSurfaceBorderColors.resting"), "expected the compact hairline border to use the shared HermexSurfaceBorderColors.resting role at normal contrast")
+        XCTAssertTrue(modifier.contains("HermexSurfaceBorderColors.increasedContrast"), "expected the compact hairline border to use the shared HermexSurfaceBorderColors.increasedContrast role under Increased Contrast")
+        XCTAssertFalse(modifier.contains("HermexCardColors.standardBorder"), "the retired component-local standardBorder must be gone from the compact modifier")
+        XCTAssertFalse(modifier.contains("HermexCardColors.increasedContrastBorder"), "the retired component-local increasedContrastBorder must be gone from the compact modifier")
+        XCTAssertFalse(
             modifier.contains(".opacity(colorSchemeContrast == .increased ? 1 : HermexCompactCardMetrics.borderOpacity)"),
-            "the validated Increased Contrast color must render at full opacity; only the normal subtle compact border keeps the legacy hairline opacity"
+            "Compact Card must not apply the retired normal borderOpacity recipe now that both states resolve to fully opaque shared border roles"
         )
         XCTAssertFalse(modifier.contains("Color(.separator)"), "the retired platform border must be absent from the compact modifier")
     }
 
-    /// The accepted correction requires Increased Contrast to reach every Card variant, not just
-    /// `.glass`/`.outlined`: `compactCardSurface`, Request Card `.opaque`, and Request Card
-    /// `.translucentOverScrim` must all select `increasedContrastBorder` under Increased Contrast and
-    /// `standardBorder` otherwise, using the same ternary `HermexCardSurfaceModifier` already applies
-    /// for `.glass`/`.outlined`. A file-wide count is deliberately structure-agnostic about *where*
-    /// each variant's border lives (a `ViewModifier`, a free function, or an environment-reading seam
-    /// `compactCardSurface` delegates to) — only that the same conditional selection is applied
-    /// consistently everywhere a Card variant draws a border.
-    func testEveryCardVariantSelectsIncreasedContrastBorderUnderIncreasedContrastAndStandardBorderOtherwise() throws {
+    /// DSR2-01 requires every bordered Card variant — not just `.glass`/`.outlined` — to select the
+    /// shared border roles: `compactCardSurface`, Request Card `.opaque`, and Request Card
+    /// `.translucentOverScrim` must all select `HermexSurfaceBorderColors.increasedContrast` under
+    /// Increased Contrast and `.resting` otherwise, using the same ternary `HermexCardSurfaceModifier`
+    /// already applies for `.glass`/`.outlined`. A file-wide count is deliberately structure-agnostic
+    /// about *where* each variant's border lives (a `ViewModifier`, a free function, or an
+    /// environment-reading seam `compactCardSurface` delegates to) — only that the same conditional
+    /// selection of the shared roles is applied consistently everywhere a Card variant draws a border.
+    func testEveryCardVariantSelectsTheSharedIncreasedContrastRoleUnderIncreasedContrastAndTheSharedRestingRoleOtherwise() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
-        let ternary = "colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder"
+        let ternary = "colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting"
         let occurrences = src.components(separatedBy: ternary).count - 1
         XCTAssertEqual(occurrences, 5,
-                       "expected all five Card variants (.glass, .outlined, compact default, opaque Request Card, translucent-over-scrim Request Card) to select increasedContrastBorder under Increased Contrast and standardBorder otherwise via this exact ternary — found \(occurrences)")
+                       "expected all five Card variants (.glass, .outlined, compact default, opaque Request Card, translucent-over-scrim Request Card) to select the shared HermexSurfaceBorderColors.increasedContrast role under Increased Contrast and .resting otherwise via this exact ternary — found \(occurrences)")
+        XCTAssertFalse(
+            src.contains("colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder"),
+            "the retired component-local border ternary must be gone entirely"
+        )
     }
 
     /// Reading `colorSchemeContrast` requires an environment-reading seam — `compactCardSurface` is
@@ -259,33 +206,34 @@ final class HermexCardTests: XCTestCase {
         let body = String(tail[bodyRange])
         XCTAssertTrue(body.contains(".background(HermexCardColors.primarySurface, in: shape)"), "expected the opaque case to use HermexCardColors.primarySurface")
         XCTAssertTrue(body.contains(".regularMaterial, in: shape"), "translucent-over-scrim must keep material behavior")
-        XCTAssertTrue(body.contains("HermexCardColors.standardBorder"), "expected a tokenized border on the Request Card surface")
+        XCTAssertTrue(body.contains("HermexSurfaceBorderColors.resting"), "expected the Request Card surface to use the shared HermexSurfaceBorderColors.resting role")
+        XCTAssertFalse(body.contains("HermexCardColors.standardBorder"), "the retired component-local standardBorder must be gone from Request Card")
         XCTAssertFalse(body.contains("secondarySystemBackground"), "the retired platform background must be gone from Request Card")
         XCTAssertFalse(body.contains(".primary.opacity(0.10)"), "the retired Color.primary.opacity border recipe must be gone from Request Card")
     }
 
-    /// The accepted correction requires `RequestCardSurfaceModifier` itself to read
-    /// `colorSchemeContrast` (it is already a `ViewModifier`, unlike the free-function
-    /// `compactCardSurface`) and for both its `.opaque` and `.translucentOverScrim` branches to
-    /// select `increasedContrastBorder`/`standardBorder` via the same ternary the other three
-    /// variants use.
-    func testRequestCardSurfaceModifierReadsColorSchemeContrastAndBothMaterialsSelectIncreasedContrastBorder() throws {
+    /// DSR2-01 requires `RequestCardSurfaceModifier` itself to read `colorSchemeContrast` (it is
+    /// already a `ViewModifier`, unlike the free-function `compactCardSurface`) and for both its
+    /// `.opaque` and `.translucentOverScrim` branches to select the shared
+    /// `HermexSurfaceBorderColors.increasedContrast`/`.resting` roles via the same ternary the other
+    /// three variants use.
+    func testRequestCardSurfaceModifierReadsColorSchemeContrastAndBothMaterialsSelectTheSharedIncreasedContrastRole() throws {
         let src = try source("HermesMobile/Features/Shared/HermexCard.swift")
         guard let structIdx = src.range(of: "private struct RequestCardSurfaceModifier") else {
             return XCTFail("expected RequestCardSurfaceModifier")
         }
         let tail = String(src[structIdx.lowerBound...])
         XCTAssertTrue(tail.contains("@Environment(\\.colorSchemeContrast)"),
-                      "expected RequestCardSurfaceModifier to declare @Environment(\\.colorSchemeContrast) so both materials can select the Increased Contrast border")
+                      "expected RequestCardSurfaceModifier to declare @Environment(\\.colorSchemeContrast) so both materials can select the shared Increased Contrast role")
 
         guard let bodyRange = tail.range(of: #"func body\(content: Content\) -> some View \{[\s\S]*?\n    \}\n\}"#, options: .regularExpression) else {
             return XCTFail("expected RequestCardSurfaceModifier.body")
         }
         let body = String(tail[bodyRange])
-        let ternary = "colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder"
+        let ternary = "colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting"
         let occurrences = body.components(separatedBy: ternary).count - 1
         XCTAssertEqual(occurrences, 2,
-                       "expected both the .opaque and .translucentOverScrim branches to select increasedContrastBorder under Increased Contrast and standardBorder otherwise — found \(occurrences)")
+                       "expected both the .opaque and .translucentOverScrim branches to select the shared HermexSurfaceBorderColors.increasedContrast role under Increased Contrast and .resting otherwise — found \(occurrences)")
     }
 
     func testRetiredPlatformColorExpressionsAreAbsentFromHermexCardSwift() throws {
@@ -294,5 +242,7 @@ final class HermexCardTests: XCTestCase {
         XCTAssertFalse(src.contains("Color(.systemBackground)"), "retired: direct systemBackground surface recipe")
         XCTAssertFalse(src.contains("Color(.separator)"), "retired: direct separator border recipe")
         XCTAssertFalse(src.contains(".primary.opacity"), "retired: Color.primary.opacity border recipe")
+        XCTAssertFalse(src.contains("HermexCardColors.standardBorder"), "retired: component-local standardBorder must be gone everywhere, declaration and usage alike")
+        XCTAssertFalse(src.contains("HermexCardColors.increasedContrastBorder"), "retired: component-local increasedContrastBorder must be gone everywhere, declaration and usage alike")
     }
 }

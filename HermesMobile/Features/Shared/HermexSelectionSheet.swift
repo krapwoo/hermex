@@ -64,6 +64,21 @@ private enum HermexSelectionSheetMode<Value: Hashable> {
     case multi(Binding<Set<Value>>)
 }
 
+/// Caller-selected outer horizontal inset applied once to the shared Search/list/empty-state
+/// container. Not an arbitrary CGFloat — a closed, semantic choice between the standard screen
+/// margin and no inset at all.
+enum HermexSelectionSheetContentInset: Equatable {
+    case standard
+    case none
+
+    var horizontalPadding: CGFloat {
+        switch self {
+        case .standard: HermesSpacing.s16
+        case .none: HermesSpacing.s0
+        }
+    }
+}
+
 /// The caller-presented content that replaces the retired `HermexDropdown`'s intended
 /// fixed-option-selection role: immediate single selection or staged multi-selection over a
 /// scrolling option list, composed entirely from existing foundations — `HermexBottomSheet`,
@@ -77,6 +92,7 @@ struct HermexSelectionSheet<Value: Hashable>: View {
     private let mode: HermexSelectionSheetMode<Value>
     private let options: [HermexSelectionSheetOption<Value>]
     private let search: HermexSelectionSheetSearch?
+    private let contentInset: HermexSelectionSheetContentInset
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: HermexSelectionSheetDraft<Value>?
@@ -87,12 +103,14 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         _ title: LocalizedStringKey,
         selection: Binding<Value?>,
         options: [HermexSelectionSheetOption<Value>],
-        search: HermexSelectionSheetSearch? = nil
+        search: HermexSelectionSheetSearch? = nil,
+        contentInset: HermexSelectionSheetContentInset = .standard
     ) {
         self.title = title
         self.mode = .single(selection)
         self.options = options
         self.search = search
+        self.contentInset = contentInset
         self._draft = State(initialValue: nil)
     }
 
@@ -101,12 +119,14 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         _ title: LocalizedStringKey,
         selections: Binding<Set<Value>>,
         options: [HermexSelectionSheetOption<Value>],
-        search: HermexSelectionSheetSearch? = nil
+        search: HermexSelectionSheetSearch? = nil,
+        contentInset: HermexSelectionSheetContentInset = .standard
     ) {
         self.title = title
         self.mode = .multi(selections)
         self.options = options
         self.search = search
+        self.contentInset = contentInset
         self._draft = State(initialValue: HermexSelectionSheetDraft(baseline: selections.wrappedValue))
     }
 
@@ -138,7 +158,6 @@ struct HermexSelectionSheet<Value: Hashable>: View {
                     prompt: search.prompt,
                     isEnabled: search.isEnabled
                 )
-                .padding(.horizontal, HermesSpacing.screenHorizontal)
                 .padding(.top, HermesSpacing.s12)
             }
 
@@ -152,6 +171,7 @@ struct HermexSelectionSheet<Value: Hashable>: View {
                 }
             }
         }
+        .padding(.horizontal, contentInset.horizontalPadding)
         .task {
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }

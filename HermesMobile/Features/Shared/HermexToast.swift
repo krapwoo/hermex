@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A transient status notice: a semantic tint/icon, a message, and an optional action, presented via
-/// `hermexToast(isPresented:toast:)`. Distinct from `Banner` (a persistent in-flow notice) and from
+/// A transient status notice: a semantic surface/icon, a message, and an optional action, presented via
+/// `hermexToast(isPresented:toast:)`. Distinct from `HermexBanner` (a persistent in-flow notice) and from
 /// `GitActionToastOverlay` (Workspace/Git's own progress/success state machine) — this is the generic
 /// version, with lifecycle left entirely to the caller's `isPresented` binding.
 struct HermexToast: View {
@@ -10,15 +10,6 @@ struct HermexToast: View {
         case success
         case warning
         case error
-
-        var tint: Color {
-            switch self {
-            case .information: .blue
-            case .success: .green
-            case .warning: .yellow
-            case .error: .red
-            }
-        }
 
         var defaultIcon: String {
             switch self {
@@ -60,30 +51,49 @@ struct HermexToast: View {
             if let icon {
                 Image(systemName: icon)
                     .font(.system(size: HermesIconSize.medium))
-                    .foregroundStyle(semantic.tint)
+                    .foregroundStyle(.white)
                     .accessibilityHidden(isIconDecorative)
             }
 
             message
                 .appFont(.subheadlineSemibold)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
 
             Spacer(minLength: HermesSpacing.s8)
 
             if let action {
-                HermexButton(content: .label(action.title), size: .extraSmall, emphasis: .neutral) {
+                Button(action.title) {
                     action.handler()
                 }
+                .foregroundStyle(.white)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+                .buttonStyle(.hermexPressOnly(.compactControl))
             }
         }
         .padding(.horizontal, HermesSpacing.s16)
         .padding(.vertical, HermesSpacing.s12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        }
+        .background(HermexToastColors.background(for: semantic), in: RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous))
         .accessibilityElement(children: action == nil ? .combine : .contain)
+    }
+}
+
+/// Component-scoped semantic-to-background mapping for `HermexToast`. The colored surface itself
+/// carries the semantic; icon, message, and the trailing action render as white content on top of
+/// it — kept outside `HermexToast` so the mapping is a pure, independently testable contract.
+enum HermexToastColors {
+    static let information = HermesColorRamp.Blue.s700
+    static let success = HermesColorRamp.Green.s800
+    static let warning = HermesColorRamp.Orange.s800
+    static let error = HermesColorRamp.Red.s700
+
+    static func background(for semantic: HermexToast.Semantic) -> Color {
+        switch semantic {
+        case .information: information.color
+        case .success: success.color
+        case .warning: warning.color
+        case .error: error.color
+        }
     }
 }
 

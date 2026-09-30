@@ -124,13 +124,18 @@ const preview = StyleSheet.create({
   },
   logBodyText: { fontSize: 11, fontFamily: 'Menlo', color: '#3a3a3c' },
 
-  // Inline Reference Link — deliberately no capsule fill/outline; accent color + underline-on-
-  // focus/press is the only affordance, visually distinct from Tag's filled pill.
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  linkGlyph: { fontSize: 13, color: '#3478F6' },
-  linkText: { fontSize: 13, fontWeight: '600', color: '#3478F6' },
-  linkTextFocused: { textDecorationLine: 'underline' },
-  linkTextPressed: { color: '#1c5cd6' },
+  // Composer Chip — an inline, text-embedded reference chip (production's real
+  // ComposerChipRendering.swift), rendered as a small tinted pill within ordinary sentence text.
+  composerChipRow: { flexWrap: 'wrap' },
+  composerChipInline: {
+    fontSize: 13, fontWeight: '600', color: HERMES_COLOR_RAMPS.Blue[700],
+    backgroundColor: HERMES_COLOR_RAMPS.Blue[100], borderRadius: 6, paddingHorizontal: 4,
+  },
+  // Composer Toolbar — the elevated appearance's own adaptive surface/radius/shadow reconstruction.
+  composerToolbarElevated: {
+    borderRadius: 12, backgroundColor: '#ffffff', padding: 6,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+  },
 
   // Static Skeleton (production-faithful — no animation)
   skeletonFill: { backgroundColor: 'rgba(120,120,128,0.16)' },
@@ -150,20 +155,47 @@ const preview = StyleSheet.create({
     width: 280, minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, borderRadius: DS_RADIUS.medium,
     backgroundColor: HERMES_COLOR_RAMPS.Neutral[100],
-    borderWidth: 1, borderColor: HERMES_COLOR_RAMPS.Neutral[300],
+    // Resting/focused border roles mirror the shared HERMEX_SURFACE_BORDER_COLORS reconstruction
+    // (Neutral[600]/[700]) instead of a locally conflicting mapping.
+    borderWidth: 1, borderColor: HERMES_COLOR_RAMPS.Neutral[600],
   },
-  searchFieldFocused: { borderColor: HERMES_COLOR_RAMPS.Neutral[600], borderWidth: 1.5 },
+  searchFieldFocused: { borderColor: HERMES_COLOR_RAMPS.Neutral[700], borderWidth: 1.5 },
   searchFieldDisabled: { opacity: 0.62 },
   searchFieldInput: { flex: 1, minWidth: 0, fontSize: 16, color: '#1c1c1e', paddingVertical: 0 },
   // The independent 44pt hit target itself is applied inline at the clear control's call site (see
-  // SearchFamilyGallery) so it stays a literal, checkable minWidth/minHeight pair; this only supplies
-  // the shared centering.
-  searchClearTarget: { alignItems: 'center', justifyContent: 'center' },
+  // SearchFamilyGallery) so it stays a literal, checkable minWidth/minHeight pair. The glyph aligns
+  // flush with the target's trailing edge (not centered) so the target can expand inward from there —
+  // the field's own 12pt paddingHorizontal (searchField.paddingHorizontal above) alone then supplies
+  // the same visible edge inset the leading magnifier glyph already gets from that same padding,
+  // rather than a second, independently-tuned inset stacking on top of it.
+  searchClearTarget: { alignItems: 'flex-end', justifyContent: 'center' },
   nativeFieldGroup: { gap: 4, width: 280 },
   nativeFieldInput: {
     minHeight: 44, fontSize: 16, color: '#1c1c1e', paddingHorizontal: 12, paddingVertical: 10,
     borderRadius: 10, backgroundColor: '#efeff4',
+    // Resting border shares the same HERMEX_SURFACE_BORDER_COLORS.resting anchor (Neutral[600]) as
+    // Search, instead of a borderless field.
+    borderWidth: 1, borderColor: HERMES_COLOR_RAMPS.Neutral[600],
   },
+  // Code Input — a decorative digit-box row layered under one transparent, full-bleed native
+  // TextInput (the same ZStack-over-one-editor shape as native HermexCodeInput), never a second
+  // editing surface. The box row is hidden from assistive technology on both native
+  // (accessibilityElementsHidden/importantForAccessibility) and web — see its call site.
+  codeInputStack: { height: 48, justifyContent: 'center' },
+  codeInputRow: { position: 'absolute', left: 0, right: 0, flexDirection: 'row' },
+  codeInputBox: {
+    flex: 1, height: 48, borderRadius: DS_RADIUS.medium,
+    backgroundColor: HERMES_COLOR_RAMPS.Neutral[100],
+    borderWidth: 1, borderColor: HERMES_COLOR_RAMPS.Neutral[600],
+    alignItems: 'center', justifyContent: 'center',
+  },
+  codeInputBoxError: { borderColor: HERMES_COLOR_RAMPS.Red[700], borderWidth: 1.5 },
+  codeInputBoxDisabled: { opacity: 0.55 },
+  codeInputBoxText: { fontSize: 20, fontWeight: '600', color: '#1c1c1e' },
+  // The one real editing surface: transparent so the decorative boxes above show through, but still
+  // the sole target that receives focus, keystrokes, and accessibility.
+  codeInputEditor: { ...StyleSheet.absoluteFill, opacity: 0 },
+  codeInputErrorText: { color: HERMES_COLOR_RAMPS.Red[700] },
   composerTextInputRow: {
     minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, borderRadius: 10, backgroundColor: 'rgba(120,120,128,0.16)',
@@ -261,7 +293,7 @@ const preview = StyleSheet.create({
     position: 'absolute', left: 0, right: 0, top: 2, height: 40, borderRadius: 999,
     backgroundColor: 'rgba(120,120,128,0.16)',
   },
-  segmentedFixedTrack: { flexDirection: 'row', gap: 4, paddingHorizontal: 4 },
+  segmentedFixedTrack: { flexDirection: 'row', gap: 4, paddingHorizontal: 2 },
   segmentedTouchTarget: { minHeight: 44, justifyContent: 'center' },
   segmentedPill: {
     height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -446,9 +478,8 @@ export function TagGallery() {
       <Text style={preview.caption}>size: prominent (12/8 padding, caption not caption2) — Settings' connection tag</Text>
       <Text style={[preview.label, { marginTop: 4 }]}>Every Tag instance above is display-only</Text>
       <Text style={preview.caption}>
-        No Tag prop, example, or styling is interactive anywhere in this section — a tappable file
-        reference is a distinct component, Inline Reference Link, never a styled Tag (see that
-        section for the visual and semantic contrast).
+        No Tag prop, example, or styling is interactive anywhere in this section — a tappable element
+        uses a control or link component (see Buttons), never a styled Tag.
       </Text>
       <Text style={[preview.label, { marginTop: 4 }]}>Closest generic equivalent</Text>
       <View style={preview.tagRow}>
@@ -459,59 +490,6 @@ export function TagGallery() {
       <Text style={preview.caption}>
         Badge's 5 closed semantic variants are the closest generic model — production drives each
         tag from an arbitrary SwiftUI Color per status, not a fixed enum.
-      </Text>
-    </View>
-  );
-}
-
-// ─── Inline Reference Link ────────────────────────────────────────────────────
-/**
- * A real, focusable link — not a recon picture — since the whole point of this family is contrast
- * with Tag's non-interactive capsule: keyboard Tab reaches it, Enter/Space activates it, and its
- * pressed/focus states are genuinely observable in the running preview.
- */
-export function InlineReferenceLinkPreview() {
-  const [focused, setFocused] = useState(false);
-  const [pressedKey, setPressedKey] = useState<string | null>(null);
-  const [opened, setOpened] = useState<string | null>(null);
-
-  const Link = ({ fileName }: { fileName: string }) => (
-    <Pressable
-      accessibilityRole="link"
-      accessibilityLabel={`Open ${fileName} in the source viewer`}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      onPressIn={() => setPressedKey(fileName)}
-      onPressOut={() => setPressedKey(null)}
-      onPress={() => setOpened(fileName)}
-      style={preview.linkRow}
-    >
-      <Text style={preview.linkGlyph}>◆</Text>
-      <Text
-        style={[
-          preview.linkText,
-          focused && preview.linkTextFocused,
-          pressedKey === fileName && preview.linkTextPressed,
-        ]}
-      >
-        {fileName}
-      </Text>
-    </Pressable>
-  );
-
-  return (
-    <View style={preview.stack}>
-      <View style={preview.row}>
-        <Link fileName="App.swift" />
-        <Link fileName="ChatComposerAttachmentStripView.swift" />
-      </View>
-      <Text style={preview.caption}>
-        Tab/click to focus, press to activate — this is a real Pressable with
-        accessibilityRole="link", not a static picture. Underline appears on focus; the accent color
-        deepens on press. No capsule fill or tag-like outline at any state.
-      </Text>
-      <Text style={preview.caption}>
-        {opened ? `Last activated: opens "${opened}" in the source viewer.` : 'Not yet activated in this preview.'}
       </Text>
     </View>
   );
@@ -717,51 +695,143 @@ export function SearchFamilyGallery() {
   );
 }
 
-// ─── Text Input — Hermex-owned HermexTextField/HermexSecureField/HermexNumberField wrappers ─
+// Reconstructs `HermexCodeInput`'s own shape: one real, transparent native `TextInput` — number-pad
+// keyboard, one-time-code content type, ASCII-digit-only filtering, truncated to `length` — layered
+// over a decorative digit-box row that mirrors its bound value. The box row is the only thing that's
+// visible; it is hidden from assistive technology (accessibilityElementsHidden/
+// importantForAccessibility) so the one TextInput stays the sole accessibility element, exactly as
+// native HermexCodeInput exposes one grouped field behind its decorative boxes. Helper and error text
+// stay mutually exclusive, matching HermexTextInputShell. No `onSubmitEditing`/completion callback is
+// wired — reaching `length` digits here never implies auto-submit.
+function HermexCodeInputSpecimen({
+  title,
+  length,
+  initialValue = '',
+  helperText,
+  errorText,
+  disabled = false,
+}: {
+  title: string;
+  length: number;
+  initialValue?: string;
+  helperText?: string;
+  errorText?: string;
+  disabled?: boolean;
+}) {
+  const [code, setCode] = useState(initialValue);
+  const spacing = length >= 7 ? 4 : 8;
+  const digits = Array.from({ length }, (_, index) => code[index] ?? '');
+
+  return (
+    <View>
+      <Text style={preview.caption}>{title}</Text>
+      <View style={preview.codeInputStack}>
+        <View
+          style={[preview.codeInputRow, { gap: spacing }]}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {digits.map((digit, index) => (
+            <View
+              key={index}
+              style={[
+                preview.codeInputBox,
+                !!errorText && preview.codeInputBoxError,
+                disabled && preview.codeInputBoxDisabled,
+              ]}
+            >
+              <Text style={preview.codeInputBoxText}>{digit}</Text>
+            </View>
+          ))}
+        </View>
+        <TextInput
+          value={code}
+          onChangeText={(raw) => setCode(raw.replace(/[^0-9]/g, '').slice(0, length))}
+          editable={!disabled}
+          keyboardType="number-pad"
+          textContentType="oneTimeCode"
+          accessibilityLabel="Verification code"
+          style={preview.codeInputEditor}
+        />
+      </View>
+      {errorText ? (
+        <Text style={[preview.caption, preview.codeInputErrorText]}>{errorText}</Text>
+      ) : helperText ? (
+        <Text style={preview.caption}>{helperText}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+// ─── Text Input — Hermex-owned HermexTextField/HermexSecureField/HermexCodeInput wrappers ─
 export function HermexTextInputFamilyGallery() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [quantity, setQuantity] = useState('');
   return (
     <View style={preview.stack}>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Single-line — HermexTextField</Text>
+        <Text style={preview.label}>Default — HermexTextField</Text>
+        <Text style={preview.caption}>Name</Text>
         <TextInput
           value={name}
           onChangeText={setName}
-          placeholder="Hermes address"
-          accessibilityLabel="Hermes address"
+          placeholder="Enter your name"
+          accessibilityLabel="Name"
           style={preview.nativeFieldInput}
         />
       </View>
       <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Secure entry — HermexSecureField</Text>
+        <Text style={preview.label}>Password — HermexSecureField</Text>
+        <Text style={preview.caption}>Password</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
-          placeholder="Password"
+          placeholder="Enter your password"
           accessibilityLabel="Password"
           secureTextEntry
           style={preview.nativeFieldInput}
         />
       </View>
-      <View style={preview.nativeFieldGroup}>
-        <Text style={preview.label}>Number — HermexNumberField</Text>
-        <TextInput
-          value={quantity}
-          onChangeText={setQuantity}
-          placeholder="Quantity"
-          accessibilityLabel="Quantity"
-          style={preview.nativeFieldInput}
+      <View style={[preview.nativeFieldGroup, { gap: 12 }]}>
+        <Text style={preview.label}>Code — HermexCodeInput</Text>
+        <Text style={preview.caption}>Verification code</Text>
+        <HermexCodeInputSpecimen
+          title="4 digits — partial"
+          length={4}
+          initialValue="12"
+          helperText="Enter the 4-digit code."
+        />
+        <HermexCodeInputSpecimen
+          title="6 digits — complete"
+          length={6}
+          initialValue="123456"
+          helperText="Enter the 6-digit code."
+        />
+        <HermexCodeInputSpecimen
+          title="6 digits — error"
+          length={6}
+          initialValue="1234"
+          errorText="Enter all 6 digits."
+        />
+        <HermexCodeInputSpecimen
+          title="8 digits — disabled"
+          length={8}
+          initialValue="12345678"
+          disabled
+          helperText="Enter the 8-digit code."
         />
       </View>
       <Text style={preview.caption}>
-        Native reconstructions of `HermexTextField`, `HermexSecureField`, and `HermexNumberField` —
-        three thin wrappers that forward straight to native TextField, SecureField, and the typed
-        TextField(value:format:) path. Production owns focus, keyboard, autocorrection,
-        capitalization, content type, and locale-aware number parsing/formatting through these native
-        controls, not through custom Hermex field chrome. TextEditor (long-form body text) and Search
-        stay outside this family — see their own entries.
+        Native reconstructions of `HermexTextField`, `HermexSecureField`, and `HermexCodeInput` — the
+        three approved Default/Password/Code variants. Each Code specimen is exactly one native
+        `TextInput` — number-pad keyboard, one-time-code content type, ASCII-digit-only filtering —
+        layered under a decorative digit-box row hidden from accessibility, demonstrating lengths 4,
+        6, and 8 across partial, complete, error, and disabled states without any auto-submit; helper
+        and error text stay mutually exclusive per specimen, matching the native HermexTextInputShell
+        contract. Production owns focus, keyboard, autocorrection, capitalization, and content type
+        through these native controls, not through custom Hermex field chrome. TextEditor (long-form
+        body text) and Search stay outside this family — see their own entries.
       </Text>
     </View>
   );
@@ -1911,6 +1981,19 @@ export function BannerFamilyGallery() {
         already announces the same fact); pass a meaningful icon override only when the glyph itself
         carries information the title text doesn't.
       </Text>
+      <Text style={[preview.label, { marginTop: 8 }]}>Description only — composer-style error composition</Text>
+      <View style={{ paddingHorizontal: 16 }}>
+        <Banner
+          variant="negative"
+          description="The Hermes server hit an internal error. Check the server logs, then try again."
+        />
+      </View>
+      <Text style={preview.caption}>
+        Title and description are independently caller-optional on the native HermexBanner, not an
+        interactive show/hide toggle. This foundation-only specimen demonstrates a description-only,
+        inset error composition by omitting the title prop entirely, never by passing an empty title;
+        it is not a production Chat composer adoption claim.
+      </Text>
     </View>
   );
 }
@@ -1997,7 +2080,7 @@ function DisclosureChevron({ expanded }: { expanded: boolean }) {
   );
 }
 
-export function DisclosureLogRowPreview() {
+export function TranscriptLogRowPreview() {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -2029,12 +2112,11 @@ export function DisclosureLogRowPreview() {
       {copied && <Text style={preview.caption}>Copied to clipboard (long-press reconstruction).</Text>}
       <Text style={preview.caption}>
         Production's three call sites — a tool-call log, the "Thinking" reasoning block (Chat), and
-        a bot activity/plan row (Bots) — compose the real, already-adopted TranscriptLogRowView, not
-        this component. DisclosureRow (documented here) is a new, foundation-only reconstruction of
-        that same icon-slot + summary + optional status + chevron anatomy, with no production call
-        site of its own yet. The row itself toggles expand/collapse (accessibilityState.expanded); a
-        long press on the expanded body copies its content. The shared downward chevron rotates
-        upward when expanded.
+        a bot activity/plan row (Bots) — compose this exact, already-adopted TranscriptLogRowView
+        anatomy: icon slot, summary, optional status, and a chevron that expands into a scrollable
+        detail body. The row itself toggles expand/collapse (accessibilityState.expanded); a long
+        press on the expanded body copies its content. The shared downward chevron rotates upward
+        when expanded.
       </Text>
     </View>
   );
@@ -2125,14 +2207,14 @@ export function TranscriptActivityPreview() {
 // ─── Composer pattern (recon mock, not the production composer) ─────────────────
 /**
  * A recon mock of the composer surface that composes every family the approved specification
- * assigns it — the real Card (density="compact") for its Attachment tile, a native-style TextInput
+ * assigns it — the real Card (density="compact") for its Attachment tile, an inline Composer Chip
+ * example rendered within ordinary text (production's real ComposerChipToken/ComposerChipRendering/
+ * ComposerChipTextView subsystem, not a standalone HermexComposerChip), a native-style TextInput
  * reconstruction for text entry (production's own composer text entry is a UIKit UITextView, not the
- * generic template InputField), the real Button for the send action, a real link-semantics Inline
- * Reference Link example, and a Tag status — rather than standing several of them in for plain
- * View/Text.
+ * generic template InputField), the real Button for the send action, and a Tag status — rather than
+ * standing several of them in for plain View/Text.
  */
 export function ComposerPatternPreview() {
-  const [refFocused, setRefFocused] = useState(false);
   const [composerText, setComposerText] = useState('');
   return (
     <View style={preview.stack}>
@@ -2154,16 +2236,12 @@ export function ComposerPatternPreview() {
             </View>
           </Card>
         </View>
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel="Open App.swift in the source viewer"
-          onFocus={() => setRefFocused(true)}
-          onBlur={() => setRefFocused(false)}
-          style={preview.linkRow}
-        >
-          <Text style={preview.linkGlyph}>◆</Text>
-          <Text style={[preview.linkText, refFocused && preview.linkTextFocused]}>App.swift</Text>
-        </Pressable>
+        <Text style={preview.composerChipRow}>
+          <Text style={preview.label}>Composer Chip example (inline with text): </Text>
+          <Text>Run </Text>
+          <Text style={preview.composerChipInline}>#run-tests</Text>
+          <Text> before merging.</Text>
+        </Text>
         <View style={preview.composerTextInputRow}>
           <Icon name="menu" size={HERMES_ICON_SIZE.small} color="#6d6d72" />
           <TextInput
@@ -2192,10 +2270,61 @@ export function ComposerPatternPreview() {
       </View>
       <Text style={preview.caption}>
         A recon mock of the composer surface — an Adaptive Glass background, a Compact-Card
-        Attachment tile, an Inline Reference Link, a native-style text input reconstruction, the real
-        Button, a Tag status, and validation feedback — not the production composer. Text editing,
-        keyboard interaction, draft persistence, attachments, runtime selection, voice input, and
-        send/stop lifecycle stay owned by the production Composer pattern.
+        Attachment tile, an inline Composer Chip example, a native-style text input reconstruction,
+        the real Button, a Tag status, and validation feedback — not the production composer. Text
+        editing, keyboard interaction, draft persistence, attachments, runtime selection, voice input,
+        and send/stop lifecycle stay owned by the production Composer pattern.
+      </Text>
+    </View>
+  );
+}
+
+// ─── Composer Toolbar (new, foundation-available, zero-adoption) ────────────────
+/**
+ * A reconstruction of `HermexComposerToolbar.swift`: one horizontally scrollable row that accepts
+ * arbitrary caller content, in its elevated (own surface/radius/shadow) and transparent (no owned
+ * chrome) appearances, at both a fitting and an overflowing content width. Deliberately demonstrates
+ * only generic secondary controls — never a Send or Stop action, which this shared foundation never
+ * owns.
+ */
+export function ComposerToolbarFamilyGallery() {
+  return (
+    <View style={preview.stack}>
+      <Text style={preview.label}>Elevated — fitting content</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={preview.composerToolbarElevated}>
+        <View style={preview.row}>
+          <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
+          <Button label="Profile" size="small" variant="secondary" onPress={() => {}} />
+        </View>
+      </ScrollView>
+
+      <Text style={[preview.label, { marginTop: 8 }]}>Elevated — overflowing content</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[preview.composerToolbarElevated, { maxWidth: 240 }]}>
+        <View style={preview.row}>
+          {['Model', 'Profile', 'Branch', 'History', 'Settings'].map((label) => (
+            <Button key={label} label={label} size="small" variant="secondary" onPress={() => {}} />
+          ))}
+        </View>
+      </ScrollView>
+
+      <Text style={[preview.label, { marginTop: 8 }]}>Transparent — inside Card</Text>
+      <Card density="compact" style={{ width: 240 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={preview.row}>
+            <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
+            <Button label="Profile" size="small" variant="secondary" onPress={() => {}} />
+          </View>
+        </ScrollView>
+      </Card>
+
+      <Text style={preview.caption}>
+        One `ScrollView(.horizontal)` row with edge fades that reveal only where content is hidden
+        behind that edge, and a Reduce-Motion-safe fade animation. Elevated draws its own adaptive
+        surface, radius, and shadow; transparent leaves the surface to the caller (here, a Card).
+        Arbitrary caller content — never a Send or Stop control, which this shared foundation never
+        demonstrates or owns. Foundation-available; zero production screens have adopted it — the
+        current Chat/Bots composer toolbars keep their own separate, feature-local
+        ComposerToolbarScroller unchanged.
       </Text>
     </View>
   );
@@ -2209,7 +2338,12 @@ function ToastMotionDemo() {
   return (
     <View style={{ gap: 8, alignItems: 'flex-start' }}>
       <Button label={visible ? 'Hide' : 'Show'} size="small" variant="secondary" onPress={() => setVisible((v) => !v)} />
-      <Toast message="Synced with server" variant="success" visible={visible} />
+      <Toast
+        message="Synced with server"
+        iconName="circle-check"
+        style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }}
+        visible={visible}
+      />
     </View>
   );
 }
@@ -2219,22 +2353,21 @@ export function ToastFamilyGallery() {
     <View style={preview.stack}>
       <Text style={preview.label}>Motion (tap to replay the slide-in/out)</Text>
       <ToastMotionDemo />
-      <Text style={[preview.label, { marginTop: 8 }]}>Semantic variants (statically visible)</Text>
-      <View style={{ gap: 8 }}>
-        <Toast message="Synced with server" variant="success" />
-        <Toast message="Cached offline data may be stale" variant="informational" />
-        <Toast message="Reconnecting…" variant="warning" />
-        <Toast message="Could not send message" variant="negative" />
-      </View>
-      <Text style={[preview.label, { marginTop: 8 }]}>With a trailing action — the generic Toast's own status-tinted shortcut</Text>
-      <Toast message="Session archived" variant="neutral" action={{ label: 'Undo', onPress: () => {} }} />
       <Text style={[preview.label, { marginTop: 8 }]}>
-        HermexToast's real trailing action — an XS neutral Button, not status-tinted
+        HermexToast's dark semantic surfaces — white icon/message content
       </Text>
+      <View style={{ gap: 8 }}>
+        <Toast message="Synced with server" iconName="circle-check" style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }} />
+        <Toast message="Cached offline data may be stale" iconName="info" style={{ backgroundColor: HERMES_COLOR_RAMPS.Blue[700] }} />
+        <Toast message="Reconnecting…" iconName="triangle-alert" style={{ backgroundColor: HERMES_COLOR_RAMPS.Orange[800] }} />
+        <Toast message="Could not send message" iconName="circle-slash" style={{ backgroundColor: HERMES_COLOR_RAMPS.Red[700] }} />
+      </View>
+      <Text style={[preview.label, { marginTop: 8 }]}>With a trailing action — plain white text, 44pt minimum target</Text>
       <Toast
         message="Session archived"
-        variant="neutral"
-        actionNode={<Button label="Undo" size="extraSmall" variant="tertiary" onPress={() => {}} />}
+        iconName="circle-check"
+        style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }}
+        action={{ label: 'Undo', onPress: () => {} }}
       />
       <Text style={preview.caption}>
         The generic catalog Toast owns its own slide-in/out animation directly on `visible`.
@@ -2243,11 +2376,14 @@ export function ToastFamilyGallery() {
         entirely caller-owned rather than baked into the toast view itself. That modifier's default
         motion enters by moving down from the top edge combined with opacity and exits back toward
         the top combined with opacity, reusing the shared overlayEnter/overlayExit motion bundles;
-        Reduce Motion drops the move and falls back to an opacity-only state change. HermexToast's own
-        trailing action composes the shared HermexButton at size: .extraSmall, emphasis: .neutral —
-        an XS neutral label button, not the status-tinted plain button shown above; the opt-in
-        `actionNode` prop demonstrates that real primitive here instead of only describing it in
-        prose, while every other Toast call site keeps using the built-in `action` shortcut unchanged.
+        Reduce Motion drops the move and falls back to an opacity-only state change. Each surface
+        above overrides the generic Toast's own light-tinted `variant` styles with the exact fixed
+        ramp step HermexToast uses natively — Blue.s700 (information), Green.s800 (success),
+        Orange.s800 (warning), and Red.s700 (error) — leaving its default white icon/message/action
+        colors untouched, since no `variant` is passed. HermexToast's own trailing action is a plain
+        white `Button(action.title)`, styled `.foregroundStyle(.white)`, never a filled capsule or a
+        separate neutral-button composition, and keeps a 44pt minimum tap target via the generic
+        ghost Button's own hitSlop.
       </Text>
     </View>
   );

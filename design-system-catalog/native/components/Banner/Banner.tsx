@@ -27,8 +27,8 @@ const COLLAPSE_ANIM_MS = DS_MOTION_DURATION.base;
  */
 export function Banner({
   variant = 'warning',
-  title = 'Banner title',
-  description = 'Description text goes here',
+  title,
+  description,
   collapsible = false,
   defaultExpanded = true,
   backgroundColor,
@@ -122,9 +122,11 @@ export function Banner({
       {onPress && pressed && <View style={styles.pressOverlay} pointerEvents="none" />}
       <View style={styles.headerRow}>
         <Icon name={iconName} size={DS_ICON_SIZE.xs} color={contentTextColor} />
-        <Text style={[styles.title, styles.titleFlex, { color: contentTextColor, marginBottom: 0 }]}>
-          {title}
-        </Text>
+        {title ? (
+          <Text style={[styles.title, styles.titleFlex, { color: contentTextColor, marginBottom: 0 }]}>
+            {title}
+          </Text>
+        ) : null}
         {trailingIcon ? <Icon name={trailingIcon} size={DS_ICON_SIZE.xs} color={contentTextColor} /> : null}
       </View>
       {description || link ? (

@@ -127,8 +127,14 @@ final class HermexSearchTests: XCTestCase {
         )
         XCTAssertTrue(src.contains("Clear search"), "expected the clear control's accessible name")
         XCTAssertTrue(
-            src.contains("minWidth: 44, minHeight: 44") || src.contains("minHeight: 44, minWidth: 44"),
-            "expected the clear control to keep an independent 44pt minimum hit target"
+            src.contains("clearControlTargetSize: CGFloat = 44"),
+            "expected the clear control's 44pt hit-target dimension to live in the named Search metrics"
+        )
+        let targetUseCount = src.components(separatedBy: "HermexSearchMetrics.clearControlTargetSize").count - 1
+        XCTAssertGreaterThanOrEqual(
+            targetUseCount,
+            2,
+            "expected both clear-control frame dimensions to consume the named 44pt target metric"
         )
     }
 
@@ -221,6 +227,48 @@ final class HermexSearchTests: XCTestCase {
         XCTAssertFalse(
             src.contains("\"Cancel\""),
             "there is no visible Cancel label; clear and exit-focus remain distinct actions"
+        )
+    }
+
+    // MARK: - DSR2-03: Search consumes shared border roles instead of retaining a component-local
+    // resting/focus/contrast mapping
+    //
+    // The private `HermexSearchColors` resting/focused/increasedContrast border members retire in
+    // favor of the shared `HermexSurfaceBorderColors.resting`/`.focused`/`.increasedContrast`
+    // foundation (contracted in `HermexSurfaceBorderTests`), so Card and Search stop each owning
+    // their own border mapping.
+
+    func testUsesTheSharedBorderRolesInsteadOfAComponentLocalMapping() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexSearch.swift")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.resting"), "expected the resting border to use the shared HermexSurfaceBorderColors.resting role")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.focused"), "expected the focused border to use the shared HermexSurfaceBorderColors.focused role")
+        XCTAssertTrue(src.contains("HermexSurfaceBorderColors.increasedContrast"), "expected the Increased Contrast border to use the shared HermexSurfaceBorderColors.increasedContrast role")
+    }
+
+    func testNoLongerDeclaresAComponentLocalRestingFocusedOrIncreasedContrastBorder() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexSearch.swift")
+        XCTAssertFalse(src.contains("static let restingBorder"), "component-local restingBorder is retired in favor of the shared HermexSurfaceBorderColors.resting role")
+        XCTAssertFalse(src.contains("static let focusedBorder"), "component-local focusedBorder is retired in favor of the shared HermexSurfaceBorderColors.focused role")
+        XCTAssertFalse(src.contains("static let increasedContrastBorder"), "component-local increasedContrastBorder is retired in favor of the shared HermexSurfaceBorderColors.increasedContrast role")
+    }
+
+    // MARK: - Source contract: named clear-control layout seam
+    //
+    // The clear control's tappable frame must keep an independent 44pt hit target (see
+    // testShowsAConditionalClearControlWithAnIndependentFortyFourPointTarget above) while its visible
+    // glyph aligns with the magnifier's leading inset. `HermexSearchMetrics.clearControlTrailingInset`
+    // is this batch's own naming choice for that seam, not a constraint stated elsewhere; a future
+    // implementer may rename it, but must update this test in the same change if so.
+
+    func testClearControlUsesANamedLayoutSeamThatAlignsItsVisibleGlyphWithTheMagnifierLeadingInset() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexSearch.swift")
+        XCTAssertTrue(
+            src.contains("enum HermexSearchMetrics") || src.contains("HermexSearchMetrics.clearControlTrailingInset"),
+            "expected a named HermexSearchMetrics.clearControlTrailingInset seam"
+        )
+        XCTAssertTrue(
+            src.contains("HermexSearchMetrics.clearControlTrailingInset"),
+            "expected the clear control's visible glyph to align via the named HermexSearchMetrics.clearControlTrailingInset seam, keeping its trailing inset equal to the magnifier's leading inset"
         )
     }
 }

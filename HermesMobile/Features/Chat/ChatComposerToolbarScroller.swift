@@ -1,38 +1,5 @@
 import SwiftUI
 
-/// Which edges of the composer toolbar scroller currently hide content.
-/// A fade is only ever shown on an edge with something behind it, so a fade
-/// never reads as a disabled control. Pure so the rule is unit-testable.
-struct ComposerToolbarEdgeFades: Equatable {
-    /// Offsets this close to an edge count as sitting on it.
-    static let scrollEpsilon: CGFloat = 4
-
-    let leading: Bool
-    let trailing: Bool
-
-    init(leading: Bool = false, trailing: Bool = false) {
-        self.leading = leading
-        self.trailing = trailing
-    }
-
-    /// - Parameters:
-    ///   - offset: horizontal content offset as the scroll view reports it, measured
-    ///     from the left edge regardless of layout direction.
-    ///   - layoutDirection: in right-to-left layouts the visual start of the content
-    ///     is at the right, so the raw offset is flipped before comparing.
-    init(
-        offset: CGFloat,
-        contentWidth: CGFloat,
-        viewportWidth: CGFloat,
-        layoutDirection: LayoutDirection = .leftToRight
-    ) {
-        let maxOffset = max(0, contentWidth - viewportWidth)
-        let logicalOffset = layoutDirection == .rightToLeft ? maxOffset - offset : offset
-        leading = logicalOffset > Self.scrollEpsilon
-        trailing = logicalOffset < maxOffset - Self.scrollEpsilon
-    }
-}
-
 /// Horizontal scroller for the composer toolbar row (add, model, reasoning,
 /// workspace, profile, git branch, mic, context meter). The Stop/Send circle
 /// stays outside it, pinned to the row's trailing edge.

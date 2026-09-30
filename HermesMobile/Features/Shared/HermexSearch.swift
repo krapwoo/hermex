@@ -1,25 +1,22 @@
 import SwiftUI
 
-/// The Search family's component-local adaptive Neutral boundary. Not `HermexCardColors`: Search
-/// owns its own resting/focused/increased-contrast pairs rather than borrowing Card's semantic role,
-/// since a focused search field needs a third, stronger state Card's two-state border doesn't have.
+/// The Search family's component-local adaptive Neutral surface. Border roles live in the shared
+/// `HermexSurfaceBorderColors` foundation, which Card and Search both consume instead of each owning
+/// their own border mapping.
 private enum HermexSearchColors {
     static let surface = HermesColorRamp.Neutral.adaptive(
         light: HermesColorRamp.Neutral.s100,
         dark: HermesColorRamp.Neutral.s900
     )
-    static let restingBorder = HermesColorRamp.Neutral.adaptive(
-        light: HermesColorRamp.Neutral.s300,
-        dark: HermesColorRamp.Neutral.s700
-    )
-    static let focusedBorder = HermesColorRamp.Neutral.adaptive(
-        light: HermesColorRamp.Neutral.s600,
-        dark: HermesColorRamp.Neutral.s400
-    )
-    static let increasedContrastBorder = HermesColorRamp.Neutral.adaptive(
-        light: HermesColorRamp.Neutral.s700,
-        dark: HermesColorRamp.Neutral.s300
-    )
+}
+
+/// Named layout seam for the clear control: its tappable frame keeps an independent 44pt hit target,
+/// while `clearControlTrailingInset` aligns its visible glyph flush with the target's trailing edge —
+/// the target extends inward from there, so the outer field padding alone supplies the same visible
+/// 12pt edge inset the leading magnifier already gets from that same padding.
+private enum HermexSearchMetrics {
+    static let clearControlTargetSize: CGFloat = 44
+    static let clearControlTrailingInset: CGFloat = HermesSpacing.s0
 }
 
 /// The Search family's one canonical visual implementation. A noninteractive search icon, the
@@ -78,7 +75,12 @@ struct HermexSearchField: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: HermesIconSize.small, weight: .semibold))
-                        .frame(minWidth: 44, minHeight: 44)
+                        .frame(
+                            width: HermexSearchMetrics.clearControlTargetSize,
+                            height: HermexSearchMetrics.clearControlTargetSize,
+                            alignment: .trailing
+                        )
+                        .padding(.trailing, HermexSearchMetrics.clearControlTrailingInset)
                 }
                 .buttonStyle(.hermexPressOnly(.icon))
                 .accessibilityLabel(Text("Clear search"))
@@ -119,9 +121,9 @@ struct HermexSearchField: View {
 
     private var borderColor: Color {
         if colorSchemeContrast == .increased {
-            return HermexSearchColors.increasedContrastBorder
+            return HermexSurfaceBorderColors.increasedContrast
         }
-        return isFocused ? HermexSearchColors.focusedBorder : HermexSearchColors.restingBorder
+        return isFocused ? HermexSurfaceBorderColors.focused : HermexSurfaceBorderColors.resting
     }
 }
 

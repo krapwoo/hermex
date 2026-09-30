@@ -10,7 +10,7 @@ enum SegmentedControlStyle {
 
 private enum SegmentedControlMetrics {
     static let minimumTouchHeight: CGFloat = 44
-    static let trackInset: CGFloat = HermesSpacing.s4
+    static let trackInset: CGFloat = HermesSpacing.s2
     /// Vertical padding step above and below the selected pill that defines the fixed variant's
     /// recessed visual-track background, distinct from the 44pt interactive row it sits inside.
     /// Insets from the text-bearing row rather than fixing a height, so the track grows with

@@ -274,6 +274,11 @@ function AccordionGroupBody({
   );
 }
 
+// Shared derived indent: the header's own text column starts after its `headerLeading` avatar-width
+// slot plus ListItem's own leading/title gap, and a body row's own indent must land in the same
+// place — both align to this one derived value instead of each independently repeating the sum.
+const textColumnIndent = AVATAR_SIZE.small + DS_SPACING[600];
+
 const styles = StyleSheet.create({
   cardStack: { gap: DS_SPACING[400] },
   cardlessStack: { gap: 0 },
@@ -292,7 +297,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bodyRow: {
-    paddingLeft: AVATAR_SIZE.small + DS_SPACING[600],
+    paddingLeft: textColumnIndent,
   },
   // Where a divider *between* body rows begins: the body row's own leading inset (avatar width +
   // header/body gap) plus ListItem's own horizontal inset (`row.paddingHorizontal`, DS_SPACING[400])

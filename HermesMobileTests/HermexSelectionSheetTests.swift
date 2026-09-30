@@ -28,6 +28,14 @@ final class HermexSelectionSheetTests: XCTestCase {
         try String(contentsOf: resourceURL(relativePath), encoding: .utf8)
     }
 
+    /// Counts non-overlapping regular-expression matches in `text` — used by the content-inset
+    /// source contracts below, where "exactly once"/"exactly two" is the assertion, not mere
+    /// presence.
+    private func matches(of pattern: String, in text: String) -> Int {
+        (try? NSRegularExpression(pattern: pattern))
+            .map { $0.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text)) } ?? 0
+    }
+
     /// Loads the future `HermexSelectionSheet.swift` source if it exists, or records one clear,
     /// explicit XCTest failure and returns `nil` so the caller can bail out safely — never a raw
     /// "file doesn't exist" error that would mask the intended contract being pinned.
@@ -272,6 +280,138 @@ final class HermexSelectionSheetTests: XCTestCase {
         )
     }
 
+    // MARK: - Content inset contracts (DSR2-07): a caller-selected outer horizontal inset that
+    // replaces Search's own screenHorizontal padding, applied exactly once to the shared
+    // Search/list/empty-state container.
+
+    func testContentInsetStandardUsesTheScreenHorizontalSpacingToken() {
+        XCTAssertEqual(HermexSelectionSheetContentInset.standard.horizontalPadding, HermesSpacing.s16)
+    }
+
+    func testContentInsetNoneUsesZeroPadding() {
+        XCTAssertEqual(HermexSelectionSheetContentInset.none.horizontalPadding, HermesSpacing.s0)
+    }
+
+    @MainActor
+    func testSingleSelectionSheetCompilesOmittingContentInsetDefaultsToStandard() {
+        enum Option: Hashable { case first, second }
+        struct Host: View {
+            @State var selection: Option?
+            var body: some View {
+                HermexSelectionSheet(
+                    "Pick one",
+                    selection: $selection,
+                    options: [
+                        HermexSelectionSheetOption(value: Option.first, title: "First"),
+                        HermexSelectionSheetOption(value: Option.second, title: "Second"),
+                    ]
+                )
+            }
+        }
+        let host = Host()
+        XCTAssertFalse(String(describing: type(of: host)).isEmpty)
+    }
+
+    @MainActor
+    func testMultiSelectionSheetCompilesWithContentInsetNone() {
+        enum Option: Hashable { case first, second }
+        struct Host: View {
+            @State var selections: Set<Option> = []
+            var body: some View {
+                HermexSelectionSheet(
+                    "Pick many",
+                    selections: $selections,
+                    options: [
+                        HermexSelectionSheetOption(value: Option.first, title: "First"),
+                        HermexSelectionSheetOption(value: Option.second, title: "Second"),
+                    ],
+                    contentInset: .none
+                )
+            }
+        }
+        let host = Host()
+        XCTAssertFalse(String(describing: type(of: host)).isEmpty)
+    }
+
+    @MainActor
+    func testSearchCompilesOnEitherSelectionPathWithoutChangingContentInsetOwnership() {
+        enum Option: Hashable { case first }
+        struct SingleHost: View {
+            @State var selection: Option?
+            @State var query = ""
+            var body: some View {
+                HermexSelectionSheet(
+                    "Pick one",
+                    selection: $selection,
+                    options: [HermexSelectionSheetOption(value: Option.first, title: "First")],
+                    search: HermexSelectionSheetSearch(title: "Search", text: $query)
+                )
+            }
+        }
+        struct MultiHost: View {
+            @State var selections: Set<Option> = []
+            @State var query = ""
+            var body: some View {
+                HermexSelectionSheet(
+                    "Pick many",
+                    selections: $selections,
+                    options: [HermexSelectionSheetOption(value: Option.first, title: "First")],
+                    search: HermexSelectionSheetSearch(title: "Search", text: $query),
+                    contentInset: .none
+                )
+            }
+        }
+        let singleHost = SingleHost()
+        let multiHost = MultiHost()
+        XCTAssertFalse(String(describing: type(of: singleHost)).isEmpty)
+        XCTAssertFalse(String(describing: type(of: multiHost)).isEmpty)
+    }
+
+    func testDefinesTheContentInsetEnumWithStandardAndNoneCases() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertTrue(
+            src.contains("enum HermexSelectionSheetContentInset: Equatable"),
+            "expected the content inset enum's exact declaration"
+        )
+        XCTAssertTrue(src.contains("case standard"), "expected the .standard case")
+        XCTAssertTrue(src.contains("case none"), "expected the .none case")
+    }
+
+    func testBothPublicInitializersDefaultContentInsetToStandard() {
+        guard let src = selectionSheetSource() else { return }
+        let count = matches(of: #"contentInset:\s*HermexSelectionSheetContentInset\s*=\s*\.standard"#, in: src)
+        XCTAssertEqual(count, 2, "expected both the single- and multi-selection initializers to default contentInset to .standard")
+    }
+
+    func testNoArbitraryCGFloatContentInsetAPIExists() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(src.contains("contentInset: CGFloat"), "expected no arbitrary CGFloat contentInset API")
+    }
+
+    func testStoresExactlyOneContentInsetValue() {
+        guard let src = selectionSheetSource() else { return }
+        let count = matches(of: #"\blet contentInset: HermexSelectionSheetContentInset\b"#, in: src)
+        XCTAssertEqual(count, 1, "expected exactly one stored contentInset value")
+    }
+
+    func testOuterContentAppliesContentInsetPaddingExactlyOnceToTheSharedContainer() {
+        guard let src = selectionSheetSource() else { return }
+        let count = matches(of: #"\.padding\(\.horizontal,\s*contentInset\.horizontalPadding\)"#, in: src)
+        XCTAssertEqual(
+            count, 1,
+            "expected the outer Search/list/empty-state container to apply the content inset's horizontal padding exactly once"
+        )
+    }
+
+    func testSearchNoLongerOwnsItsOwnScreenHorizontalPadding() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(
+            src.contains(".padding(.horizontal, HermesSpacing.screenHorizontal)"),
+            "expected Search to no longer own its own screenHorizontal padding — the outer container " +
+                "now applies the content inset's horizontal padding exactly once"
+        )
+    }
+
     // MARK: - Retirement contracts: HermexDropdown is fully removed, Popover Menu stays action-only
 
     func testHermexDropdownProductionSourceIsRemoved() {
@@ -316,6 +456,25 @@ final class HermexSelectionSheetTests: XCTestCase {
         XCTAssertTrue(src.contains("overlay-lab-selection-sheet-multi"), "expected a stable identifier for the staged multi-selection fixture")
         XCTAssertTrue(src.contains("overlay-lab-selection-sheet-search"), "expected a stable identifier for the optional Search fixture")
         XCTAssertTrue(src.contains("overlay-lab-selection-sheet-long-list"), "expected a stable identifier for the long (20+ option) scrolling-list fixture")
+    }
+
+    // MARK: - DEBUG lab reachability (DSR2-07): a no-inset specimen composed inside a pre-padded
+    // Card, alongside the existing default-inset specimens.
+
+    func testDebugLabExposesANoInsetSpecimenComposedInsideAPrePaddedCard() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexOverlayLab.swift")
+        XCTAssertTrue(
+            src.contains("overlay-lab-selection-sheet-no-inset"),
+            "expected a stable identifier for the contentInset: .none specimen"
+        )
+        XCTAssertTrue(
+            src.contains("contentInset: .none"),
+            "expected the no-inset specimen to actually pass contentInset: .none"
+        )
+        XCTAssertTrue(
+            src.contains("HermexCard") || src.contains("Card("),
+            "expected the no-inset specimen to be composed inside a pre-padded Card, demonstrating why contentInset: .none is needed"
+        )
     }
 
     func testDebugLabCanAutoPresentSingleAndMultiSheetsForHeadlessRenderedVerification() throws {

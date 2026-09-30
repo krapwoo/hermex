@@ -15,9 +15,10 @@ enum HermexCardSurface {
     case outlined
 }
 
-/// The Card family's approved Neutral color mapping (DSF-07): every Card variant's background and
-/// border resolve to one of these four adaptive pairs instead of a platform color or a hand-typed
-/// literal.
+/// The Card family's approved Neutral surface mapping (DSF-07): every Card variant's background
+/// resolves to one of these two adaptive pairs instead of a platform color or a hand-typed literal.
+/// Border roles live in the shared `HermexSurfaceBorderColors` foundation, which Card and Search both
+/// consume instead of each owning their own border mapping.
 enum HermexCardColors {
     static let primarySurface = HermesColorRamp.Neutral.adaptive(
         light: HermesColorRamp.Neutral.s50,
@@ -26,14 +27,6 @@ enum HermexCardColors {
     static let secondarySurface = HermesColorRamp.Neutral.adaptive(
         light: HermesColorRamp.Neutral.s100,
         dark: HermesColorRamp.Neutral.s900
-    )
-    static let standardBorder = HermesColorRamp.Neutral.adaptive(
-        light: HermesColorRamp.Neutral.s400,
-        dark: HermesColorRamp.Neutral.s600
-    )
-    static let increasedContrastBorder = HermesColorRamp.Neutral.adaptive(
-        light: HermesColorRamp.Neutral.s600,
-        dark: HermesColorRamp.Neutral.s400
     )
 }
 
@@ -68,7 +61,7 @@ private struct HermexCardSurfaceModifier: ViewModifier {
                 .overlay {
                     shape
                         .stroke(
-                            colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder,
+                            colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting,
                             lineWidth: 0.7
                         )
                         .allowsHitTesting(false)
@@ -80,7 +73,7 @@ private struct HermexCardSurfaceModifier: ViewModifier {
                 .overlay {
                     shape
                         .stroke(
-                            colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder,
+                            colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting,
                             lineWidth: 1
                         )
                         .allowsHitTesting(false)
@@ -94,7 +87,6 @@ private struct HermexCardSurfaceModifier: ViewModifier {
 /// default; a component owns its own compact geometry, and this only unifies the fill-plus-hairline
 /// chrome those tiles each drew by hand into one named, shared treatment.
 enum HermexCompactCardMetrics {
-    static let borderOpacity: Double = 0.25
     static let borderWidth: CGFloat = 0.5
 }
 
@@ -121,8 +113,7 @@ private struct HermexCompactCardBorderModifier: ViewModifier {
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(
-                        (colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder)
-                            .opacity(colorSchemeContrast == .increased ? 1 : HermexCompactCardMetrics.borderOpacity),
+                        colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting,
                         lineWidth: HermexCompactCardMetrics.borderWidth
                     )
             )
@@ -161,12 +152,12 @@ private struct RequestCardSurfaceModifier: ViewModifier {
         case .opaque:
             content
                 .background(HermexCardColors.primarySurface, in: shape)
-                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder, lineWidth: 1))
+                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting, lineWidth: 1))
         case .translucentOverScrim:
             content
                 .background(.regularMaterial, in: shape)
                 .background(HermexCardColors.primarySurface.opacity(0.34), in: shape)
-                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexCardColors.increasedContrastBorder : HermexCardColors.standardBorder, lineWidth: 1))
+                .overlay(shape.stroke(colorSchemeContrast == .increased ? HermexSurfaceBorderColors.increasedContrast : HermexSurfaceBorderColors.resting, lineWidth: 1))
         }
     }
 }

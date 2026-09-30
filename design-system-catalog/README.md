@@ -141,8 +141,9 @@ as a documentation shell:
 - `native/catalog/hermes/HermesDesignSystemCatalog.tsx` — renders `hermesSections`/`hermesNav`
   directly through `CatalogShell`, under the five approved sidebar groups, in order: **Foundations**
   (the token galleries — Colors, Spacing, Typography, Font, Motion, Radius & Geometry, Shadow,
-  Iconography), **Materials** (Adaptive Glass), **Native iOS** (Search, Text Input, TopNav),
-  **Components** (alphabetized by display name), and **Patterns** (Content Unavailable, Pending
+  Iconography), **Materials** (Adaptive Glass), **Native iOS** (TopNav),
+  **Components** (alphabetized by display name — including Search, Text Input, Transcript Log Row,
+  and the new zero-adoption Composer Toolbar), and **Patterns** (Content Unavailable, Pending
   Request, Transcript Activity, Composer). It never imports or merges the retained template
   catalog's own `sections`/`nav` — those stay fully intact on the separate `?catalog=template` route.
   There is no separate Overview or disposition-named sidebar group; `HermesOverview` renders once,

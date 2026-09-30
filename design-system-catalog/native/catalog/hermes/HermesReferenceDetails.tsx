@@ -97,14 +97,53 @@ const ADOPTION_STATE_LABEL: Record<HermesAdoptionState, string> = {
   'reference-only': 'Reference only',
 };
 
+// Fixed collapsed-viewport height every SupportingCard measures its own content against (DSR2-09).
+const SUPPORTING_CARD_COLLAPSED_HEIGHT = 280;
+
 /** One of the three lower supporting cards — a restrained card visually distinct from the upper
  *  specimen cards (`SectionBlock`'s own `card` style): white surface, hairline border,
- *  `CATALOG_RADIUS.sm`, `CATALOG_SPACE.lg` padding, all existing catalog tokens. */
-function SupportingCard({ heading, children }: { heading: string; children: React.ReactNode }) {
+ *  `CATALOG_RADIUS.sm`, `CATALOG_SPACE.lg` padding, all existing catalog tokens. Each instance owns
+ *  its own expansion state and measures its own content/viewport via `onLayout` — never a shared,
+ *  row-level expansion record — so the three cards below a section expand fully independently. The
+ *  disclosure control only renders once measured content actually exceeds the fixed collapsed
+ *  height, and stays mounted (never unmounted/remounted) across expand/collapse. */
+function SupportingCard({ heading, children, isNarrow }: { heading: string; children: React.ReactNode; isNarrow: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
+  const canExpand = viewportHeight > 0 && contentHeight > viewportHeight;
+
   return (
-    <View style={styles.supportingCard}>
+    <View style={[styles.supportingCard, isNarrow && styles.supportingCardNarrow, !expanded && { height: SUPPORTING_CARD_COLLAPSED_HEIGHT }]}>
       <Text style={styles.supportingCardHeading}>{heading}</Text>
-      {children}
+      <View
+        style={!expanded ? [styles.supportingCardViewport, { flex: 1, overflow: 'hidden' }] : styles.supportingCardViewport}
+        onLayout={(event) => {
+          if (!expanded) setViewportHeight(event.nativeEvent.layout.height);
+        }}
+      >
+        <View onLayout={(event) => setContentHeight(event.nativeEvent.layout.height)}>{children}</View>
+      </View>
+      {canExpand ? (
+        <DisclosureTrigger
+          onPress={() => setExpanded((value) => !value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          aria-expanded={expanded}
+          accessibilityLabel={`${expanded ? 'Show less' : 'Show more'} for ${heading}`}
+          style={({ pressed }) => [
+            styles.supportingCardDisclosureTrigger,
+            focused && styles.triggerFocused,
+            pressed && styles.triggerPressed,
+          ]}
+        >
+          <Text style={styles.triggerLabel}>{expanded ? 'Show less' : 'Show more'}</Text>
+        </DisclosureTrigger>
+      ) : null}
     </View>
   );
 }
@@ -198,7 +237,7 @@ export function HermesReferenceDetails({
   const hasInlineUsage = Boolean(meta.useSummary || inlineDestinations.length > 0);
   return (
     <View style={[styles.supportingRow, isNarrow && styles.supportingRowNarrow]}>
-      <SupportingCard heading="Decision & product context">
+      <SupportingCard heading="Decision & product context" isNarrow={isNarrow}>
         <View style={styles.decisionBlock}>
           {meta.useWhen ? (
             <DecisionField label="Use when">
@@ -255,10 +294,10 @@ export function HermesReferenceDetails({
           </Disclosure>
         )}
       </SupportingCard>
-      <SupportingCard heading="Implementation notes">
+      <SupportingCard heading="Implementation notes" isNarrow={isNarrow}>
         <ImplementationNotesContent meta={meta} implementationContent={implementationContent} />
       </SupportingCard>
-      <SupportingCard heading="Accessibility">{accessibilityContent}</SupportingCard>
+      <SupportingCard heading="Accessibility" isNarrow={isNarrow}>{accessibilityContent}</SupportingCard>
     </View>
   );
 }
@@ -281,9 +320,16 @@ const styles = StyleSheet.create({
     borderRadius: CATALOG_RADIUS.sm,
     padding: CATALOG_SPACE.lg,
   },
+  supportingCardNarrow: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   supportingCardHeading: {
     fontSize: CATALOG_TYPE.xs, fontWeight: '700', color: CATALOG_COLOR.textMuted,
     textTransform: 'uppercase', letterSpacing: 0.6,
+  },
+  supportingCardViewport: { maxWidth: '100%' },
+  supportingCardDisclosureTrigger: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: CATALOG_SPACE.xs, borderRadius: CATALOG_RADIUS.sm,
+    borderWidth: 2, borderColor: 'transparent',
   },
   emptyText: { fontSize: CATALOG_TYPE.sm, color: CATALOG_COLOR.textMuted, fontStyle: 'italic' },
   decisionBlock: { gap: CATALOG_SPACE.sm, maxWidth: '100%' },

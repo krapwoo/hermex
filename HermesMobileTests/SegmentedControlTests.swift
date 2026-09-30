@@ -130,11 +130,50 @@ final class SegmentedControlTests: XCTestCase {
         )
     }
 
-    func testFixedCaseRetainsThe4ptHorizontalInset() throws {
+    // MARK: - DSR2-04: fixed track inset moves from HermesSpacing.s4 to HermesSpacing.s2 on all
+    // four sides
+    //
+    // `trackInset` (horizontal) joins `fixedTrackVisualPadding` (vertical, already HermesSpacing.s2)
+    // at the same HermesSpacing.s2 step, so the fixed track and selected pill keep the same visual
+    // gap on all four sides instead of a larger horizontal-only inset.
+
+    func testTrackInsetMovesFromHermesSpacingS4ToHermesSpacingS2() throws {
+        let src = try segmentedControlSource()
+        XCTAssertTrue(
+            src.contains("trackInset: CGFloat = HermesSpacing.s2"),
+            "expected the fixed track's horizontal inset to be HermesSpacing.s2, matching the vertical fixedTrackVisualPadding so all four sides use the same step"
+        )
+        XCTAssertFalse(
+            src.contains("trackInset: CGFloat = HermesSpacing.s4"),
+            "the retired 4pt horizontal-only inset must be gone"
+        )
+    }
+
+    func testFixedTrackVisualPaddingStaysHermesSpacingS2() throws {
+        let src = try segmentedControlSource()
+        XCTAssertTrue(
+            src.contains("fixedTrackVisualPadding: CGFloat = HermesSpacing.s2"),
+            "expected the fixed track's vertical visual padding to remain HermesSpacing.s2, unchanged by the trackInset correction"
+        )
+    }
+
+    func testSelectedVisualInsetStaysHermesSpacingS4() throws {
+        let src = try segmentedControlSource()
+        XCTAssertTrue(
+            src.contains("selectedVisualInset: CGFloat = HermesSpacing.s4"),
+            "expected the selected pill's own inset to remain HermesSpacing.s4, unchanged by the trackInset correction"
+        )
+    }
+
+    func testFixedBackgroundUsesFixedTrackVisualPaddingVerticallyAndTrackInsetHorizontally() throws {
         let fixedCase = try fixedCaseSource()
         XCTAssertTrue(
             fixedCase.contains("SegmentedControlMetrics.trackInset"),
-            "expected the fixed track to keep its 4pt horizontal inset"
+            "expected the fixed track's horizontal inset to keep coming from SegmentedControlMetrics.trackInset"
+        )
+        XCTAssertTrue(
+            fixedCase.contains(".padding(.vertical, SegmentedControlMetrics.fixedTrackVisualPadding)"),
+            "expected the fixed track background to keep insetting vertically by SegmentedControlMetrics.fixedTrackVisualPadding"
         )
     }
 

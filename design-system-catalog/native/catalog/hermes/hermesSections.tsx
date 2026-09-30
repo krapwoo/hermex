@@ -1,9 +1,9 @@
 /**
  * Hermex reference layer.
  *
- * This branch is foundation-only: it adds Design System tokens/components to the repository
- * candidate, but does not migrate any production screen onto them (see `HermesOverview`'s branch
- * status). Every `SectionDef` below documents a Hermex-sourced catalog entry: a concise
+ * This file documents the in-repository Design System candidate. Most new tokens/components remain
+ * foundation-only; bounded production adoptions are named explicitly in `HermesOverview` and each
+ * entry's adoption metadata. Every `SectionDef` below documents a Hermex-sourced catalog entry: a concise
  * plain-English introduction and visual examples first, then "Product context" destinations —
  * relevant screens/paths a reader can use to picture where a component fits, not proof of current
  * production adoption unless the entry's own `implementationNotes.status` says so — with technical
@@ -43,13 +43,12 @@ import {
   ButtonDecisionAndTactilePreview,
   CheckboxFamilyGallery,
   ComposerPatternPreview,
+  ComposerToolbarFamilyGallery,
   DialogFamilyGallery,
-  DisclosureLogRowPreview,
   HermexBottomSheetFamilyGallery,
   HermexDividerPreview,
   HermesSkeletonGallery,
   HermexTextInputFamilyGallery,
-  InlineReferenceLinkPreview,
   ListItemFamilyGallery,
   PopoverMenuFamilyGallery,
   RadioFamilyGallery,
@@ -61,6 +60,7 @@ import {
   TooltipFamilyGallery,
   TopNavFamilyGallery,
   TranscriptActivityPreview,
+  TranscriptLogRowPreview,
 } from './HermesComponentFamiliesPreviews';
 
 // Ids below are internal keys only — never rendered directly. Sections combine into one flat array
@@ -82,7 +82,6 @@ export type HermesSectionId =
   | 'Hermes Avatar'
   | 'Row Divider'
   | 'Tag'
-  | 'Inline Reference Link'
   | 'Search'
   | 'Text Input'
   | 'Bottom Sheet'
@@ -99,7 +98,8 @@ export type HermesSectionId =
   | 'Skeleton Loading'
   | 'List / ListItem'
   | 'Accordion List'
-  | 'Disclosure Row'
+  | 'Transcript Log Row'
+  | 'Composer Toolbar'
   | 'Content Unavailable'
   | 'Pending Request'
   | 'Transcript Activity'
@@ -120,6 +120,15 @@ const HERMEX_CARD_COLORS = {
   secondarySurface: HERMES_COLOR_RAMPS.Neutral[100],
   standardBorder: HERMES_COLOR_RAMPS.Neutral[400],
   increasedContrastBorder: HERMES_COLOR_RAMPS.Neutral[600],
+};
+
+// Round 2 shared border reconstruction, mirroring native HermexSurfaceBorderColors: Card, Search,
+// Text Input, and Code Input specimens all reuse this one resting/focused/increasedContrast mapping
+// instead of each specimen re-deriving its own border literal.
+const HERMEX_SURFACE_BORDER_COLORS = {
+  resting: HERMES_COLOR_RAMPS.Neutral[600],
+  focused: HERMES_COLOR_RAMPS.Neutral[700],
+  increasedContrast: HERMES_COLOR_RAMPS.Neutral[800],
 };
 
 // ─── Reconstruction chrome ───────────────────────────────────────────────────
@@ -217,7 +226,7 @@ interface FoundationStatusRow {
 }
 const FOUNDATION_BRANCH_STATUS: FoundationStatusRow[] = [
   { area: 'Tokens (Colors, Spacing, Motion, Radius & Geometry, Shadow, Iconography, Typography, Font)', note: 'Defined and available in this branch\'s foundation layer. No production screen reads from them yet, with one exception: AppTheme.swift\'s HeaderLogoColor sources its six header-accent hex values from the new HermesProductPalette token instead of literal hex strings.' },
-  { area: 'Components (Card, Button, Checkbox, Radio, Selection Sheet, Toast, Tooltip, TopNav, Avatar, Divider, Banner, Tag, Attachment, Skeleton, List/ListItem, Disclosure Row, Segmented Control)', note: 'Implemented and available in this branch\'s foundation layer, with SwiftUI unit-test coverage. None has a production call site in this branch — every existing screen keeps its current, unmigrated implementation.' },
+  { area: 'Components (Card, Button, Checkbox, Radio, Selection Sheet, Toast, Tooltip, TopNav, Avatar, Divider, Banner, Tag, Attachment, Skeleton, List/ListItem, Composer Toolbar, Segmented Control)', note: 'Implemented and available in this branch\'s foundation layer, with SwiftUI unit-test coverage. New families, including HermexBanner, remain foundation-only. Transcript Log Row documents the pre-existing production TranscriptLogRowView; every entry below states its own adoption status.' },
   { area: 'Patterns (Content Unavailable) and pre-existing patterns (Adaptive Glass, Pending Request, Composer, Transcript Activity)', note: 'Content Unavailable is the same story as the components above — a new, unadopted foundation candidate. Adaptive Glass and the Pending Request surfaces predate this branch and remain genuinely in production use; their entries describe that existing, unchanged production reality.' },
 ];
 
@@ -239,15 +248,15 @@ export function HermesOverview() {
   return (
     <View style={recon.stack}>
       <Text style={overview.p}>
-        <Text style={overview.b}>Implementation status:</Text> this catalog documents the foundation-only
-        Design System candidate in the current working tree. Production-screen adoption is intentionally
-        excluded from this slice and remains a separate workstream. The catalog is versioned under{' '}
+        <Text style={overview.b}>Implementation status:</Text> this catalog documents the Design System
+        candidate in the current working tree. Most new foundations remain unadopted; bounded production
+        adoptions are named by each entry's adoption status. The catalog is versioned under{' '}
         <Text style={overview.code}>design-system-catalog/</Text> in the same repository — not maintained
         outside it — and is validated with the application's Design System Contract CI job.
       </Text>
       <Text style={overview.p}>
-        Foundation APIs/components/tokens are available in the current repository candidate.
-        Production-screen migration/adoption is not included in this branch.
+        Foundation APIs/components/tokens are available in the current repository candidate. Existing
+        production use and any bounded migration in this work are stated explicitly per entry.
       </Text>
       <Text style={overview.p}>
         Hermex is SwiftUI. Every live example below is a React Native documentation reconstruction
@@ -256,7 +265,7 @@ export function HermesOverview() {
       <HermesOverviewImplementationDetails
         meta={{
           implementationNotes: {
-            status: 'Foundation-only: available in this branch\'s candidate; not a claim of upstream or App Store release.',
+            status: 'Repository candidate status only; each entry separately states foundation availability and production adoption. This is not a claim of upstream or App Store release.',
             sourcePaths: ['design-system-catalog/native/catalog/hermes/hermesSections.tsx'],
             notes: [
               'This table is a maintainer-facing coverage summary, not part of the primary design reference.',
@@ -267,14 +276,14 @@ export function HermesOverview() {
       />
       <Text style={overview.p}>
         <Text style={overview.b}>Branch status:</Text> a compact, truthful summary of what this branch
-        actually changes — new tokens/components are available in the repository candidate;
-        production-screen migration is not part of this slice. It is not a per-screen adoption audit;
+        actually changes — new tokens/components are available in the repository candidate, and bounded
+        production adoptions are named explicitly below. It is not a per-screen adoption audit;
         production source remains the authority on what each screen actually renders.
       </Text>
       <HermesOverviewImplementationDetails
         meta={{
           implementationNotes: {
-            status: 'Foundation-only: describes this branch\'s own candidate, not production-screen adoption.',
+            status: 'Repository candidate summary; entry-level metadata and production source remain the authority on adoption.',
             notes: [
               'Verified against the current repository source at the time this table was written; re-check before relying on it after further changes.',
             ],
@@ -688,8 +697,8 @@ const GEOMETRY_FACTS: GeometryFact[] = [
   { name: 'ChatComposerMetrics.cardCornerRadius', value: '24pt', source: 'HermesMobile/Features/Chat/ChatComposerPresentation.swift', use: "The composer's expanded-card corner radius." },
   { name: 'ChatComposerMetrics.actionSize', value: '44pt', source: 'HermesMobile/Features/Chat/ChatComposerPresentation.swift', use: "The round send/stop action button's diameter." },
   { name: 'ChatComposerMetrics.pillInset', value: '5pt', source: 'HermesMobile/Features/Chat/ChatComposerPresentation.swift', use: "Inset used in the collapsed pill's own corner-radius derivation." },
-  { name: 'TranscriptLogRowMetrics.minimumHeight', value: '32pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Log row height at the default text size (the real, adopted, unchanged production source; the new DisclosureRowMetrics in DisclosureRow.swift duplicates the same value, foundation-only).' },
-  { name: 'TranscriptLogRowMetrics.bodyIndent', value: '26pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Icon column width plus gap, so an expanded body indents under the row text.' },
+  { name: 'TranscriptLogRowMetrics.minimumHeight', value: '32pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Log row height at the default text size (the real, adopted, unchanged production source — see Transcript Log Row).' },
+  { name: 'TranscriptLogRowMetrics.bodyIndent', value: '28pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Icon column width plus gap, so an expanded body indents under the row text.' },
   { name: 'TranscriptLogRowMetrics.bodyWindowHeight', value: '240pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Fixed cap an expanded log body scrolls inside.' },
   { name: 'AdaptiveReadableContentWidth.secondaryDestination', value: '800pt', source: 'HermesMobile/Features/Shared/AdaptiveGlassModifier.swift', use: 'Max readable content width for a secondary-destination screen class.' },
   { name: 'AdaptiveReadableContentWidth.workspace', value: '1,000pt', source: 'HermesMobile/Features/Shared/AdaptiveGlassModifier.swift', use: 'Max readable content width for a workspace-class screen.' },
@@ -1179,7 +1188,6 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       avoidWhen: 'Avoid composing it on a production screen today — the existing message/composer attachment tiles keep their own separate, unmigrated implementation.',
       alternatives: [
         { name: 'MessageBubbleView / ChatComposerAttachmentStripView (production)', useWhen: 'For any current production attachment surface — this family has no production call site yet.' },
-        { name: 'Inline Reference Link', useWhen: 'For a tappable file name inside text that opens the source viewer, not a thumbnail or type tile.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
       useSummary: 'A new, foundation-only component family; production\'s message and composer attachment tiles (MessageBubbleView.swift, ChatComposerAttachmentStripView.swift) keep their own existing, unmigrated implementation in this branch.',
@@ -1200,12 +1208,14 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Hermes Banner',
     displayName: 'Banner',
     description:
-      'A separate component family for persistent in-flow status communication — Information, Warning, Error, Success, and Offline variants, each with an optional icon, a message, an optional action, inset or full-width presentation, and consistent decorative-icon accessibility.',
+      'A separate component family for persistent in-flow status communication — Information, Warning, Error, Success, and Offline variants, each with an independently caller-optional title and description (at least one is required), an optional icon, an optional action, inset or full-width presentation, and consistent decorative-icon accessibility. The native HermexBanner (HermesMobile/Features/Shared/HermexBanner.swift) has no interactive show/hide state — a caller that only has one line of copy simply omits the other region, it does not toggle anything at runtime.',
     whenToUse: 'Use an in-flow Banner rather than a toast when the condition remains relevant until it is resolved (e.g. offline, a pending update) rather than a one-off confirmation.',
     props: [
       { name: 'variant', type: "'info' | 'warning' | 'negative' | 'positive' | 'neutral'", default: "'warning'", desc: 'Information / Warning / Error / Success map onto info/warning/negative/positive; Offline uses neutral with an icon override.' },
-      { name: 'icon', type: 'IconName', desc: 'Optional leading icon override — decorative by default (hidden from VoiceOver) unless it carries information the title text does not.' },
-      { name: 'action', type: '{ label: string; onPress: () => void }', desc: 'Optional trailing action button.' },
+      { name: 'title', type: 'string (optional)', desc: 'Independently caller-optional on the native HermexBanner (title: Text?) — the stronger tier when both title and description are present. Omit it entirely for a description-only composition; there is no interactive way to hide it, only caller omission.' },
+      { name: 'description', type: 'string (optional)', desc: 'Independently caller-optional on the native HermexBanner (description: Text?) — the quieter, multiline tier when a title is also present, or full readable-emphasis text when it is the only content. At least one of title/description is required.' },
+      { name: 'icon', type: 'IconName', desc: 'Optional leading icon override — decorative by default (hidden from VoiceOver) unless it carries information the title text does not. The native showsIcon: Bool lets a caller hide the icon entirely.' },
+      { name: 'action', type: '{ label: string; onPress: () => void }', desc: 'Optional trailing action button. The native HermexBanner.Action also supports an icon-only action with its own accessibility label.' },
       { name: 'style (inset padding)', type: 'ViewStyle', desc: 'Caller-supplied horizontal padding for an inset presentation; omit it for full-width/edge-to-edge.' },
     ],
     a11y: 'A decorative status icon is hidden from VoiceOver by default, since the surrounding title text already announces the same fact.',
@@ -1217,13 +1227,16 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         { name: 'Hermes Toast', useWhen: 'For a transient, one-off confirmation the caller dismisses itself (HermexToast has no auto-dismiss timer) rather than a persistent in-flow condition.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only component; Sessions and the transcript keep their own existing, independent offline-cache notices in this branch, not this Banner.',
+      useSummary: 'A new foundation/catalog component with zero production call sites in this branch. The composer-style error specimen demonstrates valid description-only inset composition without claiming adoption. ChatView.swift, SessionListView.swift, and every composer keep their existing production status surfaces.',
       implementationNotes: {
-        status: FOUNDATION_ONLY_STATUS,
-        sourcePaths: ['HermesMobile/Features/Shared/Banner.swift'],
+        status: 'Foundation-only with zero production adoption; the native API, tests, DEBUG fixtures, and catalog reconstruction are available for future callers.',
+        sourcePaths: [
+          'HermesMobile/Features/Shared/HermexBanner.swift',
+        ],
         notes: [
-          'ChatView.swift and SessionListView.swift each still implement their own offline-cache notice independently in this branch — a future Banner.offlineCache() consolidation, described here as a foundation capability, has not been made against either call site.',
-          `The inline icon renders at HermesIconSize.small (${HERMES_ICON_SIZE.small}) — a size choice this new component makes, not a fact about either existing production notice.`,
+          'ChatView.swift and SessionListView.swift each still implement their own offline-cache notice independently in this branch — a future HermexBanner.offlineCache() consolidation, described here as a foundation capability, has not been made against either call site.',
+          'ChatComposerView.swift, BotChatComposerView.swift, and BotRoomComposerView.swift retain their existing status surfaces; none calls HermexBanner( in this branch.',
+          `The inline icon renders at HermesIconSize.small (${HERMES_ICON_SIZE.small}) — a size choice this component makes, not a fact about either existing offline-cache notice.`,
         ],
       },
     },
@@ -1318,7 +1331,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Tag',
     description:
-      'Tag is always display-only: a small tinted-fill pill (semibold caption text on a matching low-opacity fill), modeled on the several independent tinted-fill status pills production already uses for session state, task/run status, Git change kind, and connection/selection state. A tappable element must use a control or link component, not Tag or tag-like styling — see Inline Reference Link for the interactive counterpart.',
+      'Tag is always display-only: a small tinted-fill pill (semibold caption text on a matching low-opacity fill), modeled on the several independent tinted-fill status pills production already uses for session state, task/run status, Git change kind, and connection/selection state. A tappable element must use a control or link component (see Buttons), not Tag or tag-like styling.',
     whenToUse: 'Use it for a short, glanceable status word or two; a longer message belongs in body text, not a Tag. Never make a Tag (or anything styled like one) tappable.',
     props: [
       { name: 'label', type: 'String', required: true, desc: 'The status text.' },
@@ -1333,7 +1346,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       useWhen: 'Use it for a short, glanceable status word or two, always display-only.',
       avoidWhen: 'Never make a Tag (or anything styled like one) tappable, and never use it for a longer message — that belongs in body text.',
       alternatives: [
-        { name: 'Inline Reference Link', useWhen: 'When the element must be tappable — an interactive file reference, not a display-only status label.' },
+        { name: 'Buttons', useWhen: 'When the element must be tappable, rather than a display-only status label.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
       useSummary: 'A new, foundation-only component; production\'s status pills (Sessions, Tasks, Workspace/Git, Settings, and the composer\'s chip rendering) each keep their own existing, separately-implemented capsule styling in this branch, not Tag.',
@@ -1344,40 +1357,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         ],
         notes: [
           'Production still has several independent, unmigrated capsule-style implementations across Sessions, Tasks, Workspace/Git, and Settings; a future consolidation onto this one shared Tag component has not been made against any of them in this branch.',
-          'The composer\'s inline skill/bot/file chip rendering (ComposerChipRendering.swift, ComposerChipToken.swift) is its own separate, pre-existing drawing path with no isInteractiveReference/ComposerChipVisualStyle API and no dependency on this new Tag component — see Inline Reference Link for that pattern\'s own accurate description.',
-        ],
-      },
-    },
-  },
-  {
-    id: 'Inline Reference Link',
-    description:
-      'A visually distinct, tappable file reference — file icon plus filename, link/control semantics, and platform focus/pressed affordance through accent/link treatment. No capsule fill or tag-like outline at any state, so it can never be mistaken for a display-only Tag.',
-    whenToUse: 'Use it for an interactive file reference that opens the source viewer; use Tag for any non-interactive status label, even a visually similar one.',
-    props: [
-      { name: 'fileName', type: 'String', required: true, desc: 'Displayed alongside a file icon.' },
-      { name: 'onPress', type: '() -> Void', required: true, desc: 'Opens the source viewer.' },
-      { name: 'accessibilityRole', type: '"link"', default: '"link"', desc: 'Link/control semantics — never Tag\'s plain text/image semantics.' },
-    ],
-    a11y: 'Keyboard-focusable (Tab reaches it, Enter/Space activates it); focus shows an underline, press deepens the accent color — genuinely observable states in the running preview, not a static picture.',
-    render: () => <InlineReferenceLinkPreview />,
-    hermesReference: {
-      useWhen: 'Use it for an interactive file reference that opens the source viewer.',
-      avoidWhen: 'Avoid it for a non-interactive status label — use Tag for that, even if the two look visually similar.',
-      alternatives: [
-        { name: 'Tag', useWhen: 'For a non-interactive status label rather than a tappable file reference.' },
-      ],
-      adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'A new, foundation-only interaction pattern; production\'s composer today draws every skill, file, and bot reference as one uniform baked-image chip with no distinct file-vs-skill visual or interactive split.',
-      implementationNotes: {
-        status: FOUNDATION_ONLY_STATUS,
-        sourcePaths: [
-          'HermesMobile/Features/Chat/ComposerChipRendering.swift',
-          'HermesMobile/Features/Chat/ComposerChipToken.swift',
-        ],
-        notes: [
-          'Production\'s ComposerChipRendering.swift and ComposerChipToken.swift render every reference kind through the same NSTextAttachment-backed chip image; there is no ComposerChipVisualStyle type, no isInteractiveReference property, and no accessibilityTraits = .link path in the current source for a file reference specifically.',
-          'This entry documents a proposed distinct treatment for an interactive file reference, separate from Tag\'s display-only capsule — not yet built against the composer\'s existing chip-rendering pipeline.',
+          'The composer\'s inline skill/bot/file chip rendering (ComposerChipRendering.swift, ComposerChipToken.swift) is its own separate, pre-existing drawing path with no isInteractiveReference/ComposerChipVisualStyle API and no dependency on this new Tag component — see Composer\'s own Composer Chip coverage for that pattern\'s own accurate description.',
         ],
       },
     },
@@ -1385,18 +1365,18 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Text Input',
     description:
-      'Three thin Hermex-owned entry points over native SwiftUI text entry — `HermexTextField`, `HermexSecureField`, and `HermexNumberField` (HermexTextInput.swift) — each forwarding straight to its native counterpart (`TextField`, `SecureField`, and the typed `TextField(value:format:)` path) with no chrome, validation, or parsing of its own. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (the custom `HermexSearchField`/`.hermexSearch`) stays its own separate entry rather than a Text Input variant.',
-    whenToUse: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied `ParseableFormatStyle`. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Selection Sheet instead of free text.',
+      'Three Hermex-owned entry points over native SwiftUI text entry (HermexTextInput.swift) — Default (`HermexTextField`), Password (`HermexSecureField`), and Code (`HermexCodeInput`) — each forwarding to exactly one native editor (`TextField`, `SecureField`, and a single `TextField` driving Code\'s decorative row of digit boxes) with no chrome, validation, or parsing of its own beyond Code\'s fixed digit-entry contract. TextEditor remains a native iOS control for multiline body text, not a newly owned Hermex component, and the Search family (the custom `HermexSearchField`/`.hermexSearch`) stays its own separate entry rather than a Text Input variant.',
+    whenToUse: 'Reach for Default (HermexTextField) for an ordinary single-line value, Password (HermexSecureField) for a credential, and Code (HermexCodeInput) for a caller-supplied code between 4 and 8 digits long, with paste and one-time-code autofill support. Use native TextEditor directly for multiline body text and the Search family for search placement — neither is a Text Input variant. For a fixed-option single-selection field, use Hermes Selection Sheet instead of free text.',
     props: [
-      { name: 'HermexTextField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `TextField` for ordinary single-line entry, including an optional native `Text` prompt; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
-      { name: 'HermexSecureField(_:text:prompt:)', type: 'Binding<String>, Text?', desc: 'Forwards straight to native `SecureField` for masked single-line entry, such as a password, including an optional native `Text` prompt.' },
-      { name: 'HermexNumberField(_:value:format:prompt:)', type: 'Binding<Value>, F: ParseableFormatStyle, Text?', desc: 'Forwards straight to native `TextField(value:format:)` with a caller-supplied `ParseableFormatStyle` and optional native `Text` prompt — locale-aware native parsing/formatting, never a `Binding<String>` or a forced numeric keyboard.' },
+      { name: 'HermexTextField(_:text:prompt:helperText:errorText:isEnabled:)', type: 'Binding<String>, Text?', desc: 'Default variant: one native `TextField` for ordinary single-line entry, plus a persistent label, optional prompt, and optional helper/error text; the caller keeps owning keyboard, autocorrection, capitalization, and content type exactly as with `TextField` directly.' },
+      { name: 'HermexSecureField(_:text:prompt:helperText:errorText:isEnabled:)', type: 'Binding<String>, Text?', desc: 'Password variant: one native `SecureField` for masked single-line entry, such as a credential, with the same label/prompt/helper/error chrome as Default.' },
+      { name: 'HermexCodeInput(_:code:length:helperText:errorText:isEnabled:)', type: 'Binding<String>, Int (4...8, default 6), Text?', desc: 'Code variant: exactly one native `TextField` (`.keyboardType(.numberPad)`, `.textContentType(.oneTimeCode)`) drives editing and accessibility for a caller-owned digit-only code between 4 and 8 characters long; a decorative, accessibility-hidden row of boxes mirrors the entered digits. Supports paste and iOS one-time-code autofill. Code never submits on its own — the caller decides when a complete code should be acted on.' },
     ],
-    a11y: 'Each wrapper forwards straight to its native control, so production keeps native focus, keyboard, clear behavior, dictation, Dynamic Type, and VoiceOver — none of the three add a custom accessibility layer of their own.',
+    a11y: 'Default and Password each forward straight to their native control, so production keeps native focus, keyboard, clear behavior, dictation, Dynamic Type, and VoiceOver. Code keeps exactly one native editor as the accessibility authority — it groups a native accessibility label, value (digits entered so far, out of the target length), and hint — while its digit-box row is hidden from accessibility as purely decorative.',
     render: () => <HermexTextInputFamilyGallery />,
     hermesReference: {
-      useWhen: 'Reach for HermexTextField for an ordinary single-line value, HermexSecureField for a credential, and HermexNumberField for a locale-aware numeric value with a caller-supplied ParseableFormatStyle.',
-      avoidWhen: 'Avoid HermexNumberField with a Binding<String>, manual parsing, or a forced numeric keyboard — supply a native ParseableFormatStyle instead. Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant.',
+      useWhen: 'Reach for Default (HermexTextField) for an ordinary single-line value, Password (HermexSecureField) for a credential, and Code (HermexCodeInput) for a code between 4 and 8 digits long with paste/one-time-code autofill.',
+      avoidWhen: 'Avoid reaching for any of the three for multiline body text (use native TextEditor directly) or search placement (use the Search family) — neither is a Text Input variant. Avoid expecting Code to submit on its own — it never does; the caller decides when to act on a complete code.',
       alternatives: [
         { name: 'Hermes Selection Sheet', useWhen: 'For a labeled single-selection field driven by a fixed option list, instead of freeform text entry.' },
         { name: 'Search', useWhen: 'For a field attached to a navigation surface or searchable list, instead of a bare text field.' },
@@ -1410,11 +1390,12 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         status: 'Component exists (HermexTextInput.swift) with no production call site yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermexTextInput.swift'],
         notes: [
-          'Deliberately thin: `HermexTextField` forwards to native `TextField`, `HermexSecureField` to native `SecureField`, and `HermexNumberField` to the typed `TextField(value:format:)` path — none of the three own chrome, validation, helper/error text, a clear button, or their own focus, keyboard, autocorrection, capitalization, or content-type policy; the caller keeps those exactly as it would calling the native control directly.',
+          'Deliberately thin: `HermexTextField` forwards to native `TextField`, `HermexSecureField` to native `SecureField`, and `HermexCodeInput` to exactly one native `TextField` whose `.keyboardType(.numberPad)`/`.textContentType(.oneTimeCode)` drive a decorative, accessibility-hidden `ForEach` row of digit boxes — none of the three own a clear button or their own focus, keyboard, autocorrection, or capitalization policy beyond Code\'s fixed digit-entry contract.',
           'Report only: production\'s existing direct TextField and SecureField call sites (see the Design System Contract\'s frozen TextField/SecureField baselines) are unchanged by this branch and continue to call TextField/SecureField directly; migrating them onto the three wrappers is scoped to a separate issue, not this slice.',
           'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/HermexTextField — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
           'TextEditor remains a native iOS control for multiline body text; this slice does not add a Hermex-owned multiline wrapper.',
-          'This reconstruction uses plain React Native TextInput to approximate HermexTextField/HermexSecureField/HermexNumberField visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
+          'This reconstruction uses plain React Native TextInput to approximate HermexTextField/HermexSecureField/HermexCodeInput visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
+          'Approved samples: Default uses label "Name" with prompt "Enter your name"; Password uses label "Password" with prompt "Enter your password"; Code uses label "Verification code" with helper "Enter the 6-digit code." and error "Enter all 6 digits."',
         ],
       },
     },
@@ -1521,7 +1502,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     render: () => <PopoverMenuFamilyGallery />,
     hermesReference: {
       useWhen: 'Use Popover Menu for a short list of simple, anchored actions on a trigger — it is always trigger-anchored, flips above/below to stay on screen, and clamps horizontally inside the safe area.',
-      avoidWhen: 'Avoid it for a full-attention modal decision or confirmation — use Dialog. Avoid it for forms, editable content, or a longer scrolling workflow — use Bottom Sheet. Avoid it for nested submenus, toggles, or a persistent selection model — none exist in this v1; a persistent single- or multi-selection choice belongs in Selection Sheet instead.',
+      avoidWhen: 'Avoid it for a full-attention modal decision or confirmation — use Dialog. Avoid it for forms, editable content, or a longer scrolling workflow — use Bottom Sheet. Avoid it for nested submenus, toggles, or a persistent selection model — none exist in this v1; route any persistent selection to a caller-presented Selection Sheet or a dedicated picker sheet instead of Popover Menu.',
       alternatives: [
         { name: 'Dialog', useWhen: 'For a full-attention modal decision or confirmation the user must resolve before continuing.' },
         { name: 'Bottom Sheet', useWhen: 'For forms, editable content, or a longer mobile workflow that needs scrolling.' },
@@ -1636,10 +1617,9 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     render: () => <ButtonDecisionAndTactilePreview />,
     hermesReference: {
       useWhen: 'Reach for .hermex(_:emphasis:pressFeedback:isGlass:) for a button whose chrome Hermex should supply; reach for .hermexPressOnly(_:shadow:) when a caller already owns its own shape/fill and only needs Reduce-Motion-safe press feedback.',
-      avoidWhen: 'Avoid .hermex(_:emphasis:) on a control whose chrome another component already owns (a Segmented Control option, a ListItem row, a Tag-styled pill) — use .hermexPressOnly or that component. Avoid either style for a tappable file reference — that is Inline Reference Link.',
+      avoidWhen: 'Avoid .hermex(_:emphasis:) on a control whose chrome another component already owns (a Segmented Control option, a ListItem row, a Tag-styled pill) — use .hermexPressOnly or that component.',
       alternatives: [
         { name: 'ChatTactileButtonStyle / ChatDecisionButtonStyle (production)', useWhen: 'For any current Sessions, Bots, or composer control — the adopted styles every production call site still uses.' },
-        { name: 'Inline Reference Link', useWhen: 'For a tappable file reference rather than a button.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
       useSummary: 'A new, foundation-only pair of ButtonStyle modifiers; the Sessions/Bots decision controls and the 18+ composer/thumbnail/capsule/card controls named below all still call the pre-existing, unmigrated ChatTactileButtonStyle (.chatTactile(_:)) and ChatDecisionButtonStyle in this branch, not HermexButtonStyle/HermexButtonPressOnlyStyle.',
@@ -1739,6 +1719,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
       { name: 'selections', type: 'Binding<Set<Value>>', required: true, desc: 'Multi-selection initializer: seeds a local draft at open time. Row taps toggle the draft only; Done writes the complete draft to this binding once and dismisses; Cancel/swipe/Escape/teardown discard the draft.' },
       { name: 'options', type: '[HermexSelectionSheetOption<Value>]', required: true, desc: 'Each option\'s value, display title, and enabled state. Disabled options stay visible and announced but never toggle or dismiss.' },
       { name: 'search', type: 'HermexSelectionSheetSearch?', desc: 'Optional. When present, renders the real HermexSearchField above the list; the caller owns the query binding and supplies the currently visible options array — Selection Sheet never filters, debounces, or loads results itself.' },
+      { name: 'contentInset', type: '.standard | .none', default: '.standard', desc: 'A closed, semantic choice for the outer horizontal inset applied once to the shared Search/list/empty-state container — never an arbitrary CGFloat. `.standard` is the 16pt standard screen margin (HermesSpacing.s16); `.none` removes it, for a caller that already supplies its own padding (e.g. a pre-padded Card).' },
     ],
     a11y: 'Every row is one ListItem Button target with a 44pt minimum hit area; the Radio/Checkbox indicator is accessibility-hidden so it never duplicates the row\'s own selected/disabled announcement. Initial VoiceOver focus lands on the current selected enabled option, else the first enabled visible option. Cancel and Done stay reachable with keyboard and VoiceOver; Escape follows native sheet dismissal and discards an uncommitted multi draft.',
     render: () => <SelectionSheetFamilyGallery />,
@@ -1769,13 +1750,13 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     displayName: 'Toast',
     whenToUse: 'Use a transient Toast for a one-off confirmation or brief status whose visibility the caller owns — clear it yourself, since there is no auto-dismiss; use Banner instead when the condition remains relevant until resolved (e.g. offline).',
     description:
-      'A transient status notice — a semantic tint/icon, a message, and an optional action — presented via the `hermexToast(isPresented:toast:)` view modifier. Lifecycle stays entirely caller-owned: no internal timer or auto-dismiss.',
+      'A transient status notice — a dark semantic surface with white icon, message, and optional action — presented via the `hermexToast(isPresented:toast:)` view modifier. Lifecycle stays entirely caller-owned: no internal timer or auto-dismiss.',
     props: [
-      { name: 'semantic', type: '.information | .success | .warning | .error', required: true, desc: 'Drives the tint and default icon.' },
+      { name: 'semantic', type: '.information | .success | .warning | .error', required: true, desc: 'Drives the fixed dark background ramp step and the default icon.' },
       { name: 'message', type: 'Text', required: true, desc: 'The toast\'s message.' },
       { name: 'icon', type: 'String?', desc: 'Overrides the semantic\'s default SF Symbol.' },
       { name: 'isIconDecorative', type: 'Bool', default: 'true', desc: 'Hides the icon from VoiceOver when the message text already announces the same fact.' },
-      { name: 'action', type: '{ title: String; handler: () -> Void }?', desc: 'Optional trailing action button, composed as an extraSmall neutral HermexButton — never a status-tinted plain button. Status tint stays on the semantic icon only.' },
+      { name: 'action', type: '{ title: String; handler: () -> Void }?', desc: 'Optional trailing action button: plain white text with a 44pt minimum tap target and no filled capsule, separated from the message by a vertical divider.' },
     ],
     a11y: 'Icon, message, and action combine into one accessible element when there is no action; an action present keeps the group\'s children independently focusable (accessibilityElement(children: .contain)).',
     render: () => <ToastFamilyGallery />,
@@ -1792,7 +1773,8 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
         sourcePaths: ['HermesMobile/Features/Shared/HermexToast.swift'],
         notes: [
           'Presentation (`hermexToast(isPresented:toast:)`) mirrors GitActionToastOverlay\'s established top-anchored, Reduce-Motion-safe transition, so a new caller gets the same feel without hand-rolling it again: it enters by moving down from the top edge combined with opacity (HermesMotion.Bundle.overlayEnter) and exits back toward the top combined with opacity (HermesMotion.Bundle.overlayExit). Reduce Motion drops the directional move and falls back to an opacity-only state change. Visibility itself stays entirely caller-owned — no internal timer.',
-          'The trailing action composes the shared HermexButton at size: .extraSmall, emphasis: .neutral rather than a plain Button tinted to the toast\'s own status color; the semantic icon keeps that status tint. The catalog gallery demonstrates this with the generic Toast\'s opt-in `actionNode` slot (native/components/Toast/Toast.tsx) rendering a real extraSmall Button, since the generic `action` shortcut always color-matches the toast\'s own status and cannot express a neutral treatment; every other Toast call site keeps using `action` unchanged.',
+          'The trailing action is a plain `Button(action.title) { … }` styled `.foregroundStyle(.white)` with `.buttonStyle(.hermexPressOnly(.compactControl))` and a 44pt minimum tap target — never a filled capsule or a separate neutral-button composition. The catalog gallery demonstrates the same white-on-dark-surface treatment by overriding the generic Toast\'s own background per semantic (Blue.s700/Green.s800/Orange.s800/Red.s700) while leaving its default white icon/message/action colors untouched, since the generic Toast\'s own light-tinted `variant` styles do not match this contract.',
+          'Each of the four semantic surfaces resolves to one fixed ramp step: .information to Blue.s700, .success to Green.s800, .warning to Orange.s800, and .error to Red.s700 — with the icon, message, and action content all rendering as white on top of that colored surface, never platform-adaptive text/icon colors.',
         ],
       },
     },
@@ -1802,7 +1784,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     displayName: 'Tooltip',
     description:
       'Anchored explanatory content behind an explicit tap trigger, presented through the native `.popover` path — the same one ContextWindowIndicatorView and GitBranchPickerView already use. Never a hover-only affordance.',
-    whenToUse: 'Use it for a short explanatory aside anchored to a specific control. For a persistent, always-visible detail, use Card or Disclosure Row instead.',
+    whenToUse: 'Use it for a short explanatory aside anchored to a specific control. For a persistent, always-visible detail, use Card or Transcript Log Row instead.',
     props: [
       { name: 'trigger', type: '() -> some View', desc: 'The tappable trigger content; `.info(...)` supplies the common "info" glyph trigger.' },
       { name: 'content', type: '() -> some View', desc: 'The popover\'s explanatory content; Dynamic Type-safe (fixedSize(vertical:)), never truncated.' },
@@ -1812,10 +1794,10 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     render: () => <TooltipFamilyGallery />,
     hermesReference: {
       useWhen: 'Use it for a short explanatory aside anchored to a specific control.',
-      avoidWhen: 'Avoid it for a persistent, always-visible detail — use Card or Disclosure Row instead.',
+      avoidWhen: 'Avoid it for a persistent, always-visible detail — use Card or Transcript Log Row instead.',
       alternatives: [
         { name: 'Card', useWhen: 'For persistent, always-visible detail rather than a tap-triggered aside.' },
-        { name: 'Disclosure Row', useWhen: 'For one collapsed line that expands into longer detail.' },
+        { name: 'Transcript Log Row', useWhen: 'For one collapsed line that expands into longer detail.' },
       ],
       adoptionStatus: { state: 'foundation-available', detail: 'Component exists (HermexTooltip.swift) with no production call site yet.' },
       useSummary: 'New production primitive; no screen has adopted it yet in this slice.',
@@ -1946,7 +1928,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     description:
       'A collection-level expandable ListItem composition with explicit card or cardless appearance, single or multiple expansion, caller-controlled or local state, header-aligned body rows, and four explicit separator strategies.',
     whenToUse:
-      'Use it when repeated ListItem groups need expandable bodies, such as a future project-to-sessions hierarchy. Use Disclosure Row for one compact status line that reveals long detail content, and List / ListItem for non-expandable rows.',
+      'Use it when repeated ListItem groups need expandable bodies, such as a future project-to-sessions hierarchy. Use Transcript Log Row for one compact status line that reveals long detail content, and List / ListItem for non-expandable rows.',
     props: [
       { name: 'appearance', type: 'card | cardless', required: true, desc: 'Required visual surface choice; there is no default. card composes the shared Card component (outlined surface) for exactly 16pt horizontal content padding; cardless adds no Accordion-level horizontal outer padding of its own.' },
       { name: 'separatorStyle', type: 'none | betweenRows | topAndBottom | all', required: true, desc: 'Required separator policy; topAndBottom surrounds the whole group and draws no internal lines. The divider directly under an open header always spans the full available Accordion content width; a divider between two body rows begins at those rows\' own text-content column instead.' },
@@ -1959,9 +1941,9 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     render: () => <AccordionListFamilyGallery />,
     hermesReference: {
       useWhen: 'Use it when repeated ListItem groups need expandable bodies, such as a future project-to-sessions hierarchy.',
-      avoidWhen: 'Avoid it for one compact status line that reveals long detail — use Disclosure Row; avoid it for simple non-expandable rows — use plain List/ListItem.',
+      avoidWhen: 'Avoid it for one compact status line that reveals long detail — use Transcript Log Row; avoid it for simple non-expandable rows — use plain List/ListItem.',
       alternatives: [
-        { name: 'Disclosure Row', useWhen: 'For one compact status line that reveals long detail content.' },
+        { name: 'Transcript Log Row', useWhen: 'For one compact status line that reveals long detail content.' },
         { name: 'List / ListItem', useWhen: 'For non-expandable rows.' },
       ],
       adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
@@ -1987,40 +1969,73 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     },
   },
   {
-    id: 'Disclosure Row',
+    id: 'Transcript Log Row',
     description:
-      'An icon slot, a one-line summary, and a chevron that expands into a scrollable detail body — the shared anatomy behind a tool-call log line, the "Thinking" reasoning block, and a bot activity/plan row. Uses Hermex typography, spacing, radius, motion, Buttons, and Divider.',
-    whenToUse: 'Use it for one line of collapsed status that can expand into longer detail; for a persistent always-visible detail, use Card instead.',
+      'An icon slot, a one-line summary, an optional status word, and a chevron that expands into a scrollable detail body — the real, production-adopted anatomy behind a tool-call log line, the "Thinking" reasoning block, and a bot activity/plan row (TranscriptLogRowView.swift). Uses Hermex typography, spacing, radius, motion, Buttons, and Divider.',
+    whenToUse: 'Use it for compact transcript activity: one collapsed line with a summary and optional status that can expand into a bounded, scrollable detail body; for a persistent always-visible detail, use Card instead.',
     props: [
-      { name: 'DisclosureRowMetrics.minimumHeight', type: 'CGFloat', default: '32', desc: 'Row height at the default text size.' },
-      { name: 'DisclosureRowMetrics.bodyIndent', type: 'CGFloat', default: '26', desc: 'Icon column width + gap, so the expanded body indents under the row text.' },
-      { name: 'DisclosureRowMetrics.bodyWindowHeight', type: 'CGFloat', default: '240', desc: 'Fixed cap the expanded body scrolls inside.' },
+      { name: 'TranscriptLogRowMetrics.minimumHeight', type: 'CGFloat', default: '32', desc: 'Row height at the default text size.' },
+      { name: 'TranscriptLogRowMetrics.bodyIndent', type: 'CGFloat', default: '28', desc: 'Icon column width + gap, so the expanded body indents under the row text.' },
+      { name: 'TranscriptLogRowMetrics.bodyWindowHeight', type: 'CGFloat', default: '240', desc: 'Fixed cap the expanded body scrolls inside.' },
     ],
-    a11y: 'Tap toggles expand/collapse; a long press on the expanded body copies its content — each caller supplies its own icon and detail text/accessibility label.',
-    render: () => <DisclosureLogRowPreview />,
+    a11y: 'Tap toggles expand/collapse; a long press on the expanded body copies its content, briefly showing "Copied" before reverting to "Copy". VoiceOver reads "Double tap to show details. Long press to copy." while collapsed, and "Double tap to hide details. Long press to copy." while expanded — each caller supplies its own icon and detail text/accessibility label.',
+    render: () => <TranscriptLogRowPreview />,
     hermesReference: {
-      useWhen: 'Use it for one line of collapsed status that can expand into longer detail.',
-      avoidWhen: 'Avoid it for a persistent, always-visible detail — use Card instead.',
+      useWhen: 'Use it for compact transcript activity — one line of collapsed summary/status that can expand into a bounded, scrollable detail body, with copy-on-long-press.',
+      avoidWhen: 'Avoid it for a persistent, always-visible detail — use Card instead. Avoid it for a general independently expandable collection that repeats across a list — use Accordion List.',
       alternatives: [
         { name: 'Card', useWhen: 'For a persistent, always-visible detail rather than collapsed status that expands.' },
         { name: 'Accordion List', useWhen: 'When the expandable row repeats across a list rather than standing alone.' },
-        { name: 'TranscriptLogRowView (production)', useWhen: 'For any current transcript or bot activity row — the adopted anatomy today.' },
       ],
-      adoptionStatus: FOUNDATION_AVAILABLE_ADOPTION,
-      useSummary: 'DisclosureRow.swift is new in this branch, with no production call site. The real shared row anatomy production uses today for a tool call\'s log line, the "Thinking" reasoning block, and a bot activity/plan row is the pre-existing TranscriptLogRowView, documented here as the closest production analog.',
+      adoptionStatus: { state: 'production-adopted', detail: 'Adopted in the verified local implementation; pending upstream acceptance.' },
+      useSummary: 'TranscriptLogRowView.swift is the real, already-adopted production row: a tool call\'s log line, the "Thinking" reasoning block, and a bot activity/plan row all compose it directly today. This entry documents that same production component, not a separate foundation candidate.',
       usedIn: [
-        { screen: 'Conversation', path: 'Sessions → open a conversation', effect: 'A tool call\'s log line and the "Thinking" reasoning block both expand into a detail body, via the existing TranscriptLogRowView.' },
-        { screen: 'Bots', path: 'Bots → open a bot conversation', effect: 'A bot\'s activity/plan row (BotPlanRowView) composes the same existing TranscriptLogRowView.' },
+        { screen: 'Conversation', path: 'Sessions → open a conversation', effect: 'A tool call\'s log line and the "Thinking" reasoning block both expand into a detail body, via TranscriptLogRowView.' },
+        { screen: 'Bots', path: 'Bots → open a bot conversation', effect: 'A bot\'s activity/plan row (BotPlanRowView) composes the same TranscriptLogRowView.' },
       ],
       implementationNotes: {
-        status: FOUNDATION_ONLY_STATUS,
+        status: ADOPTED_STATUS,
         sourcePaths: [
-          'HermesMobile/Features/Chat/DisclosureRow.swift',
           'HermesMobile/Features/Chat/TranscriptLogRowView.swift',
         ],
         notes: [
-          'DisclosureRow.swift is a new reconstruction of TranscriptLogRowView\'s anatomy in this branch\'s foundation layer; ToolCallLogRowView.swift, ReasoningBlockView.swift, and BotActivityViews.swift all still compose the pre-existing TranscriptLogRowView directly and do not import DisclosureRow.swift.',
-          'The geometry facts alone were already catalogued under Hermex Radius & Geometry, sourced from the real, adopted TranscriptLogRowMetrics in TranscriptLogRowView.swift; DisclosureRowMetrics in this branch\'s new DisclosureRow.swift duplicates the same three values.',
+          'ToolCallLogRowView.swift, ReasoningBlockView.swift, and BotActivityViews.swift all compose this pre-existing TranscriptLogRowView directly — the real, unchanged, already-adopted row anatomy, not a foundation candidate awaiting migration.',
+          'The geometry facts catalogued under Hermex Radius & Geometry are sourced from this same real, adopted TranscriptLogRowMetrics.',
+        ],
+      },
+    },
+  },
+  {
+    id: 'Composer Toolbar',
+    displayName: 'Composer Toolbar',
+    description:
+      'A shared horizontal composer-toolbar row — `HermexComposerToolbar` (HermexComposerToolbar.swift) — one `ScrollView(.horizontal)` accepting arbitrary caller content, with an elevated appearance (its own adaptive surface, radius, and shadow) and a transparent appearance (leaves the surface to the caller). Generalized from the current Chat/Bots feature-local `ComposerToolbarScroller`, which keeps its own current behavior unchanged. Owns no composer primary-action (dispatch/interrupt) control or any other composer-domain action.',
+    whenToUse: 'Reach for it when a caller needs one horizontally scrollable row of arbitrary secondary controls (a model picker, a profile switcher, and similar) whose content either fits or overflows the available width, in either an elevated card-like surface or a transparent surface inside an existing container.',
+    props: [
+      { name: 'appearance', type: '.elevated | .transparent', default: '.elevated', desc: 'Elevated draws Color(.systemBackground), HermesRadius.card, and the controlElevatedResting shadow; transparent renders none of that chrome.' },
+      { name: 'content', type: '@ViewBuilder', required: true, desc: 'Arbitrary caller-supplied content laid out in one HStack — never the composer\'s primary dispatch/interrupt control or any other composer-domain type.' },
+    ],
+    a11y: 'Edge fades reveal only where content is actually hidden behind that edge, animated with a Reduce-Motion-safe fade that becomes instant under Reduce Motion; the row never dismisses the keyboard on scroll, so taps on toolbar controls stay reliable while typing.',
+    render: () => <ComposerToolbarFamilyGallery />,
+    hermesReference: {
+      useWhen: 'Use it for one horizontally scrollable row of arbitrary caller content — whether it fits or overflows — in an elevated or transparent appearance.',
+      avoidWhen: 'Avoid it for the composer\'s primary dispatch/interrupt action or any other composer-domain control — this shared foundation never owns one. Avoid a second scrolling row or a vertical stack — it is exactly one horizontally scrollable row.',
+      alternatives: [
+        { name: 'Buttons', useWhen: 'For a single standalone action outside a scrolling row.' },
+        { name: 'Hermes Selection Sheet', useWhen: 'For a longer option list that should collapse into a sheet rather than sit in a scrolling row.' },
+        { name: 'Hermes TopNav', useWhen: 'For fixed leading/trailing navigation actions rather than a scrolling row of secondary controls.' },
+      ],
+      adoptionStatus: {
+        state: 'foundation-available',
+        detail: 'Available in this branch\'s foundation layer; no production call site exists yet.',
+      },
+      useSummary: 'A new, foundation-only component; zero production screens use it. The current Chat/Bots feature-local ComposerToolbarScroller (HermesMobile/Features/Chat/ChatComposerToolbarScroller.swift) keeps its own separate, unchanged implementation — migrating it onto this shared foundation is deferred to a separate adoption issue.',
+      implementationNotes: {
+        status: FOUNDATION_ONLY_STATUS,
+        sourcePaths: ['HermesMobile/Features/Shared/HermexComposerToolbar.swift'],
+        notes: [
+          'Generalized from ComposerToolbarScroller.swift\'s own layout skeleton (one ScrollView(.horizontal) + one HStack, HermesSpacing.s8 item spacing, HermesSpacing.s16 horizontal padding, a 44pt minimum row height, hidden scroll indicators, size-based horizontal bounce, and never dismissing the keyboard on scroll) plus its edge-fades helper (now HermexComposerToolbarEdgeFades, with ComposerToolbarEdgeFades kept as a typealias for the production name).',
+          'Report only: no production call site imports or composes HermexComposerToolbar( in this branch; ChatComposerView.swift, BotChatComposerView.swift, and BotRoomComposerView.swift all keep calling their own existing ComposerToolbarScroller unchanged. Migrating one onto Composer Toolbar is scoped to a separate adoption issue, not this slice.',
         ],
       },
     },
@@ -2133,29 +2148,28 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
     id: 'Transcript Activity',
     description:
       'A product pattern for the transcript\'s collapsible activity anatomy — a Turn Summary Disclosure, the Activity Disclosure Row, a grouped-tool-history control, assistant message content, and message metadata — preserving each piece\'s own domain ownership.',
-    whenToUse: 'Read it before changing how a transcript turn\'s collapsible pieces relate — a turn\'s summary, tool-call rows, reasoning block, and grouped history; implement any individual row with the pre-existing TranscriptLogRowView (see Disclosure Row for that component\'s own accurate status).',
-    a11y: 'Each composed piece keeps its own accessibility behavior — see Disclosure Row for expand/collapse semantics and Buttons for the grouped-history control\'s press feedback.',
+    whenToUse: 'Read it before changing how a transcript turn\'s collapsible pieces relate — a turn\'s summary, tool-call rows, reasoning block, and grouped history; implement any individual row with the pre-existing TranscriptLogRowView (see Transcript Log Row for that component\'s own accurate status).',
+    a11y: 'Each composed piece keeps its own accessibility behavior — see Transcript Log Row for expand/collapse semantics and Buttons for the grouped-history control\'s press feedback.',
     render: () => <TranscriptActivityPreview />,
     hermesReference: {
       useWhen: 'Read it before changing how a turn\'s summary, tool-call rows, reasoning block, and grouped history nest; implement any individual row with TranscriptLogRowView.',
-      avoidWhen: 'Avoid treating this pattern as its own component to adopt — the real owning component for the row anatomy today is the pre-existing TranscriptLogRowView (see Disclosure Row for that component\'s own accurate status).',
+      avoidWhen: 'Avoid treating this pattern as its own component to adopt — the real owning component for the row anatomy today is the pre-existing TranscriptLogRowView (see Transcript Log Row for that component\'s own accurate status).',
       alternatives: [
-        { name: 'Disclosure Row', useWhen: 'When you need one collapsible row rather than the whole turn composition.' },
+        { name: 'Transcript Log Row', useWhen: 'When you need one collapsible row rather than the whole turn composition.' },
       ],
       adoptionStatus: {
         state: 'partially-adopted',
-        detail: 'TranscriptLogRowView.swift (pre-existing) is the adopted Activity Disclosure Row; DisclosureRow.swift is a new, unadopted foundation reconstruction of its anatomy — see Disclosure Row.',
+        detail: 'TranscriptLogRowView.swift (pre-existing) is the adopted Activity Disclosure Row — see Transcript Log Row, itself production-adopted. The group-history control\'s composition through the new (unadopted) Buttons family is the remaining foundation-only piece.',
       },
-      useSummary: 'TranscriptLogRowView (pre-existing) is the real, adopted Activity Disclosure Row; the new DisclosureRow.swift foundation candidate has no production call site yet. Turn Summary stays a separate component because its semantics, height, and expansion contract differ.',
+      useSummary: 'TranscriptLogRowView (pre-existing) is the real, adopted Activity Disclosure Row — see Transcript Log Row. Turn Summary stays a separate component because its semantics, height, and expansion contract differ.',
       usedIn: [
         { screen: 'Conversation', path: 'Sessions → open a conversation', effect: 'A turn\'s summary disclosure, tool-call log lines, and the "Thinking" reasoning block compose this pattern, using the existing TranscriptLogRowView.' },
         { screen: 'Bots', path: 'Bots → open a bot conversation', effect: 'A bot\'s grouped tool-activity history composes the same existing TranscriptLogRowView anatomy.' },
       ],
       implementationNotes: {
-        status: 'TranscriptLogRowView.swift (pre-existing) is the adopted Activity Disclosure Row; DisclosureRow.swift is a new, unadopted foundation reconstruction of its anatomy — see Disclosure Row.',
+        status: 'TranscriptLogRowView.swift (pre-existing) is the adopted Activity Disclosure Row — see Transcript Log Row, itself production-adopted.',
         sourcePaths: [
           'HermesMobile/Features/Chat/TranscriptLogRowView.swift',
-          'HermesMobile/Features/Chat/DisclosureRow.swift',
           'HermesMobile/Features/Chat/TranscriptTurnFolding.swift',
           'HermesMobile/Features/Chat/ToolActivityGroupView.swift',
           'HermesMobile/Features/Chat/ReasoningBlockView.swift',
@@ -2170,34 +2184,48 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
   {
     id: 'Composer',
     description:
-      'A product pattern, not a Card variant, describing the target composition of the composer surface, an input field, Buttons, Tag, Inline Reference Link, Attachment, Adaptive Glass, and status/validation feedback — Buttons, Tag, Inline Reference Link, and Attachment are new, foundation-only families with no production call site yet (see each entry\'s own status); the composer\'s existing production implementation keeps its own independent pieces.',
+      'A product pattern, not a Card variant, describing the target composition of the composer surface, an input field, Buttons, Tag, Composer Chip, Attachment, Adaptive Glass, and status/validation feedback — Buttons, Tag, and Attachment are new, foundation-only families with no production call site yet (see each entry\'s own status); Composer Chip is a real, production-owned inline subsystem, not a new Hermex component; the composer\'s existing production implementation keeps its own independent pieces.',
     whenToUse: 'Use it to understand the target composition of the composer\'s pieces; text editing, keyboard interaction, draft persistence, attachments, runtime selection, voice input, and send/stop lifecycle stay owned by the Composer pattern, not by any one family it composes.',
+    props: [
+      {
+        name: 'Composer Chip (production subsystem)',
+        type: 'ComposerChipToken / ComposerChipRendering / ComposerChipTextView',
+        desc: 'An inline, text-embedded reference chip — a recognized skill, workspace file, bot mention, or quote rendered inline with editable/transcript text — not a standalone HermexComposerChip API. Every reference kind renders through the same uniform, NSTextAttachment-backed chip image; there is no ComposerChipVisualStyle type and no isInteractiveReference property in the current production source (HermesMobile/Features/Chat/ComposerChipRendering.swift).',
+      },
+    ],
     a11y: 'Each composed family keeps its own accessibility behavior; the composer surface itself adds no additional grouping beyond that.',
     render: () => <ComposerPatternPreview />,
     hermesReference: {
-      useWhen: 'Use it to understand the target composition of the composer\'s pieces — text editing, keyboard interaction, draft persistence, attachments, and send/stop lifecycle stay owned by the Composer pattern, not by any one family it composes.',
-      avoidWhen: 'Avoid this pattern for an ordinary field outside the chat composer — that belongs to Text Input, not a Composer-pattern concern.',
+      useWhen: 'Use it to understand the target composition of the composer\'s pieces — text editing, keyboard interaction, draft persistence, attachments, and send/stop lifecycle stay owned by the Composer pattern, not by any one family it composes. Use Composer Chip specifically for a recognized skill, workspace file, bot mention, or quote inline with editable/transcript text.',
+      avoidWhen: 'Avoid this pattern for an ordinary field outside the chat composer — that belongs to Text Input, not a Composer-pattern concern. Avoid Composer Chip for a standalone action, destination, status, filter, or attachment outside text — use Buttons, List / ListItem, Tag, or Attachment instead.',
       alternatives: [
         { name: 'Text Input', useWhen: 'For an ordinary single- or multi-line field outside the chat composer — TextField/TextEditor, not this pattern.' },
+        { name: 'Buttons', useWhen: 'For a standalone action rather than an inline text reference.' },
+        { name: 'List / ListItem', useWhen: 'For a standalone destination row rather than an inline text reference.' },
+        { name: 'Tag', useWhen: 'For a standalone status label rather than an inline text reference.' },
+        { name: 'Attachment', useWhen: 'For an attachment shown outside text, rather than an inline chip embedded within it.' },
       ],
       adoptionStatus: {
         state: 'reference-only',
-        detail: 'Target architecture only — the composer\'s existing production pieces keep their own current, independent implementation; production migration onto the new foundation components is not part of this branch.',
+        detail: 'Target architecture only for the composer surface, Buttons, Tag, and Attachment — the composer\'s existing production pieces keep their own current, independent implementation; production migration onto the new foundation components is not part of this branch. Composer Chip is different: it documents the real, already-adopted ComposerChipToken/ComposerChipRendering/ComposerChipTextView subsystem as it exists today, not a foundation candidate.',
       },
-      useSummary: 'Target architecture only: the composer\'s existing production action button, selector buttons, status pills, and attachment strip each keep their own current, independent implementation in this branch — none has migrated onto Buttons, Tag, or Attachment.',
+      useSummary: 'Target architecture only: the composer\'s existing production action button, selector buttons, status pills, and attachment strip each keep their own current, independent implementation in this branch — none has migrated onto Buttons, Tag, or Attachment. Composer Chip is the one piece already production-adopted, documented here as it is, not as a proposal.',
       usedIn: [
-        { screen: 'Conversation', path: 'Sessions → open a conversation', effect: 'The composer surface hosts text input, attachments, inline references, and the send/stop action, using its own existing implementation.' },
+        { screen: 'Conversation', path: 'Sessions → open a conversation', effect: 'The composer surface hosts text input, attachments, inline chip references, and the send/stop action, using its own existing implementation.' },
       ],
       implementationNotes: {
-        status: 'Target architecture: this pattern documents a proposed composition against the composer\'s pre-existing production files; production migration onto the new foundation components is not part of this branch.',
+        status: 'Target architecture: this pattern documents a proposed composition against the composer\'s pre-existing production files; production migration onto the new foundation components is not part of this branch. Composer Chip alone documents real, current production behavior.',
         sourcePaths: [
           'HermesMobile/Features/Chat/ChatComposerPresentation.swift',
           'HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift',
           'HermesMobile/Features/Chat/ChatComposerTextInputView.swift',
+          'HermesMobile/Features/Chat/ComposerChipToken.swift',
           'HermesMobile/Features/Chat/ComposerChipRendering.swift',
+          'HermesMobile/Features/Chat/ComposerChipTextView.swift',
         ],
         notes: [
           'Preserves domain ownership from the approved specification: text editing, keyboard interaction, draft persistence, attachments, runtime selection, voice input, and send/stop lifecycle stay owned by the Composer pattern, not moved into generic Card/Button props.',
+          'Composer Chip: no ComposerChipVisualStyle type, no isInteractiveReference property, and no accessibilityTraits = .link path exists in ComposerChipRendering.swift today — every reference (skill, workspace file, bot mention, or quote) renders through one uniform baked-image chip (an NSTextAttachment-backed chip image), not a distinct interactive/visual split.',
         ],
       },
     },
@@ -2276,7 +2304,7 @@ export const hermesSections: SectionDef<HermesSectionId>[] = [
           'HermesMobile/Config/HermesRadius.swift',
         ],
         notes: [
-          'ChatComposerPresentation.swift and AdaptiveGlassModifier.swift (both pre-existing) do not reference HermesRadius in this branch; ListItem.swift and DisclosureRow.swift (both new) do — but neither has a production call site yet (see their own entries).',
+          'ChatComposerPresentation.swift and AdaptiveGlassModifier.swift (both pre-existing) do not reference HermesRadius in this branch; ListItem.swift (new) does — but has no production call site yet (see its own entry).',
           'TranscriptLogRowMetrics (the real, adopted source) and AdaptiveReadableContentWidth remain named, feature-scoped exceptions, not migrated into the numeric scale.',
         ],
       },
@@ -2384,15 +2412,15 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
     // yet, and stayed here once that wrapper became the custom HermexSearchField/.hermexSearch
     // foundation with native `.searchable`/`SearchFieldPlacement` retired (see Search's own
     // adoptionStatus for the truthful, zero-adoption detail). Text Input
-    // joined the same way once its three HermexTextField/HermexSecureField/HermexNumberField
-    // foundation wrappers shipped over native TextField/SecureField/TextField(value:format:) — see
+    // joined the same way once its three HermexTextField/HermexSecureField/HermexCodeInput
+    // foundation wrappers shipped over native TextField/SecureField/a single numeric TextField — see
     // Text Input's own adoptionStatus for the same truthful, zero-adoption detail.
     alphabetizeByLabel: true,
     ids: [
       'Hermes Avatar', 'Hermes Card', 'Attachment', 'Hermes Banner', 'Hermes Toast', 'Row Divider', 'Tag',
-      'Inline Reference Link', 'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
-      'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Disclosure Row',
-      'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
+      'Search', 'Text Input', 'Hermes Selection Sheet', 'Hermes Tooltip', 'Segmented Control',
+      'Buttons', 'Hermes Checkbox', 'Hermes Radio', 'Skeleton Loading', 'List / ListItem', 'Accordion List', 'Transcript Log Row',
+      'Composer Toolbar', 'Bottom Sheet', 'Hermes Dialog', 'Hermes Popover Menu',
     ],
   },
   {

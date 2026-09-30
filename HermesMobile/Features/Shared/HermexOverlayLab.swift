@@ -18,7 +18,17 @@ import SwiftUI
 /// exercising the custom `HermexSearchField`/`.hermexSearch` foundation the same way.
 /// `--hermex-overlay-lab-selection-sheet` scrolls straight to the Selection Sheet section (Issue
 /// #607, DSF-06), exercising the caller-presented `HermexSelectionSheet` foundation that replaced
-/// the retired `HermexDropdown`.
+/// the retired `HermexDropdown`. `--hermex-overlay-lab-banner` scrolls straight to the Banner
+/// section (Issue #607, DSR2-15), exercising the `HermexBanner` foundation's title+description,
+/// title-only, and description-only content combinations, plus a specimen mirroring the main chat
+/// composer's description-only inset error placement — the lab's own fixture, not the production
+/// call site. `--hermex-overlay-lab-text-input` scrolls straight to the Text Input section (Issue
+/// #607, DSR2-06), exercising real `HermexTextField`, `HermexSecureField`, and `HermexCodeInput`
+/// specimens at 4/6/8-digit lengths and partial/complete/error/disabled states.
+/// `--hermex-overlay-lab-composer-toolbar` scrolls straight to the Composer Toolbar section (Issue
+/// #607, DSR2-09), exercising the unadopted `HermexComposerToolbar` foundation's elevated and
+/// transparent appearances at fitting and overflowing content widths — the lab's own fixture, not a
+/// production call site.
 struct HermexOverlayLab: View {
     @State private var forceReduceMotion = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-motion")
     @State private var forceReduceTransparency = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-transparency")
@@ -28,6 +38,9 @@ struct HermexOverlayLab: View {
     private let jumpsToBatchBSelectionControls = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-batch-b-controls")
     private let jumpsToSearchSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-search")
     private let jumpsToSelectionSheetSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-selection-sheet")
+    private let jumpsToBannerSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-banner")
+    private let jumpsToTextInputSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-text-input")
+    private let jumpsToComposerToolbarSection = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-composer-toolbar")
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -51,6 +64,15 @@ struct HermexOverlayLab: View {
                     Divider()
                     selectionSheetSection
                         .id(HermexOverlayLabSelectionSheetSection.scrollAnchorID)
+                    Divider()
+                    bannerSection
+                        .id(HermexOverlayLabBannerSection.scrollAnchorID)
+                    Divider()
+                    textInputSection
+                        .id(HermexOverlayLabTextInputSection.scrollAnchorID)
+                    Divider()
+                    composerToolbarSection
+                        .id(HermexOverlayLabComposerToolbarSection.scrollAnchorID)
                 }
                 .padding(20)
             }
@@ -70,6 +92,12 @@ struct HermexOverlayLab: View {
                     proxy.scrollTo(HermexOverlayLabSearchSection.scrollAnchorID, anchor: .top)
                 } else if jumpsToSelectionSheetSection {
                     proxy.scrollTo(HermexOverlayLabSelectionSheetSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToBannerSection {
+                    proxy.scrollTo(HermexOverlayLabBannerSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToTextInputSection {
+                    proxy.scrollTo(HermexOverlayLabTextInputSection.scrollAnchorID, anchor: .top)
+                } else if jumpsToComposerToolbarSection {
+                    proxy.scrollTo(HermexOverlayLabComposerToolbarSection.scrollAnchorID, anchor: .top)
                 }
             }
         }
@@ -137,6 +165,7 @@ struct HermexOverlayLab: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(verbatim: "Batch B Follow-up").font(.headline)
             HermexOverlayLabCardFollowup()
+            HermexOverlayLabAccordionFollowup()
             HermexOverlayLabSelectionControlsFollowup()
                 .id(HermexOverlayLabBatchBSelectionControls.scrollAnchorID)
         }
@@ -156,8 +185,96 @@ struct HermexOverlayLab: View {
             HermexOverlayLabSelectionSheetMulti()
             HermexOverlayLabSelectionSheetSearch()
             HermexOverlayLabSelectionSheetLongList()
+            HermexOverlayLabSelectionSheetNoInset()
         }
     }
+
+    // Specimens are inlined directly (not separate fixture structs, unlike the sections above) so
+    // this whole section — anchor, all three content-combination specimens, and the composer-error
+    // specimen with its dismiss action — stays in one place, matching the approved composer copy.
+    private var bannerSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Banner").font(.headline)
+                .accessibilityIdentifier("overlay-lab-banner-section")
+
+            Text(verbatim: "Title + description, with an action").font(.subheadline.weight(.semibold))
+            HermexBanner(
+                .warning,
+                title: Text(verbatim: "Update available"),
+                description: Text(verbatim: "A new version fixes a known issue."),
+                action: HermexBanner.Action(title: "Update") {}
+            )
+            .accessibilityIdentifier("overlay-lab-banner-title-description")
+
+            Text(verbatim: "Title only").font(.subheadline.weight(.semibold))
+            HermexBanner(.success, title: Text(verbatim: "Synced"))
+                .accessibilityIdentifier("overlay-lab-banner-title-only")
+
+            Text(verbatim: "Description only").font(.subheadline.weight(.semibold))
+            HermexBanner(.information, description: Text(verbatim: "All caught up."))
+                .accessibilityIdentifier("overlay-lab-banner-description-only")
+
+            Text(verbatim: "Composer error (description-only, inset, icon hidden)").font(.subheadline.weight(.semibold))
+            HermexBanner(.error,
+                title: nil,
+                description: Text(verbatim: "The Hermes server hit an internal error. Check the server logs, then try again."),
+                showsIcon: false, presentation: .inset,
+                action: HermexBanner.Action(icon: "xmark", accessibilityLabel: "Dismiss attachment error") {}
+            ).accessibilityIdentifier("overlay-lab-banner-composer-error")
+        }
+    }
+
+    private var textInputSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Text Input").font(.headline)
+                .accessibilityIdentifier("overlay-lab-text-input-section")
+            HermexOverlayLabTextInputFollowup()
+        }
+    }
+
+    // Specimens are inlined directly (not a separate fixture struct, unlike the sections above) so
+    // this whole section — anchor and all three appearance/overflow specimens — stays in one place,
+    // keeping the "no Send/Stop control" contract scoped to exactly this block.
+    private var composerToolbarSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Composer Toolbar").font(.headline)
+                .accessibilityIdentifier("overlay-lab-composer-toolbar-section")
+
+            Text(verbatim: "Elevated, fitting content").font(.subheadline.weight(.semibold))
+            HermexComposerToolbar(appearance: .elevated) {
+                Button("Model") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+                Button("Profile") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+            }
+            .accessibilityIdentifier("overlay-lab-composer-toolbar-elevated-fitting")
+
+            Text(verbatim: "Elevated, overflowing content").font(.subheadline.weight(.semibold))
+            HermexComposerToolbar(appearance: .elevated) {
+                ForEach(1...10, id: \.self) { index in
+                    Button("Option \(index)") {}
+                        .buttonStyle(.hermex(.small, emphasis: .secondary))
+                }
+            }
+            .accessibilityIdentifier("overlay-lab-composer-toolbar-elevated-overflow")
+
+            Text(verbatim: "Transparent, inside Card").font(.subheadline.weight(.semibold))
+            HermexComposerToolbar(appearance: .transparent) {
+                Button("Model") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+                Button("Profile") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+            }
+            .padding(HermexCardMetrics.contentPadding)
+            .hermexCardSurface(.outlined)
+            .accessibilityIdentifier("overlay-lab-composer-toolbar-transparent")
+        }
+    }
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-banner` jumps to on launch.
+private enum HermexOverlayLabBannerSection {
+    static let scrollAnchorID = "overlay-lab-banner-scroll"
 }
 
 /// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-popover` jumps to on launch.
@@ -188,6 +305,16 @@ private enum HermexOverlayLabSearchSection {
 /// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-selection-sheet` jumps to on launch.
 private enum HermexOverlayLabSelectionSheetSection {
     static let scrollAnchorID = "overlay-lab-selection-sheet-section"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-text-input` jumps to on launch.
+private enum HermexOverlayLabTextInputSection {
+    static let scrollAnchorID = "overlay-lab-text-input-scroll"
+}
+
+/// Namespaces the scroll-anchor identifier `--hermex-overlay-lab-composer-toolbar` jumps to on launch.
+private enum HermexOverlayLabComposerToolbarSection {
+    static let scrollAnchorID = "overlay-lab-composer-toolbar-scroll"
 }
 
 // ─── 1. Short confirmation, horizontal footer ──────────────────────────────────
@@ -432,6 +559,16 @@ private struct HermexOverlayLabToastFollowup: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .accessibilityIdentifier("overlay-lab-followup-toast-undo-count")
+
+            Text(verbatim: "All four semantic surfaces").font(.subheadline.weight(.semibold))
+            HermexToast(.information, message: Text(verbatim: "A new version is available"))
+                .accessibilityIdentifier("overlay-lab-toast-information")
+            HermexToast(.success, message: Text(verbatim: "Draft saved"))
+                .accessibilityIdentifier("overlay-lab-toast-success")
+            HermexToast(.warning, message: Text(verbatim: "Connection is unstable"))
+                .accessibilityIdentifier("overlay-lab-toast-warning")
+            HermexToast(.error, message: Text(verbatim: "Failed to send message"))
+                .accessibilityIdentifier("overlay-lab-toast-error")
         }
     }
 }
@@ -741,6 +878,52 @@ private struct HermexOverlayLabCardFollowup: View {
     }
 }
 
+// ─── Accordion List: header/body text-column and divider alignment specimen (DSR2-02) ─────────
+private struct HermexOverlayLabAccordionFollowup: View {
+    private struct Group: Identifiable {
+        let id: String
+        let title: String
+        let rows: [Row]
+    }
+
+    private struct Row: Identifiable {
+        let id: String
+        let title: String
+    }
+
+    private let groups = [
+        Group(
+            id: "hermex",
+            title: "Hermex",
+            rows: [
+                Row(id: "session-1", title: "Investigate flaky test"),
+                Row(id: "session-2", title: "Refactor auth module")
+            ]
+        )
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: "Accordion List (header/body alignment)").font(.subheadline.weight(.semibold))
+            AccordionList(
+                items: groups,
+                appearance: .card,
+                separatorStyle: .betweenRows,
+                expansion: .localSingle(initiallyExpanded: "hermex"),
+                bodyItems: { $0.rows },
+                headerTitle: { Text($0.title) },
+                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerAccessibilityLabel: { Text($0.title) },
+                headerIsDisabled: { _ in false },
+                headerLeading: { _ in HermexAvatar(systemImage: "folder", size: .small) },
+                headerTitleAccessory: { _ in EmptyView() },
+                bodyItem: { _, row in ListItem(title: Text(row.title), action: {}) }
+            )
+            .accessibilityIdentifier("overlay-lab-batch-b-accordion-card")
+        }
+    }
+}
+
 // ─── Selection controls: Radio and Checkbox, every real state plus a row-owned indicator ──────
 private struct HermexOverlayLabSelectionControlsFollowup: View {
     @State private var rowOwnedIsChecked = false
@@ -929,6 +1112,36 @@ private struct HermexOverlayLabSelectionSheetSearch: View {
     }
 }
 
+// ─── No-inset: composed inside a pre-padded Card, contentInset: .none avoids double inset ─────
+private struct HermexOverlayLabSelectionSheetNoInset: View {
+    @State private var isPresented = false
+    @State private var selection: HermexOverlayLabProvider? = .anthropic
+
+    private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
+        [
+            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
+            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
+            HermexSelectionSheetOption(value: .google, title: "Google")
+        ]
+    }
+
+    var body: some View {
+        Button("No inset (inside pre-padded Card)") { isPresented = true }
+            .padding(HermexCardMetrics.contentPadding)
+            .hermexCardSurface(.outlined)
+            .accessibilityIdentifier("overlay-lab-selection-sheet-no-inset")
+            .sheet(isPresented: $isPresented) {
+                HermexSelectionSheet(
+                    "Default Provider",
+                    selection: $selection,
+                    options: options,
+                    contentInset: .none
+                )
+                .presentationDetents([.medium, .large])
+            }
+    }
+}
+
 // ─── Long list: 20+ options, internally scrolling ──────────────────────────────
 private struct HermexOverlayLabSelectionSheetLongList: View {
     @State private var isPresented = false
@@ -945,6 +1158,64 @@ private struct HermexOverlayLabSelectionSheetLongList: View {
                 HermexSelectionSheet("Choose an Option", selection: $selection, options: options)
                     .presentationDetents([.medium, .large])
             }
+    }
+}
+
+// ─── Text Input follow-up fixtures ──────────────────────────────────────────────
+// Rendered-verification specimens for the Text Input foundation's final Default/Password/Code
+// taxonomy (Issue #607, DSR2-06): real `HermexTextField`/`HermexSecureField`/`HermexCodeInput`
+// specimens at 4/6/8-digit lengths and partial/complete/error/disabled states, none of which
+// auto-submit. These exist to confirm the shared components render and behave correctly on
+// device/simulator, not to adopt them at any production call site.
+private struct HermexOverlayLabTextInputFollowup: View {
+    @State private var name = ""
+    @State private var password = ""
+    @State private var code4 = "12"
+    @State private var code6Partial = "123"
+    @State private var code6Complete = "123456"
+    @State private var code6Error = "12345"
+    @State private var code6Disabled = "123456"
+    @State private var code8 = "12345678"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: "Default").font(.subheadline.weight(.semibold))
+            HermexTextField("Name", text: $name, prompt: Text("Enter your name"))
+                .accessibilityIdentifier("overlay-lab-text-input-default")
+
+            Text(verbatim: "Password").font(.subheadline.weight(.semibold))
+            HermexSecureField("Password", text: $password, prompt: Text("Enter your password"))
+                .accessibilityIdentifier("overlay-lab-text-input-password")
+
+            Text(verbatim: "Code (4 digits)").font(.subheadline.weight(.semibold))
+            HermexCodeInput("Verification code", code: $code4, length: 4)
+                .accessibilityIdentifier("overlay-lab-code-input-4")
+
+            Text(verbatim: "Code (6 digits, partial)").font(.subheadline.weight(.semibold))
+            HermexCodeInput("Verification code", code: $code6Partial, length: 6)
+                .accessibilityIdentifier("overlay-lab-code-input-6-partial")
+
+            Text(verbatim: "Code (6 digits, complete)").font(.subheadline.weight(.semibold))
+            HermexCodeInput("Verification code", code: $code6Complete, length: 6)
+                .accessibilityIdentifier("overlay-lab-code-input-6-complete")
+
+            Text(verbatim: "Code (6 digits, error)").font(.subheadline.weight(.semibold))
+            HermexCodeInput(
+                "Verification code",
+                code: $code6Error,
+                length: 6,
+                errorText: Text(verbatim: "Enter all 6 digits.")
+            )
+            .accessibilityIdentifier("overlay-lab-code-input-error")
+
+            Text(verbatim: "Code (6 digits, disabled)").font(.subheadline.weight(.semibold))
+            HermexCodeInput("Verification code", code: $code6Disabled, length: 6, isEnabled: false)
+                .accessibilityIdentifier("overlay-lab-code-input-disabled")
+
+            Text(verbatim: "Code (8 digits)").font(.subheadline.weight(.semibold))
+            HermexCodeInput("Recovery code", code: $code8, length: 8)
+                .accessibilityIdentifier("overlay-lab-code-input-8")
+        }
     }
 }
 #endif
