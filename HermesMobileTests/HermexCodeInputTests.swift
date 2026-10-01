@@ -233,6 +233,51 @@ final class HermexCodeInputTests: XCTestCase {
         )
     }
 
+    // MARK: - Source contracts: box height grows with Dynamic Type, 48pt default baseline (#974 review)
+
+    func testHermexCodeInputScalesBoxHeightWithDynamicTypeRelativeToTitle3() throws {
+        let region = try hermexCodeInputRegion()
+        XCTAssertNotNil(
+            region.range(
+                of: #"@ScaledMetric\(relativeTo:\s*\.title3\)[\s\S]{0,80}?=\s*HermexTextInputMetrics\.codeBoxHeight"#,
+                options: .regularExpression
+            ),
+            "expected a @ScaledMetric relative to .title3, defaulting to the existing 48pt codeBoxHeight baseline, " +
+                "so accessibility text sizes can grow the box without a fixed-height frame clipping it"
+        )
+    }
+
+    func testHermexCodeInputNoLongerUsesTheUnscaledHeightConstantForTheBoxesOrRow() throws {
+        let region = try hermexCodeInputRegion()
+        XCTAssertFalse(
+            region.contains(".frame(height: HermexTextInputMetrics.codeBoxHeight)"),
+            "expected the unscaled 48pt height constant to be replaced by the Dynamic-Type-aware scaled metric"
+        )
+    }
+
+    func testHermexCodeInputUsesTheScaledHeightForBothTheRowAndEachBox() throws {
+        let region = try hermexCodeInputRegion()
+        let scaledHeightOccurrences = matches(of: #"\.frame\([^)]*height:\s*scaledCodeBoxHeight"#, in: region)
+        XCTAssertEqual(
+            scaledHeightOccurrences, 2,
+            "expected the Dynamic-Type-scaled height on both the containing GeometryReader and each digit box, " +
+                "so the greedy GeometryReader remains bounded while the 48pt baseline grows with the title3 text"
+        )
+    }
+
+    func testHermexCodeInputBoxWidthFramingIsUnaffectedByTheHeightChange() throws {
+        let region = try hermexCodeInputRegion()
+        XCTAssertTrue(
+            region.contains(".frame(width: width, height: scaledCodeBoxHeight)"),
+            "expected the per-box width framing to be preserved exactly, with only height made Dynamic-Type-aware"
+        )
+    }
+
+    private func matches(of pattern: String, in text: String) -> Int {
+        (try? NSRegularExpression(pattern: pattern))
+            .map { $0.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text)) } ?? 0
+    }
+
     // MARK: - Source contracts: forbidden behavior
 
     func testHermexCodeInputDoesNotAutoSubmitOrExposeAnOnCompleteCallback() throws {

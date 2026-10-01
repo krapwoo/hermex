@@ -521,8 +521,11 @@ struct HermexPopoverMenu: View {
     }
 
     private func present() {
+        // A rejected request (duplicate open, or a re-open while a deferred action is still
+        // dismissing) must leave any active transition task alone, so an in-flight exit — and the
+        // action deferred on it — finishes undisturbed instead of being cancelled out from under it.
+        guard let generation = lifecycle.beginPresentation() else { return }
         transitionTask?.cancel()
-        let generation = lifecycle.beginPresentation()
         guard !reduceMotion else {
             isVisible = true
             _ = lifecycle.completePresentation(generation: generation)

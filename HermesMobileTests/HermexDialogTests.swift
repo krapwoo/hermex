@@ -225,7 +225,12 @@ import XCTest
     func testCloseControlComposesTheSharedHermexButtonAtExtraSmallNeutralAdaptiveGlass() throws {
         let block = try closeButtonSource()
         XCTAssertTrue(block.contains("HermexButton("), "expected the close control to compose the shared HermexButton")
-        XCTAssertTrue(block.contains("content: .icon(\"xmark\")"), "expected the close control to keep its xmark glyph")
+        XCTAssertTrue(block.contains("content: .icon(\"xmark\""), "expected the close control to keep its xmark glyph")
+        XCTAssertTrue(
+            block.contains("accessibilityLabel: HermexDialogPresentation.closeButtonAccessibilityLabel)"),
+            "expected the close control to supply its accessibility action name through the HermexButton " +
+                "content contract, not only an external modifier"
+        )
         XCTAssertTrue(block.contains("size: .extraSmall"), "expected the close control's compact visual to be HermexButtonSize.extraSmall")
         XCTAssertTrue(block.contains("emphasis: .neutral"), "expected the close control to use neutral emphasis")
         XCTAssertTrue(block.contains("isGlass: true"), "expected the close control to compose adaptive glass")

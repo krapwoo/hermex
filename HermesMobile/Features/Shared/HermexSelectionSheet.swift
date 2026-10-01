@@ -171,6 +171,14 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         } footer: {
             multiFooter(selections: selections)
         }
+        // The initializer's synchronous `_draft = State(initialValue:)` seeding only ever runs for a
+        // genuinely new `draft` storage instance — it cannot reset a value SwiftUI has already
+        // decided to keep across this sheet content's own present/dismiss cycle. A cancelled draft
+        // from a prior presentation must never leak into the next one, so every presentation also
+        // resets it here, from the caller's current binding, against `.onAppear` rather than init.
+        .onAppear {
+            draft = HermexSelectionSheetDraft(baseline: selections.wrappedValue)
+        }
     }
 
     @ViewBuilder
@@ -223,7 +231,7 @@ struct HermexSelectionSheet<Value: Hashable>: View {
         }
         .padding(.horizontal, contentInset.horizontalPadding)
         .task {
-            try? await Task.sleep(for: .milliseconds(400))
+            await Task.yield()
             guard !Task.isCancelled else { return }
             focusedOptionValue = initialFocusOptionValue
         }

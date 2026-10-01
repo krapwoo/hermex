@@ -193,6 +193,35 @@ final class HermexSelectionSheetTests: XCTestCase {
         )
     }
 
+    /// Regression for a PR #974 bot finding: the initial-focus task used to sleep 400ms before
+    /// unconditionally assigning `focusedOptionValue`, so a VoiceOver user who had already moved to
+    /// another row, Search, Cancel, or Done — or who was mid-dismissal on a single-selection commit
+    /// — could have focus stolen back out from under them. Initial focus must instead be requested
+    /// on the next task cycle via `Task.yield()`, with cancellation checked immediately before the
+    /// assignment so a since-cancelled task can never perform a later overwrite.
+    func testInitialFocusTaskYieldsOnceInsteadOfSleepingThenChecksCancellationBeforeAssigning() {
+        guard let src = selectionSheetSource() else { return }
+        XCTAssertFalse(
+            src.contains("Task.sleep"),
+            "expected the initial-focus task to never sleep an arbitrary delay before assigning focus"
+        )
+        guard let region = boundedRegion(startingAt: ".task {", in: src, maxLength: 200) else {
+            XCTFail("expected a locatable sheetContent .task block to scope this contract to")
+            return
+        }
+        XCTAssertTrue(
+            region.contains("await Task.yield()"),
+            "expected initial focus to be scheduled on the next task cycle via Task.yield(), not an arbitrary delay"
+        )
+        XCTAssertTrue(
+            region.range(
+                of: #"Task\.yield\(\)[\s\S]*?Task\.isCancelled[\s\S]*?focusedOptionValue\s*=\s*initialFocusOptionValue"#,
+                options: .regularExpression
+            ) != nil,
+            "expected cancellation to be checked after yielding and immediately before assigning the focus target"
+        )
+    }
+
     func testGenericAndQueriedEmptyCopyAreDistinct() {
         guard let src = selectionSheetSource() else { return }
         XCTAssertTrue(src.contains("No options available"), "expected the generic empty-without-query copy")
@@ -246,6 +275,27 @@ final class HermexSelectionSheetTests: XCTestCase {
         XCTAssertFalse(
             src.contains("seedDraftIfNeeded()"),
             "draft seeding must not wait for an asynchronous view task, where an immediate first tap could see nil state"
+        )
+    }
+
+    func testMultiSelectionResetsDraftFromCallerBindingOnEveryPresentation() {
+        guard let src = selectionSheetSource() else { return }
+        guard let region = boundedRegion(
+            startingAt: "private func multiSelectionSheet(selections: Binding<Set<Value>>) -> some View {",
+            in: src,
+            maxLength: 900
+        ) else {
+            XCTFail("expected a locatable multiSelectionSheet(selections:) composition to scope this contract to")
+            return
+        }
+        XCTAssertTrue(
+            region.range(
+                of: #"\.onAppear\s*\{\s*draft\s*=\s*HermexSelectionSheetDraft\(baseline:\s*selections\.wrappedValue\)\s*\}"#,
+                options: .regularExpression
+            ) != nil,
+            "expected the multi-selection composition to reset the draft from the caller's current binding on " +
+                "every presentation, so a cancelled draft from a prior presentation of the same sheet content " +
+                "can never persist into the next one"
         )
     }
 

@@ -122,10 +122,19 @@ export function CatalogDetailsInspector({ visible, title, onDismiss, children }:
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      const active = document.activeElement as HTMLElement | null;
+      // The programmatically focused heading (tabIndex -1, initial focus above) is never part of
+      // this list, and focus can otherwise sit outside it entirely — redirect Tab/Shift+Tab back
+      // into the panel instead of letting the browser's natural DOM-order traversal escape it.
+      if (!active || !focusable.includes(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+      if (event.shiftKey && active === first) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && active === last) {
         event.preventDefault();
         first.focus();
       }

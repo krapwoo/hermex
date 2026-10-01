@@ -2,9 +2,9 @@ import Foundation
 
 /// The generation-based presentation lifecycle shared by every custom same-window overlay
 /// (`HermexDialog`, and later `HermexPopoverMenu`). A generation identifies one present/dismiss
-/// cycle: every `beginPresentation()` call starts a new generation, and every completion call must
-/// name the generation it is completing so a stale, superseded, or cancelled transition can never
-/// finish, hide a newer presentation, or run a second time.
+/// cycle: every *accepted* `beginPresentation()` call starts a new generation, and every completion
+/// call must name the generation it is completing so a stale, superseded, or cancelled transition can
+/// never finish, hide a newer presentation, or run a second time.
 @MainActor
 struct HermexOverlayLifecycle {
     enum Phase: Equatable {
@@ -26,14 +26,29 @@ struct HermexOverlayLifecycle {
     private(set) var generation = 0
     private var pendingAction: (@MainActor () -> Void)?
 
-    /// Starts a new presentation. Always succeeds: it advances the generation (invalidating any
-    /// prior transition's completions), drops any stale pending action, and enters `.entering`.
-    /// Returns the generation the caller must complete against.
-    mutating func beginPresentation() -> Int {
-        generation += 1
-        pendingAction = nil
-        phase = .entering
-        return generation
+    /// Starts a new presentation. Returns the generation the caller must complete against, or `nil`
+    /// when the request is rejected — a caller that receives `nil` must leave any active transition
+    /// task running rather than cancelling it, so an in-flight exit (and whatever action is deferred
+    /// on it) completes undisturbed. Rejected while already `.entering` or `.presented`: a duplicate
+    /// open request is a no-op. Rejected while `.dismissing` with a deferred action pending, so the
+    /// existing exit finishes and that action runs exactly once instead of being dropped. Accepted
+    /// from `.hidden`, and accepted as a supersede from `.dismissing` when no action is deferred —
+    /// re-opening a plain (action-less) dismissal cancels it and starts fresh, preserving the
+    /// existing reopen behavior for that case. Either accepted path advances the generation
+    /// (invalidating any prior transition's completions), drops any stale pending action, and enters
+    /// `.entering`.
+    mutating func beginPresentation() -> Int? {
+        switch phase {
+        case .entering, .presented:
+            return nil
+        case .dismissing where pendingAction != nil:
+            return nil
+        case .hidden, .dismissing:
+            generation += 1
+            pendingAction = nil
+            phase = .entering
+            return generation
+        }
     }
 
     /// Completes entry into `.presented`. Succeeds only when `generation` still names the current

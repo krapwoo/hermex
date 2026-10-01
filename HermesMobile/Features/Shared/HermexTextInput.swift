@@ -224,6 +224,10 @@ struct HermexCodeInput: View {
     private let isEnabled: Bool
 
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+    // Relative to the same .title3 style the digit glyphs render in, so the boxes and their
+    // containing row grow with Dynamic Type instead of clipping accessibility-sized text against a
+    // fixed 48pt frame. Defaults to exactly the existing 48pt baseline at the standard content size.
+    @ScaledMetric(relativeTo: .title3) private var scaledCodeBoxHeight: CGFloat = HermexTextInputMetrics.codeBoxHeight
 
     init(
         _ label: LocalizedStringKey,
@@ -280,7 +284,7 @@ struct HermexCodeInput: View {
                         .accessibilityHint(accessibilityHint)
                 }
             }
-            .frame(height: HermexTextInputMetrics.codeBoxHeight)
+            .frame(height: scaledCodeBoxHeight)
         }
         .onAppear(perform: normalizeBoundCode)
         .onChange(of: code) { _ in
@@ -304,7 +308,7 @@ struct HermexCodeInput: View {
         let shape = RoundedRectangle(cornerRadius: HermesRadius.control, style: .continuous)
         Text(index < normalizedCharacters.count ? String(normalizedCharacters[index]) : "")
             .font(.title3.monospacedDigit().weight(.semibold))
-            .frame(width: width, height: HermexTextInputMetrics.codeBoxHeight)
+            .frame(width: width, height: scaledCodeBoxHeight)
             .background(HermexTextInputColors.surface, in: shape)
             .overlay {
                 shape

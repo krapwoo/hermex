@@ -6169,6 +6169,20 @@ test('CatalogDetailsInspector saves the triggering element\'s focus, focuses its
   assert.match(src, /previouslyFocused\.current\?\.focus\?\.\(\)/, 'expected focus to be restored to the saved trigger on close');
 });
 
+test('CatalogDetailsInspector Tab trap redirects focus back into the panel when focus sits outside its own focusable sequence (e.g. the programmatically focused heading, tabIndex -1), not just when it exactly matches the first/last focusable element', () => {
+  const src = read('native/catalog/CatalogDetailsInspector.tsx');
+  assert.match(
+    src,
+    /!active\s*\|\|\s*!focusable\.includes\(active\)/,
+    'expected the Tab handler to detect focus sitting outside the panel\'s own focusable sequence, not just compare against first/last',
+  );
+  assert.match(
+    src,
+    /\(event\.shiftKey\s*\?\s*last\s*:\s*first\)\.focus\(\)/,
+    'expected Tab/Shift+Tab from outside the focusable sequence to redirect into the panel, honoring direction',
+  );
+});
+
 test('CatalogDetailsInspector uses the existing Design System motion tokens (DS_MOTION_DURATION/DS_MOTION_EASING) for its enter/exit transition, and drops the spatial transform to an opacity-only change under Reduce Motion', () => {
   const src = read('native/catalog/CatalogDetailsInspector.tsx');
   assert.match(src, /import\s*\{\s*DS_MOTION_DURATION,\s*DS_MOTION_EASING\s*\}\s*from\s*'\.\.\/\.\.\/tokens'/);

@@ -198,7 +198,10 @@ extension ButtonStyle where Self == HermexButtonStyle {
 /// spinner and disables the button rather than adding a fifth content shape.
 enum HermexButtonContent: Equatable {
     case label(String)
-    case icon(String)
+    /// A bare system image name announces nothing to VoiceOver on its own, so an icon-only button
+    /// must name its action directly in the content contract rather than leaving it to an external,
+    /// easy-to-forget `.accessibilityLabel` modifier at the call site.
+    case icon(String, accessibilityLabel: String)
     case iconLeading(icon: String, label: String)
     case iconTrailing(icon: String, label: String)
 }
@@ -235,8 +238,9 @@ struct HermexButton: View {
         switch content {
         case .label(let title):
             Text(title)
-        case .icon(let systemImage):
+        case .icon(let systemImage, let accessibilityLabel):
             Image(systemName: systemImage)
+                .accessibilityLabel(Text(accessibilityLabel))
         case .iconLeading(let icon, let title):
             Label(title, systemImage: icon)
         case .iconTrailing(let icon, let title):

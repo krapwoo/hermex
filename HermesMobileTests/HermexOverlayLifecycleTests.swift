@@ -4,7 +4,9 @@ import XCTest
 @MainActor final class HermexOverlayLifecycleTests: XCTestCase {
     func testPresentationRequiresMatchingGenerationToBecomePresented() {
         var lifecycle = HermexOverlayLifecycle()
-        let generation = lifecycle.beginPresentation()
+        guard let generation = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
 
         XCTAssertFalse(lifecycle.completePresentation(generation: generation - 1),
                         "A stale generation must not complete presentation")
@@ -16,7 +18,9 @@ import XCTest
 
     func testDismissalRunsDeferredActionExactlyOnceAfterMatchingExit() {
         var lifecycle = HermexOverlayLifecycle()
-        let entryGeneration = lifecycle.beginPresentation()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         XCTAssertTrue(lifecycle.completePresentation(generation: entryGeneration))
 
         var runCount = 0
@@ -42,7 +46,9 @@ import XCTest
 
     func testRepeatedDismissRequestDoesNotReplaceOrDuplicatePendingAction() {
         var lifecycle = HermexOverlayLifecycle()
-        let entryGeneration = lifecycle.beginPresentation()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         XCTAssertTrue(lifecycle.completePresentation(generation: entryGeneration))
 
         var firstCount = 0
@@ -63,14 +69,19 @@ import XCTest
 
     func testStaleExitCompletionCannotHideRePresentedOverlay() {
         var lifecycle = HermexOverlayLifecycle()
-        let firstEntry = lifecycle.beginPresentation()
+        guard let firstEntry = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         XCTAssertTrue(lifecycle.completePresentation(generation: firstEntry))
         guard let staleDismissGeneration = lifecycle.beginDismissal() else {
             return XCTFail("Dismissal from presented must be accepted")
         }
 
-        // A newer presentation begins before the stale dismissal ever completes.
-        let secondEntry = lifecycle.beginPresentation()
+        // A newer presentation begins before the stale dismissal ever completes. No action was
+        // deferred on this plain dismissal, so the re-presentation must supersede it.
+        guard let secondEntry = lifecycle.beginPresentation() else {
+            return XCTFail("Re-presentation over a plain (action-less) dismissal must be accepted")
+        }
         XCTAssertEqual(lifecycle.phase, .entering)
         XCTAssertNotEqual(secondEntry, staleDismissGeneration)
 
@@ -82,7 +93,9 @@ import XCTest
 
     func testOwnerCancellationDropsPendingActionAndReturnsHidden() {
         var lifecycle = HermexOverlayLifecycle()
-        let entryGeneration = lifecycle.beginPresentation()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         XCTAssertTrue(lifecycle.completePresentation(generation: entryGeneration))
 
         var runCount = 0
@@ -106,7 +119,9 @@ import XCTest
         XCTAssertNil(lifecycle.beginDismissal(after: { runCount += 1 }),
                       "An action cannot be accepted from .hidden")
 
-        let entryGeneration = lifecycle.beginPresentation()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         XCTAssertNil(lifecycle.beginDismissal(after: { runCount += 1 }),
                       "An action cannot be accepted while still .entering")
 
@@ -120,11 +135,77 @@ import XCTest
         XCTAssertEqual(runCount, 1)
     }
 
+    func testBeginPresentationIsRejectedWhileEnteringOrPresented() {
+        var lifecycle = HermexOverlayLifecycle()
+        guard let firstGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
+
+        XCTAssertNil(lifecycle.beginPresentation(),
+                      "A duplicate open request while .entering must be rejected, not restart the transition")
+        XCTAssertEqual(lifecycle.phase, .entering)
+
+        XCTAssertTrue(lifecycle.completePresentation(generation: firstGeneration))
+        XCTAssertNil(lifecycle.beginPresentation(),
+                      "A duplicate open request while .presented must be rejected, not restart the transition")
+        XCTAssertEqual(lifecycle.phase, .presented)
+    }
+
+    func testBeginPresentationSupersedesAPlainDismissalWithNoDeferredAction() {
+        var lifecycle = HermexOverlayLifecycle()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
+        XCTAssertTrue(lifecycle.completePresentation(generation: entryGeneration))
+
+        guard let dismissGeneration = lifecycle.beginDismissal() else {
+            return XCTFail("A plain dismissal must be accepted while presented")
+        }
+        XCTAssertEqual(lifecycle.phase, .dismissing)
+
+        guard let reopenGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Re-presenting over a plain (action-less) dismissal must be accepted")
+        }
+        XCTAssertNotEqual(reopenGeneration, dismissGeneration,
+                           "Re-opening a plain dismissal must supersede it with a new generation")
+        XCTAssertEqual(lifecycle.phase, .entering)
+
+        if case .completed = lifecycle.completeDismissal(generation: dismissGeneration) {
+            XCTFail("The superseded dismissal generation must never complete")
+        }
+    }
+
+    func testBeginPresentationIsRejectedWhileDismissingWithADeferredActionSoItRunsExactlyOnce() {
+        var lifecycle = HermexOverlayLifecycle()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
+        XCTAssertTrue(lifecycle.completePresentation(generation: entryGeneration))
+
+        var runCount = 0
+        guard let dismissGeneration = lifecycle.beginDismissal(after: { runCount += 1 }) else {
+            return XCTFail("Dismissal with an action must be accepted while presented")
+        }
+        XCTAssertEqual(lifecycle.phase, .dismissing)
+
+        XCTAssertNil(lifecycle.beginPresentation(),
+                      "Re-presenting while a deferred action is pending must be rejected, so the exit can finish")
+        XCTAssertEqual(lifecycle.phase, .dismissing, "The rejected request must leave the in-flight exit untouched")
+
+        guard case .completed(let action) = lifecycle.completeDismissal(generation: dismissGeneration) else {
+            return XCTFail("The original exit must still be able to complete")
+        }
+        action?()
+        XCTAssertEqual(runCount, 1, "The deferred action must run exactly once")
+    }
+
     func testPlainDismissalIsAcceptedWhileEntering() {
         // Approved contract T3: a dismissal request during `.entering` cancels pending entry work
         // and proceeds to `.dismissing` — unlike an action, which only fires once `.presented`.
         var lifecycle = HermexOverlayLifecycle()
-        let entryGeneration = lifecycle.beginPresentation()
+        guard let entryGeneration = lifecycle.beginPresentation() else {
+            return XCTFail("Presentation from .hidden must be accepted")
+        }
         guard let dismissGeneration = lifecycle.beginDismissal() else {
             return XCTFail("A plain dismiss-only request must be accepted while .entering")
         }

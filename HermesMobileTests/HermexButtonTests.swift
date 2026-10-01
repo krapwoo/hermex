@@ -50,7 +50,7 @@ final class HermexButtonTests: XCTestCase {
     func testEveryContentConfigurationCompiles() {
         let views: [any View] = [
             HermexButton(content: .label("Go"), action: {}),
-            HermexButton(content: .icon("star"), action: {}),
+            HermexButton(content: .icon("star", accessibilityLabel: "Favorite"), action: {}),
             HermexButton(content: .iconLeading(icon: "star", label: "Favorite"), action: {}),
             HermexButton(content: .iconTrailing(icon: "chevron.right", label: "Next"), action: {}),
             HermexButton(content: .label("Save"), isPending: true, action: {})
@@ -124,5 +124,27 @@ final class HermexButtonTests: XCTestCase {
         for variant in ["icon", "compactControl", "capsule", "card", "thumbnail"] {
             XCTAssertTrue(src.contains("case \(variant)"), "missing preserved chrome variant \(variant)")
         }
+    }
+
+    // MARK: - Icon-only content requires an accessibility action label (#974 review)
+
+    func testIconOnlyContentDeclaresARequiredAccessibilityLabel() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexButton.swift")
+        XCTAssertTrue(
+            src.contains("case icon(String, accessibilityLabel: String)"),
+            "expected the icon-only content case to require an accessibility action label, since a bare " +
+                "system image name names nothing VoiceOver can announce"
+        )
+    }
+
+    func testIconOnlyContentAppliesTheAccessibilityLabelToTheImage() throws {
+        let src = try source("HermesMobile/Features/Shared/HermexButton.swift")
+        XCTAssertNotNil(
+            src.range(
+                of: #"case\s+\.icon\(let\s+systemImage,\s*let\s+accessibilityLabel\)\s*:\s*\n\s*Image\(systemName:\s*systemImage\)\s*\n\s*\.accessibilityLabel\(Text\(accessibilityLabel\)\)"#,
+                options: .regularExpression
+            ),
+            "expected the icon-only content case to apply its required accessibility label directly to the Image"
+        )
     }
 }
