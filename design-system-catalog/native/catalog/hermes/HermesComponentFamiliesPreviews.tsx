@@ -16,9 +16,8 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Platform, View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
-import { Icon } from '../../../icons/Icon.native';
-import type { IconName } from '../../../icons';
 import { DS_ICON_SIZE, DS_RADIUS, DS_SPACING } from '../../../tokens';
 import { CATALOG_SPECIMEN_GRID_GAP } from '../tokens';
 import { CatalogSpecimenHeader } from '../CatalogSpecimenHeader';
@@ -28,6 +27,112 @@ import { HERMES_ICON_SIZE } from './hermesIconSize';
 import { HERMES_ICON_AVATAR_PAIRING } from './hermesIconSize';
 import { HERMES_MOTION_BUNDLES } from './hermesTokenProposal';
 
+// Hand-drawn geometric glyphs scoped to this preview file only — not an import of the repository's
+// separate generic template icon set (`icons/`, `?catalog=template`-only, the Lucide-style set with
+// its own unrelated provenance), and not a claim of pixel fidelity to any real icon. Named and used
+// only to keep each "recon" specimen below visually distinct, the same convention this file's own
+// header already documents for its other hand-built approximations. AttachmentFileType's own real SF
+// Symbol mapping is the source of truth for that family and is documented separately in its prop
+// table and catalog section.
+type IconName =
+  | 'search'
+  | 'clear'
+  | 'circle-x'
+  | 'paperclip'
+  | 'waypoints'
+  | 'menu'
+  | 'briefcase'
+  | 'alert-circle'
+  | 'chevron-down'
+  | 'check'
+  | 'info';
+
+function Icon({ name, size, color }: { name: IconName; size: number; color: string }) {
+  const strokeWidth = Math.max(1.25, size / 12);
+  switch (name) {
+    case 'search':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="10" cy="10" r="6.5" stroke={color} strokeWidth={strokeWidth} />
+          <Line x1="14.8" y1="14.8" x2="20" y2="20" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'clear':
+    case 'circle-x':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="10" fill={color} />
+          <Line x1="8.5" y1="8.5" x2="15.5" y2="15.5" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+          <Line x1="15.5" y1="8.5" x2="8.5" y2="15.5" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'paperclip':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M8 13.5 15 6.5a3 3 0 1 1 4.24 4.24L10.6 19.4a5 5 0 1 1-7.07-7.07L12.5 3.5"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'waypoints':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="3" y="4" width="18" height="16" rx="2" stroke={color} strokeWidth={strokeWidth} />
+          <Line x1="3" y1="12" x2="21" y2="12" stroke={color} strokeWidth={strokeWidth} />
+          <Line x1="12" y1="4" x2="12" y2="20" stroke={color} strokeWidth={strokeWidth} />
+        </Svg>
+      );
+    case 'menu':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M6 3h7l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+          <Path d="M13 3v5h5" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+          <Line x1="8" y1="13" x2="16" y2="13" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+          <Line x1="8" y1="16.5" x2="16" y2="16.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'briefcase':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="3" y="7" width="18" height="13" rx="1.5" stroke={color} strokeWidth={strokeWidth} />
+          <Rect x="2" y="3.5" width="20" height="4" rx="1" stroke={color} strokeWidth={strokeWidth} />
+          <Line x1="10" y1="12.5" x2="14" y2="12.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'alert-circle':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="10" fill={color} />
+          <Line x1="12" y1="7" x2="12" y2="13" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+          <Circle cx="12" cy="16.5" r="1.15" fill="#fff" />
+        </Svg>
+      );
+    case 'chevron-down':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M6 9.5 12 15.5 18 9.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'check':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M5 12.5 9.5 17 19 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'info':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={strokeWidth} />
+          <Circle cx="12" cy="7.75" r="1.1" fill={color} />
+          <Line x1="12" y1="10.5" x2="12" y2="16.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        </Svg>
+      );
+  }
+}
 
 const preview = StyleSheet.create({
   stack: { gap: 12 },
@@ -394,10 +499,6 @@ const preview = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   composerSendGlyph: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
-
-  // SessionListItem — streaming/attention affordances beyond plain ListItem
-  streamDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34C759' },
-  attentionText: { fontSize: 11, color: '#FF3B30', fontWeight: '600' },
 
   // DSR3-07: ListItem's rounded, non-scaling pressed reconstruction — the generic template
   // ListItem's own pressed style is a plain full-bleed rectangle fill; this recon demonstrates the
@@ -1636,44 +1737,6 @@ export function ListItemFamilyGallery() {
       </List>
       </PreviewSpecimen>
       <PreviewSpecimen
-        name="SessionListItem"
-        fill
-        details={
-          <Text style={preview.detailsText}>
-            This SessionListItem composition is a new, foundation-only demonstration with no production
-            call site — it composes ListItem's leading/title/description/metadata/trailing slots with
-            session-specific anatomy: a streaming indicator dot (titleAccessory), an attention-status
-            metadata line, and responsive reflow at narrow widths. Production's live session row is
-            SessionRowView, which keeps its title plain and shows the match as a separate highlighted
-            excerpt line beneath the title (`SessionSearchExcerpt.highlighted`). This generic ListItem
-            preview does not model that dedicated excerpt line; its titleAccessory badge demonstrates
-            only the separate title-adjacent slot, not search highlighting. Native Button wrapping,
-            swipe actions, context menus,
-            selection background, transitions, and the single screen-level horizontal inset are
-            caller-owned in production by SessionInteractiveRow, which wraps SessionRowView (not this
-            SessionListItem) in SessionListComponents.swift.
-          </Text>
-        }
-      >
-      <List>
-        <ListItem
-          leading={<Avatar initials="HM" size={32} backgroundColor="#3478F6" />}
-          title="Ship the release notes"
-          titleAccessory={<View style={preview.streamDot} accessibilityLabel="Streaming" />}
-          description="Ran `npm test` — 2 tool calls"
-          metadata={<Text style={preview.attentionText}>Needs your input</Text>}
-          trailingText="2m"
-        />
-        <ListItem
-          leading={<Avatar initials="AB" size={32} backgroundColor="#8E8E93" />}
-          title="Investigate flaky build failure"
-          titleAccessory={<Text style={{ fontSize: 11, fontWeight: '700', color: '#3478F6' }}>build</Text>}
-          description="Archived · Read-only"
-          trailingText="1d"
-        />
-      </List>
-      </PreviewSpecimen>
-      <PreviewSpecimen
         name="compactOverlay style"
         fill
         details={
@@ -2123,10 +2186,11 @@ export function AttachmentTileGallery() {
             text sizes), with composerFileTextWidth (128pt; 160pt accessibility). It adds a real remove
             Button overlapping the corner by removeOverlap (6pt); the sent message tile does not. Each
             mapped file type renders its own distinct glyph and tint — a spreadsheet (Green 500) example
-            sits alongside the PDF (Red 500) and text-like (Blue 500) tiles here. This icon set has no
-            tablecells/doc.text/archivebox SF Symbols, so `waypoints`/`menu`/`briefcase` stand in for
-            them here only to keep every mapped type visually distinct — AttachmentFileType's own real
-            SF Symbol mapping is documented in the prop table above.
+            sits alongside the PDF (Red 500) and text-like (Blue 500) tiles here. This file's own small,
+            hand-drawn recon glyph set (scoped to this preview file, not imported from any icon
+            library) has no literal tablecells/doc.text/archivebox shapes, so `waypoints`/`menu`/
+            `briefcase` stand in for them here only to keep every mapped type visually distinct —
+            AttachmentFileType's own real SF Symbol mapping is documented in the prop table above.
           </Text>
         }
       >
@@ -2356,7 +2420,11 @@ export function BannerFamilyGallery() {
 // ─── TopNav ─────────────────────────────────────────────────────────────────────
 // Icon-first, accessibly-labeled, and composed with the same Adaptive Glass surface as Buttons'
 // Glass entry — a style composition on top of the existing variant, not a bespoke tint of its own.
-function iconSlotButton(iconName: IconName, label: string) {
+// Button's own iconName prop stays typed against the generic template icon set it renders through
+// (Button is a shared generic primitive, not Hermex-owned chrome) — this local union just pins the
+// literal values this file actually passes it, without importing that type here.
+type TopNavButtonIconName = 'chevron-left' | 'search' | 'pencil' | 'paperclip' | 'menu';
+function iconSlotButton(iconName: TopNavButtonIconName, label: string) {
   return <Button variant="secondary" size="small" showIcon showLabel={false} iconName={iconName} accessibilityLabel={label} onPress={() => {}} style={[preview.topNavActionButton, preview.buttonGlassSurface]} />;
 }
 

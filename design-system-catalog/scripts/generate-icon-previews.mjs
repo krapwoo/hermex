@@ -2,33 +2,27 @@
 // Renders the Hermex Iconography catalog's authoritative 202-name SF Symbol union through the
 // real iOS UIKit runtime (icon-renderer/, a SwiftPM XCTest bundle) on an iOS Simulator, then
 // extracts the rendered PNGs into native-preview/public/generated-icons/ for the browser catalog
-// to load. Generated assets are gitignored — never commit them.
+// to load. Those browser assets are checked in so ordinary catalog startup remains browser-only;
+// rerun this command explicitly whenever the source-derived inventory changes.
 //
-// Two modes:
-//   npm run generate:icons        — strict. Fails nonzero (process.exit(1)) if Xcode/Simulator
-//                                    prerequisites are unavailable, any SF Symbol is unresolved,
-//                                    rendering fails, the attachment count isn't exactly 202, or
-//                                    output is partial.
-//   npm run web (--optional flag) — best-effort. Only a missing platform/tooling/available-
-//                                    Simulator prerequisite is treated as "generation unavailable":
-//                                    logs one warning, leaves generated PNG state untouched, and
-//                                    exits 0 so Expo can start and the per-tile "Glyph unavailable
-//                                    in browser" fallback renders instead. Every other failure
-//                                    (compile, render, missing symbol, wrong/partial count, export)
-//                                    still fails the process in both modes.
+// This is explicit, simulator-backed regeneration only — a separate, deliberate step
+// (`npm run generate:icons`), never an implicit pre-step of the ordinary browser catalog launch
+// (`npm run web`, which starts Expo directly and never invokes Xcode/simctl). It is always strict:
+// fails nonzero (process.exit(1)) if Xcode/Simulator prerequisites are unavailable, any SF Symbol is
+// unresolved, rendering fails, the attachment count isn't exactly 202, or output is partial. Without
+// a regenerated asset for a given glyph, the browser catalog shows that tile's honest, per-icon
+// "Glyph unavailable in browser" fallback (HermesIconReference.tsx) rather than failing to load.
 //
-// The destination Simulator is resolved at runtime, never hardcoded: an explicit
-// HERMEX_ICON_SIMULATOR_UDID env override first, otherwise `simctl` discovery of an available
-// iPhone, preferring the named "Hermex Design System iPhone 17 Pro" device and falling back to
-// another available iPhone. Never creates/deletes devices, never selects a macOS/AppKit
-// destination. Pass --force to re-render even when a matching manifest is already on disk.
+// The destination Simulator must be named explicitly via the required HERMEX_ICON_SIMULATOR_UDID
+// env var — never guessed via `simctl` device discovery, which would select non-reproducible,
+// machine-local state. Never creates/deletes devices, never selects a macOS/AppKit destination.
+// Pass --force to re-render even when a matching manifest is already on disk.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-const PREFERRED_SIMULATOR_NAME = 'Hermex Design System iPhone 17 Pro';
 const EXPECTED_COUNT = 202;
 
 // Marks "generation unavailable" (missing platform/tooling/available-Simulator prerequisites) so
@@ -70,9 +64,11 @@ function writeGeneratedNamesSwift(names) {
   writeFileSync(GENERATED_NAMES_PATH, contents, 'utf8');
 }
 
-// Resolves a concrete Simulator UDID to pass to xcodebuild, or throws PrerequisiteUnavailableError
-// when Xcode/Simulator tooling isn't usable or no available iPhone Simulator can be found. Never
-// creates/deletes devices; never resolves to a macOS/AppKit destination.
+// Resolves the concrete Simulator UDID to pass to xcodebuild, or throws
+// PrerequisiteUnavailableError when Xcode tooling isn't usable or the required env var is unset.
+// Never creates/deletes devices; never resolves to a macOS/AppKit destination; never guesses a
+// destination via `simctl` device discovery — that would select non-reproducible, machine-local
+// state, so the caller must name it explicitly.
 function checkPrerequisites() {
   try {
     execFileSync('xcodebuild', ['-version'], { stdio: 'ignore' });
@@ -81,31 +77,12 @@ function checkPrerequisites() {
   }
 
   const override = process.env.HERMEX_ICON_SIMULATOR_UDID;
-  if (override) return override;
-
-  let listOutput;
-  try {
-    listOutput = execFileSync('xcrun', ['simctl', 'list', 'devices', 'available', '-j'], { encoding: 'utf8' });
-  } catch (error) {
-    throw new PrerequisiteUnavailableError(`could not query available iOS Simulators via 'xcrun simctl' (${error.message})`);
-  }
-
-  let parsed;
-  try {
-    parsed = JSON.parse(listOutput);
-  } catch {
-    throw new PrerequisiteUnavailableError("could not parse 'xcrun simctl list devices available -j' output");
-  }
-
-  const devices = Object.values(parsed.devices ?? {}).flat();
-  const iphones = devices.filter((device) => typeof device.name === 'string' && device.name.includes('iPhone'));
-  const chosen = iphones.find((device) => device.name === PREFERRED_SIMULATOR_NAME) ?? iphones[0];
-  if (!chosen) {
+  if (!override) {
     throw new PrerequisiteUnavailableError(
-      `no available iPhone Simulator found — install one in Xcode, or set HERMEX_ICON_SIMULATOR_UDID`,
+      'HERMEX_ICON_SIMULATOR_UDID is not set — explicit icon regeneration requires naming a destination Simulator explicitly, never guessing one',
     );
   }
-  return chosen.udid;
+  return override;
 }
 
 function runSimulatorRender(udid) {
@@ -175,7 +152,7 @@ function main() {
     copyFileSync(path.join(outputPath, attachment.exportedFileName), path.join(OUTPUT_DIR, `${name}.png`));
   }
 
-  writeFileSync(OUTPUT_MANIFEST_PATH, JSON.stringify({ generatedAt: new Date().toISOString(), count: names.length, names }, null, 2), 'utf8');
+  writeFileSync(OUTPUT_MANIFEST_PATH, `${JSON.stringify({ schemaVersion: 1, count: names.length, names }, null, 2)}\n`, 'utf8');
   rmSync(path.dirname(resultBundlePath), { recursive: true, force: true });
 
   console.log(`generate-icon-previews: wrote ${names.length} glyphs to ${path.relative(CATALOG_ROOT, OUTPUT_DIR)}.`);

@@ -54,9 +54,9 @@ enum HermesMotion {
         case .state:
             return .easeInOut(duration: bundle.duration)
         case .spatial:
-            return .smooth(extraBounce: 0)
+            return .smooth(duration: bundle.duration, extraBounce: 0)
         case .emphasized:
-            return .snappy
+            return .snappy(duration: bundle.duration, extraBounce: 0)
         }
     }
 }

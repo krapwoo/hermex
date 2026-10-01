@@ -5,7 +5,7 @@
  * the data map in `paths.ts`, and stays ready for a future non-native renderer to import too.
  */
 
-/** All icons from the Metro NYC Figma design system. */
+/** All icons available to this repository's generic template component library (`?catalog=template`). */
 export type IconName =
   | 'home'
   | 'briefcase'

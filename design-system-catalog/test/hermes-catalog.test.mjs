@@ -39,6 +39,7 @@ const ICON_RENDERER_PACKAGE_PATH = 'icon-renderer/Package.swift';
 const ICON_RENDERER_TEST_PATH = 'icon-renderer/Tests/IconRenderTests/IconRenderTests.swift';
 const ICON_RENDERER_GITIGNORE_PATH = 'icon-renderer/.gitignore';
 const NATIVE_PREVIEW_PACKAGE_JSON_PATH = 'native-preview/package.json';
+const GENERATED_ICON_DIRECTORY_PATH = 'native-preview/public/generated-icons';
 const SIMULATOR_UDID_PATTERN = /\b[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\b/i;
 const NATIVE_PREVIEW_GITIGNORE_PATH = 'native-preview/.gitignore';
 
@@ -863,6 +864,15 @@ test('Hermex Shadow is inserted immediately before Hermex Iconography in the Fou
   }
 });
 
+test('Hermex Iconography notes describe the checked-in browser assets and explicit regeneration path truthfully', () => {
+  const section = extractHermesSection(read(HERMES_SECTIONS_PATH), 'Hermex Iconography');
+
+  assert.match(section, /checked-in simulator-rendered PNG baseline/);
+  assert.match(section, /Glyph unavailable in browser.*error-only fallback/);
+  assert.match(section, /npm run generate:icons/);
+  assert.doesNotMatch(section, /tiles are explicitly unavailable/);
+});
+
 // Family plan 06, CC-2: the Iconography section imports two same-directory generated .json
 // artifacts directly (see test above) — TypeScript needs resolveJsonModule for those imports to
 // typecheck at all.
@@ -1572,15 +1582,14 @@ test('generate-icon-previews.mjs orchestrates a real iOS-runtime render on a por
   assert.match(src, /new Set/);
   assert.match(src, /\.flatMap\(/);
 
-  // Portability correction (2026-09-28): no committed source may hardcode a Simulator UDID. The
-  // destination must resolve at runtime: an explicit env override first, otherwise
-  // discovery of an available iPhone Simulator via `simctl`, preferring the named Design System
-  // device and falling back to another available iPhone — never macOS/AppKit.
+  // Portability correction (2026-09-28): no committed source may hardcode a Simulator UDID.
+  // Correction (explicit-destination-only): a guessed Simulator via `simctl` device discovery is
+  // itself non-reproducible, machine-local state, so the destination must resolve only from the
+  // required HERMEX_ICON_SIMULATOR_UDID env var — never macOS/AppKit, never a guessed device.
   assert.doesNotMatch(src, SIMULATOR_UDID_PATTERN, 'no machine-local Simulator UDID may be hardcoded');
-  assert.match(src, /process\.env\.HERMEX_ICON_SIMULATOR_UDID/, 'expected an explicit env override for the destination UDID, checked before simctl discovery');
-  assert.match(src, /'simctl',\s*'list',\s*'devices',\s*'available'/, 'expected simctl device discovery scoped to available devices');
-  assert.match(src, /Hermex Design System iPhone 17 Pro/, 'expected the named Design System simulator to still be preferred when present');
-  assert.match(src, /iPhone/, 'expected the fallback to another available iPhone');
+  assert.match(src, /process\.env\.HERMEX_ICON_SIMULATOR_UDID/, 'expected the required env var naming the destination UDID');
+  assert.doesNotMatch(src, /'simctl',\s*'list',\s*'devices',\s*'available'/, 'expected no simctl device-discovery fallback');
+  assert.doesNotMatch(src, /PREFERRED_SIMULATOR_NAME/, 'expected no named-device discovery preference, since discovery itself is retired');
   assert.match(src, /-destination',\s*`id=\$\{/, 'expected a concrete resolved id=<udid> destination passed to xcodebuild, not a name-based -destination');
 
   assert.match(src, /xcodebuild/);
@@ -1627,27 +1636,115 @@ test('Correction (2026-09-28): generate-icon-previews.mjs distinguishes optional
   );
 });
 
-test('Correction (2026-09-28): npm run web starts the dev server via the generator\'s best-effort mode even without Xcode/Simulator, while npm run generate:icons stays strict', () => {
+// Correction: `npm run web` wiring in icon generation as an implicit pre-step — even a best-effort
+// one — means a plain `npm run web` silently shells out to xcodebuild/simctl on every start. Normal
+// `npm run web` must be a plain dev-server start with no simulator/icon-generation pre-step at all;
+// regenerating glyphs is a separate, explicit, always-strict command.
+test('Correction: npm run web is browser-only and consumes a complete checked-in icon set, while npm run generate:icons stays a separate explicit command', () => {
   const packageJson = JSON.parse(read(NATIVE_PREVIEW_PACKAGE_JSON_PATH));
   assert.ok(packageJson.scripts['generate:icons'], 'expected a documented explicit "generate:icons" script');
   assert.match(packageJson.scripts['generate:icons'], /generate-icon-previews\.mjs/);
   assert.doesNotMatch(packageJson.scripts['generate:icons'], /--optional/, 'the explicit generate:icons command must stay strict, never best-effort');
 
-  assert.match(packageJson.scripts.web, /generate-icon-previews\.mjs/, 'expected `npm run web` to wire in generation rather than requiring a separate undocumented step');
-  assert.match(packageJson.scripts.web, /--optional\b/, "expected `npm run web` to invoke the generator's best-effort mode so a machine without Xcode can still start the dev server");
-  assert.doesNotMatch(packageJson.scripts.web, /&&\s*npm run generate:icons(?!\S)/, 'npm run web must not depend on the strict generate:icons script');
+  assert.doesNotMatch(
+    packageJson.scripts.web, /generate-icon-previews\.mjs/,
+    'expected `npm run web` to contain no icon-generation pre-step at all — not even a best-effort one',
+  );
+  assert.doesNotMatch(packageJson.scripts.web, /--optional\b/, 'expected no best-effort generation flag on `npm run web`, since it no longer calls the generator');
+  assert.doesNotMatch(packageJson.scripts.web, /&&/, 'expected `npm run web` to be a single plain command with no pre-step chained in front of it');
+  assert.match(packageJson.scripts.web, /^expo start --web\b/, 'expected `npm run web` to start Expo directly with no wrapping command');
 
   const gitignore = read(NATIVE_PREVIEW_GITIGNORE_PATH);
-  assert.match(gitignore, /public\/generated-icons|generated-icons/, 'expected generated PNGs/manifest to be gitignored, never committed');
+  assert.doesNotMatch(gitignore, /public\/generated-icons|generated-icons/, 'the browser icon assets must not be gitignored');
+
+  const inventory = JSON.parse(read(HERMES_ICON_INVENTORY_PATH));
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const names = [...new Set([
+    ...inventory.literals.map((entry) => entry.name),
+    ...trace.entries.flatMap((entry) => entry.resolvedNames),
+  ])].sort((a, b) => a.localeCompare(b));
+  assert.equal(names.length, 202);
+
+  const manifest = JSON.parse(read(`${GENERATED_ICON_DIRECTORY_PATH}/manifest.json`));
+  assert.deepEqual(manifest, { schemaVersion: 1, count: names.length, names });
+  for (const name of names) {
+    assert.ok(existsSync(path.join(ROOT, GENERATED_ICON_DIRECTORY_PATH, `${name}.png`)), `missing checked-in browser icon ${name}.png`);
+  }
+
+  const publishableAssets = execFileSync(
+    'git', ['ls-files', '--cached', '--others', '--exclude-standard', GENERATED_ICON_DIRECTORY_PATH],
+    { cwd: ROOT, encoding: 'utf8' },
+  )
+    .trim().split('\n').filter(Boolean);
+  assert.equal(publishableAssets.length, names.length + 1, 'expected all 202 PNGs plus manifest.json to be publishable by Git');
 });
 
-test('Correction (2026-09-28): README documents strict explicit generation vs. best-effort browser startup, the destination override env var, and the honest per-tile fallback, without a machine-local UDID', () => {
+// Correction: explicit simulator-backed regeneration must name its destination explicitly rather than
+// silently guessing one via `simctl` discovery — a guessed Simulator is exactly the kind of
+// machine-local, non-reproducible state this generator's own history (the retired hardcoded UDID) was
+// already corrected away from once.
+test('Correction: explicit icon regeneration requires HERMEX_ICON_SIMULATOR_UDID rather than silently falling back to simctl device discovery', () => {
+  const src = read(ICON_GENERATOR_SCRIPT_PATH);
+  assert.match(src, /HERMEX_ICON_SIMULATOR_UDID/, 'expected the explicit destination override env var to remain');
+  assert.doesNotMatch(
+    src,
+    /simctl['"],\s*\[\s*['"]list['"]/,
+    'expected no simctl device-discovery fallback — an explicit regeneration must require HERMEX_ICON_SIMULATOR_UDID rather than guessing an available iPhone Simulator',
+  );
+  assert.doesNotMatch(src, /PREFERRED_SIMULATOR_NAME/, 'expected no named-device discovery preference, since discovery itself is retired');
+});
+
+// Correction: `icons/types.ts`/`icons/paths.ts` document an unrelated, unverifiable "Metro NYC Figma
+// design system" icon set that belongs only to the separate, unmerged `?catalog=template` route (see
+// WHEN_TO_USE.md / CLAUDE.md's Design System section). The authoritative Hermex icon path — the Hermex
+// component-family previews — must render real, verified Apple SF Symbols (HermesIconReference's own
+// generated inventory/renderer), never that template icon set or its provenance claim.
+test('Correction: the authoritative Hermex icon path carries no unverifiable "Metro NYC design system" provenance claim or data — HermesComponentFamiliesPreviews does not import the template icon set', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.doesNotMatch(previewsSrc, /Metro NYC/i, 'the Hermex previews file must not carry the unverifiable Metro NYC provenance claim');
+  assert.doesNotMatch(
+    previewsSrc,
+    /from\s+['"]\.\.\/\.\.\/\.\.\/icons(\/|['"])/,
+    'expected no import from the generic template icon set (icons/) in the authoritative Hermex preview file — it documents real SF Symbols only',
+  );
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  assert.doesNotMatch(sectionsSrc, /Metro NYC/i, 'hermesSections.tsx must not carry the unverifiable Metro NYC provenance claim');
+
+  const iconReferenceSrc = read(HERMES_ICON_REFERENCE_PATH);
+  assert.doesNotMatch(iconReferenceSrc, /Metro NYC/i);
+});
+
+// ─── Web Loading: reduced motion ─────────────────────────────────────────────────────────────────
+// Correction: `Loading` (native/components/Loading/Loading.tsx) starts an unconditional
+// `Animated.loop(...)` with no `useReduceMotion()` check at all — unlike its siblings Button and
+// Shimmer, which both already gate their own looping/animated feedback behind the same
+// `useReduceMotion()` hook. An always-mounted decorative spinner that keeps looping regardless of the
+// user's reduced-motion preference (and regardless of whether it is still meaningfully visible) is
+// exactly the unbounded "continuously repainting animation" CLAUDE.md's Performance section asks us
+// to avoid.
+test('Correction: web Loading honors reduced motion with a static render and does not run a decorative loop unconditionally', () => {
+  const src = read('native/components/Loading/Loading.tsx');
+  assert.match(
+    src,
+    /function useReduceMotion\s*\(\s*\)\s*:\s*boolean/,
+    'expected Loading to define the same useReduceMotion() hook Button/Shimmer already use',
+  );
+  assert.match(src, /const reduceMotion = useReduceMotion\(\)/, 'expected Loading to read the reduced-motion preference');
+  assert.match(
+    src,
+    /useEffect\(\(\)\s*=>\s*\{\s*if\s*\(\s*reduceMotion\s*\)/,
+    'expected the animation useEffect to check reduceMotion first and return early instead of unconditionally starting Animated.loop',
+  );
+});
+
+test('Correction: README documents checked-in browser icons, explicit regeneration, the destination override, and the honest per-tile fallback', () => {
   const readme = read('README.md');
   assert.doesNotMatch(readme, SIMULATOR_UDID_PATTERN, 'no machine-local Simulator UDID may be documented');
   assert.match(readme, /HERMEX_ICON_SIMULATOR_UDID/, 'expected the README to document the destination override env var');
-  assert.match(readme, /--optional/, 'expected the README to name the best-effort flag npm run web uses');
+  assert.match(readme, /checked-in/i, 'expected the README to state that ordinary browser startup uses checked-in assets');
   assert.match(readme, /npm run generate:icons/, 'expected the README to still document the strict explicit generation command');
-  assert.match(readme, /Glyph unavailable in browser/, 'expected the README to name the existing per-tile fallback that best-effort mode preserves');
+  assert.match(readme, /Glyph unavailable in browser/, 'expected the README to name the existing per-tile fallback for an unexpectedly missing asset');
 });
 
 test('Correction (2026-09-28): machine-local Simulator UDID literals are absent from the generator and its documentation', () => {
@@ -1679,14 +1776,16 @@ test('the icon-renderer SwiftPM package renders through the real iOS UIKit/Swift
   assert.match(rendererGitignore, /\.build/);
 });
 
-test('npm run web makes the generated glyph previews available without an undocumented manual step, and a documented explicit generation command also exists', () => {
+// Normal browser startup consumes the checked-in set and never wires simulator regeneration in as a
+// pre-step. The per-tile fallback remains a defensive state for an unexpectedly missing/corrupt asset.
+test('npm run web consumes checked-in icon assets without an implicit generation pre-step', () => {
   const packageJson = JSON.parse(read(NATIVE_PREVIEW_PACKAGE_JSON_PATH));
   assert.ok(packageJson.scripts['generate:icons'], 'expected a documented explicit "generate:icons" script');
   assert.match(packageJson.scripts['generate:icons'], /generate-icon-previews\.mjs/);
-  assert.match(packageJson.scripts.web, /generate:icons|generate-icon-previews\.mjs/, 'expected `npm run web` to wire in generation rather than requiring a separate undocumented step');
+  assert.doesNotMatch(packageJson.scripts.web, /generate:icons|generate-icon-previews\.mjs/, 'expected `npm run web` to require no pre-step generation — the explicit command is documented and run separately');
 
   const gitignore = read(NATIVE_PREVIEW_GITIGNORE_PATH);
-  assert.match(gitignore, /public\/generated-icons|generated-icons/, 'expected generated PNGs/manifest to be gitignored, never committed');
+  assert.doesNotMatch(gitignore, /public\/generated-icons|generated-icons/, 'expected the browser icon assets to remain publishable');
 });
 
 // ─── Task 5: eight replayable motion demonstrations with Reduce Motion ──────────────────────────
@@ -2127,14 +2226,24 @@ test('Skeleton Loading is a new, foundation-only static primitive — no continu
   assert.match(previewsSrc, /variant="circle"/);
 });
 
-test('List / ListItem and SessionListItem.swift are new, foundation-only in this branch — SessionRowView.swift genuinely still exists and is not "retired", and no picker sheet or BotInboxView has migrated onto ListItem', () => {
+// Correction: a specialized, unadopted SessionListItem Swift struct (and its own matching
+// "SessionListItem" PreviewSpecimen) is scope creep the maintainer rejected — ListItem is the one
+// forward, generic foundation for this family, and a speculative session-specific composition with no
+// production caller is exactly the kind of machinery CLAUDE.md's "Taste"/"A note from Uzair" sections
+// ask us not to pre-build. ListItem itself, and the real production SessionRowView/SessionInteractiveRow
+// split, remain documented; only the specialized SessionListItem recommendation is retired.
+test('List / ListItem documents the generic foundation and the real production SessionRowView/SessionInteractiveRow split, but no longer recommends a specialized SessionListItem composition or source file', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'List / ListItem');
   assert.match(section, /Picker Row/);
-  assert.match(section, /SessionListItem/);
-  assert.match(section, /HermesMobile\/Features\/Shared\/ListItem\.swift/);
-  assert.match(section, /HermesMobile\/Features\/SessionList\/SessionListItem\.swift/, 'SessionListItem.swift is itself new in this branch, with no production caller');
-  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListComponents\.swift/, 'must not claim SessionListComponents.swift wraps the new SessionListItem — it keeps its own pre-existing row implementation');
+  assert.match(section, /HermesMobile\/Features\/Shared\/ListItem\.swift/, 'expected the generic ListItem to remain the documented forward foundation');
+  assert.doesNotMatch(section, /SessionListItem/, 'the specialized SessionListItem composition/recommendation must no longer be documented');
+  assert.doesNotMatch(
+    section,
+    /HermesMobile\/Features\/SessionList\/SessionListItem\.swift/,
+    'the specialized SessionListItem.swift source file must no longer be cited — it is scope creep with no production caller, not a recommendation to keep building toward'
+  );
+  assert.doesNotMatch(section, /HermesMobile\/Features\/SessionList\/SessionListComponents\.swift/, 'must not claim SessionListComponents.swift wraps ListItem — it keeps its own pre-existing row implementation');
   assert.doesNotMatch(section, /HermesMobile\/Features\/Bots\/BotsInboxView\.swift/, 'must not claim BotsInboxView.swift migrated onto ListItem');
   assert.doesNotMatch(section, /SessionRowView\.swift no longer exists|retired SessionRowView/i, 'SessionRowView.swift genuinely still exists in this worktree and is actively used — it was never split or retired');
   assert.match(section, /<ListItemFamilyGallery/);
@@ -2143,11 +2252,18 @@ test('List / ListItem and SessionListItem.swift are new, foundation-only in this
   assert.match(previewsSrc, /export function ListItemFamilyGallery/);
   const body = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
   assert.match(body, /Picker configuration/);
-  assert.match(body, /SessionListItem composition/);
+  assert.doesNotMatch(body, /SessionListItem composition/, 'the specialized SessionListItem PreviewSpecimen must be removed from the gallery');
 
   // Ground truth, independent of the catalog text: SessionRowView.swift must actually exist in this
   // worktree, so the catalog can never truthfully claim it was split or retired.
   assert.ok(existsSync(path.join(ROOT, '../HermesMobile/Features/SessionList/SessionRowView.swift')), 'SessionRowView.swift must exist in the target worktree');
+
+  // Ground truth: the specialized, unadopted SessionListItem.swift must actually be gone from
+  // production, not merely unmentioned in the catalog text above.
+  assert.ok(
+    !existsSync(path.join(ROOT, '../HermesMobile/Features/SessionList/SessionListItem.swift')),
+    'expected the specialized, foundation-only SessionListItem.swift to be deleted — ListItem is the forward foundation, not a session-specific specimen'
+  );
 });
 
 // Issue #607 (Popover Menu family slice, test-first phase): `HermexList` gains a second, explicit
@@ -3036,10 +3152,14 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
 // Native `.searchable` forwarding and `SearchFieldPlacement` are retired for the visible experience —
 // the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, and
 // platform accessibility. Production screens stay on their existing eight direct `.searchable` call
-// sites — migration is a separate issue. The preview becomes an interactive Hermex Search family
-// demonstration with custom Hermex field chrome (not a bare native reconstruction), and its
-// adoptionStatus truthfully reports zero production adoption.
-test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful zero-adoption status, and an interactive family preview with custom chrome', () => {
+// sites — migrating a *screen* onto it is a separate issue. But `HermexSelectionSheet.swift`
+// (HermesMobile/Features/Shared/HermexSelectionSheet.swift) already composes `HermexSearchField`
+// directly for its optional search slot, a real, current production call site — so Search cannot
+// truthfully claim zero production adoption the way a genuinely uncalled foundation component can;
+// it is partially adopted, the same documented pattern already used for Hermes Avatar/Hermex
+// Colors/Hermex Iconography/Transcript Activity. The preview becomes an interactive Hermex Search
+// family demonstration with custom Hermex field chrome (not a bare native reconstruction).
+test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful partially-adopted status naming its real HermexSelectionSheet caller, and an interactive family preview with custom chrome', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
 
@@ -3049,11 +3169,21 @@ test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation
   assert.doesNotMatch(search, /`\.searchable`\s*forwarding|forwards straight to native `\.searchable`/i, 'native .searchable forwarding is retired');
   assert.doesNotMatch(search, /SearchFieldPlacement/, 'SearchFieldPlacement is retired; Hermex cannot truthfully reproduce native navigation-drawer placement');
 
+  // Correction: HermexSelectionSheet.swift is a real, current production call site for
+  // HermexSearchField (it renders it directly for its optional search slot) — Search is not a
+  // genuinely uncalled foundation component, and must not contradict that fact elsewhere in the
+  // catalog (see the dedicated contradiction test below).
   const state = extractAdoptionState(search);
-  assert.equal(state, 'foundation-available', 'expected Search to remain foundation-available, not production-adopted, in this slice');
-  assert.match(search, /eight existing|eight current/i, 'expected the adoptionStatus detail to name the eight unchanged production .searchable callers');
-  assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue|separate slice/i, 'expected the adoptionStatus/notes to state migration is deferred to another slice/issue');
-  assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim production adoption');
+  assert.equal(
+    state, 'partially-adopted',
+    'expected Search to report partially-adopted — HermexSelectionSheet.swift already composes ' +
+      'HermexSearchField directly, so "foundation-available" (zero production adoption) is false'
+  );
+  assert.match(search, /HermexSelectionSheet(\.swift)?/, 'expected the adoptionStatus/notes to name HermexSelectionSheet as a real current caller of HermexSearchField');
+  assert.doesNotMatch(search, /no production call site yet|zero production adoption/i, 'Search must not claim zero production adoption — HermexSelectionSheet.swift already calls HermexSearchField directly');
+  assert.match(search, /eight existing|eight current/i, 'expected the adoptionStatus detail to still name the eight unchanged production .searchable *screen* callers');
+  assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue|separate slice/i, 'expected the adoptionStatus/notes to state migrating a screen is deferred to another slice/issue');
+  assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim full production adoption — no screen has migrated off .searchable');
 
   assert.match(search, /HermesMobile\/Features\/Shared\/HermexSearch\.swift/, 'expected implementationNotes.sourcePaths to cite HermexSearch.swift');
 
@@ -3176,7 +3306,12 @@ test('Correction (2026-09-26): ListItem genuinely supports a title-adjacent slot
   assert.ok(pressableBlock, 'expected a Pressable branch guarded by isInteractive');
 });
 
-test('Correction (final-review truthfulness pass): the ListItem preview\'s SessionListItem-composition caption truthfully distinguishes the live production SessionRowView (wrapped by SessionInteractiveRow) from the new, foundation-only SessionListItem', () => {
+// Correction: the specialized SessionListItem composition/caption is retired outright (see the List /
+// ListItem test above) rather than kept and re-worded — so this test no longer requires a
+// SessionListItem caption to exist. What remains legitimate is the truthful fact this caption was
+// protecting: SessionRowView.swift genuinely still exists and is production's real, live session row,
+// wrapped by SessionInteractiveRow, and was never retired or split.
+test('Correction (SessionListItem retirement): the ListItem preview no longer carries a SessionListItem-composition caption, and nothing in the gallery falsely claims SessionRowView was retired or split', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
   assert.doesNotMatch(
@@ -3184,13 +3319,7 @@ test('Correction (final-review truthfulness pass): the ListItem preview\'s Sessi
     /SessionRowView\.swift no longer exists|retired SessionRowView|split into SessionListItem/i,
     'SessionRowView.swift genuinely still exists and is the real, adopted production row — it was never retired or split',
   );
-  assert.match(body, /SessionRowView/, 'expected the caption to name SessionRowView as production\'s real, live session row');
-  assert.match(body, /SessionInteractiveRow/, 'expected the caption to name SessionInteractiveRow as the caller that wraps it in production');
-  assert.match(body, /wraps SessionRowView/, 'expected the caption to state SessionInteractiveRow wraps SessionRowView, not SessionListItem');
-  assert.match(body, /SessionListItem/, 'expected the caption to still name the foundation SessionListItem composition');
-  assert.match(body, /foundation-only|no production call site/i, 'expected the caption to state SessionListItem is unadopted/foundation-only');
-  assert.doesNotMatch(body, /highlights? a search match inside the title/i, 'SessionRowView keeps its title plain; production highlights the match in a separate excerpt line below it');
-  assert.match(body, /separate highlighted\s+excerpt line beneath the title/, 'expected the caption to describe the production SessionSearchExcerpt anatomy truthfully');
+  assert.doesNotMatch(body, /SessionListItem/, 'the specialized SessionListItem composition/caption must no longer appear in the gallery');
 });
 
 test('Correction (2026-09-26): the ListItem preview visibly exercises the title-adjacent slot, description/metadata, trailing data/accessory, disabled, and loading configurations', () => {

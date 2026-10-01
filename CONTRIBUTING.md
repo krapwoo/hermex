@@ -111,17 +111,15 @@ For frontend contributions:
   the JSON file directly.
 - `scripts/hermex_design_system_adoption_audit.py` (PR CI's Design System
   Contract job) protects the foundation layer: it fails closed if a required
-  foundation file or one of its load-bearing API snippets goes missing, if the
-  approved icon-size or avatar/icon-pairing scale drifts, or if a frozen
-  legacy-baseline count (native segmented controls, direct
-  `ContentUnavailableView` calls) grows or gains a new call site. It does not
-  rewrite code, and it does not require or prove that any production screen has
-  migrated onto a Design System component — an automatic check only enforces
-  the specific contracts encoded above, nothing broader. If your PR
-  legitimately adds, removes, or migrates one of the frozen baseline's call
-  sites, update that baseline dict in the same PR with a comment explaining
-  why — the script's own module docstring names the owner/removal-condition
-  rule for each baseline.
+  foundation file or one of its load-bearing API snippets goes missing, or if
+  the approved icon-size or avatar/icon-pairing scale drifts. It does not
+  rewrite code, does not count or restrict native-control call sites
+  (segmented pickers, `ContentUnavailableView`, `.searchable`, `TextField`,
+  `SecureField`) anywhere in production, and does not require or prove that
+  any production screen has migrated onto a Design System component —
+  migrating one is separate, issue-driven work, not something this script
+  gates. An automatic check only enforces the specific contracts encoded
+  above, nothing broader.
 
 ## App bug or server bug?
 

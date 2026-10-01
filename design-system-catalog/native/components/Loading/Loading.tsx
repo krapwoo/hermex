@@ -1,9 +1,28 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Animated, Easing, AccessibilityInfo, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { DS_SEMANTIC, DS_MOTION_LOOP_DURATION } from '../../../tokens';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+// Same pattern as Shimmer.tsx/Button.tsx/HermesMotionReference.tsx: read the system preference once
+// via `AccessibilityInfo.isReduceMotionEnabled()`, then keep it current via `reduceMotionChanged` —
+// no new dependency, both calls are the existing `react-native` AccessibilityInfo API.
+function useReduceMotion(): boolean {
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) setReduceMotion(enabled);
+    });
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+  return reduceMotion;
+}
 
 // A 20×20 viewBox, ~292° arc (radius 9, centre 10,10), 2px stroke. The arc is a single stroke whose
 // dash exactly covers its length, so animating the dash offset draws it on (fills) then off (empties).
@@ -40,7 +59,8 @@ export interface LoadingProps {
  *    equivalent for a plain width fill).
  * Both are JS-driven (`useNativeDriver: false`), so Fabric-safe: a continuous loop on an
  * always-mounted view, no imperative setValue. Used internally by Button and Pill for their own
- * loading states (circle).
+ * loading states (circle). Reduce Motion replaces the loop with a static half-drawn/half-filled
+ * render — still visibly a loading indicator, never a repainting decorative loop.
  */
 export function Loading({
   variant = 'circle',
@@ -52,12 +72,19 @@ export function Loading({
   duration = DS_MOTION_LOOP_DURATION.spinner,
   style,
 }: LoadingProps) {
+  const reduceMotion = useReduceMotion();
   // Circle drives this directly as a dash offset (ARC_LEN..-ARC_LEN); linear reads it as 0..1 and
   // interpolates to a width percentage. Different ranges, same underlying value — each variant's own
   // effect below sets up the animation appropriate to it.
   const progress = useRef(new Animated.Value(variant === 'circle' ? ARC_LEN : 0)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      // A static half-drawn arc / half-filled bar — still reads as "loading", never an unconditional
+      // off-screen or always-repainting Animated.loop.
+      progress.setValue(variant === 'circle' ? 0 : 0.5);
+      return;
+    }
     const loop =
       variant === 'circle'
         ? Animated.loop(
@@ -76,7 +103,7 @@ export function Loading({
           );
     loop.start();
     return () => loop.stop();
-  }, [variant, duration, progress]);
+  }, [variant, duration, progress, reduceMotion]);
 
   if (variant === 'linear') {
     const fillWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });

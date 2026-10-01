@@ -1,11 +1,12 @@
 /**
  * Platform-neutral icon DATA — no JSX, no react-native, no DOM.
  *
- * Every icon from the Metro NYC design system transcribed as a plain primitive list, kept separate
- * from any renderer on purpose: `Icon.native.tsx` (react-native-svg) consumes it today, and a future
- * `Icon.web.tsx` (DOM `<svg>`) or other platform renderer can consume the same data with zero
- * changes here — see the "porting to another platform" note in the repo README. Path `d` strings are
- * copied verbatim from the original components.
+ * Every icon for this repository's generic template component library (`?catalog=template`),
+ * transcribed as a plain primitive list and kept separate from any renderer on purpose:
+ * `Icon.native.tsx` (react-native-svg) consumes it today, and a future `Icon.web.tsx` (DOM `<svg>`)
+ * or other platform renderer can consume the same data with zero changes here — see the "porting to
+ * another platform" note in the repo README. This set has no claimed external design-system
+ * provenance beyond its own visual style below.
  *
  * Most icons are Lucide-style: a 24×24 viewBox, stroke-only, round caps/joins, default
  * strokeWidth 2. Exceptions carry `mode: 'fill'` (see MODE FILL below).

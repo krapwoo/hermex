@@ -12,7 +12,7 @@ enum HermexDialogFooterAxis {
 /// pattern as `HermexAttachmentPickerPresentation`.
 enum HermexDialogPresentation {
     static let overlayHostAccessibilityIdentifier = "hermex-dialog-overlay-host"
-    static let closeButtonAccessibilityLabel = "Close dialog"
+    static let closeButtonAccessibilityLabel = String(localized: "Close dialog")
     static let closeButtonAccessibilityIdentifier = "hermex-dialog-close-button"
     static let surfaceAccessibilityIdentifier = "hermex-dialog-surface"
 }

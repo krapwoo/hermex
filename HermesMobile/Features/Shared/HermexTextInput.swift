@@ -280,7 +280,7 @@ struct HermexCodeInput: View {
                         .tint(.clear)
                         .focused(focus)
                         .accessibilityLabel(Text(label))
-                        .accessibilityValue(Text(verbatim: accessibilityValue))
+                        .accessibilityValue(Text(accessibilityValue))
                         .accessibilityHint(accessibilityHint)
                 }
             }
@@ -336,9 +336,9 @@ struct HermexCodeInput: View {
 
     private var accessibilityValue: String {
         if code.isEmpty {
-            return "No digits entered. 0 of \(length)."
+            return String(localized: "No digits entered. 0 of \(length).")
         }
-        return "\(code). \(code.count) of \(length) digits entered."
+        return String(localized: "\(code). \(code.count) of \(length) digits entered.")
     }
 
     private var accessibilityHint: Text {

@@ -30,6 +30,39 @@ import SwiftUI
 /// #607, DSR2-09), exercising the unadopted `HermexComposerToolbar` foundation's elevated and
 /// transparent appearances at fitting and overflowing content widths — the lab's own fixture, not a
 /// production call site.
+// MARK: - Deliberately non-extractable debug-only copy
+//
+// This whole file only compiles in DEBUG, but CI's Debug build still runs the compiler's string
+// extraction over any literal reaching a `LocalizedStringKey`/`Text(_:)`-typed position, which would
+// otherwise force throwaway developer-lab copy no user ever sees into Localizable.xcstrings. Every
+// literal below is a plain, non-`LocalizedStringKey` `String` constant (or routed through
+// `Text(verbatim:)`), so none of it is ever extracted — see docs/agents/i18n.md.
+private let labRowActionsLabel = "Row actions"
+private let labSearchSessionsPrompt = "Search sessions"
+private let labCancelLabel = "Cancel"
+private let labSaveLabel = "Save"
+private let labNameFieldLabel = "Name"
+private let labNameFieldPrompt = "Enter your name"
+private let labPasswordFieldLabel = "Password"
+private let labPasswordFieldPrompt = "Enter your password"
+
+private func labSessionsCountSubtitle(_ count: Int) -> Text {
+    Text(verbatim: "\(count) sessions")
+}
+
+/// Every trigger button below is throwaway developer-lab copy — `title` is a plain, non-extractable
+/// `String` (not a `LocalizedStringKey`), so its literal call sites never reach the compiler's string
+/// extraction the way `Button(_ titleKey: LocalizedStringKey, action:)` would.
+private func labButton(_ title: String, action: @escaping () -> Void) -> some View {
+    Button(LocalizedStringKey(title), action: action)
+}
+
+/// Converts a plain, non-extractable `String` into the `LocalizedStringKey` a handful of other
+/// foundation components below require (`HermexBottomSheet`, `HermexPopoverMenuAction`,
+/// `HermexSelectionSheetOption`, `HermexSelectionSheet`, `HermexSelectionSheetSearch`) — same
+/// bypass as `labButton` above.
+private func lk(_ value: String) -> LocalizedStringKey { LocalizedStringKey(value) }
+
 struct HermexOverlayLab: View {
     @State private var forceReduceMotion = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-motion")
     @State private var forceReduceTransparency = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-reduce-transparency")
@@ -250,12 +283,12 @@ struct HermexOverlayLab: View {
 
             Text(verbatim: "Elevated, fitting content").font(.subheadline.weight(.semibold))
             HermexComposerToolbar(appearance: .elevated) {
-                Button("Model") {}
+                labButton("Model") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
-                Button("Profile") {}
+                labButton("Profile") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
                 HermexComposerToolbarDivider()
-                Button("Attach") {}
+                labButton("Attach") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
             }
             .accessibilityIdentifier("overlay-lab-composer-toolbar-elevated-fitting")
@@ -263,7 +296,7 @@ struct HermexOverlayLab: View {
             Text(verbatim: "Elevated, overflowing content").font(.subheadline.weight(.semibold))
             HermexComposerToolbar(appearance: .elevated) {
                 ForEach(1...10, id: \.self) { index in
-                    Button("Option \(index)") {}
+                    labButton("Option \(index)") {}
                         .buttonStyle(.hermex(.small, emphasis: .secondary))
                 }
             }
@@ -271,12 +304,12 @@ struct HermexOverlayLab: View {
 
             Text(verbatim: "Transparent, inside Card").font(.subheadline.weight(.semibold))
             HermexComposerToolbar(appearance: .transparent) {
-                Button("Model") {}
+                labButton("Model") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
-                Button("Profile") {}
+                labButton("Profile") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
                 HermexComposerToolbarDivider()
-                Button("Attach") {}
+                labButton("Attach") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
             }
             .padding(HermexCardMetrics.contentPadding)
@@ -288,7 +321,7 @@ struct HermexOverlayLab: View {
             Text(verbatim: "Elevated, mixed content").font(.subheadline.weight(.semibold))
             HermexComposerToolbar(appearance: .elevated) {
                 Tag(label: "Draft", tint: .orange, size: .compact)
-                Button("Model") {}
+                labButton("Model") {}
                     .buttonStyle(.hermex(.small, emphasis: .secondary))
             }
             .accessibilityIdentifier("overlay-lab-composer-toolbar-mixed-content")
@@ -354,7 +387,7 @@ private struct HermexOverlayLabHorizontalConfirmation: View {
     @State private var isPresented = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-auto-dialog")
 
     var body: some View {
-        Button("Short confirmation (horizontal)") { isPresented = true }
+        labButton("Short confirmation (horizontal)") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-dialog-horizontal-trigger")
             .hermexDialog(isPresented: $isPresented, footerAxis: .horizontal) {
                 Text(verbatim: "Delete this draft?").font(.headline)
@@ -362,9 +395,9 @@ private struct HermexOverlayLabHorizontalConfirmation: View {
                 Text(verbatim: "This removes the unsent draft from this device. It cannot be undone.")
                     .font(.body)
             } footer: { context in
-                Button("Cancel") { context.dismiss() }
+                labButton("Cancel") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .secondary))
-                Button("Delete") { context.dismissAfter {} }
+                labButton("Delete") { context.dismissAfter {} }
                     .buttonStyle(.hermex(.medium, emphasis: .destructive))
             }
     }
@@ -375,7 +408,7 @@ private struct HermexOverlayLabVerticalExplanation: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Explanatory dialog (vertical)") { isPresented = true }
+        labButton("Explanatory dialog (vertical)") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-dialog-vertical-trigger")
             .hermexDialog(isPresented: $isPresented, footerAxis: .vertical) {
                 Text(verbatim: "Turn on notifications?").font(.headline)
@@ -383,9 +416,9 @@ private struct HermexOverlayLabVerticalExplanation: View {
                 Text(verbatim: "Hermex can notify you when a session needs your attention, even while the app is closed.")
                     .font(.body)
             } footer: { context in
-                Button("Turn On") { context.dismissAfter {} }
+                labButton("Turn On") { context.dismissAfter {} }
                     .buttonStyle(.hermex(.medium, emphasis: .primary))
-                Button("Not Now") { context.dismiss() }
+                labButton("Not Now") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .neutral))
             }
     }
@@ -396,7 +429,7 @@ private struct HermexOverlayLabLongBody: View {
     @State private var isPresented = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-auto-long-dialog")
 
     var body: some View {
-        Button("Long-but-valid body") { isPresented = true }
+        labButton("Long-but-valid body") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-dialog-long-body-trigger")
             .hermexDialog(isPresented: $isPresented) {
                 Text(verbatim: "Server certificate changed").font(.headline)
@@ -404,9 +437,9 @@ private struct HermexOverlayLabLongBody: View {
                 Text(verbatim: "The certificate this server presents no longer matches the one Hermex trusted before. This can happen after a routine renewal, or it can mean the connection is no longer private. Only continue if you recognize this change.")
                     .font(.body)
             } footer: { context in
-                Button("Cancel") { context.dismiss() }
+                labButton("Cancel") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .secondary))
-                Button("Continue") { context.dismissAfter {} }
+                labButton("Continue") { context.dismissAfter {} }
                     .buttonStyle(.hermex(.medium, emphasis: .primary))
             }
     }
@@ -417,7 +450,7 @@ private struct HermexOverlayLabAccessibilitySize: View {
     @State private var isPresented = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-auto-accessibility-dialog")
 
     var body: some View {
-        Button("Largest accessibility text size") { isPresented = true }
+        labButton("Largest accessibility text size") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-dialog-accessibility-size-trigger")
             .hermexDialog(isPresented: $isPresented, footerAxis: .vertical) {
                 Text(verbatim: "Stop this session?").font(.headline)
@@ -425,9 +458,9 @@ private struct HermexOverlayLabAccessibilitySize: View {
                 Text(verbatim: "The agent stops after finishing its current step.")
                     .font(.body)
             } footer: { context in
-                Button("Keep Going") { context.dismiss() }
+                labButton("Keep Going") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .secondary))
-                Button("Stop") { context.dismissAfter {} }
+                labButton("Stop") { context.dismissAfter {} }
                     .buttonStyle(.hermex(.medium, emphasis: .destructive))
             }
             .dynamicTypeSize(.accessibility5)
@@ -444,7 +477,7 @@ private struct HermexOverlayLabRepeatedPresentDismiss: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Repeated present/dismiss") { isPresented = true }
+            labButton("Repeated present/dismiss") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-dialog-repeated-trigger")
             Text(verbatim: "Closed \(closeCount) times")
                 .font(.caption)
@@ -457,7 +490,7 @@ private struct HermexOverlayLabRepeatedPresentDismiss: View {
             Text(verbatim: "Close this and reopen it a few times to confirm nothing leaks or double-fires.")
                 .font(.body)
         } footer: { context in
-            Button("Close") { context.dismissAfter { closeCount += 1 } }
+            labButton("Close") { context.dismissAfter { closeCount += 1 } }
                 .buttonStyle(.hermex(.medium, emphasis: .primary))
         }
     }
@@ -470,7 +503,7 @@ private struct HermexOverlayLabDismissThenRun: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Dismiss-then-run counter") { isPresented = true }
+            labButton("Dismiss-then-run counter") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-dialog-dismiss-then-run-trigger")
             Text(verbatim: "Action ran \(actionCount) times")
                 .font(.caption)
@@ -483,9 +516,9 @@ private struct HermexOverlayLabDismissThenRun: View {
             Text(verbatim: "The counter below only advances after this dialog has fully closed.")
                 .font(.body)
         } footer: { context in
-            Button("Cancel") { context.dismiss() }
+            labButton("Cancel") { context.dismiss() }
                 .buttonStyle(.hermex(.medium, emphasis: .secondary))
-            Button("Archive") { context.dismissAfter { actionCount += 1 } }
+            labButton("Archive") { context.dismissAfter { actionCount += 1 } }
                 .buttonStyle(.hermex(.medium, emphasis: .primary))
         }
     }
@@ -498,9 +531,9 @@ private struct HermexOverlayLabBackdropBlocksInput: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Backdrop-blocks-input") { isPresented = true }
+            labButton("Backdrop-blocks-input") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-dialog-backdrop-trigger")
-            Button("Background counter: \(backgroundTapCount)") { backgroundTapCount += 1 }
+            labButton("Background counter: \(backgroundTapCount)") { backgroundTapCount += 1 }
                 .accessibilityIdentifier("overlay-lab-background-tap-counter")
         }
         .hermexDialog(isPresented: $isPresented) {
@@ -509,7 +542,7 @@ private struct HermexOverlayLabBackdropBlocksInput: View {
             Text(verbatim: "Tapping the dimmed area behind this dialog must never change the counter behind it.")
                 .font(.body)
         } footer: { context in
-            Button("Close") { context.dismiss() }
+            labButton("Close") { context.dismiss() }
                 .buttonStyle(.hermex(.medium, emphasis: .primary))
         }
     }
@@ -520,7 +553,7 @@ private struct HermexOverlayLabAccessibilityOrder: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Accessibility order + focus return") { isPresented = true }
+        labButton("Accessibility order + focus return") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-a11y-order-trigger")
             .hermexDialog(isPresented: $isPresented) {
                 Text(verbatim: "Heading reads first")
@@ -531,7 +564,7 @@ private struct HermexOverlayLabAccessibilityOrder: View {
                     .font(.body)
                     .accessibilityIdentifier("overlay-lab-a11y-body")
             } footer: { context in
-                Button("Footer reads third") { context.dismiss() }
+                labButton("Footer reads third") { context.dismiss() }
                     .buttonStyle(.hermex(.medium, emphasis: .secondary))
                     .accessibilityIdentifier("overlay-lab-a11y-footer")
             }
@@ -607,10 +640,10 @@ private struct HermexOverlayLabBottomSheetFollowup: View {
     @State private var isPresented = ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab-auto-bottom-sheet")
 
     var body: some View {
-        Button("Bottom sheet (icon-first TopNav)") { isPresented = true }
+        labButton("Bottom sheet (icon-first TopNav)") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-followup-bottom-sheet-trigger")
             .sheet(isPresented: $isPresented) {
-                HermexBottomSheet("Rename Session") {
+                HermexBottomSheet(lk("Rename Session")) {
                     Text(verbatim: "Choose a name that helps you find this session later.")
                         .font(.body)
                         .padding(.horizontal, HermesSpacing.screenHorizontal)
@@ -621,18 +654,18 @@ private struct HermexOverlayLabBottomSheetFollowup: View {
                     } label: {
                         Image(systemName: "xmark")
                     }
-                    .accessibilityLabel(Text("Cancel"))
+                    .accessibilityLabel(Text(verbatim: labCancelLabel))
                 } trailingPrimary: {
                     Button {
                         isPresented = false
                     } label: {
                         Image(systemName: "checkmark")
                     }
-                    .accessibilityLabel(Text("Save"))
+                    .accessibilityLabel(Text(verbatim: labSaveLabel))
                 } footer: {
-                    Button("Cancel") { isPresented = false }
+                    labButton("Cancel") { isPresented = false }
                         .buttonStyle(.hermex(.medium, emphasis: .secondary))
-                    Button("Save") { isPresented = false }
+                    labButton("Save") { isPresented = false }
                         .buttonStyle(.hermex(.medium, emphasis: .primary))
                 }
             }
@@ -646,15 +679,15 @@ private struct HermexOverlayLabPopoverBelowFit: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Below fit (top anchor)") { isPresented = true }
+        labButton("Below fit (top anchor)") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-below-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
-                    HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
-                    HermexPopoverMenuAction(id: "rename", title: "Rename", systemImage: "pencil") {}
+                    HermexPopoverMenuAction(id: "share", title: lk("Share"), systemImage: "square.and.arrow.up") {},
+                    HermexPopoverMenuAction(id: "duplicate", title: lk("Duplicate"), systemImage: "plus.square.on.square") {},
+                    HermexPopoverMenuAction(id: "rename", title: lk("Rename"), systemImage: "pencil") {}
                 ]
             )
     }
@@ -666,15 +699,15 @@ private struct HermexOverlayLabPopoverAboveFlip: View {
     var body: some View {
         VStack {
             Spacer(minLength: 320)
-            Button("Above flip (bottom anchor)") { isPresented = true }
+            labButton("Above flip (bottom anchor)") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-popover-above-trigger")
                 .hermexPopoverMenu(
                     isPresented: $isPresented,
-                    accessibilityLabel: Text("Row actions"),
+                    accessibilityLabel: Text(verbatim: labRowActionsLabel),
                     actions: [
-                        HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
-                        HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
-                        HermexPopoverMenuAction(id: "rename", title: "Rename", systemImage: "pencil") {}
+                        HermexPopoverMenuAction(id: "share", title: lk("Share"), systemImage: "square.and.arrow.up") {},
+                        HermexPopoverMenuAction(id: "duplicate", title: lk("Duplicate"), systemImage: "plus.square.on.square") {},
+                        HermexPopoverMenuAction(id: "rename", title: lk("Rename"), systemImage: "pencil") {}
                     ]
                 )
         }
@@ -686,14 +719,14 @@ private struct HermexOverlayLabPopoverLeadingClamp: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Leading clamp") { isPresented = true }
+        labButton("Leading clamp") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-leading-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "pin", title: "Pin", systemImage: "pin") {},
-                    HermexPopoverMenuAction(id: "archive", title: "Archive", systemImage: "archivebox") {}
+                    HermexPopoverMenuAction(id: "pin", title: lk("Pin"), systemImage: "pin") {},
+                    HermexPopoverMenuAction(id: "archive", title: lk("Archive"), systemImage: "archivebox") {}
                 ]
             )
     }
@@ -703,14 +736,14 @@ private struct HermexOverlayLabPopoverTrailingClamp: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Trailing clamp") { isPresented = true }
+        labButton("Trailing clamp") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-trailing-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "pin", title: "Pin", systemImage: "pin") {},
-                    HermexPopoverMenuAction(id: "archive", title: "Archive", systemImage: "archivebox") {}
+                    HermexPopoverMenuAction(id: "pin", title: lk("Pin"), systemImage: "pin") {},
+                    HermexPopoverMenuAction(id: "archive", title: lk("Archive"), systemImage: "archivebox") {}
                 ]
             )
     }
@@ -724,16 +757,16 @@ private struct HermexOverlayLabPopoverLongScroll: View {
     private var actions: [HermexPopoverMenuAction] {
         (1...12).map { index in
             index == 12
-                ? HermexPopoverMenuAction(id: "last", title: "Last action") { lastActionRunCount += 1 }
-                : HermexPopoverMenuAction(id: index, title: "Action \(index)") {}
+                ? HermexPopoverMenuAction(id: "last", title: lk("Last action")) { lastActionRunCount += 1 }
+                : HermexPopoverMenuAction(id: index, title: lk("Action \(index)")) {}
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Long list (internal scroll)") { isPresented = true }
+            labButton("Long list (internal scroll)") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-popover-long-scroll-trigger")
-                .hermexPopoverMenu(isPresented: $isPresented, accessibilityLabel: Text("Row actions"), actions: actions)
+                .hermexPopoverMenu(isPresented: $isPresented, accessibilityLabel: Text(verbatim: labRowActionsLabel), actions: actions)
             Text(verbatim: "Last action ran \(lastActionRunCount) times")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -747,14 +780,14 @@ private struct HermexOverlayLabPopoverDisabledFirstRow: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Disabled first row") { isPresented = true }
+        labButton("Disabled first row") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-disabled-first-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "unavailable", title: "Unavailable", isEnabled: false) {},
-                    HermexPopoverMenuAction(id: "available", title: "Available") {}
+                    HermexPopoverMenuAction(id: "unavailable", title: lk("Unavailable"), isEnabled: false) {},
+                    HermexPopoverMenuAction(id: "available", title: lk("Available")) {}
                 ]
             )
     }
@@ -765,14 +798,14 @@ private struct HermexOverlayLabPopoverDestructiveRow: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Destructive row") { isPresented = true }
+        labButton("Destructive row") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-destructive-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "duplicate", title: "Duplicate", systemImage: "plus.square.on.square") {},
-                    HermexPopoverMenuAction(id: "delete", title: "Delete", systemImage: "trash", role: .destructive) {}
+                    HermexPopoverMenuAction(id: "duplicate", title: lk("Duplicate"), systemImage: "plus.square.on.square") {},
+                    HermexPopoverMenuAction(id: "delete", title: lk("Delete"), systemImage: "trash", role: .destructive) {}
                 ]
             )
     }
@@ -785,12 +818,12 @@ private struct HermexOverlayLabPopoverOutsideTapDismiss: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Outside-tap dismissal") { isPresented = true }
+            labButton("Outside-tap dismissal") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-popover-outside-tap-trigger")
                 .hermexPopoverMenu(
                     isPresented: $isPresented,
-                    accessibilityLabel: Text("Row actions"),
-                    actions: [HermexPopoverMenuAction(id: "run", title: "Run") { actionRunCount += 1 }]
+                    accessibilityLabel: Text(verbatim: labRowActionsLabel),
+                    actions: [HermexPopoverMenuAction(id: "run", title: lk("Run")) { actionRunCount += 1 }]
                 )
             Text(verbatim: "Action ran \(actionRunCount) times")
                 .font(.caption)
@@ -807,12 +840,12 @@ private struct HermexOverlayLabPopoverDismissThenRun: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Dismiss-then-run counter") { isPresented = true }
+            labButton("Dismiss-then-run counter") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-popover-dismiss-then-run-trigger")
                 .hermexPopoverMenu(
                     isPresented: $isPresented,
-                    accessibilityLabel: Text("Row actions"),
-                    actions: [HermexPopoverMenuAction(id: "archive", title: "Archive") { actionRunCount += 1 }]
+                    accessibilityLabel: Text(verbatim: labRowActionsLabel),
+                    actions: [HermexPopoverMenuAction(id: "archive", title: lk("Archive")) { actionRunCount += 1 }]
                 )
             Text(verbatim: "Action ran \(actionRunCount) times")
                 .font(.caption)
@@ -827,14 +860,14 @@ private struct HermexOverlayLabPopoverAccessibilitySize: View {
     @State private var isPresented = false
 
     var body: some View {
-        Button("Largest accessibility text size") { isPresented = true }
+        labButton("Largest accessibility text size") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-popover-accessibility-size-trigger")
             .hermexPopoverMenu(
                 isPresented: $isPresented,
-                accessibilityLabel: Text("Row actions"),
+                accessibilityLabel: Text(verbatim: labRowActionsLabel),
                 actions: [
-                    HermexPopoverMenuAction(id: "share", title: "Share", systemImage: "square.and.arrow.up") {},
-                    HermexPopoverMenuAction(id: "delete", title: "Delete", systemImage: "trash", role: .destructive) {}
+                    HermexPopoverMenuAction(id: "share", title: lk("Share"), systemImage: "square.and.arrow.up") {},
+                    HermexPopoverMenuAction(id: "delete", title: lk("Delete"), systemImage: "trash", role: .destructive) {}
                 ]
             )
             .dynamicTypeSize(.accessibility5)
@@ -941,7 +974,7 @@ private struct HermexOverlayLabAccordionFollowup: View {
                 expansion: .localSingle(initiallyExpanded: "hermex"),
                 bodyItems: { $0.rows },
                 headerTitle: { Text($0.title) },
-                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerSubtitle: { labSessionsCountSubtitle($0.rows.count) },
                 headerAccessibilityLabel: { Text($0.title) },
                 headerIsDisabled: { _ in false },
                 headerLeading: { _ in HermexAvatar(systemImage: "folder", size: .small) },
@@ -990,7 +1023,7 @@ private struct HermexOverlayLabAccordionNoLeadingFollowup: View {
                 expansion: .localSingle(initiallyExpanded: "hermex-no-leading"),
                 bodyItems: { $0.rows },
                 headerTitle: { Text($0.title) },
-                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerSubtitle: { labSessionsCountSubtitle($0.rows.count) },
                 headerAccessibilityLabel: { Text($0.title) },
                 headerIsDisabled: { _ in false },
                 headerTitleAccessory: { _ in EmptyView() },
@@ -1006,7 +1039,7 @@ private struct HermexOverlayLabAccordionNoLeadingFollowup: View {
                 expansion: .localSingle(initiallyExpanded: nil),
                 bodyItems: { $0.rows },
                 headerTitle: { Text($0.title) },
-                headerSubtitle: { Text("\($0.rows.count) sessions") },
+                headerSubtitle: { labSessionsCountSubtitle($0.rows.count) },
                 headerAccessibilityLabel: { Text($0.title) },
                 headerIsDisabled: { _ in false },
                 headerTitleAccessory: { _ in EmptyView() },
@@ -1128,9 +1161,9 @@ private struct HermexOverlayLabSearchFollowup: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(verbatim: "Direct field").font(.subheadline.weight(.semibold))
             HermexSearchField(
-                "Search sessions",
+                lk(labSearchSessionsPrompt),
                 text: $query,
-                prompt: Text("Search sessions"),
+                prompt: Text(verbatim: labSearchSessionsPrompt),
                 onSubmit: { submitCount += 1 }
             )
             .accessibilityIdentifier("overlay-lab-search-field")
@@ -1140,7 +1173,7 @@ private struct HermexOverlayLabSearchFollowup: View {
                 .accessibilityIdentifier("overlay-lab-search-field-evidence")
 
             HermexSearchField(
-                "Disabled search",
+                lk("Disabled search"),
                 text: .constant("Read only"),
                 isEnabled: false
             )
@@ -1151,7 +1184,7 @@ private struct HermexOverlayLabSearchFollowup: View {
                 Text(session)
             }
             .frame(height: 160)
-            .hermexSearch("Search sessions", text: $query, prompt: Text("Search sessions"))
+            .hermexSearch(LocalizedStringKey(labSearchSessionsPrompt), text: $query, prompt: Text(verbatim: labSearchSessionsPrompt))
             .accessibilityIdentifier("overlay-lab-search-modifier-list")
         }
     }
@@ -1179,15 +1212,15 @@ private struct HermexOverlayLabSelectionSheetSingle: View {
 
     private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
         [
-            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
-            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
-            HermexSelectionSheetOption(value: .google, title: "Google", isEnabled: false)
+            HermexSelectionSheetOption(value: .anthropic, title: lk("Anthropic")),
+            HermexSelectionSheetOption(value: .openai, title: lk("OpenAI")),
+            HermexSelectionSheetOption(value: .google, title: lk("Google"), isEnabled: false)
         ]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Single selection") { isPresented = true }
+            labButton("Single selection") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-selection-sheet-single-trigger")
             Text(verbatim: "Committed: \(selection?.rawValue ?? "None")")
                 .font(.caption)
@@ -1196,7 +1229,7 @@ private struct HermexOverlayLabSelectionSheetSingle: View {
         }
         .accessibilityIdentifier("overlay-lab-selection-sheet-single")
         .sheet(isPresented: $isPresented) {
-            HermexSelectionSheet("Default Provider", selection: $selection, options: options)
+            HermexSelectionSheet(lk("Default Provider"), selection: $selection, options: options)
                 .presentationDetents([.medium, .large])
         }
     }
@@ -1211,15 +1244,15 @@ private struct HermexOverlayLabSelectionSheetMultiHorizontal: View {
 
     private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
         [
-            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
-            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
-            HermexSelectionSheetOption(value: .google, title: "Google")
+            HermexSelectionSheetOption(value: .anthropic, title: lk("Anthropic")),
+            HermexSelectionSheetOption(value: .openai, title: lk("OpenAI")),
+            HermexSelectionSheetOption(value: .google, title: lk("Google"))
         ]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Multi selection (horizontal footer)") { isPresented = true }
+            labButton("Multi selection (horizontal footer)") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-selection-sheet-multi-horizontal-trigger")
             Text(verbatim: "Committed: \(selections.map(\.rawValue).sorted().joined(separator: ", "))")
                 .font(.caption)
@@ -1228,8 +1261,7 @@ private struct HermexOverlayLabSelectionSheetMultiHorizontal: View {
         }
         .accessibilityIdentifier("overlay-lab-selection-sheet-multi-horizontal")
         .sheet(isPresented: $isPresented) {
-            HermexSelectionSheet(
-                "Model Providers",
+            HermexSelectionSheet(lk("Model Providers"),
                 selections: $selections,
                 options: options,
                 footerAxis: .horizontal
@@ -1248,15 +1280,15 @@ private struct HermexOverlayLabSelectionSheetMultiVertical: View {
 
     private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
         [
-            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
-            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
-            HermexSelectionSheetOption(value: .google, title: "Google")
+            HermexSelectionSheetOption(value: .anthropic, title: lk("Anthropic")),
+            HermexSelectionSheetOption(value: .openai, title: lk("OpenAI")),
+            HermexSelectionSheetOption(value: .google, title: lk("Google"))
         ]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Button("Multi selection (vertical footer)") { isPresented = true }
+            labButton("Multi selection (vertical footer)") { isPresented = true }
                 .accessibilityIdentifier("overlay-lab-selection-sheet-multi-vertical-trigger")
             Text(verbatim: "Committed: \(selections.map(\.rawValue).sorted().joined(separator: ", "))")
                 .font(.caption)
@@ -1265,8 +1297,7 @@ private struct HermexOverlayLabSelectionSheetMultiVertical: View {
         }
         .accessibilityIdentifier("overlay-lab-selection-sheet-multi-vertical")
         .sheet(isPresented: $isPresented) {
-            HermexSelectionSheet(
-                "Model Providers",
+            HermexSelectionSheet(lk("Model Providers"),
                 selections: $selections,
                 options: options,
                 footerAxis: .vertical
@@ -1289,14 +1320,13 @@ private struct HermexOverlayLabSelectionSheetSearch: View {
     }
 
     var body: some View {
-        Button("Search + no-results") { isPresented = true }
+        labButton("Search + no-results") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-selection-sheet-search-trigger")
             .sheet(isPresented: $isPresented) {
-                HermexSelectionSheet(
-                    "Search Providers",
+                HermexSelectionSheet(lk("Search Providers"),
                     selection: $selection,
                     options: visibleOptions,
-                    search: HermexSelectionSheetSearch(title: "Search providers", text: $query)
+                    search: HermexSelectionSheetSearch(title: lk("Search providers"), text: $query)
                 )
                 .presentationDetents([.medium, .large])
             }
@@ -1310,20 +1340,19 @@ private struct HermexOverlayLabSelectionSheetNoInset: View {
 
     private var options: [HermexSelectionSheetOption<HermexOverlayLabProvider>] {
         [
-            HermexSelectionSheetOption(value: .anthropic, title: "Anthropic"),
-            HermexSelectionSheetOption(value: .openai, title: "OpenAI"),
-            HermexSelectionSheetOption(value: .google, title: "Google")
+            HermexSelectionSheetOption(value: .anthropic, title: lk("Anthropic")),
+            HermexSelectionSheetOption(value: .openai, title: lk("OpenAI")),
+            HermexSelectionSheetOption(value: .google, title: lk("Google"))
         ]
     }
 
     var body: some View {
-        Button("No inset (inside pre-padded Card)") { isPresented = true }
+        labButton("No inset (inside pre-padded Card)") { isPresented = true }
             .padding(HermexCardMetrics.contentPadding)
             .hermexCardSurface(.outlined)
             .accessibilityIdentifier("overlay-lab-selection-sheet-no-inset")
             .sheet(isPresented: $isPresented) {
-                HermexSelectionSheet(
-                    "Default Provider",
+                HermexSelectionSheet(lk("Default Provider"),
                     selection: $selection,
                     options: options,
                     contentInset: .none
@@ -1339,14 +1368,14 @@ private struct HermexOverlayLabSelectionSheetLongList: View {
     @State private var selection: Int?
 
     private var options: [HermexSelectionSheetOption<Int>] {
-        (1...24).map { HermexSelectionSheetOption(value: $0, title: "Option \($0)") }
+        (1...24).map { HermexSelectionSheetOption(value: $0, title: lk("Option \($0)")) }
     }
 
     var body: some View {
-        Button("Long list (24 options)") { isPresented = true }
+        labButton("Long list (24 options)") { isPresented = true }
             .accessibilityIdentifier("overlay-lab-selection-sheet-long-list-trigger")
             .sheet(isPresented: $isPresented) {
-                HermexSelectionSheet("Choose an Option", selection: $selection, options: options)
+                HermexSelectionSheet(lk("Choose an Option"), selection: $selection, options: options)
                     .presentationDetents([.medium, .large])
             }
     }
@@ -1371,28 +1400,28 @@ private struct HermexOverlayLabTextInputFollowup: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(verbatim: "Default").font(.subheadline.weight(.semibold))
-            HermexTextField("Name", text: $name, prompt: Text("Enter your name"))
+            HermexTextField(LocalizedStringKey(labNameFieldLabel), text: $name, prompt: Text(verbatim: labNameFieldPrompt))
                 .accessibilityIdentifier("overlay-lab-text-input-default")
 
             Text(verbatim: "Password").font(.subheadline.weight(.semibold))
-            HermexSecureField("Password", text: $password, prompt: Text("Enter your password"))
+            HermexSecureField(LocalizedStringKey(labPasswordFieldLabel), text: $password, prompt: Text(verbatim: labPasswordFieldPrompt))
                 .accessibilityIdentifier("overlay-lab-text-input-password")
 
             Text(verbatim: "Code (4 digits)").font(.subheadline.weight(.semibold))
-            HermexCodeInput("Verification code", code: $code4, length: 4)
+            HermexCodeInput(lk("Verification code"), code: $code4, length: 4)
                 .accessibilityIdentifier("overlay-lab-code-input-4")
 
             Text(verbatim: "Code (6 digits, partial)").font(.subheadline.weight(.semibold))
-            HermexCodeInput("Verification code", code: $code6Partial, length: 6)
+            HermexCodeInput(lk("Verification code"), code: $code6Partial, length: 6)
                 .accessibilityIdentifier("overlay-lab-code-input-6-partial")
 
             Text(verbatim: "Code (6 digits, complete)").font(.subheadline.weight(.semibold))
-            HermexCodeInput("Verification code", code: $code6Complete, length: 6)
+            HermexCodeInput(lk("Verification code"), code: $code6Complete, length: 6)
                 .accessibilityIdentifier("overlay-lab-code-input-6-complete")
 
             Text(verbatim: "Code (6 digits, error)").font(.subheadline.weight(.semibold))
             HermexCodeInput(
-                "Verification code",
+                lk("Verification code"),
                 code: $code6Error,
                 length: 6,
                 errorText: Text(verbatim: "Enter all 6 digits.")
@@ -1400,11 +1429,11 @@ private struct HermexOverlayLabTextInputFollowup: View {
             .accessibilityIdentifier("overlay-lab-code-input-error")
 
             Text(verbatim: "Code (6 digits, disabled)").font(.subheadline.weight(.semibold))
-            HermexCodeInput("Verification code", code: $code6Disabled, length: 6, isEnabled: false)
+            HermexCodeInput(lk("Verification code"), code: $code6Disabled, length: 6, isEnabled: false)
                 .accessibilityIdentifier("overlay-lab-code-input-disabled")
 
             Text(verbatim: "Code (8 digits)").font(.subheadline.weight(.semibold))
-            HermexCodeInput("Recovery code", code: $code8, length: 8)
+            HermexCodeInput(lk("Recovery code"), code: $code8, length: 8)
                 .accessibilityIdentifier("overlay-lab-code-input-8")
         }
     }

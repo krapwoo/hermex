@@ -1,5 +1,6 @@
 import XCTest
 import SwiftUI
+import UIKit
 @testable import HermesMobile
 
 /// Source contracts for `SegmentedControl` (`SegmentedControl.swift`). The fixed variant is a native
@@ -182,6 +183,57 @@ final class SegmentedControlTests: XCTestCase {
         XCTAssertFalse(
             scrollingCase.contains("fixedTrackVisualPadding"),
             "the scrolling branch must not adopt the new fixed-track visual background"
+        )
+    }
+
+    // MARK: - Hosted regression: the selected pill's Capsule has no height cap (unconstrained)
+    //
+    // The source contracts above confirm the selected pill insets from its text-bearing row via
+    // `.padding(.vertical, SegmentedControlMetrics.selectedVisualInset)`, with no `.frame(height:)`
+    // or `.frame(maxHeight:)` anywhere on it. A plain `Capsule()` is a greedy shape that fills
+    // whatever height its parent *proposes*, not merely the height its sibling (the text row) needs,
+    // so hosting the fixed control in a bounded, non-scrolling container that offers far more
+    // vertical room than the row needs reveals the real defect no source-string check can see: the
+    // whole control's rendered height balloons toward the host's bound instead of tracking its
+    // 44pt-minimum interactive row.
+    @MainActor
+    private func measuredFixedControlHeight(dynamicTypeSize: DynamicTypeSize, hostHeight: CGFloat) -> CGFloat {
+        let control = SegmentedControl(
+            "View",
+            selection: .constant("one"),
+            options: [
+                SegmentedControlOption(value: "one", title: "One"),
+                SegmentedControlOption(value: "two", title: "Two"),
+            ],
+            style: .fixed
+        )
+        .environment(\.dynamicTypeSize, dynamicTypeSize)
+        let hosting = UIHostingController(rootView: control)
+        hosting.view.frame = CGRect(x: 0, y: 0, width: 360, height: hostHeight)
+        hosting.view.setNeedsLayout()
+        hosting.view.layoutIfNeeded()
+        return hosting.sizeThatFits(in: CGSize(width: 360, height: hostHeight)).height
+    }
+
+    @MainActor
+    func testFixedSelectedCapsuleStaysNearTheInteractiveRowHeightAtNormalSizeInAGenerousBoundedHost() {
+        let height = measuredFixedControlHeight(dynamicTypeSize: .large, hostHeight: 600)
+        XCTAssertLessThan(
+            height, 80,
+            "expected the fixed track to stay near its 44pt interactive row height at normal text size " +
+                "even when hosted with generous extra vertical room — the selected pill's Capsule has no " +
+                "height cap, so it greedily fills whatever height is proposed instead of tracking the row"
+        )
+    }
+
+    @MainActor
+    func testFixedSelectedCapsuleStaysNearTheInteractiveRowHeightAtAccessibility5InAGenerousBoundedHost() {
+        let height = measuredFixedControlHeight(dynamicTypeSize: .accessibility5, hostHeight: 600)
+        XCTAssertLessThan(
+            height, 160,
+            "expected the fixed track to grow only with its accessibility-sized label even when hosted " +
+                "with generous extra vertical room — the selected pill's Capsule has no height cap, so it " +
+                "greedily fills whatever height is proposed instead of tracking the row"
         )
     }
 

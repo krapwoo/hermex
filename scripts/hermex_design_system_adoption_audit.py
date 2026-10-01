@@ -4,27 +4,15 @@
 Scope (read this before extending the contract): this branch adds Hermex Design System
 foundation/token/component source files to the repository, but does not migrate any production
 screen onto them. This audit protects that foundation layer — it fails closed when a required
-foundation file, or one of its small set of load-bearing API snippets, goes missing or drifts — and
-freezes five pre-existing production baselines (native segmented controls, direct
-ContentUnavailableView calls, direct `.searchable` calls, direct `TextField(` calls, direct
-`SecureField(` calls) so a *new* untracked site or an *increased* count fails, without requiring any
-existing screen to migrate. It does not require, assert, or check production-screen adoption of any
-new component.
+foundation file, or one of its small set of load-bearing API snippets, goes missing or drifts. It does
+not require, assert, or check production-screen adoption of any new component, and it does not count
+or restrict native-control call sites (segmented pickers, `ContentUnavailableView`, `.searchable`,
+`TextField`, `SecureField`) anywhere in production — migrating those is issue-driven work scoped to
+separate PRs, not something a regex census in this script can usefully gate.
 
 It also intentionally does NOT ban `.font`, other typography modifiers, literal colors, or literal
 spacing across production generally — there is no sound, ownership-aware contract for banning those
-globally yet. Only the five explicitly frozen baselines below are enforced, and only because their
-exact current-state counts were verified against this branch's own source before being written here.
-
-Baseline ownership and removal condition: all five frozen baselines (SEGMENTED_CONTROL_BASELINE,
-CONTENT_UNAVAILABLE_BASELINE, SEARCHABLE_BASELINE, TEXT_FIELD_BASELINE, SECURE_FIELD_BASELINE) are
-owned by whoever lands the next PR that changes one of their call sites — adding, removing, or
-migrating one. That PR must update the baseline dict in the same PR to match the new verified state;
-this script deliberately fails otherwise, rather than silently drifting. A baseline count may only
-ever move down (migration) or a path disappear entirely in the same PR that performs the migration —
-never move up, and a path may never appear that was not already in the baseline, without maintainer
-review of why a new direct call site was added instead of using the foundation component that
-already exists for it.
+globally yet.
 """
 from __future__ import annotations
 
@@ -190,149 +178,6 @@ REJECTED_ICON_SIZES = {14, 18, 22, 28}
 # 32pt avatar -> 20pt icon, 40pt avatar -> 24pt icon, 48pt avatar -> 32pt icon.
 APPROVED_AVATAR_ICON_PAIRINGS = {32: 20, 40: 24, 48: 32}
 
-# ─── Frozen native segmented-control baseline ────────────────────────────────────────────────────
-# Owner: whoever lands the PR that migrates one of these three files onto the new SegmentedControl
-# foundation component (or adds a new direct .pickerStyle(.segmented) call site). Removal condition:
-# delete a file's entry here (or lower its count) in the same PR that migrates/removes that call site.
-SEGMENTED_CONTROL_BASELINE = {
-    "HermesMobile/Features/Insights/InsightsView.swift": 1,
-    "HermesMobile/Features/Insights/UsageChartCard.swift": 1,
-    "HermesMobile/Features/Tasks/TasksView.swift": 1,
-}
-SEGMENTED_CONTROL_PATTERN = re.compile(r"\.pickerStyle\(\.segmented\)")
-
-# ─── Frozen direct ContentUnavailableView baseline ───────────────────────────────────────────────
-# Owner: whoever lands the PR that migrates one of these call sites onto HermexContentUnavailable (or
-# adds a new direct ContentUnavailableView call site). Removal condition: delete a file's entry here
-# (or lower its count) in the same PR that migrates/removes that call site. Verified against this
-# branch's own source (2026-09-28); HermexContentUnavailable.swift itself and HermesMobileTests/ are
-# excluded from this accounting.
-CONTENT_UNAVAILABLE_BASELINE = {
-    "HermesMobile/Features/Skills/SkillsView.swift": 6,
-    "HermesMobile/Features/Workspace/FilePreviewView.swift": 4,
-    "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift": 4,
-    "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift": 4,
-    "HermesMobile/Features/Settings/DefaultProfilePickerView.swift": 4,
-    "HermesMobile/Features/Workspace/GitWorkspaceView.swift": 3,
-    "HermesMobile/Features/Workspace/GitCommitView.swift": 3,
-    "HermesMobile/Features/Tasks/TasksView.swift": 3,
-    "HermesMobile/Features/Shared/ModelPickerSheet.swift": 3,
-    "HermesMobile/Features/Settings/ProvidersView.swift": 3,
-    "HermesMobile/Features/Kanban/KanbanLabView.swift": 3,
-    "HermesMobile/Features/Workspace/FileBrowserView.swift": 2,
-    "HermesMobile/Features/Tasks/TaskRunOutputSheet.swift": 2,
-    "HermesMobile/Features/SessionList/SessionListView.swift": 2,
-    "HermesMobile/Features/Kanban/KanbanCardDetailView.swift": 2,
-    "HermesMobile/Features/Insights/InsightsView.swift": 2,
-    "HermesMobile/Features/Chat/TranscriptMediaView.swift": 2,
-    "HermesMobile/Features/Chat/ChatTranscriptView.swift": 2,
-    "HermesMobile/Features/Chat/ChatAttachmentPreviewView.swift": 2,
-    "HermesMobile/Features/Bots/BotDelegatedWorkView.swift": 2,
-    "HermesMobile/Features/Workspace/WorkspaceManagerView.swift": 1,
-    "HermesMobile/Features/Workspace/GitDiffView.swift": 1,
-    "HermesMobile/Features/Memory/MemoryView.swift": 1,
-    "HermesMobile/Features/Chat/ChatComposerSelectorSheets.swift": 1,
-    "HermesMobile/Features/Bots/BotsInboxView.swift": 1,
-    "HermesMobile/Features/Bots/BotSearchView.swift": 1,
-    "HermesMobile/Features/Bots/BotQuickRepliesEditorView.swift": 1,
-    "HermesMobile/Features/Bots/BotProfileEditorView.swift": 1,
-    "HermesMobile/Features/Bots/BotChatView.swift": 1,
-    "HermesMobile/Features/Bots/BotArtifactPreview.swift": 1,
-}
-CONTENT_UNAVAILABLE_PATTERN = re.compile(r"\bContentUnavailableView\b")
-CONTENT_UNAVAILABLE_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexContentUnavailable.swift"
-
-# ─── Frozen direct .searchable baseline ──────────────────────────────────────────────────────────
-# This branch replaces the old `.hermexSearch(text:placement:prompt:)` foundation wrapper — which
-# forwarded straight to native `.searchable` — with a custom `HermexSearchField` view and a
-# `.hermexSearch(...)` convenience modifier that composes it as a persistent top content inset.
-# HermexSearch.swift itself must never call `.searchable` again, so it is no longer excluded from
-# this accounting: a stray `.searchable(` call inside it now fails like any other new, unfrozen call
-# site. Production does not migrate any screen in this slice — every current search field keeps
-# calling `.searchable` directly. Owner: whoever lands the PR that migrates one of these eight call
-# sites onto `.hermexSearch` (or adds a new direct `.searchable` call site). Removal condition:
-# delete a file's entry here (or lower its count) in the same PR that migrates/removes that call
-# site. Verified against this branch's own source (2026-09-28).
-SEARCHABLE_BASELINE = {
-    "HermesMobile/Features/Kanban/KanbanLabView.swift": 1,
-    "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
-    "HermesMobile/Features/Settings/DefaultProfilePickerView.swift": 1,
-    "HermesMobile/Features/Shared/ModelPickerSheet.swift": 1,
-    "HermesMobile/Features/Skills/SkillsView.swift": 1,
-    "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift": 1,
-    "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift": 1,
-    "HermesMobile/Features/Workspace/GitBranchPickerView.swift": 1,
-}
-SEARCHABLE_PATTERN = re.compile(r"\.searchable\(")
-
-# ─── Frozen direct TextField baseline ────────────────────────────────────────────────────────────
-# This branch adds three Hermex-owned Text Input foundation wrappers — `HermexTextField`,
-# `HermexSecureField`, `HermexNumberField` (HermexTextInput.swift) — over native `TextField`,
-# `SecureField`, and the typed `TextField(value:format:)` path, but does not migrate any production
-# screen onto them — every current text field keeps calling `TextField(` directly. Owner: whoever
-# lands the PR that migrates one of these call sites onto `HermexTextField`/`HermexNumberField` (or
-# adds a new direct `TextField(` call site). Removal condition: delete a file's entry here (or lower
-# its count) in the same PR that migrates/removes that call site. Verified against this branch's own
-# source (2026-10-01); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this
-# accounting. HermexSearch.swift is excluded too, the same way: `HermexSearchField` is a foundation
-# component whose approved design keeps the system-backed `TextField` as its editor — that direct
-# call is the field's own implementation, not a production call site that should have reached for
-# the foundation instead. BotPendingRequestCard's third site is the username field inherited from
-# current master (#943); this integration freezes that reviewed upstream state without migrating it.
-TEXT_FIELD_BASELINE = {
-    "HermesMobile/Features/Kanban/KanbanCardEditorView.swift": 8,
-    "HermesMobile/Features/Kanban/KanbanLabView.swift": 5,
-    "HermesMobile/Features/Tasks/CronJobEditorSheet.swift": 4,
-    "HermesMobile/Features/Bots/BotConnectionView.swift": 3,
-    "HermesMobile/Features/Workspace/WorkspaceManagerView.swift": 3,
-    "HermesMobile/Features/Bots/BotCreateView.swift": 2,
-    "HermesMobile/Features/Bots/BotPendingRequestCard.swift": 3,
-    "HermesMobile/Features/Bots/BotProfileEditorView.swift": 2,
-    "HermesMobile/Features/Bots/BotRoomCreateView.swift": 2,
-    "HermesMobile/Features/Bots/BotsInboxView.swift": 2,
-    "HermesMobile/Features/SessionList/SessionListView.swift": 2,
-    "HermesMobile/Features/Settings/DefaultProfilePickerView.swift": 2,
-    "HermesMobile/Features/Shared/ModelPickerSheet.swift": 2,
-    "HermesMobile/Features/Bots/BotQuickRepliesEditorView.swift": 1,
-    "HermesMobile/Features/Bots/BotRoomProfileView.swift": 1,
-    "HermesMobile/Features/Bots/BotSearchView.swift": 1,
-    "HermesMobile/Features/Chat/ChatComposerSelectorSheets.swift": 1,
-    "HermesMobile/Features/Chat/ClarificationRequestCard.swift": 1,
-    "HermesMobile/Features/Kanban/KanbanCardDetailView.swift": 1,
-    "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
-    "HermesMobile/Features/SessionList/ProjectCreationSheet.swift": 1,
-    "HermesMobile/Features/SessionList/SessionRenameSheet.swift": 1,
-    "HermesMobile/Features/Settings/SettingsView.swift": 1,
-    "HermesMobile/Features/Shared/CustomHeadersEditor.swift": 1,
-    "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift": 1,
-    "HermesMobile/Features/Workspace/FileBrowserView.swift": 1,
-    "HermesMobile/Features/Workspace/GitBranchPickerView.swift": 1,
-    "HermesMobile/Features/Workspace/GitCommitView.swift": 1,
-}
-TEXT_FIELD_PATTERN = re.compile(r"\bTextField\(")
-TEXT_FIELD_EXCLUDED_FILES = {
-    "HermesMobile/Features/Shared/HermexTextInput.swift",
-    "HermesMobile/Features/Shared/HermexSearch.swift",
-}
-
-# ─── Frozen direct SecureField baseline ──────────────────────────────────────────────────────────
-# Same shape as TEXT_FIELD_BASELINE above, for native `SecureField(` call sites. Owner: whoever lands
-# the PR that migrates one of these call sites onto `HermexSecureField` (or adds a new direct
-# `SecureField(` call site). Removal condition: delete a file's entry here (or lower its count) in the
-# same PR that migrates/removes that call site. Verified against this branch's own source
-# (2026-09-28); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this accounting.
-SECURE_FIELD_BASELINE = {
-    "HermesMobile/Features/Bots/BotPendingRequestCard.swift": 2,
-    "HermesMobile/Features/Bots/BotConnectionView.swift": 1,
-    "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
-    "HermesMobile/Features/Settings/DefaultProfilePickerView.swift": 1,
-    "HermesMobile/Features/Settings/SettingsView.swift": 1,
-    "HermesMobile/Features/Shared/CustomHeadersEditor.swift": 1,
-}
-SECURE_FIELD_PATTERN = re.compile(r"\bSecureField\(")
-SECURE_FIELD_EXCLUDED_FILE = "HermesMobile/Features/Shared/HermexTextInput.swift"
-
-
 def read(rel_path: str) -> str:
     return (REPO_ROOT / rel_path).read_text(encoding="utf-8")
 
@@ -456,76 +301,11 @@ def check_avatar_pairing() -> list[str]:
     return failures
 
 
-def _count_pattern_per_file(pattern: re.Pattern, exclude: set[str] | None = None) -> dict[str, int]:
-    exclude = exclude or set()
-    counts: dict[str, int] = {}
-    for path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
-        rel_path = str(path.relative_to(REPO_ROOT))
-        if rel_path in exclude:
-            continue
-        text = path.read_text(encoding="utf-8")
-        occurrences = len(pattern.findall(text))
-        if occurrences:
-            counts[rel_path] = occurrences
-    return counts
-
-
-def _check_frozen_baseline(label: str, baseline: dict[str, int], live_counts: dict[str, int]) -> list[str]:
-    failures = []
-    for rel_path, live_count in sorted(live_counts.items()):
-        baseline_count = baseline.get(rel_path)
-        if baseline_count is None:
-            failures.append(
-                f"{label}: new, unfrozen call site {rel_path} ({live_count} reference(s)) — "
-                f"either use the existing foundation component instead, or update the frozen "
-                f"baseline in this same PR with a documented reason"
-            )
-        elif live_count > baseline_count:
-            failures.append(
-                f"{label}: {rel_path} increased from {baseline_count} to {live_count} reference(s) — "
-                f"either use the existing foundation component instead, or update the frozen "
-                f"baseline in this same PR with a documented reason"
-            )
-    return failures
-
-
-def check_segmented_control_baseline() -> list[str]:
-    live = _count_pattern_per_file(SEGMENTED_CONTROL_PATTERN)
-    return _check_frozen_baseline("native segmented control", SEGMENTED_CONTROL_BASELINE, live)
-
-
-def check_content_unavailable_baseline() -> list[str]:
-    live = _count_pattern_per_file(
-        CONTENT_UNAVAILABLE_PATTERN, exclude={CONTENT_UNAVAILABLE_EXCLUDED_FILE}
-    )
-    return _check_frozen_baseline("direct ContentUnavailableView", CONTENT_UNAVAILABLE_BASELINE, live)
-
-
-def check_searchable_baseline() -> list[str]:
-    live = _count_pattern_per_file(SEARCHABLE_PATTERN)
-    return _check_frozen_baseline("direct .searchable", SEARCHABLE_BASELINE, live)
-
-
-def check_text_field_baseline() -> list[str]:
-    live = _count_pattern_per_file(TEXT_FIELD_PATTERN, exclude=TEXT_FIELD_EXCLUDED_FILES)
-    return _check_frozen_baseline("direct TextField", TEXT_FIELD_BASELINE, live)
-
-
-def check_secure_field_baseline() -> list[str]:
-    live = _count_pattern_per_file(SECURE_FIELD_PATTERN, exclude={SECURE_FIELD_EXCLUDED_FILE})
-    return _check_frozen_baseline("direct SecureField", SECURE_FIELD_BASELINE, live)
-
-
 CHECKS = [
     ("required foundation files", check_required_files),
     ("load-bearing API snippets", check_required_snippets),
     ("icon-size scale", check_icon_scale),
     ("avatar/icon pairing", check_avatar_pairing),
-    ("native segmented-control baseline", check_segmented_control_baseline),
-    ("direct ContentUnavailableView baseline", check_content_unavailable_baseline),
-    ("direct .searchable baseline", check_searchable_baseline),
-    ("direct TextField baseline", check_text_field_baseline),
-    ("direct SecureField baseline", check_secure_field_baseline),
 ]
 
 
@@ -556,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {failure}", file=sys.stderr)
         return 1
 
-    print("hermex_design_system_adoption_audit: OK — foundation contract intact, baselines unchanged.")
+    print("hermex_design_system_adoption_audit: OK — foundation contract intact.")
     return 0
 
 

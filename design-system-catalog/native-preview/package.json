@@ -21,7 +21,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "generate:icons": "node ../scripts/generate-icon-previews.mjs",
-    "web": "node ../scripts/generate-icon-previews.mjs --optional && expo start --web --port 8096"
+    "web": "expo start --web --port 8096"
   },
   "private": true
 }

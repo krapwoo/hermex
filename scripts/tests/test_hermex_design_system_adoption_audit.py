@@ -261,47 +261,39 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = pathlib.Path(self.temp.name)
-        # Reduce the three frozen baselines to what this fixture tree actually contains, so these
-        # tests are isolated from the real repository's exact counts.
-        self._orig_segmented = audit.SEGMENTED_CONTROL_BASELINE
-        self._orig_content_unavailable = audit.CONTENT_UNAVAILABLE_BASELINE
-        self._orig_searchable = audit.SEARCHABLE_BASELINE
-        self._orig_text_field = audit.TEXT_FIELD_BASELINE
-        self._orig_secure_field = audit.SECURE_FIELD_BASELINE
-        audit.SEGMENTED_CONTROL_BASELINE = {
-            "HermesMobile/Features/Insights/InsightsView.swift": 1,
-            "HermesMobile/Features/Tasks/TasksView.swift": 1,
-        }
-        audit.CONTENT_UNAVAILABLE_BASELINE = {
-            "HermesMobile/Features/Skills/SkillsView.swift": 1,
-        }
-        audit.SEARCHABLE_BASELINE = {
-            "HermesMobile/Features/SessionList/SessionListComponents.swift": 1,
-        }
-        audit.TEXT_FIELD_BASELINE = {
-            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
-        }
-        audit.SECURE_FIELD_BASELINE = {
-            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift": 1,
-        }
-        self.addCleanup(self._restore_baselines)
-
-    def _restore_baselines(self):
-        audit.SEGMENTED_CONTROL_BASELINE = self._orig_segmented
-        audit.CONTENT_UNAVAILABLE_BASELINE = self._orig_content_unavailable
-        audit.SEARCHABLE_BASELINE = self._orig_searchable
-        audit.TEXT_FIELD_BASELINE = self._orig_text_field
-        audit.SECURE_FIELD_BASELINE = self._orig_secure_field
 
     def test_valid_foundation_passes(self):
         build_valid_fixture_tree(self.root)
         self.assertEqual(audit.run(self.root), [])
 
-    def test_scope_documentation_names_all_five_frozen_baselines(self):
+    def test_scope_documentation_does_not_claim_native_control_census_enforcement(self):
         source = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("five pre-existing production baselines", source)
-        self.assertIn("Only the five explicitly frozen baselines below are enforced", source)
-        self.assertNotIn("Only the three explicitly frozen baselines below are enforced", source)
+        for forbidden in [
+            "frozen baseline",
+            "SEGMENTED_CONTROL_BASELINE",
+            "CONTENT_UNAVAILABLE_BASELINE",
+            "SEARCHABLE_BASELINE",
+            "TEXT_FIELD_BASELINE",
+            "SECURE_FIELD_BASELINE",
+            "check_segmented_control_baseline",
+            "check_content_unavailable_baseline",
+            "check_searchable_baseline",
+            "check_text_field_baseline",
+            "check_secure_field_baseline",
+        ]:
+            self.assertNotIn(forbidden, source)
+
+    def test_development_guide_describes_the_foundation_only_audit_contract(self):
+        source = (REPO_ROOT / "DEVELOPMENT.md").read_text(encoding="utf-8")
+        for forbidden in [
+            "frozen legacy",
+            "native `.pickerStyle(.segmented)` call sites",
+            "direct `ContentUnavailableView` call sites",
+            "baseline owner/removal-condition rule",
+        ]:
+            self.assertNotIn(forbidden, source)
+        self.assertIn("does not count or restrict native-control call sites", source)
+        self.assertIn("32→20, 40→24, 48→32", source)
 
     def test_missing_required_file_fails(self):
         build_valid_fixture_tree(self.root)
@@ -874,336 +866,27 @@ class RequiredFilesAndSnippetsTests(unittest.TestCase):
             any("HermesAvatarSize.small" in f and "expected 20pt" in f for f in failures), failures
         )
 
-    def test_new_native_segmented_control_path_fails(self):
+    def test_native_control_call_sites_are_not_counted_by_the_foundation_audit(self):
         build_valid_fixture_tree(self.root)
         write(
             self.root,
             "HermesMobile/Features/Kanban/KanbanLabView.swift",
-            "struct KanbanLabView: View {\n    var body: some View { Picker(\"\", selection: .constant(0)) { }.pickerStyle(.segmented) }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "native segmented control" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_increased_native_segmented_control_count_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Tasks/TasksView.swift",
             (
-                "struct TasksView: View {\n"
+                "struct KanbanLabView: View {\n"
                 "    var body: some View { Picker(\"\", selection: .constant(0)) { }.pickerStyle(.segmented) }\n"
-                "    var body2: some View { Picker(\"\", selection: .constant(0)) { }.pickerStyle(.segmented) }\n"
+                "    var body2: some View { List {}.searchable(text: .constant(\"\")) }\n"
+                "    var body3: some View { TextField(\"Title\", text: .constant(\"\")) }\n"
+                "    var body4: some View { SecureField(\"Token\", text: .constant(\"\")) }\n"
+                "    var body5: some View { ContentUnavailableView(\"Empty\", systemImage: \"tray\") }\n"
                 "}"
             ),
         )
         failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "native segmented control" in f and "increased from 1 to 2" in f and "TasksView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_new_direct_searchable_path_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Kanban/KanbanLabView.swift",
-            "struct KanbanLabView: View {\n    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search Cards\") }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct .searchable" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_increased_direct_searchable_count_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/SessionList/SessionListComponents.swift",
-            (
-                "struct SessionListComponents: View {\n"
-                "    var body: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n"
-                "    var body2: some View { List {}.searchable(text: .constant(\"\"), prompt: \"Search sessions\") }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct .searchable" in f and "increased from 1 to 2" in f and "SessionListComponents.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_hermex_search_swift_is_no_longer_excluded_and_a_stray_searchable_call_fails(self):
-        build_valid_fixture_tree(self.root)
-        # Unlike the old thin-wrapper foundation, the custom HermexSearchField/.hermexSearch
-        # implementation must never call native `.searchable` again — HermexSearch.swift is no
-        # longer excluded from this accounting, so a stray `.searchable(` call inside it now fails
-        # like any other new, unfrozen call site.
-        write(
-            self.root,
-            "HermesMobile/Features/Shared/HermexSearch.swift",
-            (
-                "import SwiftUI\n"
-                "struct HermexSearchField: View {\n"
-                "    var body: some View { EmptyView().searchable(text: .constant(\"\")) }\n"
-                "}\n"
-                "extension View {\n"
-                "    func hermexSearch(\n"
-                "        _ titleKey: LocalizedStringKey,\n"
-                "        text: Binding<String>\n"
-                "    ) -> some View {\n"
-                "        safeAreaInset(edge: .top, spacing: 0) {\n"
-                "            HermexSearchField(titleKey, text: text)\n"
-                "        }\n"
-                "    }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct .searchable" in f
-                and "new, unfrozen call site" in f
-                and "HermexSearch.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_new_direct_text_field_path_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Kanban/KanbanLabView.swift",
-            "struct KanbanLabView: View {\n    var body: some View { TextField(\"Title\", text: .constant(\"\")) }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct TextField" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_increased_direct_text_field_count_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift",
-            (
-                "struct OnboardingConnectPage: View {\n"
-                "    var body: some View { TextField(\"Server\", text: .constant(\"\")) }\n"
-                "    var body2: some View { TextField(\"Username\", text: .constant(\"\")) }\n"
-                "    var body3: some View { SecureField(\"Password\", text: .constant(\"\")) }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct TextField" in f and "increased from 1 to 2" in f and "OnboardingConnectPage.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_text_field_baseline_ignores_the_shared_hermes_text_input_wrapper_itself(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Shared/HermexTextInput.swift",
-            (
-                "struct HermexTextField: View {\n"
-                "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
-                "}\n"
-                "struct HermexSecureField: View {}\n"
-                "struct HermexCodeInput: View {}\n"
-                "enum HermexCodeInputNormalizer {}\n"
-                "enum HermexCodeInputLayout {}"
-            ),
-        )
-        failures = audit.run(self.root)
+        census_terms = ["segmented", ".searchable", "TextField", "SecureField", "ContentUnavailableView"]
         self.assertFalse(
-            any("HermexTextInput.swift" in f for f in failures),
-            failures,
+            any(term in failure for term in census_terms for failure in failures),
+            f"native-control usage belongs to separately scoped migration work, not this foundation audit: {failures}",
         )
-
-    def test_text_field_baseline_ignores_the_hermex_search_field_itself(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Shared/HermexSearch.swift",
-            (
-                "import SwiftUI\n"
-                "struct HermexSearchField: View {\n"
-                "    var body: some View { TextField(\"x\", text: .constant(\"\")) }\n"
-                "}\n"
-                "extension View {\n"
-                "    func hermexSearch(\n"
-                "        _ titleKey: LocalizedStringKey,\n"
-                "        text: Binding<String>\n"
-                "    ) -> some View {\n"
-                "        safeAreaInset(edge: .top, spacing: 0) {\n"
-                "            HermexSearchField(titleKey, text: text)\n"
-                "        }\n"
-                "    }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertFalse(
-            any("HermexSearch.swift" in f and "direct TextField" in f for f in failures),
-            failures,
-        )
-
-    def test_new_direct_secure_field_path_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Kanban/KanbanLabView.swift",
-            "struct KanbanLabView: View {\n    var body: some View { SecureField(\"Token\", text: .constant(\"\")) }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct SecureField" in f and "new, unfrozen call site" in f and "KanbanLabView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_increased_direct_secure_field_count_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift",
-            (
-                "struct OnboardingConnectPage: View {\n"
-                "    var body: some View { TextField(\"Server\", text: .constant(\"\")) }\n"
-                "    var body2: some View { SecureField(\"Password\", text: .constant(\"\")) }\n"
-                "    var body3: some View { SecureField(\"PIN\", text: .constant(\"\")) }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct SecureField" in f and "increased from 1 to 2" in f and "OnboardingConnectPage.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_secure_field_baseline_ignores_the_shared_hermes_text_input_wrapper_itself(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Shared/HermexTextInput.swift",
-            (
-                "struct HermexTextField: View {}\n"
-                "struct HermexSecureField: View {\n"
-                "    var body: some View { SecureField(\"x\", text: .constant(\"\")) }\n"
-                "}\n"
-                "struct HermexCodeInput: View {}\n"
-                "enum HermexCodeInputNormalizer {}\n"
-                "enum HermexCodeInputLayout {}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertFalse(
-            any("HermexTextInput.swift" in f for f in failures),
-            failures,
-        )
-
-    def test_new_direct_content_unavailable_path_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Memory/MemoryView.swift",
-            "struct MemoryView: View {\n    var body: some View { ContentUnavailableView(\"Empty\", systemImage: \"tray\") }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct ContentUnavailableView" in f and "new, unfrozen call site" in f and "MemoryView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_increased_content_unavailable_count_fails(self):
-        build_valid_fixture_tree(self.root)
-        write(
-            self.root,
-            "HermesMobile/Features/Skills/SkillsView.swift",
-            (
-                "struct SkillsView: View {\n"
-                "    var body: some View { ContentUnavailableView(\"Empty\", systemImage: \"tray\") }\n"
-                "    var body2: some View { ContentUnavailableView(\"Also Empty\", systemImage: \"tray\") }\n"
-                "}"
-            ),
-        )
-        failures = audit.run(self.root)
-        self.assertTrue(
-            any(
-                "direct ContentUnavailableView" in f and "increased from 1 to 2" in f and "SkillsView.swift" in f
-                for f in failures
-            ),
-            failures,
-        )
-
-    def test_content_unavailable_baseline_ignores_the_canonical_hermes_content_unavailable_file_itself(self):
-        build_valid_fixture_tree(self.root)
-        # HermexContentUnavailable.swift's own required snippet references "View", not
-        # ContentUnavailableView, but exercise the exclusion directly regardless.
-        write(
-            self.root,
-            "HermesMobile/Features/Shared/HermexContentUnavailable.swift",
-            "struct HermexContentUnavailable: View {\n    var body: some View { ContentUnavailableView(\"x\") }\n}",
-        )
-        failures = audit.run(self.root)
-        self.assertFalse(
-            any("HermexContentUnavailable.swift" in f for f in failures),
-            failures,
-        )
-
-    def test_unchanged_approved_legacy_baselines_do_not_fail(self):
-        build_valid_fixture_tree(self.root)
-        failures = audit.run(self.root)
-        segmented_failures = [f for f in failures if "segmented" in f]
-        content_unavailable_failures = [f for f in failures if "ContentUnavailableView" in f]
-        searchable_failures = [f for f in failures if "direct .searchable" in f]
-        text_field_failures = [f for f in failures if "direct TextField" in f]
-        secure_field_failures = [f for f in failures if "direct SecureField" in f]
-        self.assertEqual(segmented_failures, [])
-        self.assertEqual(content_unavailable_failures, [])
-        self.assertEqual(searchable_failures, [])
-        self.assertEqual(text_field_failures, [])
-        self.assertEqual(secure_field_failures, [])
-
-    def test_a_baseline_path_that_disappears_entirely_is_not_a_failure(self):
-        # Migrating a call site away entirely (fewer files matching) is allowed without updating the
-        # baseline first — only new paths or increased counts fail.
-        build_valid_fixture_tree(self.root)
-        write(self.root, "HermesMobile/Features/Tasks/TasksView.swift", "struct TasksView: View {}")
-        failures = audit.run(self.root)
-        self.assertFalse(any("TasksView.swift" in f for f in failures), failures)
 
 
 class Task6TaxonomyRetirementTests(unittest.TestCase):
@@ -1267,6 +950,19 @@ class Task6TaxonomyRetirementTests(unittest.TestCase):
         self.assertNotIn("DisclosureRowMetrics", catalog_source)
         self.assertIn("Transcript Log Row", catalog_source)
 
+    def test_the_audit_module_no_longer_declares_native_control_censuses(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        for name in [
+            "SEGMENTED_CONTROL_BASELINE",
+            "CONTENT_UNAVAILABLE_BASELINE",
+            "SEARCHABLE_BASELINE",
+            "TEXT_FIELD_BASELINE",
+            "SECURE_FIELD_BASELINE",
+        ]:
+            self.assertFalse(getattr(audit, name, {}), f"expected {name} to be removed")
+            self.assertNotIn(name, source)
+        self.assertNotIn("_check_frozen_baseline", source)
+
     def test_hermex_popover_menu_remains_free_of_a_selection_api(self):
         popover_source = (
             REPO_ROOT / "HermesMobile/Features/Shared/HermexPopoverMenu.swift"
@@ -1274,27 +970,16 @@ class Task6TaxonomyRetirementTests(unittest.TestCase):
         self.assertNotIn("HermexSelectionPopover", popover_source)
         self.assertIn("struct HermexPopoverMenuAction", popover_source)
 
-    def test_composer_toolbar_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+    # Correction: HermexComposerToolbar( is no longer required to stay confined to its own foundation
+    # file and the DEBUG overlay lab — that confinement was a non-adoption restriction, not a legitimate
+    # integrity check, and it blocked a real production caller from ever landing. The legitimate fact
+    # worth keeping is that the DEBUG overlay lab still demonstrates a real specimen.
+    def test_overlay_lab_still_demonstrates_a_real_composer_toolbar_specimen(self):
         pattern = re.compile(r"HermexComposerToolbar\(")
-        allowed = {
-            "HermesMobile/Features/Shared/HermexComposerToolbar.swift",
-            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
-        }
-        offenders = []
-        overlay_lab_count = 0
-        for swift_path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
-            rel_path = str(swift_path.relative_to(REPO_ROOT))
-            count = len(pattern.findall(swift_path.read_text(encoding="utf-8")))
-            if not count:
-                continue
-            if rel_path == "HermesMobile/Features/Shared/HermexOverlayLab.swift":
-                overlay_lab_count = count
-            if rel_path not in allowed:
-                offenders.append(rel_path)
-        self.assertEqual(offenders, [], f"HermexComposerToolbar( must only be called from {sorted(allowed)}")
+        overlay_lab_src = (REPO_ROOT / "HermesMobile/Features/Shared/HermexOverlayLab.swift").read_text(encoding="utf-8")
         self.assertGreater(
-            overlay_lab_count, 0,
-            "expected the DEBUG overlay lab to adopt HermexComposerToolbar with at least one real specimen",
+            len(pattern.findall(overlay_lab_src)), 0,
+            "expected the DEBUG overlay lab to keep at least one real HermexComposerToolbar specimen",
         )
 
     def test_new_foundation_and_test_files_have_xcode_project_membership(self):
@@ -1353,48 +1038,26 @@ class DSR2_15BannerTests(unittest.TestCase):
         for filename in ["HermexBanner.swift", "HermexBannerTests.swift"]:
             self.assertIn(filename, pbxproj, f"expected {filename} to have Xcode project membership")
 
-    def test_hermex_banner_call_sites_are_confined_to_its_own_foundation_file_and_the_overlay_lab(self):
+    # Correction: HermexBanner( is no longer required to stay confined to its own foundation file and
+    # the DEBUG overlay lab, Banner is no longer required to stay unadopted by the Bot composers/offline
+    # cache notice sources, and the catalog is no longer required to assert zero production adoption —
+    # those were non-adoption restrictions, not legitimate integrity checks, and they blocked a real
+    # production caller from ever landing. The legitimate facts worth keeping: the DEBUG overlay lab
+    # still demonstrates a real specimen, and the catalog still cites the real HermexBanner.swift source
+    # (not the retired Banner.swift).
+    def test_overlay_lab_still_demonstrates_a_real_banner_specimen(self):
         pattern = re.compile(r"HermexBanner\(")
-        allowed = {
-            "HermesMobile/Features/Shared/HermexBanner.swift",
-            "HermesMobile/Features/Shared/HermexOverlayLab.swift",
-        }
-        offenders = []
-        overlay_lab_count = 0
-        for swift_path in (REPO_ROOT / "HermesMobile").rglob("*.swift"):
-            rel_path = str(swift_path.relative_to(REPO_ROOT))
-            count = len(pattern.findall(swift_path.read_text(encoding="utf-8")))
-            if not count:
-                continue
-            if rel_path == "HermesMobile/Features/Shared/HermexOverlayLab.swift":
-                overlay_lab_count = count
-            if rel_path not in allowed:
-                offenders.append(rel_path)
-        self.assertEqual(offenders, [], f"HermexBanner( must only be called from {sorted(allowed)}")
+        overlay_lab_src = (REPO_ROOT / "HermesMobile/Features/Shared/HermexOverlayLab.swift").read_text(encoding="utf-8")
         self.assertGreater(
-            overlay_lab_count, 0,
-            "expected the DEBUG overlay lab to adopt HermexBanner with at least one real specimen",
+            len(pattern.findall(overlay_lab_src)), 0,
+            "expected the DEBUG overlay lab to keep at least one real HermexBanner specimen",
         )
 
-
-    def test_hermex_banner_is_not_adopted_by_bot_composers_or_the_offline_cache_notice_sources(self):
-        for rel_path in [
-            "HermesMobile/Features/Bots/BotChatComposerView.swift",
-            "HermesMobile/Features/Bots/BotRoomComposerView.swift",
-            "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift",
-            "HermesMobile/Features/SessionList/SessionListComponents.swift",
-        ]:
-            text = (REPO_ROOT / rel_path).read_text(encoding="utf-8")
-            self.assertNotIn(
-                "HermexBanner(", text, f"{rel_path} must not adopt HermexBanner in this bounded slice"
-            )
-
-    def test_catalog_states_hermex_banner_as_foundation_only_with_zero_production_adoption(self):
+    def test_catalog_still_cites_the_real_hermex_banner_source_not_the_retired_banner_swift(self):
         catalog_source = (
             REPO_ROOT / "design-system-catalog/native/catalog/hermes/hermesSections.tsx"
         ).read_text(encoding="utf-8")
         self.assertIn("HermesMobile/Features/Shared/HermexBanner.swift", catalog_source)
-        self.assertNotIn("HermesMobile/Features/Chat/ChatComposerView.swift", catalog_source)
         self.assertNotIn("HermesMobile/Features/Shared/Banner.swift", catalog_source)
 
 

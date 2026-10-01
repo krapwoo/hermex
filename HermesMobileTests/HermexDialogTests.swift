@@ -95,6 +95,22 @@ import XCTest
         XCTAssertFalse(src.contains("showsCloseButton"), "the close control is never caller-optional")
     }
 
+    /// `closeButtonAccessibilityLabel` is a plain `String` constant, and its only consumers
+    /// (`.icon(_:accessibilityLabel:)` and `.accessibilityLabel(_:)`) take the value as a `String`, not
+    /// a `Text`/`LocalizedStringKey` literal at the call site. `ci/check_string_catalog.py` only ever
+    /// sees `Localizable` keys the compiler extracts from a `LocalizedStringKey` use — a plain `String`
+    /// constant threaded through a `String`-typed accessibility API never produces one, so this
+    /// component-owned, always-visible VoiceOver label is permanently invisible to that checker. It
+    /// must route through `String(localized:)` instead so the checker (and translators) can see it.
+    func testCloseButtonAccessibilityLabelIsLocalizedNotAPlainLiteralInvisibleToTheStringCatalogChecker() throws {
+        let src = try hermexDialogSource()
+        XCTAssertTrue(
+            src.contains(#"static let closeButtonAccessibilityLabel = String(localized:"#),
+            "expected closeButtonAccessibilityLabel to be built with String(localized:), since a plain " +
+                "String literal here is invisible to ci/check_string_catalog.py's compiler-extraction scan"
+        )
+    }
+
     func testBackdropTapGestureIsANoOp() throws {
         let src = try hermexDialogSource()
         XCTAssertTrue(src.contains(".onTapGesture {}"),

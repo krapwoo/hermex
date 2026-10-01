@@ -333,7 +333,6 @@
 		54C0F743608E4C6DA8D50B9D /* SkeletonPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1232E7291048A68107513C /* SkeletonPlaceholder.swift */; };
 		F7986A64AB214B98891DFFB9 /* Tag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CE059F7CC42A0998DA1C1 /* Tag.swift */; };
 		6042DC5222884FE18593BB96 /* TopNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = C67CCE194A3A4CD98974B32E /* TopNav.swift */; };
-		DD620C00924B40BDAEA63529 /* SessionListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FC382B67059402390B106FC /* SessionListItem.swift */; };
 		B3AE52F326AD404CBB68600A /* AppFontDynamicTypeRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A24E720CE1A4CE28963357F /* AppFontDynamicTypeRenderTests.swift */; };
 		05D53CFF110840998F02A339 /* AppFontModifierBuildProofTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697CF7A5482947F98B073119 /* AppFontModifierBuildProofTests.swift */; };
 		63F51AE0B2B149F8B1327D8B /* AppFontRoleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BFB71C99EA4B50AC76E25A /* AppFontRoleTests.swift */; };
@@ -1023,7 +1022,6 @@
 		6B1232E7291048A68107513C /* SkeletonPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonPlaceholder.swift; sourceTree = "<group>"; };
 		444CE059F7CC42A0998DA1C1 /* Tag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tag.swift; sourceTree = "<group>"; };
 		C67CCE194A3A4CD98974B32E /* TopNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopNav.swift; sourceTree = "<group>"; };
-		7FC382B67059402390B106FC /* SessionListItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListItem.swift; sourceTree = "<group>"; };
 		1A24E720CE1A4CE28963357F /* AppFontDynamicTypeRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFontDynamicTypeRenderTests.swift; sourceTree = "<group>"; };
 		697CF7A5482947F98B073119 /* AppFontModifierBuildProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFontModifierBuildProofTests.swift; sourceTree = "<group>"; };
 		A8BFB71C99EA4B50AC76E25A /* AppFontRoleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFontRoleTests.swift; sourceTree = "<group>"; };
@@ -1963,7 +1961,6 @@
 				C08800000000000000000002 /* SessionHaptics.swift */,
 				A040C0DE0000000000000002 /* ProjectCreationSheet.swift */,
 				A048C0DE0000000000000002 /* SessionRenameSheet.swift */,
-				7FC382B67059402390B106FC /* SessionListItem.swift */,
 			);
 			path = SessionList;
 			sourceTree = "<group>";
@@ -2851,7 +2848,6 @@
 				A04300000000000000000003 /* SessionMutator.swift in Sources */,
 				A040C0DE0000000000000001 /* ProjectCreationSheet.swift in Sources */,
 				A048C0DE0000000000000001 /* SessionRenameSheet.swift in Sources */,
-				DD620C00924B40BDAEA63529 /* SessionListItem.swift in Sources */,
 				1A2B3C4D5E6F70000000130 /* ContextWindowSnapshot.swift in Sources */,
 				1A2B3C4D5E6F70000000131 /* ContextWindowIndicatorView.swift in Sources */,
 				1A2B3C4D5E6F70000000150 /* UploadResponse.swift in Sources */,

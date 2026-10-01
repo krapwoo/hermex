@@ -1784,19 +1784,21 @@
           }
         ],
         "adoptionStatus": {
-          "state": "foundation-available",
-          "detail": "Component exists (HermexSearch.swift) with no production call site yet. Production's eight existing search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating them onto `.hermexSearch` is deferred to a separate issue."
+          "state": "partially-adopted",
+          "detail": "HermexSelectionSheet.swift already composes HermexSearchField directly for its optional search slot — a real, current production call site, so this is not a genuinely uncalled foundation component. Production's eight existing screen-level search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating a screen onto `.hermexSearch` is deferred to a separate issue."
         },
-        "useSummary": "New custom foundation component; no screen has adopted it yet in this slice. Production keeps its existing eight direct `.searchable` call sites unchanged.",
+        "useSummary": "HermexSelectionSheet.swift is a real, current caller of HermexSearchField; no top-level screen has migrated off `.searchable` yet. Production keeps its existing eight direct `.searchable` call sites unchanged.",
         "implementationNotes": {
-          "status": "Component exists (HermexSearch.swift) with no production call site yet.",
+          "status": "HermexSelectionSheet.swift composes HermexSearchField directly; no screen-level `.searchable` call site has migrated yet.",
           "sourcePaths": [
-            "HermesMobile/Features/Shared/HermexSearch.swift"
+            "HermesMobile/Features/Shared/HermexSearch.swift",
+            "HermesMobile/Features/Shared/HermexSelectionSheet.swift"
           ],
           "notes": [
             "One canonical visual implementation: `HermexSearchField` owns chrome, local `@FocusState`, the clear control, and `.submitLabel(.search)`/`.onSubmit` wiring around a native `TextField`; `.hermexSearch(...)` only composes that same field as a `.safeAreaInset(edge: .top)` — there is no second field implementation.",
             "Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience; Hermex cannot truthfully reproduce that native placement contract once it draws its own chrome.",
-            "Report only: production's eight existing direct `.searchable` call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating them onto `.hermexSearch` is scoped to a separate issue, not this slice."
+            "HermexSelectionSheet.swift's optional search slot renders HermexSearchField directly — a real, current production call site, distinct from the screen-level `.searchable` migration below.",
+            "Report only: production's eight existing direct `.searchable` screen call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating a screen onto `.hermexSearch` is scoped to a separate issue, not this slice."
           ]
         },
         "compositionSlots": [],
@@ -1883,14 +1885,14 @@
           "state": "foundation-available",
           "detail": "Available in this branch's foundation layer; no production call site exists yet."
         },
-        "useSummary": "A new, foundation-only component; the displayed name intentionally omits a Hermex prefix. Tasks, Usage, and Kanban each keep their own existing, direct native SwiftUI segmented control in this branch — see the Design System Contract's frozen baseline count for those three files.",
+        "useSummary": "A new, foundation-only component; the displayed name intentionally omits a Hermex prefix. Tasks, Usage, and Kanban each keep their own existing, direct native SwiftUI segmented control in this branch; migrating any of them is separate, issue-driven work, not something this foundation audit counts or gates.",
         "implementationNotes": {
           "status": "Available in this branch's foundation layer; no production call site exists yet.",
           "sourcePaths": [
             "HermesMobile/Features/Shared/SegmentedControl.swift"
           ],
           "notes": [
-            "TasksView.swift, InsightsView.swift, UsageChartCard.swift, and KanbanLabView.swift each still construct their own native SwiftUI segmented control directly; none imports SegmentedControl.swift in this branch. scripts/hermex_design_system_adoption_audit.py freezes their current native-segmented-control count so a future migration is a deliberate, reviewed change, not silent drift."
+            "TasksView.swift, InsightsView.swift, UsageChartCard.swift, and KanbanLabView.swift each still construct their own native SwiftUI segmented control directly; none imports SegmentedControl.swift in this branch. Migrating any of them is separate, issue-driven work — this foundation audit does not count or gate native-control call sites."
           ]
         },
         "compositionSlots": [],
@@ -2862,7 +2864,7 @@
       "id": "List / ListItem",
       "displayName": "List / ListItem",
       "description": "A container plus a configurable row: independently optional leading avatar/icon/status content, rich/multiline title and description, a title-adjacent Tag or accessory, two-zone metadata/footer content, trailing data (+ optional trailing subdata), a custom/independently-interactive trailing accessory, selected/disabled/loading/commit-pending states, an accessibility-label override, and Dynamic Type layout adaptation. Picker Row is removed as a standalone family — a picker is ListItem used with selected, pending, and trailing-checkmark configuration, plus an optional secondary action.",
-      "whenToUse": "Reach for ListItem for any row anatomy, including a picker row — there is no separate Picker Row component to reach for instead. SessionListItem is the named composition for session rows.",
+      "whenToUse": "Reach for ListItem for any row anatomy, including a picker row — there is no separate Picker Row component to reach for instead.",
       "a11y": "A pressable ListItem exposes one combined accessibilityLabel (title + description, overridable) and accessibilityRole=\"button\"; a disabled or loading row is never pressable. In the React Native catalog reconstruction only, a loading row announces \"Loading\" once via SkeletonGroup instead of once per Shimmer block — there is no native Swift equivalent. The real native Swift ListItem instead models a pending row with ListItemState.isPending, rendered as a single trailing ProgressView with its own tint; this is a different concept, not a native SkeletonGroup. Layout adapts to Dynamic Type via ordinary text flow rather than fixed heights.",
       "props": [
         {
@@ -2967,20 +2969,20 @@
           "state": "foundation-available",
           "detail": "Available in this branch's foundation layer; no production call site exists yet."
         },
-        "useSummary": "New, foundation-only components; the four picker sheets, SessionListItem/SessionInteractiveRow, BotInboxRow, and SessionListView's main-menu container each keep their own existing, independent row implementation in this branch, not ListItem or HermexList.",
+        "useSummary": "New, foundation-only components; the four picker sheets, SessionInteractiveRow, BotInboxRow, and SessionListView's main-menu container each keep their own existing, independent row implementation in this branch, not ListItem or HermexList.",
         "implementationNotes": {
           "status": "Available in this branch's foundation layer; no production call site exists yet.",
           "sourcePaths": [
             "HermesMobile/Features/Shared/ListItem.swift",
             "HermesMobile/Features/Shared/HermexList.swift",
-            "HermesMobile/Features/SessionList/SessionListItem.swift",
             "HermesMobile/Features/Shared/SkeletonPlaceholder.swift"
           ],
           "notes": [
+            "ListItem.swift itself has no production caller in this branch: every row above — the four picker sheets, SessionInteractiveRow/BotInboxRow, and SessionListView's main-menu container — keeps its own existing, independent row implementation.",
             "The React Native catalog reconstruction's loading prop (Shimmer placeholders grouped under one SkeletonGroup announcement) is catalog-reconstruction-only — native Swift ListItem has no loading prop and never redacts its own slots. Native Swift ListItem instead models a single-row pending state with ListItemState.isPending, rendered as one trailing ProgressView via its own trailingIndicator — a different concept (one row's own indicator, not a multi-row placeholder group). General Swift skeleton-placeholder grouping across unrelated rows (unused by ListItem itself) is the .skeletonAnnouncement(label:value:disablesHitTesting:) modifier in SkeletonPlaceholder.swift.",
             "metadata/footer and trailingText/trailingSubtext are likewise React Native catalog-reconstruction-only slots with no native Swift ListItem equivalent — native ListItem's only slots are leading, title, titleAccessory, subtitle, and trailingAccessory, plus its own automatic state-driven trailingIndicator.",
             "ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, and CronJobConfigurationPickers.swift each still construct their own picker row directly; none imports ListItem.swift in this branch — a future consolidation onto ListItem's selected/pending/trailing-checkmark configuration is documented here as a foundation capability, not a completed migration.",
-            "SessionListItem.swift is itself new in this branch, with no production caller: SessionListComponents.swift's SessionInteractiveRow and Bots' BotInboxRow both keep their own pre-existing row anatomy, unchanged.",
+            "SessionListComponents.swift's SessionInteractiveRow and Bots' BotInboxRow both keep their own pre-existing row anatomy, unchanged — neither composes ListItem in this branch.",
             "SessionListView.swift's main-menu container does not compose HermexList in this branch; it keeps its own existing native SwiftUI List container.",
             "ListItem exposes an explicit, opt-in hapticFeedbackStyle so a future caller can preserve an existing tap-haptic contract instead of silently losing it to the plain Button ListItem otherwise wraps its action in — documented here as an available foundation capability, with no caller yet since ListItem itself has none.",
             "HermexList applies a default 12pt vertical scroll-content margin (.contentMargins(.vertical, HermesSpacing.s12, for: .scrollContent)) reusing the existing HermesSpacing.s12 value — a foundation capability, not yet applied to any production List.",
@@ -4561,7 +4563,7 @@
           "notes": [
             "The inventory is deduplicated by final SF Symbol name.",
             "Literal counts, computed expressions, source sites, and trace methods remain available from hermesIconInventory.generated.json and hermesIconComputedSiteTrace.generated.json.",
-            "The browser cannot render SF Symbols faithfully without adding assets or a dependency, so tiles are explicitly unavailable instead of using substitute glyphs.",
+            "The browser grid loads the checked-in simulator-rendered PNG baseline for each symbol; \"Glyph unavailable in browser\" is only an error-only fallback shown when a tile's asset is missing or fails to load, and regenerating that baseline is a separate, explicit `npm run generate:icons` step.",
             "A five-step default icon-size scale (HermesIconSize, HermesMobile/Config/HermesSpacing.swift) is defined in this branch's foundation layer alongside two semantic pairing sets — Typography pairing (which AppFont.Role text an icon size sits beside inline) and Avatar pairing (which Avatar diameter an icon size sits inside, at the approved pairing: 32pt avatar → 20pt icon, 40pt avatar → 24pt icon, 48pt avatar → 32pt icon) — but no production call site reads HermesIconSize yet; each existing SF Symbol call site still picks its own literal point size."
           ]
         },

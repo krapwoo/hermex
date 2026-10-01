@@ -11,10 +11,6 @@ dist/bundle.js
 web-build/
 expo-env.d.ts
 
-# Simulator-rendered SF Symbol previews (scripts/generate-icon-previews.mjs) — runtime-only,
-# regenerated on demand, never committed.
-public/generated-icons/
-
 # Native
 .kotlin/
 *.orig.*

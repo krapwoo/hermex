@@ -189,13 +189,13 @@ this one.
 
 That job also runs `scripts/hermex_design_system_adoption_audit.py` (plus its fixture suite,
 `scripts/tests/test_hermex_design_system_adoption_audit.py`) — a foundation-only contract check, not
-a production-adoption gate. It fails closed when a required Swift foundation file or a small,
-load-bearing API snippet inside it goes missing, when the approved icon-size (12/16/20/24/32pt) or
-avatar/icon-pairing (32→16, 40→20, 48→24) scale drifts, or when either of its two frozen legacy
-baselines (native `.pickerStyle(.segmented)` call sites, direct `ContentUnavailableView` call sites)
-gains a new file or an increased count. This check does not rewrite code, and it does not require or
-prove that any production screen has migrated onto a Design System component — see the script's own
-module docstring for the exact contract and the baseline owner/removal-condition rule.
+a production-adoption gate. It fails closed only when a required Swift foundation file or a small,
+load-bearing API snippet inside it goes missing, or when the approved icon-size (12/16/20/24/32pt) or
+avatar/icon-pairing (32→20, 40→24, 48→32) scale drifts.
+
+It does not count or restrict native-control call sites anywhere in production, does not
+rewrite code, and does not require or prove that any production screen has migrated onto a
+Design System component — see the script's own module docstring for the exact contract.
 
 ```zsh
 # Fixture tests for the audit script itself

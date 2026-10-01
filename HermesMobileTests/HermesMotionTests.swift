@@ -1,3 +1,4 @@
+import SwiftUI
 import XCTest
 @testable import HermesMobile
 
@@ -66,6 +67,40 @@ final class HermesMotionTests: XCTestCase {
         XCTAssertEqual(HermesMotion.Bundle.scrollFollow.duration, HermesMotion.Duration.d200)
         XCTAssertEqual(HermesMotion.Bundle.scrollFollow.easing, .easeOut)
         XCTAssertEqual(HermesMotion.Bundle.scrollFollow.detail, "")
+    }
+
+    // MARK: - animation(for:) must apply the bundle's own duration, not SwiftUI's default
+    //
+    // `HermesMotion.Bundle.overlayEnter.duration == 0.25` only pins the token; it says nothing about
+    // what `.smooth`/`.snappy` animation `animation(for:)` actually returns. `Animation` is Equatable,
+    // so these compare the real returned value against the exact animation the fix must produce,
+    // rather than inspecting a string description.
+
+    func testSpatialEasingResolvesToSmoothUsingTheBundlesOwnDurationNotSwiftUIsDefault() {
+        let resolved = HermesMotion.animation(for: HermesMotion.Bundle.overlayEnter)
+        XCTAssertEqual(
+            resolved, .smooth(duration: HermesMotion.Bundle.overlayEnter.duration, extraBounce: 0),
+            "expected `.spatial` easing (overlayEnter) to resolve to `.smooth` using its own 0.25s " +
+                "bundle duration, not SwiftUI's default `.smooth` duration"
+        )
+    }
+
+    func testSpatialEasingAppliesContentRepositionsOwnDurationTooNotJustOverlayEnters() {
+        let resolved = HermesMotion.animation(for: HermesMotion.Bundle.contentReposition)
+        XCTAssertEqual(
+            resolved, .smooth(duration: HermesMotion.Bundle.contentReposition.duration, extraBounce: 0),
+            "expected every `.spatial` bundle, not only overlayEnter, to carry its own duration into `.smooth`"
+        )
+    }
+
+    func testEmphasizedEasingResolvesToSnappyUsingTheBundlesOwnDurationNotSwiftUIsDefault() {
+        let bundle = HermesMotion.MotionBundle(duration: 0.25, easing: .emphasized, detail: "test-only bundle")
+        let resolved = HermesMotion.animation(for: bundle)
+        XCTAssertEqual(
+            resolved, .snappy(duration: bundle.duration, extraBounce: 0),
+            "expected `.emphasized` easing to resolve to `.snappy` using the bundle's own duration, " +
+                "not SwiftUI's default `.snappy` duration"
+        )
     }
 
     func testAllEightBundlesAreDistinctByDurationEasingPair() {

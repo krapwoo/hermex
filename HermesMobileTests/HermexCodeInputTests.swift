@@ -196,6 +196,34 @@ final class HermexCodeInputTests: XCTestCase {
         )
     }
 
+    // MARK: - Source/localization contracts: accessibility value copy must not bypass the catalog
+    //
+    // `accessibilityValue` builds its progress copy ("No digits entered. 0 of 6." / "123456. 6 of 6
+    // digits entered.") as a plain `String` and the call site wraps it in `Text(verbatim:)` — the
+    // documented, legitimate escape hatch for copy that should never reach the catalog (identifiers,
+    // paths, DEBUG-only text). Using it here for real spoken progress copy means
+    // `ci/check_string_catalog.py` treats it as deliberately excluded rather than missing, so this
+    // user-facing string stays permanently un-translatable with no red build to catch it.
+
+    func testHermexCodeInputAccessibilityValueDoesNotHideUserFacingCopyBehindTextVerbatim() throws {
+        let region = try hermexCodeInputRegion()
+        XCTAssertFalse(
+            region.contains("Text(verbatim: accessibilityValue)"),
+            "the code input's spoken digit-progress copy is real user-facing text, not an identifier or " +
+                "debug string — Text(verbatim:) tells ci/check_string_catalog.py to ignore it, which is wrong here"
+        )
+    }
+
+    func testHermexCodeInputAccessibilityValueStringsAreLocalized() throws {
+        let region = try hermexCodeInputRegion()
+        XCTAssertTrue(
+            region.contains("String(localized:"),
+            "expected the code input's accessibilityValue copy to be built with String(localized:) so " +
+                "ci/check_string_catalog.py's compiler-extraction scan can see it, instead of a plain String " +
+                "literal wrapped in Text(verbatim:)"
+        )
+    }
+
     func testHermexCodeInputGroupsNativeFieldAccessibilitySemantics() throws {
         let region = try hermexCodeInputRegion()
         XCTAssertTrue(region.contains("accessibilityLabel("), "expected a native accessibility label")

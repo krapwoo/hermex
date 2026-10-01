@@ -99,34 +99,36 @@ struct SegmentedControl<Value: Hashable>: View {
                 selection = option.value
             }
         } label: {
-            ZStack {
-                if isSelected {
-                    if expandsToFill {
-                        Capsule(style: .continuous)
-                            .fill(Color(.systemBackground))
-                            .hermesShadow(.controlElevatedResting)
-                            .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
-                            .padding(.vertical, SegmentedControlMetrics.selectedVisualInset)
-                            .allowsHitTesting(false)
-                    } else {
-                        Capsule(style: .continuous)
-                            .fill(Color(.systemBackground))
-                            .hermesShadow(.controlElevatedResting)
-                            .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
-                            .frame(height: SegmentedControlMetrics.scrollingSelectedPillHeight)
-                            .allowsHitTesting(false)
-                    }
-                }
-
-                optionLabel(option, isSelected: isSelected, expandsToFill: expandsToFill)
-
+            optionLabel(option, isSelected: isSelected, expandsToFill: expandsToFill)
                 .padding(.horizontal, HermesSpacing.s12)
                 .frame(
                     maxWidth: expandsToFill ? .infinity : nil,
                     minHeight: SegmentedControlMetrics.minimumTouchHeight
                 )
+                .background {
+                    // The selected pill is bound to this text-bearing row's own resolved size via
+                    // `.background` — never a ZStack sibling — so a greedy, unconstrained `Capsule`
+                    // can never adopt an ambient parent proposal instead of tracking the row it sits
+                    // behind.
+                    if isSelected {
+                        if expandsToFill {
+                            Capsule(style: .continuous)
+                                .fill(Color(.systemBackground))
+                                .hermesShadow(.controlElevatedResting)
+                                .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
+                                .padding(.vertical, SegmentedControlMetrics.selectedVisualInset)
+                                .allowsHitTesting(false)
+                        } else {
+                            Capsule(style: .continuous)
+                                .fill(Color(.systemBackground))
+                                .hermesShadow(.controlElevatedResting)
+                                .matchedGeometryEffect(id: "segmented-control-selection", in: selectionNamespace)
+                                .frame(height: SegmentedControlMetrics.scrollingSelectedPillHeight)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                }
                 .contentShape(Rectangle())
-            }
         }
         .buttonStyle(.hermexPressOnly(.capsule))
         .accessibilityLabel(accessibilityLabel(for: option))
