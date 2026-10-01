@@ -36,6 +36,24 @@ import XCTest
         XCTAssertNil(PushPreview.open(sealed: "not base64", keys: keys))
     }
 
+    /// Settings' test notification seals on the phone (#874); the extension must open it
+    /// exactly as it opens the plugin's, and only with this install's keys.
+    func testAPhoneSealedPreviewOpensOnlyForItsOwnInstall() throws {
+        let preview = PushPreview(title: "Hermex test notification", body: "Push reached this iPhone.")
+        let sealed = try XCTUnwrap(PushPreview.seal(preview, keys: keys))
+        XCTAssertNotEqual(PushPreview.seal(preview, keys: keys), sealed, "Every seal takes a fresh nonce")
+        XCTAssertEqual(PushPreview.open(sealed: sealed, keys: keys), preview)
+
+        let content = banner(sealed: sealed)
+        PushPreview.rewrite(content, candidates: [keys])
+        XCTAssertEqual(content.title, "Hermex test notification")
+        XCTAssertEqual(content.body, "Push reached this iPhone.")
+
+        let otherInstall = PushPreviewKeys(installKey: String(repeating: "f", count: 64), previewKey: keys.previewKey)
+        XCTAssertNil(PushPreview.open(sealed: sealed, keys: otherInstall))
+        XCTAssertNil(PushPreview.seal(preview, keys: PushPreviewKeys(installKey: keys.installKey, previewKey: "short")))
+    }
+
     func testRewriteShowsThePreviewAndKeepsTheProfileForTheTap() {
         let content = banner(sealed: sealed)
         PushPreview.rewrite(content, candidates: [PushPreviewKeys(installKey: String(repeating: "f", count: 64), previewKey: keys.previewKey), keys])
@@ -58,6 +76,40 @@ import XCTest
         let unpaired = banner(sealed: sealed)
         PushPreview.rewrite(unpaired, candidates: [])
         XCTAssertEqual(unpaired.body, "New activity")
+    }
+
+    /// #887: the title names the bot and what it wants in the phone's language, built from
+    /// the cleartext `kind` and the sealed `bot_name`. The sealed English title is only for
+    /// app builds that predate `bot_name`.
+    func testRewriteNamesTheBotWithTheKindsLabel() throws {
+        let titles = [
+            "approval": "Inbox Triage · Approval needed",
+            "clarify": "Inbox Triage · Question",
+            "turn_error": "Inbox Triage · Turn failed",
+            "reply": "Inbox Triage"
+        ]
+        for (kind, title) in titles {
+            let content = try namedBanner(kind: kind, botName: "Inbox Triage")
+            PushPreview.rewrite(content, candidates: [keys])
+            XCTAssertEqual(content.title, title, kind)
+            XCTAssertEqual(content.subtitle, "Sealed subtitle", kind)
+            XCTAssertEqual(content.body, "Sealed body", kind)
+            XCTAssertEqual(PushPayload(userInfo: content.userInfo).profile, "inbox-triage", kind)
+        }
+    }
+
+    /// An older plugin seals no `bot_name`, and a kind this build has no label for keeps
+    /// the plugin's title: both banners look exactly as they did before #887.
+    func testRewriteKeepsTheSealedTitleWithoutABotName() throws {
+        let cases: [(kind: String?, botName: String?)] = [
+            ("approval", nil), ("approval", ""), ("input", "Inbox Triage"), (nil, "Inbox Triage")
+        ]
+        for (kind, botName) in cases {
+            let content = try namedBanner(kind: kind, botName: botName)
+            PushPreview.rewrite(content, candidates: [keys])
+            XCTAssertEqual(content.title, "Sealed title", "\(kind ?? "no kind"), \(botName ?? "no bot_name")")
+            XCTAssertEqual(content.body, "Sealed body")
+        }
     }
 
     func testTapOpensTheBotOnThePairedServer() {
@@ -171,6 +223,30 @@ import XCTest
             userInfo: info, pairings: [server: pairing, other: unrelated], activeServer: other)?.server, server)
     }
 
+    // #862: a local run alert opens its chat on its own server with no pairing at all.
+    func testLocalAlertTapOpensItsChatOnItsConfiguredServer() throws {
+        let other = URL(string: "https://other.example")!
+        let alert = ResponseCompletionNotificationRequest(sessionID: "s1", server: server, title: "Chat", outcome: .completed)
+        let info: [AnyHashable: Any] = alert.userInfo
+
+        XCTAssertEqual(ResponseCompletionNotificationRequest.destination(userInfo: info, servers: [other, server]),
+                       WebuiPushDestination(server: server, sessionID: "s1"))
+        // Its server was removed, so the tap only opens the app.
+        XCTAssertNil(ResponseCompletionNotificationRequest.destination(userInfo: info, servers: [other]))
+        var blank = info
+        blank["session_id"] = " "
+        XCTAssertNil(ResponseCompletionNotificationRequest.destination(userInfo: blank, servers: [server]))
+        let noSession = ResponseCompletionNotificationRequest(sessionID: nil, server: server, title: "Chat", outcome: .failed)
+        XCTAssertNil(ResponseCompletionNotificationRequest.destination(userInfo: noSession.userInfo, servers: [server]))
+        // It is never mistaken for a relay push, nor a relay push for it.
+        XCTAssertNil(PushPayload(userInfo: info).installHash)
+        XCTAssertEqual(PushPresence.presentation(userInfo: info, viewer: nil, pairings: [:]), [])
+        var relay = banner(sealed: nil).userInfo
+        relay["source"] = "webui"
+        relay["server_hash"] = info["server_hash"]
+        XCTAssertNil(ResponseCompletionNotificationRequest.destination(userInfo: relay, servers: [server]))
+    }
+
     func testForegroundShowsRelayPushesButQuietsTheOpenChatsReplies() {
         let pairing = PushPairing(relayURL: server, installKey: keys.installKey, previewKey: keys.previewKey)
         let open = PushPresence.Viewer(server: server, sessionID: "s1")
@@ -201,7 +277,8 @@ import XCTest
     }
 
     func testPresenceOnlyClearsForTheScreenThatEntered() {
-        let presence = PushPresence()
+        // An unlocked app: a locked one reports no chat on screen (AppLockTests).
+        let presence = PushPresence(appLock: AppLock(defaults: UserDefaults(suiteName: "PushPreviewTests.presence")!))
         let chat = PushPresence.Viewer(server: server, sessionID: "s1")
         let (old, replacement) = (UUID(), UUID())
         // A deep link can rebuild the same conversation before the old screen disappears.
@@ -211,6 +288,20 @@ import XCTest
         XCTAssertEqual(presence.viewer, chat)
         presence.leave(owner: replacement)
         XCTAssertNil(presence.viewer)
+    }
+
+    /// A relay banner of `kind` whose preview is sealed from the plugin's JSON, so
+    /// `bot_name` goes through the same decode the extension runs.
+    private func namedBanner(kind: String?, botName: String?) throws -> UNMutableNotificationContent {
+        var json: [String: Any] = [
+            "title": "Sealed title", "subtitle": "Sealed subtitle", "body": "Sealed body",
+            "profile": "inbox-triage", "request_id": "r1"
+        ]
+        json["bot_name"] = botName
+        let preview = try JSONDecoder().decode(PushPreview.self, from: JSONSerialization.data(withJSONObject: json))
+        let content = banner(sealed: try XCTUnwrap(PushPreview.seal(preview, keys: keys)))
+        content.userInfo["kind"] = kind
+        return content
     }
 
     /// A banner as the relay's `bannerPush` builds it.

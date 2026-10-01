@@ -626,6 +626,31 @@ import XCTest
         XCTAssertEqual(spare, 1, "no automatic retry for an address that is not a dashboard")
     }
 
+    /// An access proxy, a host with browser sign-in only, and a refused gateway upgrade each
+    /// need the user to change something, so the inbox says what and stops retrying.
+    func testSignInFailuresTheUserMustFixShowTheirMessageInsteadOfRetrying() async throws {
+        let rows: [(BotFailure, String)] = [
+            (.blocked, "Something in front of Hermes, such as Cloudflare Access, wants its own sign-in first. Hermex can't do that yet. Use an address that skips it, such as the dashboard's local network address."),
+            (.browserSignIn, "This Hermes host only offers sign-in with a browser, which Hermex doesn't support yet. To connect now, add a dashboard username and password on the host."),
+            (.upgradeRefused(403), "Hermes accepted the sign-in, but the live connection was refused. If a proxy or tunnel sits in front of Hermes, turn on WebSocket support and let the Sec-WebSocket-Protocol header through.")
+        ]
+        for (failure, message) in rows {
+            let wire = BotInboxFixtureWire(roster: [row("triage")])
+            wire.connectError = failure
+            var spare = 0
+            let inbox = BotInbox(server: server, store: try connectedStore(), unread: BotUnreadStore(defaults: defaults),
+                                 avatarStore: BotAvatarStore(), reloadSpacing: .zero, reconnectDelays: [.zero]) { _ in
+                spare += 1; return wire
+            }
+            await inbox.open()
+            XCTAssertEqual(inbox.errorMessage, message, "\(failure)")
+            XCTAssertFalse(inbox.isLoadingRoster, "\(failure)")
+            await Task.yield(); await Task.yield()
+            XCTAssertEqual(spare, 1, "no automatic retry after \(failure)")
+            inbox.close()
+        }
+    }
+
     func testAnUnreachableHostReplacesTheSkeletonWithAdviceAfterThreeTriesAndKeepsRetrying() async throws {
         let failing = (0..<3).map { _ in
             let wire = BotInboxFixtureWire(roster: [row("triage")])
@@ -699,8 +724,102 @@ import XCTest
         await inbox.open()
         XCTAssertEqual(inbox.link, .disconnected)
         XCTAssertEqual(inbox.errorMessage, BotFailure.rejected(401).localizedDescription)
+        XCTAssertTrue(inbox.needsSignIn, "a refused password offers the sign-in form")
         await Task.yield(); await Task.yield()
         XCTAssertEqual(spare, 1, "no automatic retry after a refusal")
+    }
+
+    /// Foregrounding, pull to refresh and closing the form unsaved all rerun `open()`;
+    /// none of them may spend another of the host's password logins (#884).
+    func testARejectedPasswordIsNotSentAgainUntilTheSavedSignInChanges() async throws {
+        let store = try connectedStore()
+        let wire = BotInboxFixtureWire(roster: [row("triage")])
+        wire.connectError = BotFailure.rejected(401)
+        var spare = 0
+        let inbox = BotInbox(server: server, store: store, unread: BotUnreadStore(defaults: defaults),
+                             avatarStore: BotAvatarStore(), reloadSpacing: .zero, reconnectDelays: [.zero]) { _ in
+            spare += 1; return wire
+        }
+        await inbox.open()
+        await inbox.open()
+        XCTAssertEqual(spare, 1, "the unchanged, rejected record is not sent again")
+        XCTAssertEqual(inbox.link, .disconnected)
+        XCTAssertEqual(inbox.errorMessage, "Hermes didn't accept the username or password.")
+        XCTAssertTrue(inbox.needsSignIn)
+
+        let old = try XCTUnwrap(store.load(server: server))
+        try store.save(BotConnection(id: old.id, name: old.name, address: old.address, username: old.username,
+                                     password: "new", hermesVersion: nil), server: server)
+        wire.connectError = nil
+        await inbox.open()
+        XCTAssertEqual(spare, 2, "a new password signs in")
+        XCTAssertEqual(inbox.link, .live)
+        XCTAssertNil(inbox.errorMessage)
+        XCTAssertFalse(inbox.needsSignIn)
+    }
+
+    /// The host may have been the problem, so a save from the form retries even an
+    /// unchanged record (Decision D3 on #884).
+    func testASavedSignInRetriesTheUnchangedRecord() async throws {
+        let wire = BotInboxFixtureWire(roster: [row("triage")])
+        wire.connectError = BotFailure.rejected(401)
+        var spare = 0
+        let inbox = BotInbox(server: server, store: try connectedStore(), unread: BotUnreadStore(defaults: defaults),
+                             avatarStore: BotAvatarStore(), reloadSpacing: .zero, reconnectDelays: [.zero]) { _ in
+            spare += 1; return wire
+        }
+        await inbox.open()
+        wire.connectError = nil
+        inbox.signInSaved()
+        await inbox.open()
+        XCTAssertEqual(spare, 2)
+        XCTAssertEqual(inbox.link, .live)
+        XCTAssertFalse(inbox.needsSignIn)
+    }
+
+    /// A chat or room saw the 401 while the inbox was off screen. Handing off to the form
+    /// marks the inbox, so its reappearing `open()` sends nothing; another record is ignored.
+    func testAChatsRejectedPasswordIsNotSentAgainAsTheInboxReturns() async throws {
+        let wire = BotInboxFixtureWire(roster: [row("triage")]); wire.serverInstallID = "install-1"
+        var spare = 0
+        let inbox = BotInbox(server: server, store: try connectedStore(), unread: BotUnreadStore(defaults: defaults),
+                             avatarStore: BotAvatarStore(), reloadSpacing: .zero, reconnectDelays: [.zero]) { _ in
+            spare += 1; return wire
+        }
+        await inbox.open()
+        let saved = try XCTUnwrap(inbox.connection)
+        XCTAssertEqual(saved.installID, "install-1")
+        inbox.close()
+
+        var other = saved; other.password = "older"
+        inbox.noteRejectedSignIn(other)
+        XCTAssertFalse(inbox.needsSignIn, "a chat built from another sign-in says nothing about this one")
+
+        // The chat opened before the inbox recorded the host's install id.
+        var chat = saved; chat.installID = nil
+        inbox.noteRejectedSignIn(chat)
+        await inbox.open()
+        XCTAssertEqual(spare, 1, "the refused password is not sent again")
+        XCTAssertEqual(inbox.link, .disconnected)
+        XCTAssertEqual(inbox.errorMessage, "Hermes didn't accept the username or password.")
+        XCTAssertTrue(inbox.needsSignIn)
+    }
+
+    func testOtherRefusalsKeepReconnect() async throws {
+        for failure in [BotFailure.notDashboard, .rejected(403), .blocked] {
+            let wire = BotInboxFixtureWire(roster: [row("triage")])
+            wire.connectError = failure
+            var spare = 0
+            let inbox = BotInbox(server: server, store: try connectedStore(), unread: BotUnreadStore(defaults: defaults),
+                                 avatarStore: BotAvatarStore(), reloadSpacing: .zero, reconnectDelays: [.zero]) { _ in
+                spare += 1; return wire
+            }
+            await inbox.open()
+            XCTAssertNotNil(inbox.errorMessage, "\(failure)")
+            XCTAssertFalse(inbox.needsSignIn, "\(failure)")
+            await inbox.open()
+            XCTAssertEqual(spare, 2, "Reconnect still tries again after \(failure)")
+        }
     }
 
     func testAnotherHostShowsTheMessageAndDoesNotRetryOnItsOwn() async throws {
@@ -1155,7 +1274,8 @@ import XCTest
         deleted.append(name)
     }
 
-    func call(_ method: String, _ params: [String: BotJSON], validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+    func call(_ call: HermesCall, validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+        let method = call.method, params = try call.params()
         try validateDispatch?()
         if Task.isCancelled { cancelledCalls += 1 }
         calls.append((method, params))

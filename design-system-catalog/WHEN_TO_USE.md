@@ -57,7 +57,10 @@ A few representative, real Hermex disambiguations — read as examples of how `u
 - **Card vs Transcript Log Row vs Hermes Tooltip vs Accordion List** — all show supplementary
   detail, differing in how much and how persistently. Card is a standalone, always-visible surface;
   Transcript Log Row (the real, production-adopted `TranscriptLogRowView`) is one collapsed line
-  with a summary, optional status, and copy-on-long-press that expands into a bounded, scrollable
+  with a summary, an optional trailing detail/accessory (placed trailing before the chevron at
+  ordinary Dynamic Type sizes, and below the summary/detail at accessibility sizes — fold its
+  meaning into the caller's `accessibilityLabel`, since the row ignores its child accessibility
+  semantics), optional status, and copy-on-long-press that expands into a bounded, scrollable
   detail body; Hermes Tooltip is a tap-triggered aside anchored to a control; Accordion List is a
   *collection* of independently expandable `ListItem` rows, not a single expandable surface — reach
   for it over Transcript Log Row specifically when the pattern repeats across a list, not for one

@@ -168,6 +168,10 @@ import UIKit
     private(set) var avatars: [String: UIImage] = [:]
     private(set) var link = Link.idle
     private(set) var errorMessage: String?
+    /// True after the host refused the saved username or password (`.rejected(401)`).
+    /// The inbox offers the sign-in form instead of Reconnect, and `open()` never sends
+    /// that record again until it changes or the form saves a sign-in (#884).
+    private(set) var needsSignIn = false
     /// What to check once an empty inbox has failed to reach the host
     /// `routeFailuresBeforeAdvice` times in a row. The quiet retry goes on behind it,
     /// and `open()` leaves it alone so it holds steady between attempts.
@@ -238,7 +242,7 @@ import UIKit
         self.avatarStore = avatarStore ?? .shared; self.reloadSpacing = reloadSpacing
         self.reconnectDelays = reconnectDelays; self.historyCache = historyCache
         self.statusPollInterval = statusPollInterval
-        self.makeWire = makeWire ?? { BotClient(connection: $0) }
+        self.makeWire = makeWire ?? { BotClient(saved: $0, server: server) }
         self.purgeLocalState = purgeLocalState ?? { connectionID, profile in
             try? await BotHistoryCache.shared.removeProfile(server: server, connectionID: connectionID, profileID: profile)
             await ChatDraftStore.shared.discardBotDrafts(server: server, connectionID: connectionID, profile: profile)
@@ -280,7 +284,9 @@ import UIKit
     }
 
     /// Connects, reads the roster and avatars, and keeps the socket for live
-    /// `sessions.changed` reloads. Also the pull-to-refresh and Reconnect path.
+    /// `sessions.changed` reloads. Also the pull-to-refresh, Reconnect and foreground
+    /// path, so a rejected password stays unsent here until the saved record changes
+    /// or `signInSaved()` runs.
     func open() async {
         close(); hasRoomList = false
         var client: (any BotTransport)?
@@ -295,11 +301,15 @@ import UIKit
             if connection?.id != saved?.id || connection?.address != saved?.address {
                 routeFailures = 0; routeAdvice = nil
             }
+            if connection != saved { needsSignIn = false }
             connection = saved
             guard let saved else { link = .idle; return }
             if seen.isEmpty { seen = unread.load(connectionID: saved.id) }
             if roomFlags == BotRoomOrganizeStore.Flags() { roomFlags = roomStore.load(connectionID: saved.id) }
             if sectionOrder.isEmpty { sectionOrder = sectionOrderStore.load(server: server, connectionID: saved.id) }
+            // Each resend spends one of the host's ten password logins a minute per client
+            // IP, which Desktop and the browser may share behind the same tunnel.
+            guard !needsSignIn else { link = .disconnected; return }
             let opened = makeWire(saved)
             client = opened
             wire = opened; link = .connecting; errorMessage = nil; notice = nil; readsLiveStatus = true; retriesStatusRead = false
@@ -338,6 +348,7 @@ import UIKit
                 // A saved-connection read can fail before any client exists; that is
                 // still a visible failure with the Reconnect path, not a stale roster.
                 link = .disconnected; errorMessage = (error as? BotFailure ?? .transport).localizedDescription
+                needsSignIn = error as? BotFailure == .rejected(401)
                 setLiveStatuses([:])
             }
         }
@@ -360,6 +371,24 @@ import UIKit
         try? store.save(fresh, server: server)
     }
 
+    /// The connection form signed in and saved. The next `open()` connects even when the
+    /// saved record is unchanged, because the fix may have been on the host.
+    func signInSaved() { needsSignIn = false }
+
+    /// A chat or room opened from this inbox saw the host refuse `rejected` and is
+    /// handing off to the sign-in form. The inbox takes the same stop as its own 401,
+    /// so the `open()` that runs as it reappears sends nothing. A record that signs in
+    /// differently from the inbox's is ignored; an install id the inbox recorded after
+    /// the chat opened is not a difference.
+    func noteRejectedSignIn(_ rejected: BotConnection) {
+        guard let connection, rejected.id == connection.id, rejected.address == connection.address,
+              rejected.username == connection.username, rejected.password == connection.password else { return }
+        close(); setLiveStatuses([:]); link = .disconnected
+        routeFailures = 0; routeAdvice = nil
+        errorMessage = BotConnectionAdvice.message(for: BotFailure.rejected(401), address: rejected.address)
+        needsSignIn = true
+    }
+
     func close() {
         reconnectTask?.cancel(); reconnectTask = nil
         reloadTask?.cancel(); reloadTask = nil; reloadWanted = false
@@ -370,15 +399,18 @@ import UIKit
 
     /// A lost socket or a failed read is retried quietly, with growing delays, for
     /// as long as the inbox stays open; the roster stays on screen meanwhile. Only
-    /// a refusal the user has to act on shows a message and the Reconnect button:
-    /// sign-in, an unsupported host or address, an address that now reaches a
-    /// different host or is not a dashboard, and any other permanent HTTP
-    /// client error (a 404 is not a Hermes host). Server errors, rate limits and
-    /// JSON-RPC faults other than "method missing" are the retry loop's problem;
-    /// an empty inbox shows `routeAdvice` if the host stays unreachable.
+    /// a refusal the user has to act on shows a message and the Reconnect button
+    /// (Update sign-in for a rejected password): sign-in, an unsupported host or
+    /// address, an address that now reaches a different host or is not a dashboard,
+    /// an access proxy's own sign-in, a host with browser sign-in only, a refused
+    /// gateway upgrade, and any other permanent HTTP client error (a 404 is not a
+    /// Hermes host). Server errors, rate limits and JSON-RPC faults other than
+    /// "method missing" are the retry loop's problem; an empty inbox shows
+    /// `routeAdvice` if the host stays unreachable.
     private static func isRetryable(_ error: Error) -> Bool {
         switch error as? BotFailure {
-        case .unsupported, .wrongIdentity, .differentHost, .invalidAddress, .notDashboard: return false
+        case .unsupported, .wrongIdentity, .differentHost, .invalidAddress, .notDashboard,
+             .blocked, .browserSignIn, .upgradeRefused: return false
         case .rejected(-32601), .rejected(4090), .rejected(4130): return false
         case .rejected(408), .rejected(429): return true
         case .rejected(let code): return !(400..<500).contains(code)
@@ -482,11 +514,8 @@ import UIKit
         defer { editing.remove(profile.id) }
         let look = profile.look.merging(changes) { $1 }
         do {
-            let reply = try await client.call("profiles.configure", [
-                "name": .string(profile.id),
-                "ui_meta": .object(["hermes-bots": .object(look)]),
-                "ui_meta_expected_revisions": .object(["hermes-bots": .number(Double(profile.lookRevision ?? 0))])
-            ])
+            let reply = try await client.call(.profilesConfigure(.init(
+                name: profile.id, look: .init(fields: look, revision: profile.lookRevision ?? 0))))
             guard wire === client else { return }
             if reply["applied"]["ui_meta"].flag != true {
                 notice = reply["applied"]["ui_meta_conflicts"] != .null
@@ -526,7 +555,7 @@ import UIKit
         reloadSerial += 1
         let serial = reloadSerial
         do {
-            let roster = try await client.call("profiles.list", ["include_sessions": .bool(true)])
+            let roster = try await client.call(.profilesList(includeSessions: true))
             guard wire === client, serial == reloadSerial else { return false }
             guard let rows = roster["profiles"].list else { throw BotFailure.unsupported }
             var ids = Set<String>()
@@ -589,7 +618,7 @@ import UIKit
             !Task.isCancelled && wire === client && serial == statusSerial && roster == reloadSerial
         }
         do {
-            let reply = try await client.call("session.active_list", [:])
+            let reply = try await client.call(.sessionActiveList)
             guard current() else { return }
             setLiveStatuses(BotLiveStatus.statuses(reply["sessions"].list ?? [], profiles: profiles))
             retriesStatusRead = false
@@ -705,8 +734,7 @@ import UIKit
 
     func renameRoom(_ room: BotGroupRoom, to name: String) async {
         guard mayRenameRoom(room), BotRoomRPC.validName(name), name != room.name, let client = wire else { return }
-        await commandRoom(room, "groups.rename", ["room_id": .string(room.id),
-            "event_id": .string(UUID().uuidString), "name": .string(name)], client) { result in
+        await commandRoom(room, .groupsRename(roomID: room.id, eventID: UUID().uuidString, name: name), client) { result in
             guard let updated = BotGroupRoom(result["room"]), updated.id == room.id, !updated.disbanded
             else { throw BotFailure.unsupported }
             if let index = rooms.firstIndex(where: { $0.id == room.id }) { rooms[index] = updated }
@@ -717,7 +745,7 @@ import UIKit
     /// reply is settled by the next room list, which prunes what is gone.
     func disbandRoom(_ room: BotGroupRoom) async {
         guard mayDisbandRoom(room), let client = wire, let key = roomKey(room) else { return }
-        let disbanded = await commandRoom(room, "groups.disband", ["room_id": .string(room.id)], client) { result in
+        let disbanded = await commandRoom(room, .groupsDisband(roomID: room.id), client) { result in
             guard result["tombstone"]["room_id"].text == room.id,
                   result["tombstone"]["disbanded_at"].number != nil else { throw BotFailure.unsupported }
             rooms.removeAll { $0.id == room.id }
@@ -728,13 +756,13 @@ import UIKit
 
     /// True when the host accepted the write and `accept` took it.
     @discardableResult
-    private func commandRoom(_ room: BotGroupRoom, _ method: String, _ params: [String: BotJSON],
+    private func commandRoom(_ room: BotGroupRoom, _ call: HermesCall,
                              _ client: any BotTransport, accept: (BotJSON) throws -> Void) async -> Bool {
         let id = ChatRow.room(room).id
         editing.insert(id); notice = nil
         defer { editing.remove(id) }
         do {
-            let result = try await client.call(method, params)
+            let result = try await client.call(call)
             guard wire === client else { return false }
             try accept(result)
             return true
@@ -755,7 +783,7 @@ import UIKit
     /// a mutating probe. Unsupported hosts keep their ordinary Bot inbox.
     private func refreshRooms(_ client: any BotTransport) async {
         do {
-            let value = try await client.call("groups.capabilities", [:])
+            let value = try await client.call(.groupsCapabilities)
             guard wire === client, !Task.isCancelled else { return }
             let capabilities = BotRoomCapabilities(value)
             roomCapabilities = capabilities
@@ -763,7 +791,7 @@ import UIKit
             var found: [BotGroupRoom] = []
             var offset = 0
             while true {
-                let page = try await client.call("groups.list", ["limit": .number(500), "offset": .number(Double(offset))])
+                let page = try await client.call(.groupsList(offset: offset))
                 guard wire === client, !Task.isCancelled else { return }
                 guard let rows = page["rooms"].list else { throw BotFailure.unsupported }
                 found += rows.compactMap(BotGroupRoom.init).filter { !$0.disbanded }
@@ -806,6 +834,7 @@ import UIKit
             routeFailures = 0; routeAdvice = nil
             errorMessage = address.map { BotConnectionAdvice.message(for: error, address: $0) }
                 ?? (error as? BotFailure ?? .transport).localizedDescription
+            needsSignIn = error as? BotFailure == .rejected(401)
             return
         }
         if Self.isRouteFailure(error) { routeFailures += 1 } else { routeFailures = 0; routeAdvice = nil }

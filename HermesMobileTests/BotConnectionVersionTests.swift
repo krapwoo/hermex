@@ -97,14 +97,35 @@ final class BotConnectionVersionTests: XCTestCase {
             "[fe80::1]:9119": "http://[fe80::1]:9119",
             "[2001:4860::1]:9119": "https://[2001:4860::1]:9119",
             " HTTPS://HERMES.LOCAL:9119/ ": "https://hermes.local:9119",
-            "http://public.example": "http://public.example"
+            "http://public.example": "http://public.example",
+            "192.168.1.5:9119": "http://192.168.1.5:9119",
+            // Links copied from a browser, a config file or a curl command.
+            "https://hermes.example.com/sessions": "https://hermes.example.com",
+            "https://hermes.example.com/login?next=%2F": "https://hermes.example.com",
+            "https://hermes.example.com/auth/login?provider=nous&next=%2F": "https://hermes.example.com",
+            "https://hermes.example.com/api/status": "https://hermes.example.com",
+            "wss://hermes.example.com/api/ws": "https://hermes.example.com",
+            "WS://192.168.1.5:9119/api/ws": "http://192.168.1.5:9119",
+            "http://192.168.1.5:9119/chat/": "http://192.168.1.5:9119",
+            "hermes.example.com/Sessions/abc#top": "https://hermes.example.com",
+            "host?key=x": "http://host",
+            "host#fragment": "http://host"
         ]
         for (input, expected) in cases {
             XCTAssertEqual(try BotConnection.address(input).absoluteString, expected, input)
         }
-        for invalid in ["", " ", "https://", "bad host", "192.168.1.999", "host/path", "host?key=x",
-                        "user:pass@host", "host:0", "host:65536", "ftp://host", "host#fragment"] {
-            XCTAssertThrowsError(try BotConnection.address(invalid), invalid)
+        for invalid in ["", " ", "https://", "bad host", "192.168.1.999", "user:pass@host",
+                        "https://user:pass@hermes.example.com/sessions", "host:0", "host:65536", "ftp://host"] {
+            XCTAssertThrowsError(try BotConnection.address(invalid), invalid) {
+                XCTAssertEqual($0 as? BotAddressError, .invalid, invalid)
+            }
+        }
+        let refusedPaths = ["host/path": "/path", "https://hermes.example.com/hermes": "/hermes",
+                            "https://hermes.example.com/hermes/sessions/": "/hermes/sessions"]
+        for (input, path) in refusedPaths {
+            XCTAssertThrowsError(try BotConnection.address(input), input) {
+                XCTAssertEqual($0 as? BotAddressError, .path(path), input)
+            }
         }
     }
 
@@ -114,8 +135,20 @@ final class BotConnectionVersionTests: XCTestCase {
         model.address = "host/not-supported"
         let succeeded = await model.connect()
         XCTAssertFalse(succeeded)
-        XCTAssertEqual(model.errorMessage, BotFailure.invalidAddress.localizedDescription)
+        XCTAssertEqual(model.errorMessage, BotAddressError.path("/not-supported").localizedDescription)
+        XCTAssertTrue(model.errorMessage?.contains("“\u{2068}/not-supported\u{2069}”") == true,
+                      "The error names the refused path, isolated so its slash stays in front in right-to-left text")
         XCTAssertFalse(model.isConnecting)
+    }
+
+    func testAddressPreviewShowsTheRootOnlyWhileTheTextParses() {
+        let model = BotConnectionSetup(server: server, store: BotConnectionStore(keychain: InMemoryKeychainStore()),
+            makeWire: { _ in XCTFail("Previewing must not create a client"); return ConnectionSetupWire() }, discard: { _ in })
+        model.address = "https://hermes.example.com/login?next=%2F"
+        XCTAssertEqual(model.addressPreview?.absoluteString, "https://hermes.example.com")
+        model.address = "https://hermes.example.com/hermes"
+        XCTAssertNil(model.addressPreview)
+        XCTAssertNil(model.errorMessage, "Parse errors wait for Connect")
     }
 
     func testSuccessOnAnUnknownVersionKeepsSameAccountIdentityAndAllowsDismissal() async throws {
@@ -375,9 +408,10 @@ final class BotConnectionVersionTests: XCTestCase {
         if let failure { throw failure }
         try connection?.requireSameInstall(serverInstallID)
     }
-    func call(_ method: String, _ params: [String: BotJSON], validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+    func call(_ call: HermesCall, validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+        _ = try call.params()
         try validateDispatch?(); calls += 1
-        XCTAssertEqual(method, "profiles.list")
+        XCTAssertEqual(call.method, "profiles.list")
         return .object(["profiles": .array([])])
     }
     func close() { closeCount += 1 }
@@ -392,7 +426,7 @@ private struct ConnectionSetupFailingKeychain: KeychainStoring {
     func delete(_ key: KeychainStore.Key, scope: String) throws {}
 }
 
-/// One assertion per row of #751's copy table. Tests run in English, so the copy is literal.
+/// One assertion per row of #751's and #880's copy tables. Tests run in English, so the copy is literal.
 final class BotConnectionAdviceTests: XCTestCase {
     func testEachConnectionFailureNamesWhatToCheck() {
         let address = URL(string: "https://hermes.example:8443")!
@@ -419,7 +453,10 @@ final class BotConnectionAdviceTests: XCTestCase {
             (BotFailure.rejected(504), proxy),
             (BotFailure.rejected(520), tunnel),
             (BotFailure.rejected(530), tunnel),
-            (BotFailure.rejected(401), "Sign in again. Check your Bot connection username and password."),
+            (BotFailure.rejected(401), "Hermes didn't accept the username or password."),
+            (BotFailure.blocked, "Something in front of Hermes, such as Cloudflare Access, wants its own sign-in first. Hermex can't do that yet. Use an address that skips it, such as the dashboard's local network address."),
+            (BotFailure.browserSignIn, "This Hermes host only offers sign-in with a browser, which Hermex doesn't support yet. To connect now, add a dashboard username and password on the host."),
+            (BotFailure.upgradeRefused(403), "Hermes accepted the sign-in, but the live connection was refused. If a proxy or tunnel sits in front of Hermes, turn on WebSocket support and let the Sec-WebSocket-Protocol header through."),
             (URLError(.networkConnectionLost), "Couldn't reach hermes.example. Check the address and network.")
         ]
         for (error, expected) in rows {

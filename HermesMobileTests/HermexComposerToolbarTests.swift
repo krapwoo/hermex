@@ -422,9 +422,10 @@ final class HermexComposerToolbarTests: XCTestCase {
         XCTAssertTrue(src.contains(".scrollDismissesKeyboard(.never)"))
         XCTAssertTrue(src.contains(".scrollBounceBehavior(.basedOnSize, axes: .horizontal)"))
         XCTAssertTrue(src.contains(".scrollIndicators(.hidden)"))
-        XCTAssertTrue(src.contains("mask"), "expected the scroller to keep its fade mask")
-        XCTAssertTrue(src.contains("layoutDirection"), "expected the scroller to keep reading layout direction")
-        XCTAssertTrue(src.contains("accessibilityReduceMotion"), "expected the scroller to keep reading Reduce Motion")
+        XCTAssertTrue(
+            src.contains(".horizontalOverflowFades(.mask)"),
+            "expected the scroller to keep its RTL- and Reduce-Motion-aware fade mask"
+        )
         XCTAssertTrue(
             src.contains("minimumRowHeight: CGFloat = 44") || src.contains("minHeight: 44"),
             "expected the scroller to keep its 44pt minimum row height"

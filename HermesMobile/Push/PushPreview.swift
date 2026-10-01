@@ -37,16 +37,20 @@ struct PushPayload: Equatable {
 }
 
 /// The plaintext the plugin sealed on the user's host.
-struct PushPreview: Decodable, Equatable {
+struct PushPreview: Codable, Equatable {
     var title: String?
     var subtitle: String?
     var body: String?
     var profile: String?
     var requestID: String?
+    /// The name the bot roster shows for the bot. Plugins before 0.3.0 omit it, and
+    /// their English `title` is shown as sealed.
+    var botName: String?
 
     private enum CodingKeys: String, CodingKey {
         case title, subtitle, body, profile
         case requestID = "request_id"
+        case botName = "bot_name"
     }
 
     /// Opens a sealed preview (AES-256-GCM, AAD `hermex-preview-v1:<sha256 hex of
@@ -58,8 +62,7 @@ struct PushPreview: Decodable, Equatable {
               let rawKey = Data(base64Encoded: keys.previewKey), rawKey.count == 32,
               let box = try? AES.GCM.SealedBox(combined: blob),
               let plaintext = try? AES.GCM.open(
-                  box, using: SymmetricKey(data: rawKey),
-                  authenticating: Data("hermex-preview-v1:\(keys.installHash)".utf8))
+                  box, using: SymmetricKey(data: rawKey), authenticating: keys.previewAAD)
         else { return nil }
         return try? JSONDecoder().decode(PushPreview.self, from: plaintext)
     }
@@ -74,6 +77,10 @@ struct PushPreviewKeys: Decodable, Equatable {
     var installHash: String {
         SHA256.hash(data: Data(installKey.utf8)).map { String(format: "%02x", $0) }.joined()
     }
+
+    /// The AES-GCM associated data every sealed preview is bound to, so a blob only
+    /// opens under the install it was sealed for.
+    var previewAAD: Data { Data("hermex-preview-v1:\(installHash)".utf8) }
 
     /// The pairing a payload names. One phone can be paired with several servers,
     /// and a preview must only ever be opened with its own server's key.
@@ -109,7 +116,8 @@ struct PushPreviewKeys: Decodable, Equatable {
 
 extension PushPreview {
     /// The extension's whole job, kept here so it is testable without an extension
-    /// process. A preview that opens replaces the banner text and leaves its Profile
+    /// process. A preview that opens replaces the banner text, titled with the bot's
+    /// name in the phone's language when the plugin sealed one, and leaves its Profile
     /// behind for the tap. Anything else — previews off, no pairing for this install,
     /// a wrong key, a tampered blob — keeps the banner content-free and only puts the
     /// relay's English placeholder into the phone's language.
@@ -122,11 +130,33 @@ extension PushPreview {
             content.body = String(localized: "New activity")
             return
         }
-        if let title = preview.title, !title.isEmpty { content.title = title }
+        if let title = preview.localizedTitle(kind: payload.kind) ?? preview.title, !title.isEmpty {
+            content.title = title
+        }
         if let subtitle = preview.subtitle, !subtitle.isEmpty { content.subtitle = subtitle }
         if let body = preview.body, !body.isEmpty { content.body = body }
         if let profile = preview.profile, !profile.isEmpty {
             content.userInfo[PushPayload.profileKey] = profile
+        }
+    }
+
+    /// The banner title in the phone's language: the bot's name and what it is asking
+    /// for, picked by the cleartext `kind`. A reply is titled by the name alone. Nil
+    /// without a sealed `bot_name` or for a kind this build has no label for, so the
+    /// plugin's English title stays.
+    func localizedTitle(kind: String?) -> String? {
+        guard let name = botName, !name.isEmpty else { return nil }
+        switch kind {
+        case "approval":
+            return String(localized: "\(name) · Approval needed", comment: "Push banner title; %@ is the bot's name.")
+        case "clarify":
+            return String(localized: "\(name) · Question", comment: "Push banner title; %@ is the bot's name.")
+        case "turn_error":
+            return String(localized: "\(name) · Turn failed", comment: "Push banner title; %@ is the bot's name.")
+        case "reply":
+            return name
+        default:
+            return nil
         }
     }
 }

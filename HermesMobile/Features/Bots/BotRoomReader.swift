@@ -15,6 +15,11 @@ import Observation
     private(set) var status = BotRoomStatus(.null)
     private(set) var link = Link.idle
     private(set) var errorMessage: String?
+    /// True after the host refused the saved username or password (`.rejected(401)`).
+    /// The room offers Update sign-in instead of Reconnect. It stays set for this
+    /// reader's life, because the reader only signs in with the record it was built
+    /// from; the fix goes through the inbox, which opens the room with a new reader.
+    private(set) var needsSignIn = false
     private(set) var hasEarlier = false
     private(set) var loadingEarlier = false
     private(set) var foreignAuthority = false
@@ -63,7 +68,7 @@ import Observation
         self.key = key; self.connection = connection; self.room = room
         self.cache = cache; self.initialSequence = initialSequence
         self.onChanged = onChanged; self.onDisbanded = onDisbanded
-        self.makeWire = makeWire ?? { BotClient(connection: $0) }; self.onExpired = onExpired
+        self.makeWire = makeWire ?? { BotClient(saved: $0, server: key.server) }; self.onExpired = onExpired
         if case .room(let recent)? = cache.recent.snapshot(for: .room(key)) {
             log = recent; events = recent.events; hasEarlier = recent.earlierBoundary > 0
             hasRecentLog = true
@@ -72,6 +77,9 @@ import Observation
 
     /// Room and profile share state, but each visible screen claims async ownership.
     /// Navigation callbacks can arrive in either order; the old screen cannot close the new socket.
+    /// Once the host has refused this reader's password, a reopen only restores the saved
+    /// history and stops: the reader signs in with the record it was built from, so it
+    /// never sends that password again (#884).
     func open(owner: UUID? = nil) async {
         viewOwner = owner
         suspend()
@@ -82,6 +90,14 @@ import Observation
             log = BotRoomLog(); events = []; hasEarlier = false; hasRecentLog = false
         }
         recentOwner = cache.recent.begin(.room(key))
+        // Checked before `makeWire`, which can retire a newer shared connection.
+        if needsSignIn {
+            await historyRemoval?.value
+            let cached = try? await cache.roomHistory(key)
+            guard viewOwner == owner, wire == nil, !Task.isCancelled else { return }
+            restore(cached); link = .stopped
+            return
+        }
         let client = makeWire(connection)
         wire = client; link = .connecting; errorMessage = nil
         client.onDisconnect = { [weak self] error in
@@ -92,15 +108,10 @@ import Observation
             await historyRemoval?.value
             let cached = try? await cache.roomHistory(key)
             try check(client)
-            if let cached, !hasRecentLog {
-                var restored = BotRoomLog()
-                restored.apply(cached.replayPage)
-                restored.loadedEarlier(from: cached.earlierBoundary ?? 0)
-                log = restored; publishLog()
-            }
+            restore(cached)
             try await client.connect()
             try check(client)
-            let value = try await client.call("groups.capabilities", [:])
+            let value = try await client.call(.groupsCapabilities)
             try check(client)
             capabilities = BotRoomCapabilities(value)
             guard capabilities.enabled else { throw BotFailure.unsupported }
@@ -193,6 +204,9 @@ import Observation
         link == .live && !uncertainDisband && !foreignAuthority && capabilities.authority != nil && room.authority == capabilities.authority
     }
     var showsComposer: Bool { !foreignAuthority }
+    /// A new room opens on its members instead of an empty transcript: live, with
+    /// no earlier history to load and no message from the user or a member yet.
+    var showsWelcome: Bool { link == .live && !hasEarlier && !BotRoomEvent.hasConversation(in: events) }
     var showsStop: Bool { status.working || status.stopping > 0 || awaitingStop }
     var mayStop: Bool { allows("groups.stop") && !busy && !awaitingStop && status.stopping == 0 && status.stoppable > 0 }
     var mayEditDraft: Bool { !busy && uncertainSend == nil }
@@ -213,8 +227,7 @@ import Observation
     func rename(_ name: String) async {
         guard mayRename, BotRoomRPC.validName(name), name != room.name else { return }
         renaming = true
-        await command("groups.rename", params: ["room_id": .string(key.roomID),
-            "event_id": .string(UUID().uuidString), "name": .string(name)], validate: {}, accept: { result in
+        await command(.groupsRename(roomID: key.roomID, eventID: UUID().uuidString, name: name), validate: {}, accept: { result in
             guard let updated = BotGroupRoom(result["room"]), updated.id == self.key.roomID,
                   !updated.disbanded else { throw BotFailure.unsupported }
             self.stateRevision += 1
@@ -225,7 +238,7 @@ import Observation
     func disband() async {
         guard mayDisband else { return }
         let owner = viewOwner
-        await command("groups.disband", params: ["room_id": .string(key.roomID)], validate: {
+        await command(.groupsDisband(roomID: key.roomID), validate: {
             guard !self.finishingStop else { throw BotFailure.stale }
             self.uncertainDisband = true
         }, accept: { result in
@@ -256,9 +269,8 @@ import Observation
         guard retry ? mayResend : maySend else { return }
         let request = retry ? uncertainSend! : Send(text: draft)
         sending = request
-        let params: [String: BotJSON] = ["room_id": .string(key.roomID), "event_id": .string(request.eventID),
-            "payload": .object(["text": .string(request.text), "thread_id": .string(request.threadID)])]
-        await command("groups.send", params: params, validate: {}, accept: { result in
+        let send = HermesCall.groupsSend(roomID: key.roomID, eventID: request.eventID, text: request.text, threadID: request.threadID)
+        await command(send, validate: {}, accept: { result in
             guard result["accepted"].flag == true, result["client_event_id"].text == request.eventID,
                   result["event"]["room_id"].text == self.key.roomID,
                   result["event"]["kind"].text == "message.user",
@@ -275,7 +287,7 @@ import Observation
 
     func stop() async {
         guard mayStop else { return }
-        await command("groups.stop", params: ["room_id": .string(key.roomID), "cancel_id": .string(UUID().uuidString)],
+        await command(.groupsStop(roomID: key.roomID, cancelID: UUID().uuidString),
                       validate: { guard self.status.stoppable > 0 else { throw BotFailure.stale } }, accept: { result in
             guard result["cancelled"].integer != nil else { throw BotFailure.unsupported }
             self.awaitingStop = true
@@ -284,9 +296,8 @@ import Observation
     }
 
     func act(_ action: BotRoomAction, choice: BotApprovalRequest.Choice? = nil) async {
-        guard mayAct(action), let params = action.parameters(roomID: key.roomID, choice: choice) else { return }
-        let method = action.isRetry ? "groups.retry" : "groups.approve"
-        await command(method, params: params, validate: {
+        guard mayAct(action), let call = action.call(roomID: key.roomID, choice: choice) else { return }
+        await command(call, validate: {
             guard self.status.actions.contains(action), !self.inactiveActions.contains(action.id) else { throw BotFailure.stale }
             self.inactiveActions.insert(action.id)
         }, accept: { result in
@@ -297,14 +308,14 @@ import Observation
 
     /// Ownership and the pending tuple are checked in BotClient's actual socket
     /// write closure. A lost reply never starts another command.
-    private func command(_ method: String, params: [String: BotJSON], validate: @escaping () throws -> Void,
+    private func command(_ call: HermesCall, validate: @escaping () throws -> Void,
                          accept: (BotJSON) throws -> Void) async {
-        guard let client = wire, allows(method), !busy else { sending = nil; return }
+        guard let client = wire, allows(call.method), !busy else { sending = nil; return }
         let token = UUID(), epoch = room.epoch
         commandID = token; busy = true; dispatched = false; commandMessage = nil
         do {
-            let result = try await client.call(method, params, validateDispatch: { [weak self] in
-                guard let self, self.commandID == token, self.wire === client, self.allows(method),
+            let result = try await client.call(call, validateDispatch: { [weak self] in
+                guard let self, self.commandID == token, self.wire === client, self.allows(call.method),
                       self.room.epoch == epoch, !Task.isCancelled else { throw BotFailure.stale }
                 try validate()
                 self.dispatched = true
@@ -316,7 +327,7 @@ import Observation
         } catch {
             guard commandID == token, wire === client else { return }
             if let rejection = error as? BotRoomFailure {
-                if method == "groups.disband" { uncertainDisband = false }
+                if case .groupsDisband = call { uncertainDisband = false }
                 commandMessage = rejection.localizedDescription
                 if rejection.reason == "authority_conflict" { foreignAuthority = true }
                 if rejection.expired { discardHistory(); close(); onExpired(); return }
@@ -344,7 +355,7 @@ import Observation
     private func readState(_ client: any BotTransport) async throws -> Int {
         stateRevision += 1
         let revision = stateRevision
-        let value = try await client.call("groups.state", ["room_id": .string(key.roomID)])
+        let value = try await client.call(.groupsState(roomID: key.roomID))
         try check(client)
         guard let updated = BotGroupRoom(value["room"]), updated.id == key.roomID else { throw BotFailure.unsupported }
         guard revision == stateRevision else { return room.latestSeq }
@@ -368,8 +379,7 @@ import Observation
         let receivedAt = Date()
         while true {
             let limit = min(capabilities.pageLimit, through.map { max(1, $0 - cursor) } ?? capabilities.pageLimit)
-            let page = try await client.call("groups.log", ["room_id": .string(key.roomID),
-                "since_seq": .number(Double(cursor)), "limit": .number(Double(limit))])
+            let page = try await client.call(.groupsLog(roomID: key.roomID, sinceSeq: cursor, limit: limit))
             try check(client)
             guard page["events"].list != nil, let next = page["cursor"].integer, next >= cursor,
                   let more = page["has_more"].flag else { throw BotFailure.unsupported }
@@ -401,6 +411,15 @@ import Observation
         return moved
     }
 
+    /// Shows the disk history when `open` found no recent window to restore.
+    private func restore(_ cached: BotHistoryCache.Snapshot?) {
+        guard let cached, !hasRecentLog else { return }
+        var restored = BotRoomLog()
+        restored.apply(cached.replayPage)
+        restored.loadedEarlier(from: cached.earlierBoundary ?? 0)
+        log = restored; publishLog()
+    }
+
     private func publishLog() {
         // A poll can race the send acknowledgment. Do not publish our own pending
         // message as sent until the RPC result has been validated.
@@ -430,6 +449,7 @@ import Observation
         guard wire === client else { return }
         suspend(); link = .stopped
         errorMessage = error.localizedDescription
+        needsSignIn = error as? BotFailure == .rejected(401)
         if let failure = error as? BotRoomFailure, failure.expired { discardHistory(); close(); onExpired() }
     }
 }

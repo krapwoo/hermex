@@ -168,9 +168,9 @@ import XCTest
 
     func testCapabilityGateRequiresDriverAndEveryReadMethod() {
         XCTAssertTrue(BotRoomCapabilities(RoomFixture.capabilities).enabled)
-        XCTAssertFalse(BotRoomCapabilities(.object(["driver": .bool(false), "methods": .array(BotRoomRPC.methods.map(BotJSON.string))])).enabled)
+        XCTAssertFalse(BotRoomCapabilities(.object(["driver": .bool(false), "methods": .array(RoomFixture.methods.map(BotJSON.string))])).enabled)
         for missing in ["groups.list", "groups.state", "groups.log"] {
-            XCTAssertFalse(BotRoomCapabilities(.object(["driver": .bool(true), "methods": .array(BotRoomRPC.methods.filter { $0 != missing }.map(BotJSON.string))])).enabled)
+            XCTAssertFalse(BotRoomCapabilities(.object(["driver": .bool(true), "methods": .array(RoomFixture.methods.filter { $0 != missing }.map(BotJSON.string))])).enabled)
         }
         XCTAssertFalse(BotRoomCapabilities(.null).enabled)
     }
@@ -208,6 +208,36 @@ import XCTest
         XCTAssertEqual(events.map(\.timestamp), [1_000, 1_060, 5_000, 2_859, nil, 4_659])
         XCTAssertEqual(BotRoomEvent.gapStarts(in: events), [1, 6], "a system row's created_at neither dates nor resets a gap")
         XCTAssertEqual(BotRoomEvent.gapStarts(in: events[1...]), [2, 6], "the window's first message is dated")
+    }
+
+    func testARoomIsNewUntilItsFirstUserOrMemberMessage() async throws {
+        func events(_ kinds: String...) -> [BotRoomEvent] {
+            kinds.enumerated().compactMap { BotRoomEvent(RoomFixture.event($0.offset + 1, kind: $0.element)) }
+        }
+        XCTAssertFalse(BotRoomEvent.hasConversation(in: []))
+        XCTAssertFalse(BotRoomEvent.hasConversation(in: events("room.renamed", "turn.failed")),
+                       "A rename before anyone speaks leaves the room new")
+        XCTAssertTrue(BotRoomEvent.hasConversation(in: events("room.renamed", "message.user")))
+        XCTAssertTrue(BotRoomEvent.hasConversation(in: events("message.member")))
+
+        let wire = RoomWire(); wire.latest = 1; wire.kind = "room.renamed"
+        let reader = makeReader(wire)
+        XCTAssertFalse(reader.showsWelcome, "A room that hasn't loaded can't say it is empty")
+        await reader.open()
+        XCTAssertTrue(reader.showsWelcome)
+        reader.draft = "hello everyone"
+        await reader.send()
+        XCTAssertEqual(reader.events.map(\.kind), ["room.renamed", "message.user"])
+        XCTAssertFalse(reader.showsWelcome, "The first message ends the welcome")
+        reader.close()
+
+        let olderWire = RoomWire(); olderWire.latest = 250; olderWire.kind = "room.renamed"
+        let older = makeReader(olderWire)
+        await older.open()
+        XCTAssertTrue(older.hasEarlier)
+        XCTAssertFalse(BotRoomEvent.hasConversation(in: older.events))
+        XCTAssertFalse(older.showsWelcome, "Only system rows are loaded, but earlier history may hold messages")
+        older.close()
     }
 
     func testMemberFallbackAndForeignAuthorityAndScopedIdentity() throws {
@@ -565,6 +595,37 @@ import XCTest
         XCTAssertNil(reader.uncertainSend)
     }
 
+    /// A refused password stops the room with Update sign-in, and any other stop keeps
+    /// Reconnect. A reopen after backgrounding shows the saved history again but builds
+    /// no client, so the refused password is never sent again (#884).
+    func testARejectedPasswordStopsTheRoomNeedingSignIn() async {
+        let wire = RoomWire(); wire.latest = 3; wire.connectFailure = BotFailure.transport
+        var clients = 0
+        let reader = BotRoomReader(key: key(), connection: connection, room: BotGroupRoom(RoomFixture.room(latest: 0))!,
+                                   cache: BotHistoryCache(), makeWire: { _ in clients += 1; return wire })
+        await reader.open()
+        XCTAssertEqual(reader.link, .stopped)
+        XCTAssertFalse(reader.needsSignIn, "a lost route keeps Reconnect")
+
+        wire.connectFailure = nil; await reader.open()
+        XCTAssertEqual(reader.link, .live)
+        reader.close()
+
+        wire.connectFailure = BotFailure.rejected(401); await reader.open()
+        XCTAssertEqual(reader.link, .stopped)
+        XCTAssertTrue(reader.needsSignIn)
+        XCTAssertEqual(clients, 3)
+
+        reader.close()
+        XCTAssertTrue(reader.events.isEmpty)
+        await reader.open()
+        XCTAssertEqual(clients, 3, "the refused password is not sent again")
+        XCTAssertEqual(reader.link, .stopped)
+        XCTAssertTrue(reader.needsSignIn)
+        XCTAssertEqual(reader.events.map(\.seq), [1, 2, 3], "the saved history is back on screen")
+        XCTAssertEqual(reader.errorMessage, "Hermes didn't accept the username or password.")
+    }
+
     func testRoomMentionsUseHandlesAndIncludeBroadcastTargets() throws {
         var value = RoomFixture.room(latest: 0).fields!
         value["members"] = .array([.object(["member_id": .string("member"), "handle": .string("chief"), "display_name": .string("Chief of Staff")])])
@@ -680,7 +741,11 @@ enum RoomFixture {
                  "counts": .object(["running": .number(Double(running)), "stopping": .number(Double(stopping))]),
                  "pending_actions": .array(actions)])
     }
-    static let capabilities = BotJSON.object(["driver": .bool(true), "methods": .array(BotRoomRPC.methods.map(BotJSON.string)),
+    /// Every room method the host advertises that Hermex uses.
+    static let methods = ["groups.capabilities", "groups.list", "groups.state", "groups.log",
+                          "groups.send", "groups.stop", "groups.approve", "groups.retry",
+                          "groups.create", "groups.rename", "groups.disband"]
+    static let capabilities = BotJSON.object(["driver": .bool(true), "methods": .array(RoomFixture.methods.map(BotJSON.string)),
         "authority_gateway_id": .string("fixture-install"), "max_log_limit": .number(100)])
     static func room(latest: Int) -> BotJSON {
         .object(["room_id": .string("fixture-room"), "name": .string("Comms"), "latest_seq": .number(Double(latest)),
@@ -705,6 +770,8 @@ enum RoomFixture {
     var capabilities = RoomFixture.capabilities
     var disbanded = false
     var roomName = "Comms"
+    /// The members `groups.state` reports; nil keeps the fixture's one member.
+    var members: [BotJSON]?
     var listedRooms: [BotJSON]?
     var listCalls = 0
     var listFailure: Error?
@@ -731,7 +798,8 @@ enum RoomFixture {
     private var held: CheckedContinuation<BotJSON, Never>?
     func connect() async throws { if let connectFailure { throw connectFailure } }
     func close() { closed += 1 }
-    func call(_ method: String, _ params: [String: BotJSON], validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+    func call(_ call: HermesCall, validateDispatch: (() throws -> Void)?) async throws -> BotJSON {
+        let method = call.method, params = try call.params()
         if ["groups.send", "groups.stop", "groups.approve", "groups.retry", "groups.create", "groups.rename", "groups.disband"].contains(method) {
             await beforeWrite?()
             try validateDispatch?()
@@ -798,6 +866,7 @@ enum RoomFixture {
             if holdState { return await withCheckedContinuation { held = $0; onHeld?() } }
             var room = RoomFixture.room(latest: latest).fields!
             room["name"] = .string(roomName)
+            if let members { room["members"] = .array(members) }
             room["authority_gateway_id"] = .string(authority); room["authority_epoch"] = .number(Double(epoch))
             return .object(["room": .object(room), "driver_status": driverStatus])
         case "groups.log":

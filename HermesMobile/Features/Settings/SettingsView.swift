@@ -4,9 +4,12 @@ import UIKit
 import UserNotifications
 
 /// A Settings section a deep link can scroll to when the screen opens — the
-/// avatar long-press "Manage Servers" shortcut lands on the Servers card (#283).
+/// avatar long-press "Manage Servers" shortcut lands on the Servers card (#283),
+/// and the chat's one-time notification offer on the expanded Notifications
+/// section (#863).
 enum SettingsScrollAnchor: Hashable {
     case servers
+    case notifications
 }
 
 struct SettingsView: View {
@@ -68,7 +71,6 @@ struct SettingsView: View {
     @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
     @AppStorage(AppHaptics.streamingPulseIsEnabledKey) private var isStreamingPulseEnabled = false
     @AppStorage(ResponseCompletionNotifications.isEnabledKey) private var isResponseCompletionNotificationsEnabled = false
-    @AppStorage(ResponseCompletionNotifications.hasRequestedPermissionKey) private var hasRequestedResponseCompletionNotificationPermission = false
     @AppStorage(AgentRunLiveActivityPrivacy.showsResponseExcerptsKey) private var showsLiveActivityResponseExcerpts = false
     @AppStorage(SessionRowDisplaySettings.showMessageCountKey) private var showsSessionMessageCount = true
     @AppStorage(SessionRowDisplaySettings.showWorkspaceKey) private var showsSessionWorkspace = true
@@ -193,25 +195,29 @@ struct SettingsView: View {
 
                     SettingsDivider()
 
-                    HermexPushSectionView(server: server) {
-                        SettingsToggleRow(
-                            title: String(localized: "Response Complete Alerts"),
-                            systemImage: "bell",
-                            isOn: responseCompletionNotificationBinding
-                        )
-                        SettingsFootnote(String(localized: "Local completion alerts for servers without push notifications."))
-                        if let notificationStatusText {
-                            SettingsFootnote(notificationStatusText)
+                    // A wrapper carries the scroll anchor: the section's own id is its server.
+                    VStack(alignment: .leading, spacing: 0) {
+                        HermexPushSectionView(server: server, startsExpanded: initialScrollTarget == .notifications) {
+                            SettingsToggleRow(
+                                title: String(localized: "Response Complete Alerts"),
+                                systemImage: "bell",
+                                isOn: responseCompletionNotificationBinding
+                            )
+                            SettingsFootnote(String(localized: "Alerts when a reply finishes or fails, for servers without push notifications."))
+                            if let notificationStatusText {
+                                SettingsFootnote(notificationStatusText)
+                            }
+                            SettingsDivider()
+                            SettingsToggleRow(
+                                title: String(localized: "Live Activity Excerpts"),
+                                systemImage: "lock",
+                                isOn: $showsLiveActivityResponseExcerpts
+                            )
+                            SettingsFootnote(String(localized: "Shows short response text on the Lock Screen and Dynamic Island."))
                         }
-                        SettingsDivider()
-                        SettingsToggleRow(
-                            title: String(localized: "Live Activity Excerpts"),
-                            systemImage: "lock",
-                            isOn: $showsLiveActivityResponseExcerpts
-                        )
-                        SettingsFootnote(String(localized: "Shows short response text on the Lock Screen and Dynamic Island."))
+                        .id(server)
                     }
-                    .id(server)
+                    .id(SettingsScrollAnchor.notifications)
 
                     SettingsDivider()
 
@@ -224,6 +230,8 @@ struct SettingsView: View {
                             Text(behavior.settingsDescription).tag(behavior.rawValue)
                         }
                     }
+
+                    SettingsFootnote(String(localized: "Long-press Send to choose for one message."))
 
                     SettingsDivider()
 
@@ -579,6 +587,10 @@ struct SettingsView: View {
                     serverUpdateAction
                 }
 
+                SettingsCard(title: String(localized: "Privacy")) {
+                    AppLockSettingsRow()
+                }
+
                 SettingsCard(title: String(localized: "App")) {
                     SettingsInfoRow(title: String(localized: "Version"), value: appVersion)
                     SettingsInfoRow(title: String(localized: "Build"), value: appBuild)
@@ -609,15 +621,29 @@ struct SettingsView: View {
 
                     SettingsDivider()
 
-                    Link(destination: AppConfig.tipURL) {
-                        SettingsAccessoryRow(
-                            title: String(localized: "Buy Uzi a coffee"),
-                            systemImage: "cup.and.saucer",
-                            accessorySystemImage: "arrow.up.forward"
-                        )
+                    Group {
+                        Link(destination: AppConfig.membershipURL) {
+                            SettingsAccessoryRow(
+                                title: String(localized: "Become a supporter"),
+                                systemImage: "heart",
+                                accessorySystemImage: "arrow.up.forward"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Become a supporter, opens in browser")
+
+                        SettingsDivider()
+
+                        Link(destination: AppConfig.tipURL) {
+                            SettingsAccessoryRow(
+                                title: String(localized: "Buy Uzi a coffee"),
+                                systemImage: "cup.and.saucer",
+                                accessorySystemImage: "arrow.up.forward"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Buy Uzi a coffee, opens in browser")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Buy Uzi a coffee, opens in browser")
                     .environment(\.openURL, OpenURLAction { url in
                         TipJarPromptState(defaults: .standard).recordLinkOpened()
                         return .systemAction(url)
@@ -976,7 +1002,7 @@ struct SettingsView: View {
     }
 
     private var notificationStatusText: String? {
-        notificationStatusMessage ?? notificationPermissionStatus.map(notificationPermissionLabel)
+        notificationStatusMessage ?? notificationPermissionStatus.map(ResponseCompletionNotificationService.permissionLabel)
     }
 
     // True while the server is applying/restarting an update. The manual check
@@ -1358,47 +1384,11 @@ struct SettingsView: View {
         notificationStatusMessage = nil
     }
 
+    /// Shared with the chat's one-time offer, which turns the same preference on.
     private func enableResponseCompletionNotifications() async {
-        let currentStatus = await ResponseCompletionNotificationService.authorizationStatus()
-        notificationPermissionStatus = currentStatus
-
-        switch currentStatus {
-        case .authorized, .provisional, .ephemeral:
-            isResponseCompletionNotificationsEnabled = true
-            notificationStatusMessage = nil
-        case .notDetermined:
-            guard !hasRequestedResponseCompletionNotificationPermission else {
-                isResponseCompletionNotificationsEnabled = false
-                notificationStatusMessage = String(localized: "Permission not requested.")
-                return
-            }
-
-            hasRequestedResponseCompletionNotificationPermission = true
-            let granted = await ResponseCompletionNotificationService.requestAuthorization()
-            let updatedStatus = await ResponseCompletionNotificationService.authorizationStatus()
-            notificationPermissionStatus = updatedStatus
-            isResponseCompletionNotificationsEnabled = granted && updatedStatus.allowsSettingsToggleOn
-            notificationStatusMessage = isResponseCompletionNotificationsEnabled ? nil : notificationPermissionLabel(updatedStatus)
-        case .denied:
-            isResponseCompletionNotificationsEnabled = false
-            notificationStatusMessage = notificationPermissionLabel(currentStatus)
-        @unknown default:
-            isResponseCompletionNotificationsEnabled = false
-            notificationStatusMessage = String(localized: "Notifications unavailable.")
-        }
-    }
-
-    private func notificationPermissionLabel(_ status: UNAuthorizationStatus) -> String {
-        switch status {
-        case .authorized, .provisional, .ephemeral:
-            return String(localized: "iOS notifications allowed.")
-        case .notDetermined:
-            return String(localized: "iOS permission not requested.")
-        case .denied:
-            return String(localized: "iOS notifications disabled.")
-        @unknown default:
-            return String(localized: "Notifications unavailable.")
-        }
+        let result = await ResponseCompletionNotificationService.enable()
+        notificationPermissionStatus = result.authorizationStatus
+        notificationStatusMessage = result.message
     }
 }
 
@@ -1960,6 +1950,42 @@ private struct SettingsToggleRow: View {
         }
         .toggleStyle(.switch)
         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+    }
+}
+
+/// The app lock toggle (#885), app-wide rather than per server. `AppLock` authenticates
+/// before it changes, so the switch moves only once iOS says yes.
+private struct AppLockSettingsRow: View {
+    @Environment(\.scenePhase) private var scenePhase
+    private let lock = AppLock.shared
+
+    var body: some View {
+        let capability = lock.capability
+
+        SettingsToggleRow(
+            title: title(for: capability.method),
+            systemImage: capability.method.systemImage,
+            isOn: Binding(get: { lock.isEnabled }, set: { isOn in Task { await lock.setEnabled(isOn) } })
+        )
+        // Without a passcode it can still be turned off: nothing could unlock it anyway.
+        .disabled(lock.isAuthenticating || (!capability.hasPasscode && !lock.isEnabled))
+        .onAppear { lock.refreshCapability() }
+        .onChange(of: scenePhase) { _, phase in
+            // The passcode or Face ID may have changed in iOS Settings.
+            if phase == .active { lock.refreshCapability() }
+        }
+
+        SettingsFootnote(capability.hasPasscode
+            ? String(localized: "Locks Hermex when it opens and after a minute away. Notifications, Live Activities and the share sheet still show their content.")
+            : String(localized: "Set a passcode in iOS Settings to use this."))
+    }
+
+    private func title(for method: AppLockCapability.Method) -> String {
+        switch method {
+        case .faceID: String(localized: "Require Face ID")
+        case .touchID: String(localized: "Require Touch ID")
+        case .passcode: String(localized: "Require Passcode")
+        }
     }
 }
 

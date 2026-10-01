@@ -273,11 +273,12 @@ SEARCHABLE_PATTERN = re.compile(r"\.searchable\(")
 # lands the PR that migrates one of these call sites onto `HermexTextField`/`HermexNumberField` (or
 # adds a new direct `TextField(` call site). Removal condition: delete a file's entry here (or lower
 # its count) in the same PR that migrates/removes that call site. Verified against this branch's own
-# source (2026-09-28); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this
+# source (2026-10-01); HermexTextInput.swift itself and HermesMobileTests/ are excluded from this
 # accounting. HermexSearch.swift is excluded too, the same way: `HermexSearchField` is a foundation
 # component whose approved design keeps the system-backed `TextField` as its editor — that direct
 # call is the field's own implementation, not a production call site that should have reached for
-# the foundation instead.
+# the foundation instead. BotPendingRequestCard's third site is the username field inherited from
+# current master (#943); this integration freezes that reviewed upstream state without migrating it.
 TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Kanban/KanbanCardEditorView.swift": 8,
     "HermesMobile/Features/Kanban/KanbanLabView.swift": 5,
@@ -285,7 +286,7 @@ TEXT_FIELD_BASELINE = {
     "HermesMobile/Features/Bots/BotConnectionView.swift": 3,
     "HermesMobile/Features/Workspace/WorkspaceManagerView.swift": 3,
     "HermesMobile/Features/Bots/BotCreateView.swift": 2,
-    "HermesMobile/Features/Bots/BotPendingRequestCard.swift": 2,
+    "HermesMobile/Features/Bots/BotPendingRequestCard.swift": 3,
     "HermesMobile/Features/Bots/BotProfileEditorView.swift": 2,
     "HermesMobile/Features/Bots/BotRoomCreateView.swift": 2,
     "HermesMobile/Features/Bots/BotsInboxView.swift": 2,

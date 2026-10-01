@@ -109,6 +109,10 @@ final class SessionListViewModel {
     private(set) var remoteContentSearchExcerpts: [String: String] = [:]
     private var activeRemoteSearchQuery: String?
     private var sessionOpenGeneration = 0
+    /// The external session the live `sessionForOpening` is still importing, so
+    /// Next and Previous Chat step past it before navigation lands. Nil once
+    /// that open finishes or a newer open or navigation invalidates it.
+    private(set) var openingSessionID: String?
     private var activeProfileGeneration = 0
 
     private let client: APIClient
@@ -223,14 +227,17 @@ final class SessionListViewModel {
         automatedVisibility: AutomatedSessionVisibility
     ) -> [SessionSummary] {
         let query = Self.normalizedSearchQuery(rawSearchText)
+        // Every word must appear somewhere in the row, in any order and field.
+        let searchTerms = query.split(whereSeparator: \.isWhitespace)
         let baseSessions = candidates.filter { automatedVisibility.shows($0) }
         let projectFilteredSessions = baseSessions.filter { session in
             guard let selectedProjectID else { return true }
             return session.projectId == selectedProjectID
         }
         let localMatches = projectFilteredSessions.filter { session in
-            guard !query.isEmpty else { return true }
-            return Self.searchableText(for: session).contains(query)
+            guard !searchTerms.isEmpty else { return true }
+            let searchableText = Self.searchableText(for: session)
+            return searchTerms.allSatisfy { searchableText.contains($0) }
         }
         let sortedLocalMatches = Self.sortedSessions(localMatches)
 
@@ -802,6 +809,7 @@ final class SessionListViewModel {
     ) async -> SessionSummary? {
         sessionOpenGeneration &+= 1
         let generation = sessionOpenGeneration
+        openingSessionID = nil
         actionErrorMessage = nil
         lastError = nil
 
@@ -812,6 +820,11 @@ final class SessionListViewModel {
         guard let sessionID = Self.nonEmpty(session.sessionId) else {
             actionErrorMessage = String(localized: "The server did not provide a session ID.")
             return nil
+        }
+
+        openingSessionID = session.sessionId
+        defer {
+            if generation == sessionOpenGeneration { openingSessionID = nil }
         }
 
         do {
@@ -909,6 +922,7 @@ final class SessionListViewModel {
 
     func invalidateSessionOpening() {
         sessionOpenGeneration &+= 1
+        openingSessionID = nil
     }
 
     func setPinned(
@@ -945,6 +959,27 @@ final class SessionListViewModel {
 
         return await mutate(modelContext: modelContext, animation: animation) {
             try await sessionMutator.archive(sessionID: sessionId)
+        }
+    }
+
+    /// Undoes an archive from the list: restores the session, then reloads so
+    /// its row returns to its old place (the server keeps `updated_at`). A second
+    /// call while one is in flight for the same session sends nothing.
+    func unarchive(
+        _ session: SessionSummary,
+        modelContext: ModelContext? = nil,
+        animation: Animation? = nil
+    ) async -> Bool {
+        guard let sessionId = Self.nonEmpty(session.sessionId) else {
+            actionErrorMessage = String(localized: "The server did not provide a session ID.")
+            return false
+        }
+
+        guard beginSessionMutation(sessionId) else { return false }
+        defer { endSessionMutation(sessionId) }
+
+        return await mutate(modelContext: modelContext, animation: animation) {
+            try await sessionMutator.unarchive(sessionID: sessionId)
         }
     }
 
@@ -1317,8 +1352,13 @@ final class SessionListViewModel {
 
     /// Creates a session in the explicit App Intent profile or the sidebar's selected
     /// profile. The server supplies that profile's model and last workspace. With
-    /// neither profile known, preserve the cookie-scoped workspace lookup.
-    func createSession(modelContext: ModelContext? = nil, profile: String? = nil) async -> SessionSummary? {
+    /// neither profile known, preserve the cookie-scoped workspace lookup. In-app New
+    /// Chat passes the project filter the user tapped under as `projectID` (#875).
+    func createSession(
+        modelContext: ModelContext? = nil,
+        profile: String? = nil,
+        projectID: String? = nil
+    ) async -> SessionSummary? {
         isCreatingSession = true
         actionErrorMessage = nil
         lastError = nil
@@ -1335,7 +1375,8 @@ final class SessionListViewModel {
                 workspace: workspace,
                 model: nil,
                 modelProvider: nil,
-                profile: requestedProfile
+                profile: requestedProfile,
+                projectID: Self.nonEmpty(projectID)
             )
 
             guard let sessionDetail = response.session else {
@@ -1420,6 +1461,8 @@ final class SessionListViewModel {
         session.lastMessageAt ?? session.updatedAt ?? session.createdAt ?? 0
     }
 
+    /// Lowercased fields joined by spaces. Search terms hold no spaces, so a
+    /// term found here always sits inside a single field.
     private static func searchableText(for session: SessionSummary) -> String {
         [
             session.title,

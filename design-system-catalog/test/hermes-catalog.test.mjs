@@ -3809,18 +3809,80 @@ test('Transcript Log Row documents its Buttons and Divider composition alongside
   assert.match(section, /Hermex typography, spacing, radius, motion, Buttons, and Divider/);
 });
 
-// Correction (final-review source accuracy): TranscriptLogRowView.swift's three ViewBuilder slots
-// are icon, status, and expandedBody — the collapsed-row status word has no catalog slot at all,
-// and the expanded scrollable body was misnamed "detail", which is really the separate `detail:
-// String?` initializer value shown in the collapsed row, not the expanded generic body.
-test('Correction (final-review source accuracy): Transcript Log Row\'s compositionSlots match TranscriptLogRowView.swift exactly — icon, status, and expandedBody, in that order', () => {
+// Correction (final-review source accuracy): TranscriptLogRowView.swift's ViewBuilder slots are
+// icon, accessory, status, and expandedBody — the collapsed-row status word has no catalog slot at
+// all, and the expanded scrollable body was misnamed "detail", which is really the separate `detail:
+// String?` initializer value shown in the collapsed row, not the expanded generic body. Current-base
+// integration correction (PR #974): current master added the optional generic `accessory` slot
+// between `icon` and `status`; see the focused contract test below for its full shape.
+test('Correction (final-review source accuracy): Transcript Log Row\'s compositionSlots match TranscriptLogRowView.swift exactly — icon, accessory, status, and expandedBody, in that order', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Transcript Log Row');
   const ref = extractHermesReferenceBlock(section);
 
   const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
   const slotNames = [...slotsSrc.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(slotNames, ['icon', 'status', 'expandedBody'], 'expected the exact native TranscriptLogRowView.swift composition slot sequence');
+  assert.deepEqual(slotNames, ['icon', 'accessory', 'status', 'expandedBody'], 'expected the exact native TranscriptLogRowView.swift composition slot sequence');
+});
+
+// Current-base integration correction (PR #974): current master added an optional generic
+// `accessory` ViewBuilder slot to TranscriptLogRowView, rendered trailing before the chevron at
+// ordinary Dynamic Type sizes and moved below the summary/detail at accessibility sizes. The row
+// ignores the accessory's own child accessibility semantics, so a caller that supplies one must
+// fold its meaning into `accessibilityLabel`. This test pins that corrected contract in the catalog.
+test('Current-base integration correction (PR #974): Transcript Log Row\'s catalog entry documents the optional accessory slot\'s shape, both adaptive placements, the accessibility-label fold requirement, and a usage example that demonstrates it', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Transcript Log Row');
+  const ref = extractHermesReferenceBlock(section);
+
+  const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
+  const slotNames = [...slotsSrc.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(
+    slotNames,
+    ['icon', 'accessory', 'status', 'expandedBody'],
+    'expected composition slots icon, accessory, status, expandedBody in that exact order'
+  );
+
+  const slotObjects = splitTopLevelObjects(slotsSrc);
+  const accessorySlotSrc = slotObjects.find((s) => /name:\s*'accessory'/.test(s));
+  assert.ok(accessorySlotSrc, 'expected an accessory compositionSlots entry');
+  assert.match(accessorySlotSrc, /order:\s*1\b/, 'expected accessory to be order 1, between icon (0) and status (2)');
+  assert.match(accessorySlotSrc, /required:\s*false/, 'expected accessory to be optional');
+  assert.match(accessorySlotSrc, /cardinality:\s*'one'/, 'expected accessory cardinality to be one');
+  assert.match(accessorySlotSrc, /acceptedContent:\s*\[[^\]]*'text'[^\]]*\]/, 'expected accessory to accept text content');
+  assert.match(accessorySlotSrc, /acceptedContent:\s*\[[^\]]*'generic-view'[^\]]*\]/, 'expected accessory to accept generic-view content');
+  assert.match(accessorySlotSrc, /role:\s*'trailing-accessory'/, 'expected accessory role to be trailing-accessory');
+  assert.match(accessorySlotSrc, /interactionOwnership:\s*'none'/, 'expected accessory to be noninteractive');
+  assert.match(
+    accessorySlotSrc,
+    /accessibilityOwnership:\s*'component-owned'/,
+    'expected accessory accessibilityOwnership to be component-owned, since the row ignores child semantics and requires callers to fold meaning into accessibilityLabel'
+  );
+
+  assert.match(
+    section,
+    /ordinary Dynamic Type sizes[^.]*trailing[^.]*before the chevron/i,
+    'expected the catalog to describe ordinary-size trailing placement before the chevron'
+  );
+  assert.match(
+    section,
+    /accessibility sizes[^.]*below the summary\/detail/i,
+    'expected the catalog to describe the accessibility-size placement below the summary/detail'
+  );
+  assert.match(
+    section,
+    /ignores (its )?(own )?child accessibility semantics/i,
+    'expected the catalog accessibility prose to state that child accessibility semantics are ignored'
+  );
+  assert.match(
+    section,
+    /fold(s)? (its |the accessory's )?meaning into `?accessibilityLabel`?/i,
+    'expected the catalog accessibility prose to require folding accessory meaning into accessibilityLabel'
+  );
+
+  const examplesSrc = extractBracketBlock(ref, /usageExamples:\s*\[/);
+  assert.match(examplesSrc, /accessory:\s*\{/, 'expected a usage example demonstrating the optional accessory closure');
+  assert.match(examplesSrc, /accessibilityLabel:\s*"[^"]*[+−-][^"]*"/, 'expected the usage example\'s accessibilityLabel to include the accessory\'s meaning');
 });
 
 // Controller correction (2026-09-26, gap 5), carried forward for Round 2: the preview rendered a

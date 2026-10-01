@@ -1,10 +1,17 @@
 import SwiftUI
 import UIKit
 
+/// A composer status line that offers Retry, such as "Couldn't steer".
+struct ComposerRetryableStatus {
+    let message: String
+    let onRetry: () -> Void
+}
+
 private struct ComposerStatusView: View {
     let text: String
     let isError: Bool
     let isDismissible: Bool
+    let onRetry: (() -> Void)?
     let onDismiss: () -> Void
 
     var body: some View {
@@ -14,6 +21,12 @@ private struct ComposerStatusView: View {
                 .foregroundStyle(textColor)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let onRetry {
+                Button("Retry", action: onRetry)
+                    .font(AppFont.caption(weight: .semibold))
+                    .buttonStyle(.borderless)
+            }
 
             if isDismissible {
                 Button(action: onDismiss) {
@@ -88,6 +101,7 @@ struct MessageComposerView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(HeaderLogoColor.storageKey) private var headerLogoColorHex = HeaderLogoColor.defaultHex
     @AppStorage(PrimaryActionTintSettings.isEnabledKey) private var tintsPrimaryActions = false
+    @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
     @ScaledMetric(relativeTo: .body) private var actionIconSize: CGFloat = 16
     @ScaledMetric(relativeTo: .body) private var plusIconSize: CGFloat = 20
 
@@ -159,7 +173,16 @@ struct MessageComposerView: View {
     /// again the first time the panel opens.
     let filePathSearch: ComposerFilePathSearch
     let uploadAttachmentErrorMessage: String?
+    /// "Couldn't steer" with Retry, after a steer didn't reach the run.
+    let steerFailure: ComposerRetryableStatus?
+    /// The Send While Responding default: what a tap on Send does mid-run, and
+    /// the glyph and VoiceOver label that say so.
+    let streamingSendBehavior: StreamingSendBehavior
+    /// Sends with the default; a mid-run send uses `streamingSendBehavior`.
     let onSend: () -> Void
+    /// Sends this one message with a behavior picked from the send-choice card
+    /// or a VoiceOver action. The default does not change.
+    let onSendWithBehavior: (StreamingSendBehavior) -> Void
     let onSendVoiceNote: (Data, String) -> Void
     let onCancel: () -> Void
     let onSelectModel: (ModelCatalogOption) -> Void
@@ -191,6 +214,9 @@ struct MessageComposerView: View {
     /// Each edit the user makes to the draft here (typing, completions,
     /// dictation), after it lands in `draftMessage`, for the owner to persist.
     let onDraftEdit: (String) -> Void
+    /// The chat's last sent message, for ↑ in an empty composer on a hardware
+    /// keyboard. A closure, so the transcript is scanned only when ↑ is pressed.
+    var recallLastSentText: (() -> String?)? = nil
     /// A file chip the user tapped, by workspace-relative path.
     let onOpenFileReference: (String) -> Void
     let onSelectGitBranch: (GitCheckoutTarget) -> Void
@@ -212,6 +238,12 @@ struct MessageComposerView: View {
     @State private var keyboardIsVisible = false
     @State private var shouldRestoreFocusAfterPresentation = false
     @State private var selectedQuote: ComposerQuote?
+    /// True while the send-choice card is up after a hold on Send mid-run.
+    @State private var choosingSendBehavior = false
+    /// Keeps the release of a hold that opened the card from also sending.
+    @State private var sendHold = ChatComposerSendHold()
+    @State private var sendHoldWorkItem: DispatchWorkItem?
+    @GestureState private var isPressingSend = false
 
     @State private var deferredUploadFocusPhase: DeferredUploadFocusPhase = .none
     @State private var showMediaPicker = false
@@ -333,13 +365,21 @@ struct MessageComposerView: View {
         composerSelection = composerSelection.moved(to: completed.selection)
     }
 
+    /// A row the user tapped in the `/` panel: completes it with a selection
+    /// tick. Dismissing the panel calls `applyCompletion` directly, silently.
+    private func pickCompletion(_ replacement: String) {
+        applyCompletion(replacement)
+        ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
+    }
+
     /// Swaps the `@…` at the caret for the picked entry.
     ///
     /// A file finishes the reference: `@path` plus a space, recorded so the
     /// editor draws it as a chip. A folder is a step on the way, so it inserts
     /// with a trailing `/` and no space and the panel stays open listing what is
     /// inside it. Only files are recorded, which is what keeps a folder
-    /// reference from becoming a chip that opens nothing.
+    /// reference from becoming a chip that opens nothing. Either pick plays a
+    /// selection tick, so a folder tap that keeps the panel open still lands.
     private func applyFileCompletion(_ match: ComposerFilePathSearch.Match) {
         guard let trigger = fileTrigger else { return }
 
@@ -353,6 +393,7 @@ struct MessageComposerView: View {
         if !match.isDirectory {
             onSelectFileReference(match.path)
         }
+        ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
     }
 
     private var parsedSlashQuery: ParsedSlashQuery {
@@ -402,6 +443,7 @@ struct MessageComposerView: View {
                         text: composerStatus.text,
                         isError: composerStatus.isError,
                         isDismissible: composerStatus.isDismissible,
+                        onRetry: composerStatus.onRetry,
                         onDismiss: onDismissUploadAttachmentError
                     )
                 }
@@ -431,19 +473,19 @@ struct MessageComposerView: View {
                             skillsOnly: showsSlashAutocompleteSkillsOnly,
                             selectedReasoningEffort: selectedReasoningEffort,
                             onSelectCommand: { command in
-                                applyCompletion("/\(command.name) ")
+                                pickCompletion("/\(command.name) ")
                             },
                             onSelectSkillCommand: { skill in
-                                applyCompletion("/\(skill.slashName) ")
+                                pickCompletion("/\(skill.slashName) ")
                             },
                             onSelectAgentCommand: { command in
-                                applyCompletion("/\(command.name) ")
+                                pickCompletion("/\(command.name) ")
                             },
                             onSelectSkillSubArg: { skill in
-                                applyCompletion("/skills \(skill.slashName) ")
+                                pickCompletion("/skills \(skill.slashName) ")
                             },
                             onSelectSubArg: { subArg in
-                                applyCompletion("/\(parsedSlashQuery.commandName) \(subArg)")
+                                pickCompletion("/\(parsedSlashQuery.commandName) \(subArg)")
                             },
                             onDismiss: {
                                 applyCompletion("")
@@ -516,6 +558,32 @@ struct MessageComposerView: View {
             }
             .frame(width: 0, height: 0)
         }
+        // The same keyboard-retaining overlay as the "+" picker and the Bot
+        // composer's send-choice card, so the keyboard stays up.
+        .background {
+            HermexKeyboardRetainingOverlay(isPresented: choosingSendBehavior) {
+                SendChoiceCard(
+                    choices: sendChoices,
+                    onPick: pickSendBehavior,
+                    onDismiss: closeSendChoices
+                )
+            }
+            .frame(width: 0, height: 0)
+        }
+        // The run ending, or Send turning into Stop, closes the card and drops
+        // a hold that has not opened it yet, as the Bot composer does.
+        .onChange(of: sendChoices) { _, choices in
+            guard choices.isEmpty else { return }
+            cancelScheduledSendChoices()
+            closeSendChoices()
+        }
+        .onChange(of: isPressingSend) { _, isPressing in
+            if isPressing {
+                scheduleSendChoices()
+            } else {
+                cancelScheduledSendChoices()
+            }
+        }
         .task(id: draftMayReferenceSkill) {
             await loadSkillSuggestionsForChipsIfNeeded()
         }
@@ -525,9 +593,11 @@ struct MessageComposerView: View {
         .task(id: slashAutocompleteLoadKey) {
             await loadSlashAutocompleteSubArgsIfNeeded()
         }
-        .task {
+        .task(id: AppLock.shared.isLocked) {
             // Cold path: the composer appears already active (the usual case for the
             // "New Chat with Voice" intent once its session is created) — start here.
+            // Runs again when the app lock changes, since dictation waits for it (#885);
+            // one modifier keeps this chain inside CI Xcode's type-checking budget.
             autoStartVoiceInputIfNeeded()
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -700,6 +770,7 @@ struct MessageComposerView: View {
         .onDisappear {
             voiceInput.stopBeforeSubmittingDraft()
             cancelVoiceNote()
+            cancelScheduledSendChoices()
         }
         .padding(.bottom, keyboardIsVisible ? 10 : 0)
     }
@@ -756,7 +827,8 @@ struct MessageComposerView: View {
                         onOpenFileReference(path)
                     },
                     onTapQuote: presentQuote,
-                    onRemoveQuote: removeQuote
+                    onRemoveQuote: removeQuote,
+                    recallLastSentText: recallLastSentText
                 )
 
                 if !isExpanded {
@@ -821,9 +893,11 @@ struct MessageComposerView: View {
     }
 
     /// One trailing circle in both states. Stop while a response streams and the
-    /// draft is empty; Send (which queues mid-run) as soon as there is text.
+    /// draft is empty; Send as soon as there is text. Mid-run a tap sends with
+    /// the Send While Responding default, and a hold opens the send-choice card
+    /// for this one message (`ChatComposerSendButton`).
     private var actionButton: some View {
-        Button(action: actionButtonTapped) {
+        Button(action: actionButtonPressed) {
             actionButtonLabel
                 .frame(width: circleSize, height: circleSize)
                 .background(actionButtonBackground)
@@ -831,8 +905,15 @@ struct MessageComposerView: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.chatTactile(.icon))
+        .simultaneousGesture(sendHoldGesture)
         .disabled(isActionButtonDisabled)
-        .accessibilityLabel(showsStopButton ? "Stop response" : "Send")
+        .accessibilityLabel(sendButton.accessibilityLabel)
+        .accessibilityActions {
+            // VoiceOver can't hold, so each choice is a named action.
+            ForEach(sendChoices, id: \.self) { behavior in
+                Button(behavior.title) { pickSendBehavior(behavior) }
+            }
+        }
     }
 
     @ViewBuilder
@@ -841,13 +922,64 @@ struct MessageComposerView: View {
             ProgressView()
                 .tint(actionButtonForeground)
                 .scaleEffect(0.9)
-        } else if showsStopButton {
-            Image(systemName: "stop.fill")
-                .font(.system(size: actionIconSize, weight: .semibold))
         } else {
-            Image(systemName: "arrow.up")
+            // Morphs between Stop and the default's Send glyph; instant
+            // with Reduce Motion.
+            Image(systemName: sendButton.systemName)
                 .font(.system(size: actionIconSize, weight: .semibold))
+                .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
         }
+    }
+
+    /// Times a hold the way the mic does (`ComposerVoiceControlButton`): one
+    /// `DragGesture(minimumDistance: 0)` beside the button's own tap, where
+    /// touch-down schedules the card and lifting before the delay cancels it.
+    /// The gesture state resets on a cancelled touch too, so a hold can never
+    /// stay armed.
+    private var sendHoldGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .updating($isPressingSend) { _, isPressing, _ in
+                isPressing = true
+            }
+    }
+
+    private func scheduleSendChoices() {
+        sendHold.pressBegan()
+        cancelScheduledSendChoices()
+        guard !sendChoices.isEmpty else { return }
+        let item = DispatchWorkItem {
+            sendHold.openedChoices()
+            choosingSendBehavior = true
+        }
+        sendHoldWorkItem = item
+        // The mic's hold delay, so the composer's two holds feel alike.
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + ComposerVoiceNoteGesture.holdActivationDelay,
+            execute: item
+        )
+    }
+
+    private func cancelScheduledSendChoices() {
+        sendHoldWorkItem?.cancel()
+        sendHoldWorkItem = nil
+    }
+
+    /// Closes the send-choice card. A hold still down keeps its release from
+    /// sending (or stopping); see `ChatComposerSendHold`.
+    private func closeSendChoices() {
+        choosingSendBehavior = false
+        sendHold.choicesClosed(isPressing: isPressingSend)
+    }
+
+    /// The card's rows and VoiceOver's named actions both land here.
+    private func pickSendBehavior(_ behavior: StreamingSendBehavior) {
+        closeSendChoices()
+        // A pick can outlive the run or the draft it was offered for.
+        guard sendChoices.contains(behavior) else { return }
+        if voiceInput.isListening {
+            voiceInput.stopBeforeSubmittingDraft()
+        }
+        onSendWithBehavior(behavior)
     }
 
     /// Whether the draft holds anything that could be drawn as a skill chip.
@@ -1022,25 +1154,27 @@ struct MessageComposerView: View {
         showsAllModelsSheet = true
     }
 
-    private var composerStatus: (text: String, isError: Bool, isDismissible: Bool)? {
+    private var composerStatus: (text: String, isError: Bool, isDismissible: Bool, onRetry: (() -> Void)?)? {
         if let readOnlyMessage {
-            return (readOnlyMessage, false, false)
+            return (readOnlyMessage, false, false, nil)
         } else if isWaitingForStream && isCancellingStream {
-            return (String(localized: "Stopping response..."), false, false)
+            return (String(localized: "Stopping response..."), false, false, nil)
         } else if isCompressingSession {
-            return (String(localized: "Compressing context..."), false, false)
+            return (String(localized: "Compressing context..."), false, false, nil)
         } else if let uploadAttachmentErrorMessage {
-            return (uploadAttachmentErrorMessage, true, true)
+            return (uploadAttachmentErrorMessage, true, true, nil)
         } else if isSendingVoiceNote {
-            return (String(localized: "Sending voice note..."), false, false)
+            return (String(localized: "Sending voice note..."), false, false, nil)
         } else if isUploadingAttachment {
-            return (String(localized: "Uploading attachment..."), false, false)
+            return (String(localized: "Uploading attachment..."), false, false, nil)
+        } else if let steerFailure {
+            return (steerFailure.message, true, false, steerFailure.onRetry)
         } else if let errorMessage {
-            return (errorMessage, true, false)
+            return (errorMessage, true, false, nil)
         } else if let configurationErrorMessage {
-            return (configurationErrorMessage, true, false)
+            return (configurationErrorMessage, true, false, nil)
         } else if isUpdatingConfiguration {
-            return (String(localized: "Updating composer settings..."), false, false)
+            return (String(localized: "Updating composer settings..."), false, false, nil)
         }
 
         return nil
@@ -1167,12 +1301,22 @@ struct MessageComposerView: View {
         draftMessage.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var showsStopButton: Bool {
-        ChatComposerSendGate.showsStopButton(
+    private var sendButton: ChatComposerSendButton {
+        ChatComposerSendButton(
             isWaitingForStream: isWaitingForStream,
             hasText: !trimmedDraftMessage.isEmpty,
-            hasQuotes: !quotes.isEmpty
+            hasQuotes: !quotes.isEmpty,
+            defaultBehavior: streamingSendBehavior
         )
+    }
+
+    private var showsStopButton: Bool {
+        sendButton.showsStop
+    }
+
+    /// What a hold on Send offers right now: nothing while Send is disabled.
+    private var sendChoices: [StreamingSendBehavior] {
+        isActionButtonDisabled ? [] : sendButton.choices
     }
 
     private var isActionButtonDisabled: Bool {
@@ -1195,6 +1339,14 @@ struct MessageComposerView: View {
         )
     }
 
+    /// A tap on the circle. The release of a hold that opened the send-choice
+    /// card lands here too, and is dropped so the hold never also sends.
+    private func actionButtonPressed() {
+        guard sendHold.activate() else { return }
+        actionButtonTapped()
+    }
+
+    /// Stop, or Send with the default. Command-Return comes straight here.
     private func actionButtonTapped() {
         if showsStopButton {
             onCancel()
@@ -1208,12 +1360,14 @@ struct MessageComposerView: View {
 
     /// Starts dictation once for a composer opened by the "New Chat with Voice" intent (#338),
     /// mirroring a mic tap. Gated so it fires a single time, only while the app is active and
-    /// the mic is free; the reused tap path handles the mic/speech permission prompt and surfaces
-    /// a clear error if access is denied, so a denied/undetermined mic degrades gracefully.
+    /// unlocked (the scene stays active under the app lock, so the microphone never starts
+    /// behind it) and the mic is free; the reused tap path handles the mic/speech permission
+    /// prompt and surfaces a clear error if access is denied, so a denied/undetermined mic
+    /// degrades gracefully.
     @MainActor
     private func autoStartVoiceInputIfNeeded() {
         guard autoStartsVoiceInput, !didAutoStartVoiceInput else { return }
-        guard scenePhase == .active else { return }
+        guard scenePhase == .active, !AppLock.shared.isLocked else { return }
         didAutoStartVoiceInput = true
         guard !voiceInput.isListening, !isVoiceInputDisabled else { return }
         toggleVoiceInput()

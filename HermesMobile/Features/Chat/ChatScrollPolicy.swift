@@ -201,13 +201,42 @@ extension EnvironmentValues {
     }
 }
 
-/// Routes transcript link taps through one `OpenURLAction` that outlives body
-/// passes, for the same reason as `ChatDisclosureToggleAction`.
+/// Routes link taps through one `OpenURLAction` that outlives body passes, for
+/// the same reason as `ChatDisclosureToggleAction`. The screen's `handler` sees
+/// each link first and returns nil for links it does not own; of those, web
+/// pages open in the in-app browser and the rest go to the system.
 final class TranscriptLinkRouter {
-    var handler: (URL) -> OpenURLAction.Result = { _ in .systemAction }
+    enum Decision {
+        case host(OpenURLAction.Result)
+        case inAppBrowser
+        case system
+    }
+
+    var handler: (URL) -> OpenURLAction.Result? = { _ in nil }
+    var openInAppBrowser: (URL) -> Void = { url in
+        MainActor.assumeIsolated { SafariView.present(url) }
+    }
 
     private(set) lazy var openURL = OpenURLAction { [weak self] url in
-        self?.handler(url) ?? .systemAction
+        self?.route(url) ?? .systemAction
+    }
+
+    /// What a tap on `url` does, given the screen handler's result for it.
+    static func decision(for url: URL, hostResult: OpenURLAction.Result?) -> Decision {
+        if let hostResult { return .host(hostResult) }
+        return InAppBrowserPolicy.opensInApp(url) ? .inAppBrowser : .system
+    }
+
+    private func route(_ url: URL) -> OpenURLAction.Result {
+        switch Self.decision(for: url, hostResult: handler(url)) {
+        case .host(let result):
+            return result
+        case .inAppBrowser:
+            openInAppBrowser(url)
+            return .handled
+        case .system:
+            return .systemAction
+        }
     }
 }
 
@@ -218,10 +247,18 @@ extension View {
         modifier(ChatDisclosureToggledModifier(handler: handler))
     }
 
-    /// Installs `handler` as the transcript's `openURL` without invalidating
-    /// link readers when the caller rebuilds the closure.
-    func transcriptLinks(perform handler: @escaping (URL) -> OpenURLAction.Result) -> some View {
-        modifier(TranscriptLinksModifier(handler: handler))
+    /// Routes every link tap below this view through `handler` first, without
+    /// invalidating link readers when the caller rebuilds the closure. Links
+    /// the handler returns nil for open web pages in an in-app Safari sheet
+    /// over whatever is on screen (`SafariView`); other links go to the system.
+    func transcriptLinks(perform handler: @escaping (URL) -> OpenURLAction.Result?) -> some View {
+        modifier(TranscriptLinksModifier())
+            .modifier(TranscriptLinkHandlerModifier(handler: handler))
+    }
+
+    /// `transcriptLinks(perform:)` for a screen with no links of its own.
+    func transcriptLinks() -> some View {
+        transcriptLinks { _ in nil }
     }
 }
 
@@ -239,13 +276,38 @@ private struct ChatDisclosureToggledModifier: ViewModifier {
     }
 }
 
-private struct TranscriptLinksModifier: ViewModifier {
-    let handler: (URL) -> OpenURLAction.Result
+/// Owns the router and refreshes its handler on every pass, publishing only the
+/// router itself: a reference that compares equal, as with `chatDisclosureToggled`.
+private struct TranscriptLinkHandlerModifier: ViewModifier {
+    let handler: (URL) -> OpenURLAction.Result?
     @State private var router = TranscriptLinkRouter()
 
     func body(content: Content) -> some View {
         router.handler = handler
-        return content.environment(\.openURL, router.openURL)
+        return content.environment(\.transcriptLinkRouter, router)
+    }
+}
+
+/// Publishes the enclosing router's `openURL`. It takes no inputs and its one
+/// dependency never changes, so owner passes skip its body and `openURL` is
+/// written once: re-written on every pass, iOS 26 could treat it as changed
+/// and re-run every link reader (ChatTranscriptEnvironmentStabilityTests).
+private struct TranscriptLinksModifier: ViewModifier {
+    @Environment(\.transcriptLinkRouter) private var router
+
+    func body(content: Content) -> some View {
+        content.environment(\.openURL, router?.openURL ?? OpenURLAction { _ in .systemAction })
+    }
+}
+
+private struct TranscriptLinkRouterKey: EnvironmentKey {
+    static let defaultValue: TranscriptLinkRouter? = nil
+}
+
+private extension EnvironmentValues {
+    var transcriptLinkRouter: TranscriptLinkRouter? {
+        get { self[TranscriptLinkRouterKey.self] }
+        set { self[TranscriptLinkRouterKey.self] = newValue }
     }
 }
 

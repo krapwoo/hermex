@@ -37,9 +37,21 @@ indirect enum BotJSON: Codable, Hashable, Sendable {
 }
 
 enum BotFailure: Error, Equatable, LocalizedError {
-    /// `notDashboard`: the address answered `/api/status` with 401, 404 or a body that
-    /// is not JSON, so it is not a Hermes dashboard (often the webui address). Permanent.
+    /// `notDashboard`: the address answered `/api/status` with 404, a JSON 401 (the webui's
+    /// auth gate) or a body that is not JSON, so it is not a Hermes dashboard (often the
+    /// webui address). Permanent.
     case stale, unsupported, missingChat, wrongIdentity, differentHost, rejected(Int), transport, invalidAddress, notDashboard
+    /// Something in front of Hermes wants its own sign-in: a request ended on another host
+    /// (an access proxy's login page), or `/api/status` answered a 401 whose body is not a
+    /// JSON object. Permanent.
+    case blocked
+    /// The host requires sign-in but offers no `basic` provider, only a browser (OIDC)
+    /// one Hermex can't use yet. Permanent.
+    case browserSignIn
+    /// The gateway upgrade was refused with this HTTP status after a good sign-in, usually
+    /// by a proxy that drops the ticket header or has no WebSocket support. Permanent;
+    /// 408, 429 and 5xx arrive as `.rejected` instead (`init(upgradeStatus:)`).
+    case upgradeRefused(Int)
     var errorDescription: String? {
         switch self {
         case .stale: return String(localized: "This action is no longer current. Refresh the conversation.")
@@ -48,9 +60,10 @@ enum BotFailure: Error, Equatable, LocalizedError {
         case .missingChat: return String(localized: "Open this bot’s chat in Hermes Desktop, then refresh.")
         case .wrongIdentity: return String(localized: "The conversation identity changed. Check this bot in Desktop.")
         case .differentHost: return String(localized: "The Hermes host at this address reports a different identity than the one you connected to. Check the address in the Hermes connection.")
-        case .rejected(401): return String(localized: "Sign in again. Check your Bot connection username and password.")
-        // Hermes never answers 403 or 520-530 itself. 502-504 usually come from a proxy; Hermes's
-        // own 503 (its auth provider is unreachable) shares the approved proxy copy.
+        case .rejected(401): return String(localized: "Hermes didn't accept the username or password.")
+        // Hermes's REST routes never answer 403, but the gateway upgrade does (see `.upgradeRefused`).
+        // Hermes never answers 520-530 itself. 502-504 usually come from a proxy; Hermes's own 503
+        // (its auth provider is unreachable) shares the approved proxy copy.
         case .rejected(403): return String(localized: "Something in front of Hermes, such as Cloudflare Access, blocked the request.")
         case .rejected(502...504): return String(localized: "Your proxy answered, but Hermes didn't. Check that the dashboard is running on the host.")
         case .rejected(520...530): return String(localized: "Cloudflare can't reach your tunnel. Check that cloudflared and the dashboard are running on the host.")
@@ -58,6 +71,9 @@ enum BotFailure: Error, Equatable, LocalizedError {
         case .rejected(4090): return String(localized: "Another Hermes process owns this conversation. Resolve it on the host, then refresh.")
         case .rejected(4130): return String(localized: "This conversation is too large to open here. Use Desktop.")
         case .invalidAddress: return String(localized: "Enter a Hermes HTTP or HTTPS address without a path, credentials or query.")
+        case .blocked: return String(localized: "Something in front of Hermes, such as Cloudflare Access, wants its own sign-in first. Hermex can't do that yet. Use an address that skips it, such as the dashboard's local network address.")
+        case .browserSignIn: return String(localized: "This Hermes host only offers sign-in with a browser, which Hermex doesn't support yet. To connect now, add a dashboard username and password on the host.")
+        case .upgradeRefused: return String(localized: "Hermes accepted the sign-in, but the live connection was refused. If a proxy or tunnel sits in front of Hermes, turn on WebSocket support and let the Sec-WebSocket-Protocol header through.")
         default: return String(localized: "Connection lost. The bot may still be working. Reconnect to check its current conversation.")
         }
     }
@@ -105,46 +121,28 @@ enum BotConnectionAdvice {
     }
 }
 
-enum BotEndpoint: String {
-    case status = "api/status", login = "auth/password-login", identity = "api/auth/me"
-    case ticket = "api/auth/ws-ticket", socket = "api/ws"
-    case imageUpload = "api/chat/image-upload"
-    /// Dashboard routes push provisioning uses (#557), verified against a 0.21.3 host on
-    /// 2026-09-19: install takes `{identifier, enable, force, ref}` and has no profile
-    /// parameter, enable and disable are path-only, and `PUT /api/env` and the gateway
-    /// restart take an optional `profile` Hermex leaves unset so every profile inherits.
-    case environment = "api/env"
-    case pluginInstall = "api/dashboard/agent-plugins/install"
-    case gatewayRestart = "api/gateway/restart"
-    case pushPairing = "api/plugins/hermex-push/pairing"
-    func url(base: URL) -> URL { base.appendingPathComponent(rawValue) }
-    /// `POST /api/dashboard/agent-plugins/{name}/{action}` for `enable` and `disable`.
-    static func pluginURL(base: URL, name: String, action: String) -> URL {
-        base.appendingPathComponent("api/dashboard/agent-plugins")
-            .appendingPathComponent(name).appendingPathComponent(action)
-    }
-    /// `DELETE /api/profiles/{name}`, the only Profile removal the host exposes; the
-    /// gateway has no `profiles.delete` RPC. `name` is a validated Profile slug.
-    static func profileURL(base: URL, name: String) -> URL {
-        base.appendingPathComponent("api/profiles").appendingPathComponent(name)
-    }
-}
-
+/// One screen's connection to the Bot gateway. `BotClient` is the real one: a handle on
+/// the socket every screen of the saved connection shares.
 @MainActor protocol BotTransport: AnyObject {
     var replayEpoch: String? { get }
     var serverVersion: String? { get }
     /// `install_id` from `/api/status` at the last connect; nil when the host omits it.
     var serverInstallID: String? { get }
-    /// Sequenced event params or a complete string-id server-request envelope.
+    /// Sequenced event params or a complete string-id server-request envelope. The socket
+    /// is shared, so this sees other screens' sessions too: admit only your own.
     var onEvent: ((BotJSON) -> Void)? { get set }
+    /// The socket was lost or its connection replaced; once each time, never for `close()`.
     var onDisconnect: ((Error) -> Void)? { get set }
     func connect() async throws
-    func call(_ method: String, _ params: [String: BotJSON], validateDispatch: (() throws -> Void)?) async throws -> BotJSON
+    /// Sends one typed request. `validateDispatch` runs immediately before the
+    /// socket write, so an action that went stale while queued is never sent.
+    func call(_ call: HermesCall, validateDispatch: (() throws -> Void)?) async throws -> BotJSON
     func uploadImage(data: Data, filename: String, context: BotArtifactContext) async throws -> String
     func artifactData(path: String, context: BotArtifactContext) async throws -> Data
     /// Removes a Profile on the host over the authenticated HTTP session. Only
     /// a 200 with `ok` counts as deleted; anything else leaves the bot in place.
     func deleteProfile(_ name: String) async throws
+    /// Ends this screen's calls, uploads and downloads; the shared socket stays for others.
     func close()
 }
 
@@ -164,8 +162,8 @@ extension BotTransport {
         throw BotFailure.unsupported
     }
 
-    func call(_ method: String, _ params: [String: BotJSON]) async throws -> BotJSON {
-        try await call(method, params, validateDispatch: nil)
+    func call(_ call: HermesCall) async throws -> BotJSON {
+        try await self.call(call, validateDispatch: nil)
     }
 }
 
@@ -226,11 +224,11 @@ struct BotHostStatusProbe {
     func check(_ address: URL) async -> Result<BotHostStatus, BotHostProbeFailure> {
         let session = URLSession(configuration: configuration)
         defer { session.finishTasksAndInvalidate() }
-        let url = BotEndpoint.status.url(base: address)
         do {
-            let (data, response) = try await session.data(from: url)
+            let request = try HermesREST.status.request(base: address)
+            let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else { return .failure(.notHermes) }
-            if response.url?.host != url.host || [401, 403].contains(response.statusCode) { return .failure(.blocked) }
+            if response.url?.host != request.url?.host || [401, 403].contains(response.statusCode) { return .failure(.blocked) }
             guard response.statusCode == 200 else { return .failure(.answered(response.statusCode)) }
             guard let json = try? JSONDecoder().decode(BotJSON.self, from: data), json.fields != nil else {
                 return .failure(.notHermes)

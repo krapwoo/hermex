@@ -38,17 +38,20 @@ Before external distribution, all of these must hold:
 - The owner tested this exact build on a physical iPhone as described in
   [Test the release candidate](#test-the-release-candidate).
 - No unresolved P0/P1 issue blocks normal use; accepted risks are recorded.
+- `HermexPushPlugin.newestVersion` equals `version` in `plugin/plugin.yaml` on
+  hermex-push `main`. If the plugin changed since the last release, bump the
+  constant, or Settings will never offer paired hosts the update.
 - The build is processed, with compliance information resolved and symbols uploaded.
 - TestFlight information, privacy policy URL, and reviewer access are complete.
 - Beta App Review has approved the build for external testing.
 
 ## Signing and workflow setup
 
-Use Xcode automatic signing for the app, share extension, and Live Activity
-widget. Confirm their bundle identifiers, entitlements, App Group capabilities,
-and provisioning in the Apple Developer account before the first upload or
-after a signing change. Inspect the current settings rather than copying identities
-from a previous release:
+Use Xcode automatic signing for the app, share extension, Live Activity widget,
+and notification service extension. Confirm their bundle identifiers,
+entitlements, App Group capabilities, and provisioning in the Apple Developer
+account before the first upload or after a signing change. Inspect the current
+settings rather than copying identities from a previous release:
 
 ```zsh
 xcodebuild -showBuildSettings -project HermesMobile.xcodeproj -scheme HermesMobile -configuration Release | rg "PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_ENTITLEMENTS|CODE_SIGN_STYLE"

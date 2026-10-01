@@ -6,8 +6,10 @@ struct BotRoomComposerView: View {
     let roster: [BotProfile]
     let avatars: [String: UIImage]
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(HeaderLogoColor.storageKey) private var themeHex = HeaderLogoColor.defaultHex
     @AppStorage(PrimaryActionTintSettings.isEnabledKey) private var tintsPrimaryActions = false
+    @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
     @State private var selection = ComposerSelection()
     @State private var focused = false
     @State private var inputHeight: CGFloat = 22
@@ -25,6 +27,7 @@ struct BotRoomComposerView: View {
                             let result = trigger.applying(tag: item.tag, to: reader.draft)
                             reader.draft = result.draft
                             selection = selection.moved(to: result.selection)
+                            ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
                         }
                     }
                 }
@@ -63,6 +66,7 @@ struct BotRoomComposerView: View {
                 } else {
                     Image(systemName: stop ? "stop.fill" : "arrow.up")
                         .font(.system(size: iconSize, weight: .semibold))
+                        .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
                         .frame(width: ChatComposerMetrics.actionSize)
                 }
             }
@@ -105,7 +109,7 @@ struct BotRoomActionCard: View {
                 isEnabled: reader.mayAct(action), canStop: reader.mayStop,
                 isAnswering: reader.busy && reader.inactiveActions.contains(action.id), resolution: nil,
                 onApprove: { choice in Task { await reader.act(action, choice: choice) } },
-                onAnswer: { _ in }, onSkip: {}, onCredential: { _ in }, canDecline: false, onDecline: {},
+                onAnswer: { _ in }, onSkip: {}, onCredential: { _ in },
                 onStop: { Task { await reader.stop() } }, onConnection: { _ in })
         } else {
             VStack(alignment: .leading, spacing: 12) {

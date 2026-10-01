@@ -13,12 +13,15 @@ struct BotChatComposerView: View {
     let onReconnect: () -> Void
     /// Scrolls the transcript back to the pending request card.
     let onShowRequest: () -> Void
+    /// Leaves the chat for the inbox's sign-in form, after the host refused the password.
+    var onUpdateSignIn: () -> Void = {}
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(HeaderLogoColor.storageKey) private var themeHex = HeaderLogoColor.defaultHex
     @AppStorage(PrimaryActionTintSettings.isEnabledKey) private var tintsPrimaryActions = false
+    @AppStorage(AppHaptics.isEnabledKey) private var isHapticsEnabled = true
     @AppStorage(BotQuickReplyStore.storageKey) private var storedQuickReplies = ""
     /// Decoded once per storage change, not on every keystroke's body pass.
     @State private var quickReplies: [BotQuickReply] = []
@@ -69,7 +72,8 @@ struct BotChatComposerView: View {
             // receipt for work the transcript already shows. With nothing to act
             // on, the user's quick replies take the same slot, so the two never stack.
             if let pill {
-                BotComposerPillView(pill: pill, onReconnect: onReconnect, onShowRequest: onShowRequest,
+                BotComposerPillView(pill: pill, onReconnect: onReconnect, onUpdateSignIn: onUpdateSignIn,
+                                    onShowRequest: onShowRequest,
                                     onCancelUpload: { model.cancelAttachmentUpload() },
                                     onDismissError: { if let text = pill.errorText { dismissedErrors.insert(text) } })
                     .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
@@ -120,16 +124,16 @@ struct BotChatComposerView: View {
             errorText: errorTexts.first { !dismissedErrors.contains($0) },
             voiceStatus: voiceStatus,
             offersReconnect: model.connectionState == .disconnected && !model.isReconnecting && model.errorMessage != nil,
+            needsSignIn: model.needsSignIn,
             isUploading: model.isUploadingAttachments
         )
     }
 
     /// What the blocked bot is waiting on. "Handling this" is only true where
-    /// there is nothing to do: a request the phone can answer or decline has an
-    /// action on its card, and saying it is handled would hide that.
+    /// there is nothing to do: a request the phone can answer has an action on
+    /// its card, and saying it is handled would hide that.
     private var requestText: String {
         if model.pendingRequest?.isAnswerable == true { return String(localized: "Waiting for your answer") }
-        if model.mayDecline { return String(localized: "Waiting on Hermes Desktop") }
         if model.pendingRequest == nil { return String(localized: "Needs attention. Answer the request in Hermes Desktop on this same connection.") }
         return String(localized: "Hermes Desktop is handling this")
     }
@@ -216,7 +220,7 @@ struct BotChatComposerView: View {
         // the keyboard stays up and the two cards look and move alike.
         .background {
             HermexKeyboardRetainingOverlay(isPresented: choosingSendMode) {
-                BotSendChoiceView(choices: busyChoices, onPick: { mode in
+                SendChoiceCard(choices: busyChoices, onPick: { mode in
                     choosingSendMode = false
                     guard let action = model.preparePrompt(mode) else { return }
                     Task { await model.submit(action) }
@@ -260,6 +264,7 @@ struct BotChatComposerView: View {
                             let result = trigger.applying("@" + item.tag + " ", to: model.draft)
                             editDraft(result.draft)
                             selection = selection.moved(to: result.selection)
+                            ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
                         },
                         onSelectFile: { match in
                             let result = trigger.applying(
@@ -268,6 +273,7 @@ struct BotChatComposerView: View {
                             editDraft(result.draft)
                             selection = selection.moved(to: result.selection)
                             if !match.isDirectory { model.recordFileChipReference(match.path) }
+                            ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
                         }
                     )
                     .padding(.horizontal, 16).padding(.bottom, 8)
@@ -284,6 +290,7 @@ struct BotChatComposerView: View {
                     let result = trigger.applying("/" + skill.slashName + " ", to: model.draft)
                     editDraft(result.draft)
                     selection = selection.moved(to: result.selection)
+                    ChatHaptics.autocompleteAccepted(isEnabled: isHapticsEnabled)
                 }
                 .padding(.horizontal, 16).padding(.bottom, 8)
             }
@@ -317,6 +324,12 @@ struct BotChatComposerView: View {
                     // Tapping a chip opens its full passage in issue #564; here it
                     // is inert, and the swipe-to-remove is the way back out.
                     onTapChip: { _ in }, onTapQuote: { _ in }, onRemoveQuote: { model.removeQuote($0) },
+                    // Live rows count, so a prompt still in flight is the one ↑ recalls.
+                    // The attachment refs the send appended don't come back.
+                    recallLastSentText: {
+                        ComposerRecall.lastSentText(in: model.messages + model.liveMessages,
+                                                    typedText: BotAttachmentUpload.typedText(of:))
+                    },
                     placeholder: String(localized: "Ask anything..."), acceptsAttachments: model.mayEditDraft
                 )
                 if !isExpanded {
@@ -563,15 +576,18 @@ enum BotComposerPill: Equatable {
     case error(String)
     case voice(ComposerVoiceStatus)
     case reconnect
+    /// Reconnect's slot after the host refused the saved password: reconnecting
+    /// would only send it again, so the button opens the sign-in form instead.
+    case updateSignIn
     case uploading
     case retrySend
 
     static func resolve(requestText: String?, requestHasCard: Bool, errorText: String?, voiceStatus: ComposerVoiceStatus?,
-                        offersReconnect: Bool, isUploading: Bool) -> BotComposerPill? {
+                        offersReconnect: Bool, needsSignIn: Bool = false, isUploading: Bool) -> BotComposerPill? {
         if let requestText { return requestHasCard ? .request(requestText) : .notice(requestText) }
         if let errorText { return .error(errorText) }
         if let voiceStatus { return .voice(voiceStatus) }
-        if offersReconnect { return .reconnect }
+        if offersReconnect { return needsSignIn ? .updateSignIn : .reconnect }
         if isUploading { return .uploading }
         return nil
     }
@@ -580,9 +596,12 @@ enum BotComposerPill: Equatable {
 
     /// Rooms share the action pill, but their host exposes no turn start time.
     /// Routine working/connecting states stay quiet; requests and recovery remain reachable.
+    /// `needsSignIn` holds Update sign-in in place even while a background leaves the
+    /// room idle, because the room never signs in again with a rejected password.
     static func room(link: BotRoomReader.Link, blocked: Bool, hasActions: Bool,
-                     mayRetry: Bool, errorText: String?) -> BotComposerPill? {
+                     mayRetry: Bool, needsSignIn: Bool = false, errorText: String?) -> BotComposerPill? {
         if let errorText { return .error(errorText) }
+        if needsSignIn { return .updateSignIn }
         if link == .stopped { return .reconnect }
         if mayRetry { return .retrySend }
         if link == .live && blocked {
@@ -593,11 +612,12 @@ enum BotComposerPill: Equatable {
     }
 }
 
-/// One centered capsule with material and no motion of its own. Request and
-/// Reconnect are buttons; an error is tappable to dismiss; Uploading carries Cancel.
+/// One centered capsule with material and no motion of its own. Request, Reconnect
+/// and Update sign-in are buttons; an error is tappable to dismiss; Uploading carries Cancel.
 struct BotComposerPillView: View {
     let pill: BotComposerPill
     let onReconnect: () -> Void
+    let onUpdateSignIn: () -> Void
     let onShowRequest: () -> Void
     let onCancelUpload: () -> Void
     let onDismissError: () -> Void
@@ -617,6 +637,8 @@ struct BotComposerPillView: View {
                 Label(status.text, systemImage: status.systemImage)
             case .reconnect:
                 Button(action: onReconnect) { Label("Reconnect", systemImage: "arrow.clockwise") }
+            case .updateSignIn:
+                Button(action: onUpdateSignIn) { Label("Update sign-in", systemImage: "key") }
             case .retrySend:
                 Button(action: onRetrySend) { Label("Retry send", systemImage: "arrow.up") }
             case .uploading:
@@ -638,89 +660,5 @@ struct BotComposerPillView: View {
         .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 24)
         .accessibilityIdentifier("bot-chat-status")
-    }
-}
-
-/// The send-choice card: the "+" picker's chrome (scrim, material panel, the
-/// same present and dismiss motion) holding Steer, Queue and Interrupt. It sits
-/// bottom-trailing, by the send button that opened it.
-struct BotSendChoiceView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @State private var isVisible = false
-    @State private var isDismissing = false
-    @State private var transitionTask: Task<Void, Never>?
-
-    let choices: [BotPromptMode]
-    let onPick: (BotPromptMode) -> Void
-    let onDismiss: () -> Void
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = HermexAttachmentPickerLayoutMetrics.menuWidth(containerWidth: proxy.size.width)
-            ZStack(alignment: .bottomTrailing) {
-                Button(action: dismiss) {
-                    Color.black.opacity(isVisible ? 0.08 : 0)
-                        .ignoresSafeArea()
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(isDismissing)
-                .accessibilityLabel("Close send choices")
-
-                VStack(spacing: 0) {
-                    ForEach(choices, id: \.self) { choice in
-                        HermexAttachmentMenuRow(title: Text(choice.title), systemImage: choice.systemImage) {
-                            finish { onPick(choice) }
-                        }
-                    }
-                }
-                .padding(.vertical, 12)
-                .frame(width: width)
-                .modifier(HermexAttachmentPanelSurface(reduceTransparency: reduceTransparency))
-                .compositingGroup()
-                .clipShape(.rect(cornerRadius: 46, style: .continuous))
-                .padding(.trailing, HermexAttachmentPickerLayoutMetrics.menuLeadingPadding)
-                .padding(.bottom, 74)
-                .opacity(isVisible ? 1 : 0)
-                .scaleEffect(isVisible ? 1 : 0.96, anchor: .bottomTrailing)
-                .offset(y: isVisible ? 0 : 8)
-                .allowsHitTesting(!isDismissing)
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Send choices")
-            }
-        }
-        .accessibilityAddTraits(.isModal)
-        .accessibilityAction(.escape, dismiss)
-        .onAppear(perform: present)
-        .onDisappear { transitionTask?.cancel(); transitionTask = nil }
-    }
-
-    private func present() {
-        guard !isVisible else { return }
-        guard !reduceMotion else { isVisible = true; return }
-        transitionTask = Task { @MainActor in
-            await Task.yield()
-            guard !Task.isCancelled else { return }
-            withAnimation(.snappy(duration: 0.2)) { isVisible = true }
-            transitionTask = nil
-        }
-    }
-
-    private func dismiss() { finish(onDismiss) }
-
-    /// Fades the card out, then hands control back; a pick and a dismissal
-    /// leave the same way.
-    private func finish(_ completion: @escaping () -> Void) {
-        guard !isDismissing else { return }
-        isDismissing = true
-        transitionTask?.cancel()
-        guard !reduceMotion else { completion(); return }
-        withAnimation(.easeInOut(duration: 0.16)) { isVisible = false }
-        transitionTask = Task { @MainActor in
-            do { try await Task.sleep(for: .milliseconds(160)) } catch { return }
-            guard !Task.isCancelled else { return }
-            completion()
-        }
     }
 }

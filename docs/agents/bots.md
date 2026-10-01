@@ -6,9 +6,9 @@ The connection record, credentials and stable UUID live in server-scoped Keychai
 storage. The host's identity is the `install_id` public `/api/status` reports (one
 per Hermes root, so every Profile and every address that reaches it agree); the
 record stores it the first time the host reports one (trust on first use; the inbox
-backfills older records). A reconnect whose live id differs from the stored one
-fails with `.differentHost` before the login POST, in `BotClient.connect()` and
-`BotDashboardClient.signIn()`, so every Bot surface and push provisioning refuses
+backfills older records). A sign-in whose live id differs from the stored one
+fails with `.differentHost` before the login POST, in `HermesConnection.signIn()`,
+which every Bot surface and push provisioning goes through, so they all refuse
 without sending the password. A missing stored or live id skips the check, and an
 omitted id never clears a stored one. In the connection form, a new address or
 username keeps the UUID when the host reports the stored `install_id`; otherwise a
@@ -19,10 +19,89 @@ address that now reaches another host, not an impostor. Removing the connection
 deletes its drafts; removing the configured server deletes both its connection and
 all its drafts.
 
-`BotClient` owns an ephemeral cookie session and one WebSocket. HTTP paths live in
-`BotEndpoint`. Password login requires the basic auth gate, verifies identity,
-and mints a fresh single-use ticket for each socket. JSON-RPC uses text frames
-with the `hermes-gateway-v1` and ticket subprotocols. There is no bootstrap-token,
+The saved connection's HTTP side is one `HermesConnection` (`Networking/Hermes/`):
+an ephemeral cookie jar, a single-flight password sign-in, and the only path Bot HTTP
+requests and gateway upgrades are sent through. `HermesConnections` gives every
+consumer of the active server's saved connection (inbox, chats, rooms, creator,
+editor and push provisioning's `BotDashboardClient`) the same instance, so they sign
+in once; a reconnect only mints a new ticket. The registry holds its one entry weakly
+and keys it by configured server and connection UUID. A request for another server
+or UUID, or for the same UUID with a new address, account or password, retires the
+old connection first: its sign-in in flight stops and its late replies throw
+`.stale`. Switching away from, signing out of or removing the configured server, and
+saving other credentials or removing them, retire it at once rather than at the next
+lookup, so a sign-in finishing afterwards stores nothing and resends nothing; a
+rename or an install id backfill keeps it. Nothing is pooled by hostname, so the same host and account under two
+configured servers get two jars. The connection form and dev auto-login probe
+unsaved credentials on their own `HermesConnection`, never the shared one.
+Cancelling one waiting consumer never cancels the shared sign-in. A signed-in
+request answered 401 signs in again once, sharing that sign-in with every other
+consumer's 401, and is resent: the auth gate refuses `/api/*` before any handler
+runs (`hermes_cli/dashboard_auth/middleware.py`), so the resend cannot repeat a
+write. A Bot screen's delete, upload or download is sent, and resent, only while
+that screen still owns it: one that closed during the sign-in sends nothing. A 401 from the login itself (bad credentials) ends the recovery and leaves
+the connection signed out; the next request signs in again. A transport failure,
+proxy status or 5xx fails only its request and leaves the sign-in as it was, and
+is never resent. Provisioning keeps its 120/180-second deadlines, for its steps and
+for a sign-in it starts, on a second session that shares the jar; everything else
+keeps 15/30. `HermesConnection`
+accepts origin-bound `HermesHeaders` for tests and a later editor: they reach only
+its own origin, a cross-origin redirect drops them before the push relay or any
+other host, and the policy refuses transport names (`Host`, `Cookie`,
+`Sec-WebSocket-*` and similar), the names Hermes reads for its own checks (`Origin`,
+`X-Forwarded-Prefix`, `X-Hermes-Session-Token`) and `Bearer` authorization while allowing
+Cloudflare Access's JSON `Authorization` form. Production passes none, and the
+webui's custom headers are never a source.
+
+Each `HermesConnection` also owns the one gateway WebSocket its Bot screens share,
+`HermesGateway`. Every screen holds its own `BotClient` handle on it: the inbox, each
+open chat (its controls and delegated work use the chat's), a room, the creator and
+the editor. The socket opens when the first screen connects and closes when the last
+one leaves, so it lives while any Bot screen is connected and backgrounding still
+closes it. Screens that connect while it opens wait for that one attempt, so screens
+reconnecting after the same drop make one socket, one ticket and one handshake. A
+reply settles only the call that sent it; every event and server request goes to
+every attached screen, which admits only its own (a chat by its runtime ID, the inbox
+`sessions.changed`), and the gateway never answers a server request itself. A screen's
+`close()` fails only its own calls with `.transport`, cancels its uploads and
+downloads and ends its callbacks; the last screen to leave closes the socket without
+a disconnect. Cancelling a read discards its reply; cancelling a call that may have
+reached the agent ends that screen's part as `close()` does and leaves the socket to
+the others. A required call past its deadline ends only its screen, which hears
+`onDisconnect(.transport)` once and reconnects onto the socket the others kept. A lost
+socket (a read or send failure, 45 seconds of silence) is connection-wide: each
+attached screen hears `onDisconnect` once and reconnects as before, and anything later
+from that socket is dropped by its generation. Retiring the connection does the same with `.stale` and refuses
+reconnects. A chat's session stays attached to the shared socket after the chat
+leaves, until the socket closes; leaving a screen never closes a host session. The
+connection form and dev auto-login probe on their own connection, so their own socket.
+
+`HermesConnection` and `HermesGateway` log the connection's lifecycle to the device
+log (`HermesConnectionLog`), under the bundle ID and the category `HermesConnection`:
+each sign-in with its release, or the step that failed (`status`, `login`, `identity`,
+`ticket`) and why; the socket opening or failing to open (a refused upgrade with its
+status); a drop with its reason and any close code the other end sent; 45 seconds of
+silence; the last screen leaving; retirement; a reply that matched no open call; and a
+call past its deadline, by method. Lines name connections `c1`, `c2`, … and each
+connection's sockets `s0`, `s1`, …, never the server: interpolate only numbers, step,
+case and method names, the release `/api/status` reports (upstream's package version) and
+`HermesConnectionLog.reason(_:)`, each `.public`, and never a host, address, URL,
+session or runtime id, Profile name, title, message text, ticket, replay epoch or
+install id. Events, deltas and keepalive pongs are never logged.
+
+Requests are typed in `Networking/Hermes/`: every HTTP request (method, path, query, JSON body) is a
+`HermesREST` case, and every JSON-RPC request is a `HermesCall` case, one per
+operation the app uses and none for any other upstream method. A case carries only
+what callers vary; fixed contract values (the canonical title, `queued`, the avatar
+asset) are encoded there. `HermesCall.params()` is the only way to the wire and
+runs admission first, so the "typed exception" rules below hold for every caller;
+`HermesGateway` still runs `validateDispatch` at the socket write and maps errors,
+cancellation and timeouts. Password login requires the basic auth gate, verifies identity,
+and each socket gets a fresh single-use ticket. The upgrade is a `URLRequest`
+(`HermesREST.gatewayUpgrade`) offering the `hermes-gateway-v1` and ticket
+subprotocols in its `Sec-WebSocket-Protocol` header, which is where
+`URLSessionWebSocketTask` takes them from a request; the host splits that header
+on commas (`hermes_cli/web_server_chat.py`). JSON-RPC uses text frames. There is no bootstrap-token,
 OAuth, webui fallback, server provisioning or competing-backend path.
 
 Every socket, reconnects included, runs the same handshake before any other RPC:
@@ -34,7 +113,7 @@ it (`tui_gateway/server_requests.py`, `session_transports.py`). A host older
 than the capability answers -32601; `connect()` ignores any JSON-RPC rejection
 here, as the shared web client does, and connects as before. The host sends no
 JSON heartbeat of its own (`heartbeat: true` in `gateway.ready` only means the
-socket answers pings), so `BotClient` sends `gateway.ping` every 15 seconds
+socket answers pings), so `HermesGateway` sends `gateway.ping` every 15 seconds
 with string ids that never settle an RPC. Any inbound frame resets the 45-second
 silence deadline; a socket quiet for longer is dropped and reconnects.
 
@@ -69,7 +148,11 @@ The prompt discovers the existing backend and asks before changing setup.
 The same connection form serves Bots, Settings and push setup. A schemeless
 address defaults to HTTPS, except recognizable private/local IPs (including
 Tailscale ranges), local names and single-label hosts use HTTP. Explicit schemes
-and ports are preserved; TLS failures never trigger an HTTP downgrade. Invalid
+and ports are preserved; TLS failures never trigger an HTTP downgrade. A pasted
+link is reduced to its root: `ws`/`wss` become `http`/`https`, the query and
+fragment are dropped, and a path starting with `login`, `auth`, `api`, `chat` or
+`sessions` is removed; any other path (a proxy prefix) and credentials are refused.
+While the text parses, the form shows the root it will connect to. Invalid
 addresses display errors even before a transport exists. Cancellation invalidates
 the attempt before late replies can save credentials or dismiss the screen.
 The synchronous Keychain write is the commit point. Saved state changes with it;
@@ -80,7 +163,16 @@ through CIDR exceptions, and explicit `http://` Tailscale names through the `ts.
 subdomain exception. Public hosts still require HTTPS.
 A failed sign-in names what to check (`BotConnectionAdvice`): the unreachable host,
 a Host-header 400 (`dashboard.public_url`), a webui address, a proxy or Cloudflare
-status. The inbox and chat use the same copy for the messages they show.
+status, an access proxy's own sign-in (`.blocked`: a redirect to another host or a
+non-JSON 401 on `/api/status`), a host with browser sign-in only (`.browserSignIn`),
+and a refused gateway upgrade (`.upgradeRefused`). The inbox and chat use the same
+copy for the messages they show, and none of these three retries on its own.
+A rejected password (`.rejected(401)`) offers "Update sign-in" in place of
+Reconnect in the inbox, a chat and a room: it opens the connection form with the
+password focused, from the inbox, because a chat's or room's client is bound to
+the rejected record. The app never resends that password on its own; foregrounding,
+pull to refresh and closing the form unsaved send nothing until the saved record
+changes or the form saves a sign-in.
 
 `BotConversation` owns one server/connection/Profile view lifetime. It resolves
 exact-title Bot Chat, keeps canonical root, compression tip and runtime IDs
@@ -121,14 +213,43 @@ a chat view model; `BotMessageActions` builds that list, and for a Bot it is
 Copy over the Markdown source, by the canonical-chat policy of #481. The host
 does support rewind (`prompt.submit` with `confirm_truncate` and a
 `truncate_before_row_id` taken from the snapshot's durable `row_id`) and
-`session.branch`; Bot Chat does not offer edit, regenerate or branch yet
-(#745). Group rooms use the same seam. Under a settled message, one reply
-footer (`BotReplyFooter`, on `ChatMessageMetaRow`) shows the host `timestamp`
+`session.branch`; Bot Chat uses rewind only to retry a failed turn (below) and
+does not offer edit, regenerate or branch yet (#745). Group rooms use the same
+seam. Under a settled message, one reply footer (`BotReplyFooter`, on
+`ChatMessageMetaRow`) shows the host `timestamp`
 (room `created_at`) on user messages and turn-ending replies, following
 Settings → Chat → Message Timestamps; a dated separator (`TranscriptTimeline`)
 opens the window and any row 30+ minutes after the previous stamped one, and
 shows even with that setting off. Later footer parts join this row rather than
 adding one.
+
+A failed turn gets an outcome row under it (`BotTurnOutcomeRow`, #878), after
+any live reply and before the plan and request card. Its failure half is
+`BotConversation.turnFailure`, decoded by `HermesTurnOutcome` from the
+snapshot's retained `inflight` (`error`, `error_surface {layer, code,
+retryable, resets_at?, message?}`, `recoverable`). The host keeps that until the
+next turn starts or the session closes, so reopening, backgrounding and a push
+tap all rebuild it. The row shows a Hermex title (the surface's own `message`
+first, then the `endpoint` layer so a local endpoint's timeout points at that
+endpoint, then the code, then the layer, else "The turn failed"), the raw `error`
+capped at four selectable lines, "Limit resets at …" while `resets_at` is in
+the future (no timer; a passed time drops on the next redraw), and Retry when
+`retryable` is true, or `recoverable` is true without a surface. Retry is
+`HermesCall.promptRewind`: one `prompt.submit` that cuts at the failed prompt's
+saved `row_id` and resends the raw `inflight.user` (for a `/skill` turn, the
+expansion with its attachment references and mention note, which the displayed
+invocation leaves out), with both confirmations and never `queued`; 4009 says
+to wait and changes nothing, 4018 says the message can't be changed, hides
+Retry for that row and rereads. The host resolves the cut against its in-memory history, so a
+turn whose agent never started (`runtime`/`agent_init_failed`) always gets 4018:
+its prompt row is saved at submit but never reaches that history.
+`turnNotice` holds what only `message.complete` carries: an `https`
+`billing.billing_url` ("Open billing page" in Safari; the host's long billing
+text is left out) and the host's `warning`, shown verbatim even under a
+successful reply. It is live-only: replay rebuilds it while the ring holds the
+turn's frames, and a gap that could hide a newer turn's start drops it. Both
+survive suspend and a continuous reconnect, clear on `message.start` and on the
+next accepted send, and are never cached. Rooms and Sessions are unchanged.
 
 Bot Chat rows take Desktop's Tapbacks (#761). `session.resume` rows carry the
 durable `row_id` (projected as `ChatMessage.rowID`) and
@@ -272,6 +393,23 @@ answer it. Request payloads and credential values are never cached.
 A disconnect drops the requests and reconnect restores the host's current list,
 independently of replay-ring truncation. The phone never retries an answer.
 
+When the withdrawn envelope is the card on screen, Bot Chat leaves one caption
+line in its slot (`BotRequestWithdrawal`): `timeout`, `interrupted` or
+`session_closed` (the work stopped), `shutdown`, or any other wording as a
+generic "withdrawn" line, worded per family (approval, question, other).
+`resolved` (answered on another surface) and a cancel without a reason stay
+silent; other requests answered elsewhere send no cancel at all. The renderer's
+own tasks (`tour`, `terminal.read`, `window.read`, `preview.read`,
+`preview.act`) and a request queued behind the card are silent too. A stopped
+run is silent when this phone stopped it: a Stop or an Interrupt send
+(`session.redirect`) in flight, an acknowledged Stop, or an Interrupt the host
+answered `redirected` (not `queued`) or a voice stop, for the card it stopped. A cancel that arrives while the phone is
+away is matched in the reconnect replay against the envelope (id and method
+only) on screen when it left. It must be the replay's last `request.cancel`:
+request frames are not sequenced, so a later cancel is the only trace of a
+card that took the slot after it. A truncated replay stays silent. The note clears on the next accepted
+prompt, a new request, or leaving the connection, and is never cached.
+
 Connection operations (`manage_connections`) are an event plus an RPC, not a
 server request: nothing reaches `open_requests` and `request.answer` does not
 apply. `connection.request` opens an operation, every `connection.update`
@@ -280,8 +418,12 @@ carries the full snapshot again (keep the highest `seq` per `op_id`; the
 restores it, so an omitted field clears the card. `BotConnectionOperation`
 reads all three tolerantly: an unknown `kind`, `action` or `state` keeps its row
 but offers nothing, and an operation with no readable row is needs-attention
-without a card. The card answers with `connection.respond {session_id, op_id,
-result}`, where `result` is one row's `approved` (with `env` for an MCP
+without a card. The card answers with `connection.respond {owner, op_id,
+result}`, where `owner` is `{type: "session", session_id}`. A host older than
+0.21.5 takes a bare `session_id` instead, and each release refuses the other's
+key with `4000`, so `HermesCall` picks the shape from the `/api/status` version
+the last sign-in read (numeric part only; a missing, partial or unreadable one
+gets `owner`). `result` is one row's `approved` (with `env` for an MCP
 install's `required_env`; a plain field starts at its `default` and sends it,
 since the host never fills one in) or `skipped`, or `{settled_by: "continue"}` alone;
 `BotClient` refuses every other shape. A managed connector's `connect_url`
@@ -295,7 +437,8 @@ settled. Setup values stay in the row's view state and are cleared on send.
 Try again on a failed managed row (`connectors.connect {reconnect}`) and
 `connectors.operation.wake` are not used. The shapes are verified against
 `tui_gateway/contracts/connectors_operation.py`, `tui_gateway/methods_connectors.py`
-and `tools/connectors/mcp.py` at `HERMES_AGENT_TESTED_SHA` (0.21.4).
+and `tools/connectors/mcp.py` at 0.21.4 (`d337b736`); the `owner` rename against
+`apps/shared/src/gateway-contract.openrpc.json` at 0.21.5 (`ca678285`).
 
 `BotApprovalRequest` keeps the host's own `choices`
 (`once`/`session`/`always`/`deny`) and only rebuilds them when an older host omits
@@ -303,6 +446,23 @@ the field. Unknown choices never invent permanent permission. Approvals still
 use `approval.respond` with the underlying queue `request_id`, which differs
 from the server-request envelope id. `resolved: 0` means already resolved.
 `approval.received` is deliberately never called.
+
+It also reads `pattern_keys` (else `[pattern_key]`) and `tool_name`, all
+optional, for the one scope line under the command. `ApprovalScope` (in
+`Models/Approval.swift`, shared with the Sessions overlay) turns the keys into a
+sentence saying what Allow session covers in this chat and what Always allow
+covers for this Profile; a raw key never reaches the screen. A shell key is the
+host's danger description, quoted as sent. A `plugin_rule:` key names its tool,
+raw and monospaced, from the default `<tool>:<sha12>` rule key, else
+`tool_name`, else the `<tool>` in the command. `execute_code`,
+`ssh_config_write`, `cua:` and `tirith:` keys get plain labels, and anything
+else is "every action like this one". Hermes keeps a Tirith finding
+session-only even under Always, so a mixed prompt says so and a Tirith-only
+prompt (no Always offered) names only the chat. No Allow session offered (a
+smart-denied prompt, a room approval) means no line, and so do the one-time
+`mcp_elicitation` and `protected_instruction_file` keys, whose every allow
+choice is a single accept. The key shapes are verified against
+`tools/approval.py` at `ca678285`.
 
 `BotQuestionRequest` reads single and batch clarification from `clarify`
 server requests (there is no `pending_clarify` snapshot field), including locked
@@ -316,21 +476,30 @@ without `answers`, the host's cancel-all shape for a batch.
 
 The phone uses the acknowledged `request.answer` proxy for both live and restored
 requests: unlike a bare response frame, it distinguishes `ok` from `expired`.
-`sudo` and `secret` send `result: {value}`; an empty value skips. Credential input
+`sudo`, `secret` and the password-vault prompts (`vault.unlock_prompt`,
+`vault.save_login`, `vault.code`) are all `BotCredentialRequest`s and send
+`result: {value}`; an empty value is the host's skip or decline. Credential input
 uses a `SecureField` and passes directly to dispatch without storing the value.
-The field offers Password AutoFill (`.password`) for both kinds and is keyed by
-request id, so a replacement request never inherits a half-typed value. With no
-associated domain, iOS offers no "Save Password?" afterward.
+The field offers AutoFill for its content type (`.password`, or `.oneTimeCode`
+for `vault.code`) and is keyed by request id, so a replacement request never
+inherits a half-typed value. With no associated domain, iOS offers no "Save
+Password?" afterward.
+
+The vault prompts carry `display_name` (unlock), `origin` and `site` (save
+login), and optional `site` and `hint` (code). An unlock's master password goes
+to the password manager's CLI on the host, which keeps only a session token. A
+save-login answer is one JSON-encoded string `{"identifier", "password"}`,
+built by `BotCredentialRequest.saveLoginValue` and sent only when both are
+filled; the host saves it in Hermes's own encrypted vault on the Mac (Desktop →
+Settings → Passwords & Logins), not in 1Password or Bitwarden, and fills the
+page. A code is sent as typed; the host strips spaces and dashes.
 The old per-kind answer methods (`clarify.respond`, `sudo.respond`,
 `secret.respond`, `mcp.setup.respond`) no longer exist at the pin and are off
 the allowlist.
 
 `terminal.read`, `window.read`, `preview.read`, `preview.act` and `tour` require
 Desktop renderer data the phone cannot supply. Their cards report the wait and
-retain Stop. The `vault.*` prompts (unlock a password manager, save a login, a
-sign-in code) wait for someone at the Mac; the phone cannot answer them but
-offers Skip, which sends `request.answer` with `result: {value: ""}`, the host's
-decline.
+retain Stop.
 
 Nothing is sent without a tap. Generation, runtime and request id are captured
 on tap and revalidated at socket dispatch. `ok` means accepted; `expired` means
@@ -363,8 +532,8 @@ Ordinary external web links retain their normal behavior. Remote image URLs and
 unknown media forms do not gain authenticated access to other hosts.
 
 `BotArtifactContext` captures connection UUID, Profile, durable compression-tip
-session ID and conversation generation. `BotClient` downloads through its existing
-cookie session using `GET /api/fs/download?path=…&profile=…&session_id=…`.
+session ID and conversation generation. `BotClient` downloads through the shared
+signed-in connection using `GET /api/fs/download?path=…&profile=…&session_id=…`.
 Relative paths are resolved by the host's session cwd; no iOS filesystem base or
 webui transport is used. Known same-origin media/download links contribute only
 their path; embedded auth tokens and identity overrides are discarded. Redirects
@@ -443,12 +612,15 @@ rules. A lost or unrecognized acknowledgment schedules recovery; it never causes
 an automatic prompt retry. Identical text in recovered history cannot reliably
 attribute a submission, so it never silently consumes the restored draft.
 
-The composer offers Send for idle work and a Sessions-style native menu for
-Steer, Queue and Redirect while busy. Selecting a mode does not submit. The
-selected action is labeled beside a separate Stop button; Command-Return uses
-that same action, including Redirect's consequence confirmation. A selected
-busy mode stays disabled after idle until the user chooses Send. No new
-animation or alternate editor is introduced.
+Idle, Send starts a turn. While the bot works, Stop sits beside Send in the
+expanded composer and takes its place in the collapsed pill, and Send opens the
+send-choice card (`SendChoiceCard`, the same card a long-press on the Sessions
+Send button opens) listing Steer, Queue and Interrupt from
+`BotPromptMode.busyChoices`. Steer drops out while attachments are staged,
+because the host only accepts them on a fresh turn. A pick submits at once; a
+scrim tap or escape closes the card without sending. Command-Return does what a
+Send tap does. The bot finishing, or the choices changing under the card, closes
+it, so the next send asks again.
 
 `BotPromptMode` validates the acknowledgment for each operation. `session.steer`
 accepts `status: queued` as guidance queued, not read; `session.redirect` accepts
@@ -516,9 +688,9 @@ rule). An arriving approval, opening the chat onto one, stopping, and the
 start a beat, and the face is still while the app is inactive.
 The title face also reads the turn (`BotConversation.titleFace`): while the bot
 needs attention (any blocking request, readable or not) it shows Curious eyes and
-only blinks, and after a host-reported failure it shows Sad eyes until the next
-send; a user Stop rests. These state faces override a pinned expression, and
-VoiceOver adds "Needs attention" or "Turn failed" after the name. Inbox rows,
+only blinks, and after a host-reported failure (`turnFailure`, which also draws
+the outcome row) it shows Sad eyes until the next send; a user Stop rests.
+These state faces override a pinned expression, and VoiceOver adds "Needs attention" or "Turn failed" after the name. Inbox rows,
 pinned tiles, rooms, chips and the Live Activity avatar keep the pinned expression.
 Reduce Motion, the shape and expression picker tiles, photos and the extensions
 render one still frame; inbox rows and pinned tiles blink.
@@ -530,7 +702,7 @@ Unknown values read as neutral.
 
 `BotInbox` owns the roster for one configured server and one live subscription
 that lasts while the inbox is on screen. `open()` connects, reads
-`profiles.list`, then keeps the socket; the gateway advertises `change_events`
+`profiles.list`, then keeps its client on the shared socket; the gateway advertises `change_events`
 in `gateway.ready` and broadcasts `sessions.changed` whenever any served
 Profile's `state.db` moves (floored at two seconds, `change_watcher.py`). Each
 event coalesces into one `profiles.list` reload with at most one more queued,
@@ -825,7 +997,11 @@ those values into manager calls.
   device token. The gateway's short-lived RPC `session_id` and the canonical chat
   root are different IDs; plugin progress hooks use neither of them. After registration succeeds,
   suspension leaves freshness to push; the relay sets a fifteen-minute stale date
-  and the widget uses ActivityKit's stale flag. Unpaired or failed registrations
+  and the widget uses ActivityKit's stale flag. For a session no phone watches (the
+  relay answers its progress `no_activity`), the plugin sends routine progress about
+  once a minute after the turn's first 30 seconds, so an activity started mid-turn
+  catches up within a minute, or at the next status change if that comes sooner.
+  Unpaired or failed registrations
   still show "Not connected" / "Open to reconnect" on suspend. A webui run on a
   paired server takes the same handoff (#566): its attributes carry the configured
   server, it requests a token, and it registers under its webui session ID, which
@@ -840,7 +1016,9 @@ those values into manager calls.
   it is not in the foreground (`AgentLiveActivityAlertPolicy`, #740). The alert stays
   owed until a write actually lands, so the feed's same-tick chips write cannot drop
   it, and an ask that arrives while ActivityKit is still creating the activity alerts
-  on its first write. A repeated waiting event stays silent.
+  on its first write. A repeated waiting event stays silent. On a paired server the
+  run's finish or failure can also alert once, through the relay's final update, under
+  the Replies and subagent-mute preferences (see Push previews and taps, #888).
 - **Ownership.** Before every stale or end call the feed checks
   `drivenSessionID`, so an activity a webui run or another bot took over is never
   touched. Token rotation and retirement are serialized: an in-flight registration
@@ -1201,7 +1379,7 @@ connection UUID + `room_id`; names and member Profiles are never room keys.
 Avatars resolve against that connection’s roster, with a placeholder for unknown
 members. Search matches room names and previously loaded room messages through the local cache above.
 
-`BotRoomReader` owns an independent socket and in-memory `BotRoomLog`. Opening
+`BotRoomReader` owns its own client on the shared socket and an in-memory `BotRoomLog`. Opening
 restores cached messages first, then reads state and drains pages from the saved
 cursor until `has_more` is false. Without cache it starts at
 `max(0, latest_seq - 200)` (or the selected search sequence). Each completed replay window
@@ -1214,7 +1392,7 @@ While visible and foregrounded, state reads run every two seconds when working
 or blocked and every ten seconds when idle. Log reads happen only after sequence
 advancement. Unchanged polls do not assign the transcript. Backgrounding, closing,
 and socket loss stop polling and invalidate late replies. Reconnect closes the
-old transport before opening and re-reading state/history. Closing drops the in-memory log; bounded cached messages remain for reopening.
+old client before opening and re-reading state/history. Closing drops the in-memory log; bounded cached messages remain for reopening.
 
 The transcript renders `message.user` and `message.member` with the existing
 Bot markdown renderer; member messages include their sender and roster avatar.
@@ -1223,6 +1401,13 @@ centered system lines. `room.activity`, `turn.settled`, `turn.deferred`,
 `authority.*`, and all unknown kinds remain invisible. Driver status reports
 room-wide working/blocked state, never an inferred active member. Pending actions
 use the participant controls below; unknown kinds show Desktop attention. Room profiles link to existing bot profiles and expose the lifecycle controls below.
+
+A new room opens on a welcome instead of an empty transcript: every member's
+still face and name in centred rows of up to three (stacked at accessibility
+text sizes), then “Say something to the group” while the composer shows. It
+shows while the room is live with no earlier history and no user or member
+message loaded (`BotRoomReader.showsWelcome`), so a rename before anyone speaks
+keeps it, and the first message replaces it for good.
 
 The socket allowlist admits four room reads, four participant commands and three lifecycle commands with typed parameter checks.
 Room RPC errors preserve `data.reason`: `room_history_expired` or code 4114 removes
@@ -1297,7 +1482,7 @@ resends disband; a failed read keeps the outcome unknown until Reconnect.
 A tombstoned room ID is permanently reserved and must never be reused.
 Foreign-authority rooms hide rename/disband; absent capabilities disable writes.
 The room and profile share state but claim separate view ownership so navigation
-cannot let an old screen close the new screen's socket. Lifecycle helpers belong
+cannot let an old screen close the new screen's client. Lifecycle helpers belong
 only to the app target; the share extension and Live Activity do not manage rooms.
 
 ## Activity presentation
@@ -1354,7 +1539,7 @@ in the order the host needs: `PUT /api/env` sets
 /api/dashboard/agent-plugins/install` and `…/hermex-push/enable` install the
 plugin, `POST /api/gateway/restart` loads it, and `GET
 /api/plugins/hermex-push/pairing` returns `{relay_url, install_key, preview_key,
-platform, payload_version}`. Verified against a live 0.21.3 host on 2026-09-19:
+platform, payload_version, plugin_version}` (`plugin_version` from plugin 0.2.0 on). Verified against a live 0.21.3 host on 2026-09-19:
 install takes `{identifier, force, enable, catalog_name, ref}` with no Profile
 parameter, enable and disable are path-only, and only `PUT /api/env` and the
 restart accept one. The install identifier is
@@ -1388,8 +1573,9 @@ code, a timeout, a rejected sign-in), the relay (its status code, or unreachable
 (no device token). Only a connection failure at sign-in, before anything on the host has
 changed, says the host could not be reached. `BotFailure`'s chat copy never reaches this
 screen.
-`BotDashboardClient` waits 120 seconds per request, because installing clones a
-repository on the host and a restart takes the gateway down and back up.
+`BotDashboardClient` signs in on the connection the Bot screens share, and its sign-in
+and each step wait up to 120 seconds, because installing clones a repository on the host and a
+restart takes the gateway down and back up.
 
 `HermexPushPlugin` owns only what the plugin itself defines: its name, its install
 identifier, the env var it reads, and a strict decode of the pairing route — a 64-hex
@@ -1405,6 +1591,47 @@ asked to change — so it can outlive a removal. It commits nothing without re-r
 saved connection first: if the connection or its server is gone, the keys are not written
 and a device registered seconds earlier is dropped again, so teardown stays final.
 
+Settings' "Send Test Notification" (#874) is the only place the phone calls the relay's
+`POST /installs/<install key>/notify`, the plugin's own route, whose only credential is the
+key in the path. `PushRelayClient.sendTestNotification` posts exactly the strict notify
+schema: `v` 1, a fresh 32-hex `event_id` per tap (never deduplicated), fixed 32-hex
+`thread_id` and `collapse_id` (a new test banner replaces the last), `session_id`
+`hermex-test`, `source` `other` (a tap only opens the app), `is_subagent` false, `sent_at`,
+`kind` `reply`, and a `sealed` preview the phone seals itself (`PushPreview.seal`, app target
+only) with the pairing's keys. It rings every iPhone paired with the host and says nothing
+about the host → relay leg. One tap is one request with no retry. Any 200 is delivered;
+`apns_rejected`, the busy codes (`delivery_retry`, `temporarily_unavailable`,
+`event_limit`), a non-JSON refusal from the relay's hosting (#834), and any other answer
+each get their own message. The button is off while Reply Notifications are off (the relay
+would skip the banner yet answer accepted) or iOS notifications are off for Hermex.
+
+Settings also offers a plugin update (#851). `HermexPushPlugin.newestVersion` is the newest
+plugin this build knows. Each time the Notifications section appears on a paired server,
+`checkPlugin()` makes one read of the pairing route: its `plugin_version` is the code the
+dashboard process has loaded, and a missing or unparseable one counts as older than every
+known version. Only a plugin that is behind costs a second read, `GET
+/api/dashboard/plugins/hub`, whose per-plugin `version` is `plugin.yaml` on disk; the newest
+on disk means the update is only waiting for a restart. The answer lives in memory, never in
+`PushPairing`, so "Restart Hermes to finish" always reflects what the host says now. The
+update is one confirmed action: `POST /api/dashboard/agent-plugins/hermex-push/disable`, the
+same forced install setup uses (it clones `main` again and turns the plugin back on; the keys
+stay in `plugin-data`, so the phone stays paired), `POST /api/gateway/restart`, then the
+pairing route again. The plugin goes off first because current Hermes asks at a terminal
+before it replaces an enabled plugin that declares Python packages (hermex-push declares
+`cryptography`) and refuses the dashboard's reinstall with a 400; a disabled plugin skips that
+question, and enabling runs Hermes's own dependency admission. Turning a plugin off only edits
+config, so the running gateway keeps it; a failed install turns it back on so the next
+restart keeps push. The hub caches for 5 s and an install clears it, so no rescan is
+needed. The dashboard process that serves the pairing route and runs Bot turns loads plugin
+code only when it starts, and no route restarts it, so the usual end is a card asking the
+user to restart `hermes dashboard`, with "Check again" (#934 tracks restarting from the
+phone). A version read that fails after the reinstall and restart also offers "Check again",
+never a second reinstall and restart. A failure whose copy says "Update the hermex-push plugin." (keys this build cannot
+use, at setup or from the test notification) offers the same update. An update started there
+never pairs by itself; "Turn on notifications…" stays the way to pair. Turning notifications
+off drops the offer, because its install would enable the plugin again. Bump the constant in
+the release that follows a plugin release (TESTFLIGHT.md's release gates).
+
 Every way out removes this phone at the relay and wipes the keys.
 `HermexPushProvisioner.disable()` stops the host sending first, then calls
 `PushRegistrar.disable`, so a failure at either end changes nothing the user has to
@@ -1419,10 +1646,15 @@ content-free ("Hermex / New activity") with `mutable-content`, and outside `aps`
 `v`, `kind`, `event_id`, `install_hash`, `session_id`, `source`, `is_subagent` and
 `sealed`. The extension finds the pairing whose `sha256(install_key)` equals
 `install_hash`, opens `sealed` (base64 of `nonce(12) || AES-256-GCM ciphertext ||
-tag(16)`, AAD `hermex-preview-v1:<that hash>`) and rewrites title, subtitle and body. On
-any failure — a null `sealed`, no pairing, a wrong key, a tampered blob, running out of
-time — the banner stays content-free, with only `New activity` localized. Format and test
-vector: `hermex-push` `plugin/hermex_push_tests/fixtures/sealed_preview.json`.
+tag(16)`, AAD `hermex-preview-v1:<that hash>`) and rewrites title, subtitle and body.
+Plugin 0.3.0 also seals `bot_name`, the name the bot roster shows (#887). With it, the
+extension builds the title in the phone's language from `bot_name` and the cleartext
+`kind`: `<name> · Approval needed`, `· Question` or `· Turn failed`, and the name alone
+for a reply. Without it, or for a kind this build has no label for, the sealed title (the
+plugin's English `<name> · <label>`) stays. On any failure — a null `sealed`, no pairing, a
+wrong key, a tampered blob, running out of time — the banner stays content-free, with only
+`New activity` localized. Format and test vector: `hermex-push`
+`plugin/hermex_push_tests/fixtures/sealed_preview.json`.
 
 Target membership is deliberate. The extension compiles `NotificationService.swift` and
 `HermesMobile/Push/PushPreview.swift` and bundles `Localizable.xcstrings`; that shared
@@ -1448,7 +1680,17 @@ push restores the existing global local-notification preference. Webui Live Acti
 on a paired server hand off to the relay like a bot's (see Bot Live Activity). Grouping (`thread-id`), the self-rewriting banner (`apns-collapse-id`) and "no
 reply or error banner while a Live Activity carries the session" are relay policy (`relay/src/policy.ts`),
 not app code. Approvals and questions still banner during an activity, since its
-`waiting` update is silent (#740).
+`waiting` update is silent (#740). In place of the reply or error banner, the run's end
+alerts once (#888): before the `end`, the relay sends the activity a final update with
+a sound and the text "Hermex" / "Response complete" or "Response failed", the body a
+`loc-key` that iOS resolves from `Localizable.xcstrings` (the iPhone shows the expanded
+activity; only Apple Watch shows the text). A finish follows the server's Replies
+preference and muted subagents; a failure follows only the subagent mute. The `end` then
+removes the activity from the Lock Screen after 5 minutes (done) or 30 s (failed), as the
+app's local end does. The plugin reports a stopped run as `done`, so a run stopped from
+another device alerts "Response complete"; a Stop in Hermex retires the registration
+first, so it usually does not. APNs stores only the latest push for an offline phone, so
+a phone that is offline when the run ends gets the `end` without the alert.
 
 While the app is open, `PushAppDelegate` presents relay pushes itself (#566); iOS would
 otherwise show none, approvals included. `PushPresence` records the conversation on

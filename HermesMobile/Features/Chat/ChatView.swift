@@ -255,8 +255,10 @@ struct ChatView: View {
     private let bottomAnchorID = "chat-bottom-anchor"
     private let transcriptSpacing: CGFloat = 8
     private let composerAccessoryVerticalSpacing: CGFloat = 8
-    private let activeRunStatusSpacerHeight: CGFloat = 36
     private let approvalBypassStatusSpacerHeight: CGFloat = 38
+    /// The composer and its status stack keep 16 pt side insets of their own;
+    /// this cap lines those insets up with the transcript's reading column.
+    private let composerMaximumWidth = ChatReadingWidth.maximumWidth(horizontalPadding: 16)
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
@@ -310,7 +312,11 @@ struct ChatView: View {
     /// While set and in the future, auto-follow scrolls snap instead of animating, so
     /// the cache-first → network reconcile re-pins to the bottom without a jump (#289).
     @State private var cacheFirstSnapUntil: Date?
-    @State private var forkedSession: SessionSummary?
+    /// A chat pushed on top of this one: a new fork, or this fork's parent.
+    @State private var pushedSession: SessionSummary?
+    /// Set when this chat is a fork; draws the "Forked from" row.
+    @State private var forkOrigin: ForkOrigin?
+    @State private var isOpeningForkParent = false
     @State private var editContext: MessageActionContext?
     @State private var editDraft = ""
     @State private var showEditSheet = false
@@ -341,6 +347,9 @@ struct ChatView: View {
     /// Measured height of the collapsed clarification bar, the request's only
     /// layout footprint; the expanded card overlays the transcript instead.
     @State private var clarificationBarHeight: CGFloat = 0
+    /// Measured height of the run-status pill, which wraps at accessibility
+    /// text sizes. Seeded with its one-line height at the default size.
+    @State private var activeRunStatusHeight: CGFloat = 28
     @State private var composerIsFocused = false
     @State private var didHydrateDraft = false
     /// Whether this chat has already asked the server for its skills on the
@@ -366,6 +375,11 @@ struct ChatView: View {
     @State private var didApplyInitialComposerFocusPolicy = false
     @State private var shouldRestoreComposerFocusAfterPreview = false
     @State private var responseCompletionNotificationTracker = ResponseCompletionNotificationTracker()
+    /// The one-time notification offer (#863), set once a send claims it.
+    @State private var pendingNotificationOffer: NotificationOffer.Offer?
+    /// Between appear and disappear; a send that returns after the chat closed must not
+    /// use up the offer it can no longer show.
+    @State private var isOnScreen = false
     @State private var responseCompletionBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     @State private var activeStreamStatusRefreshTask: Task<Void, Never>?
     @State private var appearanceTask: Task<Void, Never>?
@@ -465,8 +479,17 @@ struct ChatView: View {
             chipFilePaths: viewModel.fileChipPaths,
             filePathSearch: viewModel.filePathSearch,
             uploadAttachmentErrorMessage: viewModel.uploadAttachmentErrorMessage,
+            steerFailure: viewModel.steerFailureMessage.map { message in
+                ComposerRetryableStatus(message: message) {
+                    Task { await sendDraftMessage(behavior: .steer) }
+                }
+            },
+            streamingSendBehavior: StreamingSendBehavior.storedValue(streamingSendBehaviorRawValue),
             onSend: {
                 Task { await sendDraftMessage() }
+            },
+            onSendWithBehavior: { behavior in
+                Task { await sendDraftMessage(behavior: behavior) }
             },
             onSendVoiceNote: { data, filename in
                 Task { await sendVoiceNote(audioData: data, filename: filename) }
@@ -557,6 +580,7 @@ struct ChatView: View {
                 await viewModel.loadFileChipReferences(draft: draft)
             },
             onDraftEdit: persistDraftEdit,
+            recallLastSentText: { viewModel.lastSentText },
             onOpenFileReference: { path in
                 openedFileReference = FileReference(path: path, line: nil, column: nil)
             },
@@ -643,11 +667,11 @@ struct ChatView: View {
     }
 
     /// A chat link that names a workspace file opens the source viewer at its line; every
-    /// other link keeps the system behaviour. The viewer's own error state covers a path
-    /// the server no longer has, so the tap never waits on a fetch.
-    private func handleTranscriptLink(_ url: URL) -> OpenURLAction.Result {
+    /// other link returns nil for `transcriptLinks` to open. The viewer's own error state
+    /// covers a path the server no longer has, so the tap never waits on a fetch.
+    private func handleTranscriptLink(_ url: URL) -> OpenURLAction.Result? {
         guard let reference = FileReference.parse(url.absoluteString, workspaceRoot: session.workspace) else {
-            return .systemAction
+            return nil
         }
         openedFileReference = reference
         return .handled
@@ -713,9 +737,11 @@ struct ChatView: View {
         }
     }
 
-    /// The chat scaffold. Split from `body` so the confirmation-alert chain
-    /// below stays inside the compiler's type-checking budget.
-    private var chatContent: some View {
+    /// The chat scaffold: layout, title, and push presence. `body` is built in
+    /// layers (`chatScaffold`, `chatLifecycle`, `chatContent`, then the alerts in
+    /// `body`) so each chained expression stays inside the compiler's
+    /// type-checking budget; CI's pinned Xcode has less headroom than the newest.
+    private var chatScaffold: some View {
         GeometryReader { viewport in
             let clarificationMaximumHeight = max(
                 0,
@@ -744,6 +770,7 @@ struct ChatView: View {
                 clarificationInset(maximumExpandedHeight: clarificationMaximumHeight)
 
                 messageComposer
+                    .frame(maxWidth: composerMaximumWidth)
 
                 approvalOverlay
             }
@@ -755,11 +782,19 @@ struct ChatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("chat-detail:\(viewModel.displayTitle)")
         .pushPresence(viewModel.pushPresence)
-        .task(id: didCompleteInitialAppearance) {
-            await handleInitialAppearanceTask()
-        }
-        .onChange(of: scenePhase) {
+    }
+
+    /// Appearance, scene, network, stream, and draft handlers over `chatScaffold`.
+    private var chatLifecycle: some View {
+        chatScaffold
+            .task(id: didCompleteInitialAppearance) {
+                await handleInitialAppearanceTask()
+            }
+            .onChange(of: scenePhase) {
                 handleScenePhaseChange(scenePhase)
+            }
+            .onChange(of: NetworkPathMonitor.shared.changeCount) {
+                handleNetworkPathChange()
             }
             .onChange(of: viewModel.activeStreamID) {
                 handleActiveStreamChange()
@@ -791,6 +826,8 @@ struct ChatView: View {
                 viewModel.setShowsLiveActivityResponseExcerpts(showsLiveActivityResponseExcerpts)
             }
             .onDisappear {
+                isOnScreen = false
+                parkQueuedMessages()
                 flushDraftsBestEffort()
                 appearanceTask?.cancel()
                 appearanceTask = nil
@@ -801,6 +838,7 @@ struct ChatView: View {
                 viewModel.cleanupPollingTasks()
             }
             .onAppear {
+                isOnScreen = true
                 appearanceTask?.cancel()
                 appearanceTask = Task {
                     await viewModel.reconnectStreamIfNeeded(modelContext: modelContext)
@@ -823,7 +861,16 @@ struct ChatView: View {
                 guard viewModel.responseCompletionHapticTrigger > 0 else { return }
                 handleResponseCompletionSideEffects()
             }
+            .onChange(of: viewModel.runEndTrigger) {
+                guard viewModel.runEndTrigger > 0 else { return }
+                handleRunEnd()
+            }
             .onChange(of: viewModel.streamingHapticPulseTrigger, handleStreamingHapticPulse)
+    }
+
+    /// Toolbar, navigation, and presentations over `chatLifecycle`.
+    private var chatContent: some View {
+        chatLifecycle
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     ChatToolbarTitleLabel(
@@ -860,7 +907,7 @@ struct ChatView: View {
                     }
                 }
             }
-            .navigationDestination(item: $forkedSession) { session in
+            .navigationDestination(item: $pushedSession) { session in
                 ChatView(session: session, server: server, onAPIError: onAPIError)
             }
             .sheet(item: $attachmentPreviewItem) { item in
@@ -982,6 +1029,7 @@ struct ChatView: View {
                     onConfirm: confirmClearConversation
                 )
             )
+            .notificationOfferAlert($pendingNotificationOffer)
             .alert(
                 "Message Action Failed",
                 isPresented: Binding(
@@ -1345,6 +1393,11 @@ struct ChatView: View {
 
                 if let activeRunStatusPresentation {
                     ChatActiveRunStatusView(presentation: activeRunStatusPresentation)
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.size.height
+                        } action: { height in
+                            activeRunStatusHeight = height
+                        }
                         .transition(ChatMotion.bottomOverlayTransition(reduceMotion: reduceMotion))
                 }
 
@@ -1354,6 +1407,7 @@ struct ChatView: View {
                 }
             }
             .padding(.horizontal)
+            .frame(maxWidth: composerMaximumWidth)
             .padding(.bottom, composerHeight + 8 + clarificationFootprintHeight)
             .allowsHitTesting(false)
             .zIndex(8)
@@ -1379,6 +1433,7 @@ struct ChatView: View {
             liveReasoningText: viewModel.liveReasoningText,
             reasoningAnchorMessageID: viewModel.reasoningAnchorMessageID,
             liveToolCalls: viewModel.liveToolCalls,
+            isReplayingLiveToolCalls: viewModel.isActiveStreamReplayConnection,
             toolCallAnchorMessageID: viewModel.toolCallAnchorMessageID,
             streamingAssistantMessageID: viewModel.streamingAssistantMessageID,
             liveTokensPerSecond: viewModel.liveTokensPerSecond,
@@ -1476,11 +1531,19 @@ struct ChatView: View {
             },
             onOpenTurnFileDiff: { file in
                 turnDiffPresentation = .turnFiles(turnChangesRecapSummary?.diffFiles ?? [file], initial: file)
-            }
+            },
+            forkOrigin: forkOrigin,
+            onOpenForkParent: openForkParent
         )
         // Off the main body chain, which is at the type-checker's limit.
         .onChange(of: viewModel.latestRunOutcome) {
             handleLatestRunOutcomeChange(viewModel.latestRunOutcome)
+        }
+        .task(id: session.sessionId) {
+            resolveForkOrigin()
+        }
+        .onChange(of: viewModel.messages.isEmpty, initial: true) { _, isEmpty in
+            if !isEmpty { endSessionOpenSignpost() }
         }
         .environment(\.composerChipCatalog, viewModel.composerChipCatalog)
         .transcriptLinks(perform: handleTranscriptLink)
@@ -1599,6 +1662,9 @@ struct ChatView: View {
 
     private var composerLocalNotices: [String] {
         var notices = viewModel.pinnedLocalNotices
+        if let queuedMessagesReceipt = viewModel.queuedMessagesReceipt {
+            notices.append(queuedMessagesReceipt)
+        }
         if let steeringConfirmationNotice = viewModel.steeringConfirmationNotice {
             notices.append(steeringConfirmationNotice)
         }
@@ -1611,7 +1677,8 @@ struct ChatView: View {
             hasActiveStream: viewModel.activeStreamID != nil,
             activeStreamRecoveryState: viewModel.activeStreamRecoveryState,
             isCancellingStream: viewModel.isCancellingStream,
-            isScrolledNearBottom: isScrolledNearBottom
+            isScrolledNearBottom: isScrolledNearBottom,
+            activeRunStartedAt: workingRowStartedAt
         )
     }
 
@@ -1622,7 +1689,9 @@ struct ChatView: View {
     private var composerAccessorySpacerHeight: CGFloat {
         var height = pinnedNoticeSpacerHeight
         if activeRunStatusPresentation != nil {
-            height += activeRunStatusSpacerHeight
+            // The measured pill plus one accessory gap: 36 pt at the default
+            // size, and a full wrapped pill at accessibility sizes.
+            height += activeRunStatusHeight + composerAccessoryVerticalSpacing
         }
         if showsApprovalBypassStatus {
             height += approvalBypassStatusSpacerHeight
@@ -1764,6 +1833,7 @@ struct ChatView: View {
         if loadsInitialMessages {
             await loadMessages(appliesInitialFocus: false, usesInitialPrefetch: true)
             guard !Task.isCancelled else { return }
+            if viewModel.messages.isEmpty { endSessionOpenSignpost() }
         }
         if initialAttachments.isEmpty {
             isInitialComposerFocusContentReady = true
@@ -1788,6 +1858,16 @@ struct ChatView: View {
         applyInitialComposerFocusPolicyIfNeeded()
         if let lastError = viewModel.lastError {
             onAPIError(lastError)
+        }
+    }
+
+    /// Ends this session's `Session Open` interval on the next main-queue turn, so
+    /// it includes the layout of the first transcript frame (or the empty state).
+    private func endSessionOpenSignpost() {
+        let sessionID = session.sessionId
+        let messages = viewModel.messages.count
+        DispatchQueue.main.async {
+            SessionOpenSignpost.end(sessionID: sessionID, messages: messages)
         }
     }
 
@@ -1877,7 +1957,11 @@ struct ChatView: View {
         }
     }
 
-    private func sendDraftMessage() async {
+    /// Sends the composer's draft. A send during a run uses `behavior`, or the
+    /// Send While Responding setting when it is nil: a long-press on Send picks
+    /// one for this message, and Retry after a refused steer forces `.steer`.
+    private func sendDraftMessage(behavior: StreamingSendBehavior? = nil) async {
+        viewModel.clearSteerFailure()
         let submittedContent = ComposerDraftContent(text: draftMessage, quotes: draftQuotes)
         let submittedDraft = submittedContent.text
         let outboundMessage = ComposerQuoteMessageFormatter.message(
@@ -1925,13 +2009,11 @@ struct ChatView: View {
         let didStart: Bool
         if viewModel.activeStreamID != nil {
             prepareTranscriptForExplicitSend()
-            let result = await viewModel.submitStreamingMessage(
-                outboundMessage,
-                behavior: StreamingSendBehavior.storedValue(streamingSendBehaviorRawValue)
-            )
+            let behavior = behavior ?? StreamingSendBehavior.storedValue(streamingSendBehaviorRawValue)
+            let result = await viewModel.submitStreamingMessage(outboundMessage, behavior: behavior)
             handleSlashExecutionResult(
                 result,
-                parsedCommand: SlashCommandCatalog.command(named: streamingSendBehaviorCommandName),
+                parsedCommand: SlashCommandCatalog.command(named: Self.slashCommandName(for: behavior)),
                 submittedDraft: submittedDraft,
                 submittedQuotes: submittedContent.quotes,
                 submittedDraftRevision: submittedDraftRevision,
@@ -1972,6 +2054,7 @@ struct ChatView: View {
         if didSend {
             onConversationStarted()
             ChatHaptics.messageSent(isEnabled: isHapticsEnabled)
+            offerNotificationsIfNeeded()
         }
 
         if let lastError = viewModel.lastError {
@@ -2026,9 +2109,23 @@ struct ChatView: View {
             // open. Deterministic here rather than waiting on the observation
             // sync that the emptied composer strip will also trigger.
             syncDraftAttachments()
+            offerNotificationsIfNeeded()
         }
 
         return didStart
+    }
+
+    /// Asks once per install, right after a normal send or voice note started a run, whether
+    /// the user wants to hear when it ends (#863). Steers, queued messages and slash commands
+    /// never get here, and a failed send never started a run, so none of them use it up.
+    /// Runs beside the send, so its permission check never delays the send's haptic or
+    /// composer focus; `isCurrent` keeps a chat that closed meanwhile from claiming it.
+    private func offerNotificationsIfNeeded() {
+        guard isOnScreen else { return }
+        Task {
+            guard let offer = await NotificationOffer.claim(server: server, isCurrent: { isOnScreen }) else { return }
+            pendingNotificationOffer = offer
+        }
     }
 
     private func handleSlashExecutionResult(
@@ -2059,7 +2156,7 @@ struct ChatView: View {
                 )
             }
         case .openedSession(let session):
-            forkedSession = session
+            pushedSession = session
             if consumesDraft {
                 reconcileConsumedDraft(
                     ComposerDraftContent(text: submittedDraft, quotes: submittedQuotes),
@@ -2076,7 +2173,9 @@ struct ChatView: View {
             }
         case .needsSubArg:
             viewModel.setSendErrorMessage(String(localized: "Choose a slash command or continue typing."))
-        case .sendAsMessage:
+        case .sendAsMessage, .notDelivered:
+            // `.notDelivered` keeps the draft; the view model already set the
+            // status line that says why.
             break
         }
     }
@@ -2089,8 +2188,8 @@ struct ChatView: View {
             command?.handler == .serverSide(.background)
     }
 
-    private var streamingSendBehaviorCommandName: String {
-        switch StreamingSendBehavior.storedValue(streamingSendBehaviorRawValue) {
+    private static func slashCommandName(for behavior: StreamingSendBehavior) -> String {
+        switch behavior {
         case .steer:
             "steer"
         case .interrupt:
@@ -2110,10 +2209,11 @@ struct ChatView: View {
     }
 
     /// Records a draft edit the user made, after it lands in `draftMessage`:
-    /// bumps the revision a failed send checks before restoring, and persists
-    /// the draft. Writes that are not the user's (clearing on send, restoring,
-    /// hydrating) skip it.
+    /// clears a "Couldn't steer" status, bumps the revision a failed send
+    /// checks before restoring, and persists the draft. Writes that are not the
+    /// user's (clearing on send, restoring, hydrating) skip it.
     private func persistDraftEdit(_ text: String) {
+        viewModel.clearSteerFailure()
         draftRevision &+= 1
         draftStore.setContent(
             ComposerDraftContent(text: text, quotes: draftQuotes),
@@ -2334,6 +2434,23 @@ struct ChatView: View {
         requestComposerFocusIfPossible()
     }
 
+    /// Moves messages queued behind the run into this chat's draft when the
+    /// chat is left or covered (#857): a suspended stream can't send them, so
+    /// the user reviews and sends them on return. The composer takes the merged
+    /// text and files too, so a covered chat shows them when it comes back and
+    /// its next keystroke can't overwrite the stored merge.
+    private func parkQueuedMessages() {
+        let queued = viewModel.takeQueuedMessages()
+        guard !queued.isEmpty,
+              // Nil when the session was just deleted: there is no draft to show.
+              let parked = draftStore.parkQueuedMessages(queued, for: draftKey)
+        else { return }
+        // Not the user's edit, but a send still in flight must not clear it.
+        draftRevision &+= 1
+        draftMessage = parked.text
+        viewModel.appendPendingAttachments(queued.flatMap(\.attachments))
+    }
+
     private func flushDraftsBestEffort() {
         Task {
             try? await draftStore.flush()
@@ -2359,7 +2476,40 @@ struct ChatView: View {
         }
 
         if let session {
-            forkedSession = session
+            pushedSession = session
+        }
+    }
+
+    /// Reads the parent's title from the active server's session cache, which
+    /// the session list writes on every load. Only forks do the lookup.
+    private func resolveForkOrigin() {
+        guard let parentID = ForkOrigin.parentSessionID(of: session) else {
+            forkOrigin = nil
+            return
+        }
+        let parent = try? CacheStore.cachedSession(id: parentID, serverURL: server, in: modelContext)
+        forkOrigin = ForkOrigin.resolve(session: session, parent: parent)
+    }
+
+    /// Pushes the fork's parent: the cached one at once, otherwise after
+    /// fetching it. A failed fetch shows the message-action error and stays here.
+    private func openForkParent() {
+        guard let forkOrigin, !isOpeningForkParent else { return }
+        if let parent = forkOrigin.parent {
+            pushedSession = parent
+            return
+        }
+
+        isOpeningForkParent = true
+        Task {
+            let parent = await viewModel.loadForkParent(id: forkOrigin.parentSessionID)
+            isOpeningForkParent = false
+            if let lastError = viewModel.lastError {
+                onAPIError(lastError)
+            }
+            if let parent {
+                pushedSession = parent
+            }
         }
     }
 
@@ -2394,7 +2544,7 @@ struct ChatView: View {
         }
 
         if let session = outcome?.session {
-            forkedSession = session
+            pushedSession = session
         }
     }
 
@@ -2662,13 +2812,25 @@ struct ChatView: View {
         }
     }
 
+    /// The network came back or moved to another interface: retry a suspended
+    /// stream now instead of waiting for a foreground or reopen (#869).
+    private func handleNetworkPathChange() {
+        Task {
+            await viewModel.networkPathDidChange(modelContext: modelContext)
+
+            if let lastError = viewModel.lastError {
+                onAPIError(lastError)
+            }
+        }
+    }
+
     private func handleActiveStreamChange() {
         guard let activeStreamID = viewModel.activeStreamID else {
             activeStreamStatusRefreshTask?.cancel()
             activeStreamStatusRefreshTask = nil
 
             if responseCompletionNotificationTracker.shouldEndBackgroundTaskOnStreamInactive(
-                completionTrigger: viewModel.responseCompletionHapticTrigger
+                runEndTrigger: viewModel.runEndTrigger
             ) {
                 endResponseCompletionBackgroundTask()
             }
@@ -2715,29 +2877,41 @@ struct ChatView: View {
             viewModel.cacheCompletedResponse(modelContext: modelContext)
         }
 
-        guard let completionContext = responseCompletionNotificationTracker.completionContext(
-            completionTrigger: viewModel.responseCompletionHapticTrigger,
+        ChatHaptics.assistantResponseCompleted(isEnabled: isHapticsEnabled)
+    }
+
+    /// Alerts once for a run that completed or failed while the scene was not active,
+    /// then releases the background task that kept the stream alive for it. A newer
+    /// run end in this chat supersedes one still waiting on its transcript load: the
+    /// newer alert stands, and the newer task releases the background task.
+    private func handleRunEnd() {
+        guard let runEndContext = responseCompletionNotificationTracker.completionContext(
+            runEndTrigger: viewModel.runEndTrigger,
             sceneIsActive: scenePhase == .active
         ) else {
             return
         }
-
-        ChatHaptics.assistantResponseCompleted(isEnabled: isHapticsEnabled)
+        let outcome = viewModel.runEndOutcome
+        let runEndTrigger = viewModel.runEndTrigger
 
         Task { @MainActor in
-            defer { endResponseCompletionBackgroundTask() }
-
-            if viewModel.responseCompletionNeedsTranscriptRefresh {
+            if outcome == .completed, viewModel.responseCompletionNeedsTranscriptRefresh {
                 await loadMessages()
             }
 
-            await ResponseCompletionNotificationService.scheduleResponseCompletedIfAllowed(
+            let isLatestRunEnd = { viewModel.runEndTrigger == runEndTrigger }
+            await ResponseCompletionNotificationService.scheduleRunEndedIfAllowed(
+                outcome,
                 sessionID: session.sessionId,
+                title: viewModel.displayTitle,
+                server: server,
                 preferenceEnabled: isResponseCompletionNotificationsEnabled,
-                completedNormally: true,
-                sceneIsActive: completionContext.sceneIsActive,
-                server: server
+                sceneIsActive: runEndContext.sceneIsActive,
+                isCurrent: isLatestRunEnd
             )
+            if isLatestRunEnd() {
+                endResponseCompletionBackgroundTask()
+            }
         }
     }
 
@@ -3236,7 +3410,7 @@ private extension SlashCommandExecutionResult {
         switch self {
         case .executed, .openedSession:
             true
-        case .sendAsMessage, .unsupported, .needsSubArg:
+        case .sendAsMessage, .unsupported, .needsSubArg, .notDelivered:
             false
         }
     }

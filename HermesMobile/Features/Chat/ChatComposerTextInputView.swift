@@ -2,12 +2,30 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
+/// The card editor's height, shared by the Sessions, Bot Chat and Bot room
+/// composers. It grows with the text from `expandedMinimum` up to the text
+/// view's 160 pt measure cap. In compact height (iPhone landscape) it stays at
+/// the minimum and scrolls inside, so with the keyboard up the transcript stays
+/// visible. A nil size class counts as regular.
+enum ComposerTextInputHeight {
+    /// At least 72 pt of real text view, so a tap anywhere in the card lands
+    /// on the editor rather than dead space; about three lines at default size.
+    static let expandedMinimum: CGFloat = 72
+
+    static func expanded(measured: CGFloat, verticalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        verticalSizeClass == .compact ? expandedMinimum : max(expandedMinimum, measured)
+    }
+}
+
 struct ComposerTextInputView: View {
     @Binding var text: String
     @Binding var selection: ComposerSelection
     @Binding var isFocused: Bool
     @Binding var inputHeight: CGFloat
     @Binding var measuredHeight: CGFloat
+
+    /// Compact in iPhone landscape, where the card editor stops growing.
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     /// The chips the editor has drawn. The collapsed pill draws this same set
     /// rather than deriving its own, because a trailing chip whose space was
@@ -38,12 +56,14 @@ struct ComposerTextInputView: View {
     let onTapChip: (ComposerChipToken) -> Void
     let onTapQuote: (ComposerQuote) -> Void
     let onRemoveQuote: (UUID) -> Void
+    /// The chat's last sent message, for ↑ in an empty editor. Nil turns the
+    /// shortcut off.
+    var recallLastSentText: (() -> String?)? = nil
 
     var placeholder = String(localized: "Ask anything... /commands")
     /// Text-only clients reject file/image paste and drop before invoking callbacks.
     var acceptsAttachments = true
     private let collapsedLineHeight: CGFloat = 22
-    private let expandedMinimumHeight: CGFloat = 72
 
     var body: some View {
         ZStack(alignment: isCollapsed ? .leading : .topLeading) {
@@ -62,6 +82,7 @@ struct ComposerTextInputView: View {
                 onTapQuote: onTapQuote,
                 onRemoveQuote: onRemoveQuote,
                 onKeyboardSend: onKeyboardSend,
+                recallLastSentText: recallLastSentText,
                 onHeightChange: updateMeasuredHeight,
                 onPasteFileProviders: onPasteFileProviders,
                 onPasteFileURLs: onPasteFileURLs,
@@ -70,9 +91,11 @@ struct ComposerTextInputView: View {
                 acceptsAttachments: acceptsAttachments,
                 accessibilityLabel: placeholder
             )
-            // The card editor is at least 72 pt of real text view, so a tap
-            // anywhere in it lands on the editor rather than dead space.
-            .frame(height: isCollapsed ? collapsedLineHeight : max(expandedMinimumHeight, inputHeight))
+            // The card editor runs 72–160 pt with the text, and stays at 72 pt
+            // in iPhone landscape, where the text scrolls inside it.
+            .frame(height: isCollapsed
+                ? collapsedLineHeight
+                : ComposerTextInputHeight.expanded(measured: inputHeight, verticalSizeClass: verticalSizeClass))
             .padding(.vertical, isCollapsed ? 0 : verticalPadding)
             .padding(.horizontal, 16)
             .opacity(isCollapsed ? 0 : 1)
@@ -186,6 +209,7 @@ private struct ComposerTextView: UIViewRepresentable {
     let onTapQuote: (ComposerQuote) -> Void
     let onRemoveQuote: (UUID) -> Void
     let onKeyboardSend: () -> Void
+    let recallLastSentText: (() -> String?)?
     let onHeightChange: (CGFloat) -> Void
     let onPasteFileProviders: ([NSItemProvider]) -> Void
     let onPasteFileURLs: ([URL]) -> Void
@@ -223,6 +247,7 @@ private struct ComposerTextView: UIViewRepresentable {
         textView.allowsEditingTextAttributes = false
         textView.isKeyboardSendEnabled = isKeyboardSendEnabled
         textView.onKeyboardSend = onKeyboardSend
+        textView.recallLastSentText = recallLastSentText
         textView.onPasteFileProviders = onPasteFileProviders
         textView.onPasteFileURLs = onPasteFileURLs
         textView.onPasteImageProviders = onPasteImageProviders
@@ -255,6 +280,7 @@ private struct ComposerTextView: UIViewRepresentable {
         context.coordinator.syncEditing(for: textView, isDisabled: isDisabled)
         textView.isKeyboardSendEnabled = isKeyboardSendEnabled
         textView.onKeyboardSend = onKeyboardSend
+        textView.recallLastSentText = recallLastSentText
         textView.onPasteFileProviders = onPasteFileProviders
         textView.onPasteFileURLs = onPasteFileURLs
         textView.onPasteImageProviders = onPasteImageProviders

@@ -1,9 +1,11 @@
 import UIKit
 import UserNotifications
 
-/// SwiftUI has no scene-level hook for APNs device tokens or notification taps, so
-/// this delegate hands tokens to `PushRegistrar` and taps to
-/// `PushNotificationRouter`. Nothing else belongs here.
+/// The app's one UIKit delegate. SwiftUI has no scene-level hook for APNs device tokens or
+/// notification taps, so this delegate hands tokens to `PushRegistrar`, relay taps to
+/// `PushNotificationRouter`, and local run alert taps to
+/// `ResponseCompletionNotificationRequest`. It also gives the scene `AppLockSceneDelegate`.
+/// Nothing else belongs here.
 final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(
         _ application: UIApplication,
@@ -13,6 +15,18 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         UNUserNotificationCenter.current().delegate = self
         MainActor.assumeIsolated { PushRegistrar.shared?.refreshOnLaunch() }
         return true
+    }
+
+    /// SwiftUI still builds the scene and its window; the extra delegate adds the app lock's
+    /// window above it (#885).
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = AppLockSceneDelegate.self
+        return configuration
     }
 
     func application(
@@ -44,7 +58,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     }
 
     /// A tapped banner queues the conversation deep link on `AppIntentRouter`, which
-    /// `ContentView` drains on cold and warm launch alike.
+    /// `ContentView` drains on cold and warm launch alike. A local run alert names its
+    /// server by hash and needs no pairing; a relay banner needs its pairing.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -58,7 +73,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         // The system does not promise a thread here, so hop rather than assume.
         Task { @MainActor in
             let activeServer = ServerRegistry.shared.activeServerID.flatMap(URL.init(string:))
-            if let pairings = Self.configuredPairings() {
+            if let destination = ResponseCompletionNotificationRequest.destination(
+                userInfo: userInfo, servers: ServerRegistry.shared.servers.compactMap { URL(string: $0.id) }) {
+                AppIntentRouter.shared.requestDeepLink(destination.url)
+            } else if let pairings = Self.configuredPairings() {
                 if let destination = PushNotificationRouter.webuiDestination(
                     userInfo: userInfo, pairings: pairings, activeServer: activeServer) {
                     AppIntentRouter.shared.requestDeepLink(destination.url)

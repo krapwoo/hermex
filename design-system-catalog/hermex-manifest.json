@@ -3298,9 +3298,9 @@
     {
       "id": "Transcript Log Row",
       "displayName": "Transcript Log Row",
-      "description": "An icon slot, a one-line summary, an optional status word, and a chevron that expands into a scrollable detail body — the real, production-adopted anatomy behind a tool-call log line, the \"Thinking\" reasoning block, and a bot activity/plan row (TranscriptLogRowView.swift). Uses Hermex typography, spacing, radius, motion, Buttons, and Divider.",
-      "whenToUse": "Use it for compact transcript activity: one collapsed line with a summary and optional status that can expand into a bounded, scrollable detail body; for a persistent always-visible detail, use Card instead.",
-      "a11y": "Tap toggles expand/collapse; a long press on the expanded body copies its content, briefly showing \"Copied\" before reverting to \"Copy\". VoiceOver reads \"Double tap to show details. Long press to copy.\" while collapsed, and \"Double tap to hide details. Long press to copy.\" while expanded — each caller supplies its own icon and detail text/accessibility label.",
+      "description": "An icon slot, a one-line summary, an optional trailing accessory, an optional status word, and a chevron that expands into a scrollable detail body — the real, production-adopted anatomy behind a tool-call log line, the \"Thinking\" reasoning block, and a bot activity/plan row (TranscriptLogRowView.swift). At ordinary Dynamic Type sizes the accessory sits trailing, before the chevron; at accessibility sizes it moves below the summary/detail. Uses Hermex typography, spacing, radius, motion, Buttons, and Divider.",
+      "whenToUse": "Use it for compact transcript activity: one collapsed line with a summary, an optional trailing accessory, and optional status that can expand into a bounded, scrollable detail body; for a persistent always-visible detail, use Card instead.",
+      "a11y": "Tap toggles expand/collapse; a long press on the expanded body copies its content, briefly showing \"Copied\" before reverting to \"Copy\". VoiceOver reads \"Double tap to show details. Long press to copy.\" while collapsed, and \"Double tap to hide details. Long press to copy.\" while expanded — each caller supplies its own icon and detail text/accessibility label. The row ignores its own child accessibility semantics for the optional trailing accessory, so a caller that supplies one must fold the accessory's meaning into `accessibilityLabel`.",
       "props": [
         {
           "name": "TranscriptLogRowMetrics.minimumHeight",
@@ -3325,7 +3325,7 @@
       "variants": [],
       "states": [],
       "hermesReference": {
-        "useWhen": "Use it for compact transcript activity — one line of collapsed summary/status that can expand into a bounded, scrollable detail body, with copy-on-long-press.",
+        "useWhen": "Use it for compact transcript activity — one line of collapsed summary/status, with an optional trailing accessory, that can expand into a bounded, scrollable detail body, with copy-on-long-press.",
         "avoidWhen": "Avoid it for a persistent, always-visible detail — use Card instead. Avoid it for a general independently expandable collection that repeats across a list — use Accordion List.",
         "alternatives": [
           {
@@ -3361,7 +3361,8 @@
           ],
           "notes": [
             "ToolCallLogRowView.swift, ReasoningBlockView.swift, and BotActivityViews.swift all compose this pre-existing TranscriptLogRowView directly — the real, unchanged, already-adopted row anatomy, not a foundation candidate awaiting migration.",
-            "The geometry facts catalogued under Hermex Radius & Geometry are sourced from this same real, adopted TranscriptLogRowMetrics."
+            "The geometry facts catalogued under Hermex Radius & Geometry are sourced from this same real, adopted TranscriptLogRowMetrics.",
+            "Current-base integration correction (PR #974): current master added an optional generic `accessory` ViewBuilder slot between `icon` and `status` (an `Accessory == EmptyView` convenience initializer keeps callers with no accessory unchanged). At ordinary Dynamic Type sizes it renders trailing, before the chevron; at accessibility sizes it moves below the summary/detail. The row ignores the accessory's own child accessibility semantics, so a caller that supplies one must fold its meaning into `accessibilityLabel`."
           ]
         },
         "compositionSlots": [
@@ -3385,6 +3386,26 @@
             "accessibilityOwnership": "child-owned"
           },
           {
+            "name": "accessory",
+            "description": "Caller-supplied optional trailing detail, such as an edit's \"+N -M\". At ordinary Dynamic Type sizes it sits trailing, before the chevron; at accessibility sizes it moves below the summary/detail.",
+            "required": false,
+            "cardinality": "one",
+            "acceptedContent": [
+              "text",
+              "generic-view"
+            ],
+            "order": 1,
+            "role": "trailing-accessory",
+            "layout": {
+              "placement": "component-fixed",
+              "axis": "none",
+              "position": "ordinary Dynamic Type sizes: trailing edge of the collapsed row, before the chevron; accessibility sizes: below the summary/detail"
+            },
+            "overflow": "not-applicable",
+            "interactionOwnership": "none",
+            "accessibilityOwnership": "component-owned"
+          },
+          {
             "name": "status",
             "description": "Caller-supplied status word shown in the collapsed row, beside the chevron.",
             "required": true,
@@ -3393,7 +3414,7 @@
               "text",
               "generic-view"
             ],
-            "order": 1,
+            "order": 2,
             "role": "caption",
             "layout": {
               "placement": "component-fixed",
@@ -3413,7 +3434,7 @@
               "text",
               "generic-view"
             ],
-            "order": 2,
+            "order": 3,
             "role": "body-content",
             "layout": {
               "placement": "component-fixed",
@@ -3432,9 +3453,9 @@
         ],
         "usageExamples": [
           {
-            "name": "Expandable tool-call log line",
+            "name": "Expandable tool-call log line with a trailing accessory",
             "language": "swift",
-            "code": "TranscriptLogRowView(\n    summary: \"Ran tests\",\n    detail: \"Passed\",\n    isExpanded: isExpanded,\n    accessibilityLabel: \"Ran tests\",\n    copyText: { fullLogOutput },\n    toggleExpansion: { isExpanded.toggle() },\n    icon: { Image(systemName: \"terminal\") },\n    status: { Text(\"Passed\") },\n    expandedBody: { Text(fullLogOutput) }\n)"
+            "code": "TranscriptLogRowView(\n    summary: \"Edited main.swift\",\n    detail: \"Passed\",\n    isExpanded: isExpanded,\n    accessibilityLabel: \"Edited main.swift, +12 -4, passed\",\n    copyText: { fullLogOutput },\n    toggleExpansion: { isExpanded.toggle() },\n    icon: { Image(systemName: \"pencil\") },\n    accessory: { Text(\"+12 -4\") },\n    status: { Text(\"Passed\") },\n    expandedBody: { Text(fullLogOutput) }\n)"
           }
         ],
         "machineConfigurations": [

@@ -4,14 +4,8 @@ import SwiftUI
 /// workspace, profile, git branch, mic, context meter). The Stop/Send circle
 /// stays outside it, pinned to the row's trailing edge.
 struct ComposerToolbarScroller<Content: View>: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.layoutDirection) private var layoutDirection
-
     private let content: Content
 
-    @State private var fades = ComposerToolbarEdgeFades()
-
-    private let fadeWidth: CGFloat = 18
     private let itemSpacing: CGFloat = 8
     private let minimumRowHeight: CGFloat = 44
 
@@ -32,39 +26,7 @@ struct ComposerToolbarScroller<Content: View>: View {
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         // Taps on toolbar controls must never dismiss the keyboard first.
         .scrollDismissesKeyboard(.never)
-        .onScrollGeometryChange(for: ComposerToolbarEdgeFades.self) { geometry in
-            ComposerToolbarEdgeFades(
-                offset: geometry.contentOffset.x,
-                contentWidth: geometry.contentSize.width,
-                viewportWidth: geometry.containerSize.width,
-                layoutDirection: layoutDirection
-            )
-        } action: { _, newFades in
-            fades = newFades
-        }
-        .mask { fadeMask }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: fades)
-    }
-
-    /// Alpha mask: opaque everywhere except an edge that hides content, which
-    /// fades over `fadeWidth` so the glass surface shows through.
-    private var fadeMask: some View {
-        HStack(spacing: 0) {
-            LinearGradient(
-                colors: [fades.leading ? .clear : .black, .black],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(width: fadeWidth)
-
-            Color.black
-
-            LinearGradient(
-                colors: [.black, fades.trailing ? .clear : .black],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(width: fadeWidth)
-        }
+        // The toolbar sits on glass, so its edges fade through a mask.
+        .horizontalOverflowFades(.mask)
     }
 }

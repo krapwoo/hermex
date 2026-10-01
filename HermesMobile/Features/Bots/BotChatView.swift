@@ -11,6 +11,9 @@ import SwiftUI
     /// bot's canonical chat has since moved on, so the inbox can take the user back
     /// instead of leaving a dead transcript on screen (#554).
     private let onConversationUnavailable: (() -> Void)?
+    /// Leaves the chat for the inbox's sign-in form, after the host refused the password.
+    /// The inbox owns the form because a new password needs a new chat client (#884).
+    private let onUpdateSignIn: () -> Void
     @State private var model: BotConversation
     @State private var stopAction: BotConversation.StopAction?
     @State private var recoveryID = UUID()
@@ -37,17 +40,19 @@ import SwiftUI
 
     init(server: URL, connection: BotConnection, profile: BotProfile, roster: [BotProfile],
          avatars: [String: UIImage], conversation: String? = nil,
-         onConversationUnavailable: (() -> Void)? = nil) {
+         onConversationUnavailable: (() -> Void)? = nil, onUpdateSignIn: @escaping () -> Void = {}) {
         mentionAvatars = avatars
         self.onConversationUnavailable = onConversationUnavailable
+        self.onUpdateSignIn = onUpdateSignIn
         _model = State(initialValue: BotConversation(server: server, connection: connection, profile: profile,
                                                      roster: roster, conversation: conversation, historyCache: .shared,
                                                      liveActivityFeed: .shared))
     }
 
-    init(model: BotConversation, onConversationUnavailable: (() -> Void)? = nil) {
+    init(model: BotConversation, onConversationUnavailable: (() -> Void)? = nil, onUpdateSignIn: @escaping () -> Void = {}) {
         mentionAvatars = [:]
         self.onConversationUnavailable = onConversationUnavailable
+        self.onUpdateSignIn = onUpdateSignIn
         _model = State(initialValue: model)
     }
 
@@ -113,6 +118,14 @@ import SwiftUI
                         if let reply = model.liveMessages.first(where: { $0.role == "assistant" }) {
                             BotArtifactMessageView(message: reply, model: model, isLive: true)
                         }
+                        // How the last turn ended sits under it, before any plan or request.
+                        if model.turnFailure != nil || model.turnNotice?.warning != nil {
+                            BotTurnOutcomeRow(
+                                failure: model.turnFailure, notice: model.turnNotice,
+                                offersRetry: model.offersRetry, mayRetry: model.mayRetry,
+                                onRetry: { Task { await model.retryFailedTurn() } }
+                            )
+                        }
                         if let plan = model.plan {
                             BotPlanRowView(plan: plan).id("bot-plan")
                         }
@@ -126,24 +139,34 @@ import SwiftUI
                                 resolution: resolution(for: request),
                                 onApprove: approve, onAnswer: answer, onSkip: skip,
                                 onCredential: sendCredential,
-                                canDecline: model.mayDecline, onDecline: decline,
                                 onStop: { stopAction = model.prepareStop() },
                                 onConnection: answerConnection
                             )
                             .id(BotChatView.requestAnchor)
+                        } else if let withdrawal = model.withdrawnRequest {
+                            // A withdrawn card leaves the reason in its slot until the next send or request.
+                            BotRequestWithdrawalNote(withdrawal: withdrawal)
                         }
                         if let startedAt = model.workingRowStartedAt {
                             ChatWorkingRowView(startedAt: startedAt)
                         }
                         Color.clear.frame(height: 1).id("bot-transcript-bottom")
                     }
-                    .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 20 : 16)
+                    .padding(.horizontal, transcriptHorizontalPadding)
+                    // Centred in the reading column; the scroll view stays full width.
+                    .frame(
+                        maxWidth: ChatReadingWidth.maximumWidth(horizontalPadding: transcriptHorizontalPadding),
+                        alignment: .leading
+                    )
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 16)
                     .padding(.bottom, 44)
                     // A tapped row must stay under the finger: stop following so
                     // neither the size-change anchor nor the next activity update
                     // moves the reader. Latest brings them back.
                     .chatDisclosureToggled { handleFollowEvent(.userScrollBegin) }
+                    // One link router for the whole transcript.
+                    .transcriptLinks()
                     .background {
                         ChatScrollObserver(isStreaming: isStreaming, onFollowEvent: handleFollowEvent, onMetrics: updateScrollMetrics)
                             .accessibilityHidden(true)
@@ -262,7 +285,8 @@ import SwiftUI
                 .presentationDragIndicator(.visible)
         }
         .task(id: recoveryID) {
-            if scenePhase == .active { await model.recover() }
+            // A rejected password is never sent again on its own (#884).
+            if scenePhase == .active && !model.needsSignIn { await model.recover() }
         }
         .onChange(of: scenePhase) {
             if scenePhase == .active { recoveryID = UUID(); workingBeat.rearm() }
@@ -326,11 +350,6 @@ import SwiftUI
     private func sendCredential(_ value: String) {
         guard let action = model.prepareAnswer() else { return }
         Task { await model.answerCredential(action, value: value) }
-    }
-
-    private func decline() {
-        guard let action = model.prepareAnswer() else { return }
-        Task { await model.declineDesktopTask(action) }
     }
 
     private func answerConnection(_ answer: BotConnectionOperation.Answer) {
@@ -425,6 +444,10 @@ import SwiftUI
         proxy.scrollTo("bot-transcript-bottom", anchor: .bottom)
     }
 
+    private var transcriptHorizontalPadding: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? 20 : 16
+    }
+
     /// The composer over the same bottom fade the main chat uses, so the two
     /// transcripts end identically. The fade reaches 34 pt above the composer.
     private var composer: some View {
@@ -432,8 +455,12 @@ import SwiftUI
             model: model, mentionAvatars: mentionAvatars, isFocused: $composerFocused,
             onStop: { stopAction = model.prepareStop() },
             onReconnect: { recoveryID = UUID() },
-            onShowRequest: { showRequestID = UUID() }
+            onShowRequest: { showRequestID = UUID() },
+            onUpdateSignIn: onUpdateSignIn
         )
+        // Lined up with the reading column; the material fade below stays full width.
+        .frame(maxWidth: ChatReadingWidth.maximumWidth(horizontalPadding: 16))
+        .frame(maxWidth: .infinity)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { composerHeight = $0 }
         .background(alignment: .bottom) {
             BottomComposerMaterialFade(composerHeight: composerHeight)
