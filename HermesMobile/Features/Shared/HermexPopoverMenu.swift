@@ -524,7 +524,13 @@ struct HermexPopoverMenu: View {
         // A rejected request (duplicate open, or a re-open while a deferred action is still
         // dismissing) must leave any active transition task alone, so an in-flight exit — and the
         // action deferred on it — finishes undisturbed instead of being cancelled out from under it.
+        // A re-open while dismissing with a deferred action is queued, not dropped: see
+        // `finishExit(generation:)`, which resumes entry here once that exit completes.
         guard let generation = lifecycle.beginPresentation() else { return }
+        beginEntry(generation: generation)
+    }
+
+    private func beginEntry(generation: Int) {
         transitionTask?.cancel()
         guard !reduceMotion else {
             isVisible = true
@@ -561,8 +567,20 @@ struct HermexPopoverMenu: View {
     }
 
     private func finishExit(generation: Int) {
-        guard case .completed(let action) = lifecycle.completeDismissal(generation: generation) else { return }
-        onExitCompleted(action)
+        switch lifecycle.completeDismissal(generation: generation) {
+        case .notCurrent:
+            return
+        case .completed(let action, let reopened):
+            guard let reopened else {
+                onExitCompleted(action)
+                return
+            }
+            // A reopen was queued while this action-bearing exit was in flight: run the deferred
+            // action once, then resume entry on the same mounted surface instead of routing through
+            // `onExitCompleted`, which would unmount the host and write the caller's binding false.
+            action?()
+            beginEntry(generation: reopened)
+        }
     }
 
     private func focusFirstEnabledAction() {

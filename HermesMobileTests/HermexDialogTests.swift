@@ -177,6 +177,34 @@ import XCTest
         XCTAssertTrue(src.contains("transitionTask?.cancel()"))
     }
 
+    /// `HermexOverlayLifecycleTests` proves the exactly-once/fresh-generation/cancellation semantics
+    /// of a queued reopen at the lifecycle level; this is the smallest contract proving `HermexDialog`
+    /// actually reads and acts on that result, instead of discarding it.
+    func testFinishExitRunsTheDeferredActionThenResumesAFreshEntryOnAQueuedReopenInsteadOfUnmounting() throws {
+        let src = try hermexDialogSource()
+        let finishExitBody = try XCTUnwrap(
+            src.components(separatedBy: "private func finishExit(generation: Int) {").last,
+            "expected a finishExit(generation:) function"
+        )
+        XCTAssertTrue(
+            finishExitBody.contains("case .completed(let action, let reopened):"),
+            "finishExit must read both the deferred action and any queued reopen generation from completeDismissal"
+        )
+        guard let reopenedRange = finishExitBody.range(of: "guard let reopened else {") else {
+            return XCTFail("expected finishExit to branch on whether a reopen was queued")
+        }
+        guard let onExitRange = finishExitBody.range(of: "onExitCompleted(action)") else {
+            return XCTFail("expected the no-reopen branch to still hand off through onExitCompleted")
+        }
+        guard let beginEntryRange = finishExitBody.range(of: "beginEntry(generation: reopened)") else {
+            return XCTFail("expected a queued reopen to resume the same mounted surface via beginEntry, never onExitCompleted")
+        }
+        XCTAssertLessThan(reopenedRange.lowerBound, onExitRange.lowerBound,
+                          "onExitCompleted must only run inside the no-reopen branch")
+        XCTAssertLessThan(onExitRange.upperBound, beginEntryRange.lowerBound,
+                          "the queued-reopen path must come after, and be distinct from, the onExitCompleted branch")
+    }
+
     func testAccessibilityLabSpecimenUsesVerticalActions() throws {
         let src = try overlayLabSource()
         let accessibilitySection = try XCTUnwrap(
