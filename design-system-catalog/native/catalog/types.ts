@@ -161,11 +161,175 @@ export interface HermesReferenceDestination {
 
 /** Technical provenance for a Hermex reference entry — rendered as the Details inspector's own
  *  "Source" (sourcePaths) and "Implementation notes" (status/notes) sections, never part of the
- *  main canvas. */
+ *  main canvas. `sourcePaths` names the native Swift file(s) this catalog entry documents, so a
+ *  tool can tell a React Native browser reconstruction apart from the production Swift source it
+ *  describes. */
 export interface HermesImplementationNotes {
   status?: string;
   sourcePaths?: string[];
   notes?: string[];
+}
+
+/** The closed vocabulary for what kind of content one `HermesCompositionSlot` accepts — structured
+ *  so a tool can tell a single-value slot (a title, an icon) from a generic, ordered, zero-or-more
+ *  content slot (Composer Toolbar's `content`) without parsing prose. */
+export type HermesCompositionContentKind =
+  | 'text'
+  | 'icon'
+  | 'control'
+  | 'display-only-tag'
+  | 'generic-view'
+  | 'future-component';
+
+/** The semantic region a composition slot plays within its component's anatomy — closed so a tool
+ *  can group or compare slots across different entries (e.g. every entry's leading icon) without
+ *  parsing each slot's free-text `description`. */
+export type HermesCompositionSlotRole =
+  | 'leading-icon'
+  | 'leading-accessory'
+  | 'leading-action'
+  | 'inline-accessory'
+  | 'primary-text'
+  | 'secondary-text'
+  | 'caption'
+  | 'metadata'
+  | 'body-content'
+  | 'header'
+  | 'center-content'
+  | 'footer'
+  | 'trailing-action'
+  | 'trailing-accessory'
+  | 'trigger'
+  | 'surface-content';
+
+/** Who positions a composition slot within its component's layout, and along which axis — e.g. a
+ *  component docks a fixed-position action slot at its own trailing edge, versus arranging a
+ *  caller-ordered generic content slot along one scrolling axis. */
+export interface HermesCompositionSlotLayout {
+  /** `'component-fixed'` for a named anatomy position the component itself docks (e.g. Banner's
+   *  `icon`); `'caller-ordered'` for a generic slot whose own content order the caller controls
+   *  (e.g. Composer Toolbar's `content`). */
+  placement: 'component-fixed' | 'caller-ordered';
+  /** The axis this slot's own content runs along, when the slot itself arranges more than one
+   *  child (e.g. Composer Toolbar's horizontal scrolling row). `'none'` for a single-value slot
+   *  with no internal axis of its own. */
+  axis: 'horizontal' | 'vertical' | 'none';
+  /** Where the component docks this slot relative to its anatomy, in the component's own terms
+   *  (e.g. `'leading edge of the header row'`, `'trailing edge'`, `'centered'`) — source-backed,
+   *  not a generic guess. */
+  position: string;
+}
+
+/** How a composition slot's content behaves once it exceeds the space the component gives it —
+ *  closed so a tool can tell a slot that scrolls from one that silently clips or truncates,
+ *  without parsing prose. `'not-applicable'` is for a slot whose content has no meaningful overflow
+ *  behavior (a fixed-size icon, a single fixed-size control). */
+export type HermesCompositionOverflow = 'wrap' | 'clip' | 'scroll' | 'truncate' | 'not-applicable';
+
+/** Who drives a composition slot's interaction: the component itself (e.g. Accordion's own
+ *  expand/collapse on its `header` slot), each child/caller content independently (e.g. Composer
+ *  Toolbar's children), or `'none'` because the slot is non-interactive, display-only content. */
+export type HermesCompositionInteractionOwnership = 'component-owned' | 'child-owned' | 'none';
+
+/** Who supplies a composition slot's accessibility label/role/grouping: the component itself
+ *  (e.g. Banner hiding a decorative icon from VoiceOver), each child independently (its own default
+ *  accessibility stands unmodified), or `'combined-element'` when this slot merges into one larger
+ *  combined accessible element together with sibling slots (e.g. Content Unavailable's icon+title+
+ *  description). */
+export type HermesCompositionAccessibilityOwnership = 'component-owned' | 'child-owned' | 'combined-element';
+
+/** One named content region/slot in a component's composition — e.g. Banner's title/description/
+ *  icon/action regions, or Composer Toolbar's single ordered generic content slot. Structured so a
+ *  tool can enumerate what a component actually accepts, in what order, who lays it out, how it
+ *  behaves on overflow, and who owns what within it — all without parsing prose. */
+export interface HermesCompositionSlot {
+  /** The region's name, e.g. `'title'`, `'description'`, `'content'`. */
+  name: string;
+  /** One sentence describing what this region is for. */
+  description: string;
+  /** Whether a caller must always supply this region on its own — false for a region that is only
+   *  conditionally required via a `HermesCompositionConstraint` (e.g. Banner's title/description).
+   *  @default false */
+  required?: boolean;
+  /** How many instances this slot accepts: `'one'` for a single region/value, `'zero-or-more'` for
+   *  an ordered list of arbitrary content (e.g. Composer Toolbar's `content` slot). @default 'one' */
+  cardinality?: 'one' | 'zero-or-more';
+  /** What kind(s) of content this slot accepts, in the closed `HermesCompositionContentKind`
+   *  vocabulary — a generic content slot lists every kind it mixes freely (e.g. `['generic-view',
+   *  'control', 'display-only-tag', 'future-component']`). */
+  acceptedContent: HermesCompositionContentKind[];
+  /** This slot's 0-based position in the component's own documented reading/composition order
+   *  among its sibling slots — stable so a tool can reconstruct composition order without
+   *  re-deriving it from prose. */
+  order: number;
+  /** The semantic region this slot plays, from the closed `HermesCompositionSlotRole` vocabulary. */
+  role: HermesCompositionSlotRole;
+  /** Who positions this slot and along which axis — see `HermesCompositionSlotLayout`. */
+  layout: HermesCompositionSlotLayout;
+  /** How this slot's content behaves once it exceeds its given space — see
+   *  `HermesCompositionOverflow`. */
+  overflow: HermesCompositionOverflow;
+  /** Who drives this slot's interaction — see `HermesCompositionInteractionOwnership`. */
+  interactionOwnership: HermesCompositionInteractionOwnership;
+  /** Who supplies this slot's accessibility label/role/grouping — see
+   *  `HermesCompositionAccessibilityOwnership`. */
+  accessibilityOwnership: HermesCompositionAccessibilityOwnership;
+  /** Free-text ownership note for a generic/zero-or-more slot where the structured fields above
+   *  don't fully capture the parent/child responsibility split — kept alongside, not replaced by,
+   *  `interactionOwnership`/`accessibilityOwnership`. Omit for a single-value slot with no such
+   *  split to describe. */
+  ownership?: string;
+}
+
+/** The closed vocabulary for a structured cross-slot composition rule — currently only the
+ *  "at least one of these slots must be present" shape Banner's title/description pairing needs.
+ *  Closed rather than open-ended prose so a tool can check a proposed composition mechanically. */
+export type HermesCompositionConstraintKind = 'at-least-one-of';
+
+/** One structured constraint across a component's composition slots — e.g. Banner's "at least one
+ *  of title or description" requirement. Kept structured (not prose) so a tool can check a proposed
+ *  composition against it mechanically, referencing slots by `HermesCompositionSlot.name`. */
+export interface HermesCompositionConstraint {
+  kind: HermesCompositionConstraintKind;
+  /** The slot names this constraint governs, by `HermesCompositionSlot.name`. */
+  slots: string[];
+  /** One sentence stating the constraint in plain English. */
+  detail: string;
+}
+
+/** One canonical Swift usage example for a Hermex entry — the smallest source-backed snippet an
+ *  agent can pattern-match against when deciding how to call the real API. `name` is a stable,
+ *  human-readable title (e.g. "Description-only banner"); `code` is Swift reflecting the entry's own
+ *  documented prop/initializer shape. Showing a usage example is not a production-adoption claim —
+ *  `HermesAdoptionStatus` alone carries that fact. */
+export interface HermesUsageExample {
+  name: string;
+  language: 'swift';
+  code: string;
+}
+
+/** One JSON-safe behavioral configuration/example descriptor for a Hermex entry whose live catalog
+ *  renders through a custom `render()` function rather than data-driven `variants`/`states` — so the
+ *  manifest still exposes at least one machine-readable configuration instead of an empty surface,
+ *  without the gallery's React elements themselves needing to be JSON-serializable. `props` mirrors
+ *  the real prop values the named configuration demonstrates, in the same spirit as `VariantExample.
+ *  props` in types.ts above. */
+export interface HermesMachineConfiguration {
+  name: string;
+  description?: string;
+  props?: Record<string, unknown>;
+}
+
+/** One structured token fact for a Hermex Foundations entry (Colors, Spacing, Typography, Font,
+ *  Motion, Radius & Geometry, Shadow, Iconography) — reusing this catalog's own existing typed
+ *  token/reference data (e.g. `hermesColorCatalogData.ts`, `hermesTokenProposal.ts`,
+ *  `hermesIconSize.ts`) rather than hand-maintaining a second, independent token catalogue.
+ *  `purpose` is omitted only when the source data carries no separate purpose/classification beyond
+ *  the name/value pair itself. */
+export interface HermesTokenFact {
+  name: string;
+  value: string;
+  purpose?: string;
 }
 
 /** One alternative to reach for instead of this entry — structured so a human or AI can tell
@@ -221,6 +385,35 @@ export interface HermesReferenceMeta {
   useSummary?: string;
   usedIn?: HermesReferenceDestination[];
   implementationNotes?: HermesImplementationNotes;
+  /** This component's named content regions/slots, structured so a tool can enumerate what it
+   *  actually accepts (and who owns what within a generic slot) without parsing prose. Every one of
+   *  this catalog's 37 Hermex entries sets this explicitly (enforced by hermes-catalog.test.mjs) — an
+   *  empty array for a genuinely atomic/token/native entry with no caller-provided content region,
+   *  never an omitted field; kept optional here only because `HermesReferenceMeta` is also reused by
+   *  the catalog overview's own non-entry implementation-notes panel (`HermesOverviewImplementationDetails`). */
+  compositionSlots?: HermesCompositionSlot[];
+  /** Structured cross-slot rules this component's composition must satisfy — e.g. Banner's "at
+   *  least one of title or description". Every entry sets this explicitly (see `compositionSlots`
+   *  above) — an empty array when there is no such rule, never an omitted field. */
+  compositionConstraints?: HermesCompositionConstraint[];
+  /** Non-empty list of the native Swift API/type/token/pattern symbols an agent should search for to
+   *  find this entry's real implementation — e.g. `['HermexBanner', 'HermexBanner.Action']`. A
+   *  platform/reference-only entry names the platform API or documented composition it stands for
+   *  instead of inventing a Hermex wrapper (e.g. `['.popover(isPresented:)']` for Tooltip). Required
+   *  (non-empty) for every entry, enforced by hermes-catalog.test.mjs. */
+  canonicalSymbols?: string[];
+  /** At least one concise, source-backed canonical Swift usage example — see `HermesUsageExample`.
+   *  Showing usage is not itself a production-adoption claim; `adoptionStatus` carries that fact.
+   *  Required (non-empty) for every entry, enforced by hermes-catalog.test.mjs. */
+  usageExamples?: HermesUsageExample[];
+  /** JSON-safe behavioral configuration descriptors for an entry whose live catalog renders through
+   *  a custom `render()` function rather than data-driven `variants`/`states` — see
+   *  `HermesMachineConfiguration`. Omit for an entry whose `variants`/`states` arrays already serialize
+   *  into the manifest, or whose `tokenFacts` already supplies a machine-readable surface. */
+  machineConfigurations?: HermesMachineConfiguration[];
+  /** Structured token facts for a Foundations token-gallery entry — see `HermesTokenFact`. Required
+   *  (non-empty) for all 8 Foundations entries; omitted for a non-Foundations entry. */
+  tokenFacts?: HermesTokenFact[];
 }
 
 /** A labeled group of section ids in the sidebar (e.g. "Components" vs "Tokens"). */

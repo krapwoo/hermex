@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -626,11 +627,19 @@ test('hermesColorCatalogData.ts defines the exact 9 color ramps, 11 steps each (
 
 test('Hermex Colors section includes the product-palette sub-block with all 14 named HermesProductPalette constants', () => {
   const src = read(HERMES_SECTIONS_PATH);
+  // Issue #607 Slice A hoisted the two literal palette arrays HermesProductPaletteGallery renders
+  // to shared top-level consts (HERMEX_HEADER_ACCENT_PALETTE / HERMEX_PROJECT_COLOR_PALETTE) so the
+  // same typed data also backs hermesReference.tokenFacts — the gallery function body itself now
+  // just references them, so this checks the whole file rather than only the function's own body.
+  assert.match(src, /HERMEX_HEADER_ACCENT_PALETTE/);
+  assert.match(src, /HERMEX_PROJECT_COLOR_PALETTE/);
   const gallery = extractFunctionBody(src, 'HermesProductPaletteGallery');
-  assert.match(gallery, /headerAccentYellow/);
-  assert.match(gallery, /headerAccentWhite/);
-  assert.match(gallery, /projectViolet/);
-  assert.match(gallery, /projectPink/);
+  assert.match(gallery, /headerAccents = HERMEX_HEADER_ACCENT_PALETTE/);
+  assert.match(gallery, /projectPalette = HERMEX_PROJECT_COLOR_PALETTE/);
+  assert.match(src, /headerAccentYellow/);
+  assert.match(src, /headerAccentWhite/);
+  assert.match(src, /projectViolet/);
+  assert.match(src, /projectPink/);
 });
 
 test('the superseded Color-only proposal gallery implementation is deleted from HermesTokenProposalGalleries.tsx, not merely left as dead code, while every other family\'s still-unadopted proposal gallery and shared plumbing survive', () => {
@@ -804,7 +813,11 @@ test('Hermex Shadow is inserted immediately before Hermex Iconography in the Fou
     'expected Hermex Shadow immediately before Hermex Iconography in the Foundations — Hermex order',
   );
 
+  // Issue #607 Slice A hoisted the literal `cases` array HermesShadowGallery renders to a shared
+  // top-level const (HERMES_SHADOW_CASES) so the same typed data also backs hermesReference.
+  // tokenFacts — the gallery function body itself now just references it by name.
   const gallery = extractFunctionBody(sectionsSrc, 'HermesShadowGallery');
+  assert.match(gallery, /cases: ShadowFact\[\] = HERMES_SHADOW_CASES/, 'expected HermesShadowGallery to read the shared HERMES_SHADOW_CASES const');
   for (const caseName of [
     'none',
     'controlSubtleResting',
@@ -815,10 +828,15 @@ test('Hermex Shadow is inserted immediately before Hermex Iconography in the Fou
     'chrome',
     'overlay',
   ]) {
-    assert.match(gallery, new RegExp(`'${caseName}'`), `expected the exact case name '${caseName}' in HermesShadowGallery`);
+    assert.match(sectionsSrc, new RegExp(`'${caseName}'`), `expected the exact case name '${caseName}' in hermesSections.tsx`);
   }
   assert.doesNotMatch(
     gallery,
+    /controlResting/,
+    'must never abbreviate a control case name (dropping Subtle/Elevated) to "controlResting"',
+  );
+  assert.doesNotMatch(
+    sectionsSrc,
     /controlResting/,
     'must never abbreviate a control case name (dropping Subtle/Elevated) to "controlResting"',
   );
@@ -826,15 +844,16 @@ test('Hermex Shadow is inserted immediately before Hermex Iconography in the Fou
   // CC-1 correction: HermesMobile/Config/HermesShadow.swift resolves exactly three cases
   // differently by appearance — controlElevatedResting, controlElevatedPressed, and chrome.
   // Both controlSubtleResting/Pressed are constant across schemes despite the two subtle
-  // opacity numbers happening to coincide light vs. dark.
-  const chromeCase = gallery.match(/\{ name: 'chrome'[^}]*\}/);
+  // opacity numbers happening to coincide light vs. dark. The case data itself now lives in the
+  // shared HERMES_SHADOW_CASES const (see Issue #607 Slice A), not inline in the gallery function.
+  const chromeCase = sectionsSrc.match(/\{ name: 'chrome'[^}]*\}/);
   assert.ok(chromeCase, "expected a 'chrome' shadow case object");
   assert.match(chromeCase[0], /lightOpacity:\s*0\.12\b/, 'expected chrome lightOpacity 0.12');
   assert.match(chromeCase[0], /darkOpacity:\s*0\.28\b/, 'expected chrome darkOpacity 0.28');
   assert.match(chromeCase[0], /adaptive:\s*true/, 'expected chrome to be adaptive, matching HermesShadow.swift');
 
   for (const subtleName of ['controlSubtleResting', 'controlSubtlePressed']) {
-    const subtleCase = gallery.match(new RegExp(`\\{ name: '${subtleName}'[^}]*\\}`));
+    const subtleCase = sectionsSrc.match(new RegExp(`\\{ name: '${subtleName}'[^}]*\\}`));
     assert.ok(subtleCase, `expected a '${subtleName}' shadow case object`);
     assert.match(
       subtleCase[0],
@@ -1700,6 +1719,17 @@ test('HermesMotionReference declares all eight motion demo ids, one Replay per d
   assert.match(motionSection, /render:\s*\(\)\s*=>\s*<HermesMotionReference\s*\/>/);
 });
 
+// Correction (final-review source accuracy): Hermex Motion's own description and alternatives
+// already state eight named motion patterns (feedbackPress, stateChange, contentEnter, contentExit,
+// overlayEnter, overlayExit, contentReposition, scrollFollow), but an implementation note still
+// called it a stale "six-step scale" — a leftover from before the eighth pattern was added.
+test('Correction (final-review source accuracy): Hermex Motion no longer calls HermesMotion.Bundle a stale "six-step scale" — it is the eight-pattern scale its own description already states', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const motionSection = extractHermesSection(sectionsSrc, 'Hermex Motion');
+  assert.doesNotMatch(motionSection, /six-step scale/, 'HermesMotion.Bundle has eight named patterns, not six');
+  assert.match(motionSection, /eight-pattern scale/, 'expected the implementation note to call it the eight-pattern scale');
+});
+
 // ─── Rendered-verification correction (2026-09-26) ───────────────────────────────────────────────
 // Controller-owned browser verification of the completed Hermex catalog reproduced three issues:
 // the Implementation notes disclosure never exposed a browser-observable expanded/collapsed state,
@@ -1814,6 +1844,64 @@ test('Card documents HermexCard.swift as a new, foundation-only primitive that S
   assert.match(section, /no production file imports HermexCard\.swift/i);
 });
 
+// Issue #607 semantic-accuracy follow-up: the prior pass still presented HermexCard.swift as though
+// it were a constructible view with `title`/`content`/`footer` slots/props of its own. HermexCard.swift
+// declares no such view — title/content/footer are SectionCard's own real API (SectionCard.swift),
+// a separate, pre-existing component this entry must not conflate with HermexCard's own surface
+// modifiers (.hermexCardSurface(_:cornerRadius:), .compactCardSurface(cornerRadius:fill:),
+// .requestCardSurface(cornerRadius:material:)).
+test('Issue #607 follow-up: Hermes Card\'s own top-level props never attribute SectionCard\'s title/content/footer anatomy to HermexCard.swift, and canonicalSymbols name the real surface modifiers/metrics', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Card');
+  const topLevelProps = section.split('hermesReference:')[0];
+
+  assert.doesNotMatch(topLevelProps, /name:\s*'title'/, 'HermexCard.swift declares no title prop/slot of its own — that is SectionCard\'s real API');
+  assert.doesNotMatch(topLevelProps, /name:\s*'content'/, 'HermexCard.swift declares no content prop/slot of its own — its modifiers wrap caller-owned content instead');
+  assert.doesNotMatch(topLevelProps, /name:\s*'footer'/, 'HermexCard.swift declares no footer prop/slot of its own — that is SectionCard\'s real API');
+  assert.match(section, /surface-modifier family|family of View (?:surface )?modifiers/i, 'expected Card to be described as a surface-modifier family, not a constructible view');
+
+  const ref = extractHermesReferenceBlock(section);
+  const canonical = extractBracketBlock(ref, /canonicalSymbols:\s*\[/);
+  assert.match(canonical, /compactCardSurface/, 'expected the real .compactCardSurface(cornerRadius:fill:) modifier to be a canonical symbol');
+  assert.match(canonical, /requestCardSurface/, 'expected the real .requestCardSurface(cornerRadius:material:) modifier to be a canonical symbol');
+  assert.match(canonical, /RequestCardMaterial/, 'expected the real RequestCardMaterial enum to be a canonical symbol');
+  assert.match(canonical, /HermexCardMetrics/, 'expected the real HermexCardMetrics enum to be a canonical symbol');
+});
+
+// Issue #607 semantic-accuracy follow-up: the prior pass attributed a `standardBorder`/
+// `increasedContrastBorder` member pair to `HermexCardColors` and claimed Card chrome includes
+// "elevation" — neither matches HermexCard.swift. HermexCardColors declares only primarySurface/
+// secondarySurface; both border roles live on the separate, shared HermexSurfaceBorderColors
+// (.resting/.increasedContrast), and `.hermexCardSurface` applies no shadow in either case.
+test('Issue #607 follow-up: Hermes Card never attributes a standardBorder/increasedContrastBorder member to HermexCardColors, names the real HermexSurfaceBorderColors.resting/.increasedContrast border roles, and states that the surface modifiers add no shadow', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Card');
+
+  assert.doesNotMatch(section, /\(primarySurface\/secondarySurface\/standardBorder\/increasedContrastBorder\)/, 'HermexCardColors does not define standardBorder/increasedContrastBorder');
+  assert.doesNotMatch(section, /HermexCardColors\.standardBorder/);
+  assert.doesNotMatch(section, /HermexCardColors\.increasedContrastBorder/);
+  assert.match(section, /HermexSurfaceBorderColors\.resting/, 'expected the real shared border role to be named');
+  assert.match(section, /HermexSurfaceBorderColors\.increasedContrast/, 'expected the real shared border role to be named');
+  assert.match(section, /hermexCardSurface[\s\S]{0,120}(?:adds|applies) no (?:shadow|elevation)/i, 'expected an explicit statement that the surface modifier adds no shadow/elevation');
+});
+
+// Issue #607 semantic-accuracy follow-up: the catalog reconstruction's own HERMEX_CARD_COLORS object
+// mirrored the same retired standardBorder/increasedContrastBorder member names — DSR2-01 moved both
+// border roles off HermexCardColors onto the shared HermexSurfaceBorderColors (already reconstructed
+// here as HERMEX_SURFACE_BORDER_COLORS for Search/Text Input/Code Input) in production Swift.
+test('Issue #607 follow-up: the Hermex Card catalog reconstruction\'s HERMEX_CARD_COLORS object defines only the real HermexCardColors surface roles (primarySurface/secondarySurface), and every render site sources its border color from the shared HERMEX_SURFACE_BORDER_COLORS reconstruction instead of a retired HERMEX_CARD_COLORS border member', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const objMatch = src.match(/const HERMEX_CARD_COLORS[\s\S]*?\};/);
+  assert.ok(objMatch, 'expected a top-level HERMEX_CARD_COLORS object in hermesSections.tsx');
+  const obj = objMatch[0];
+  assert.doesNotMatch(obj, /standardBorder/, 'the retired component-local standardBorder member must be gone from the catalog reconstruction');
+  assert.doesNotMatch(obj, /increasedContrastBorder/, 'the retired component-local increasedContrastBorder member must be gone from the catalog reconstruction');
+  assert.match(obj, /primarySurface/);
+  assert.match(obj, /secondarySurface/);
+  assert.doesNotMatch(src, /HERMEX_CARD_COLORS\.standardBorder/, 'no render site may reference the retired standardBorder member');
+  assert.doesNotMatch(src, /HERMEX_CARD_COLORS\.increasedContrastBorder/, 'no render site may reference the retired increasedContrastBorder member');
+});
+
 test('Avatar broadens Identity Avatar into the umbrella while keeping the original approved introduction verbatim, truthfully separating the pre-existing adopted ServerAvatarBadge/bot-face system from the new unadopted HermexAvatar.swift/HermesAvatarSize', () => {
   const src = read(HERMES_SECTIONS_PATH);
   assert.doesNotMatch(src, /id:\s*'Identity Avatar'/, 'the id must be renamed, not left alongside a new duplicate');
@@ -1840,6 +1928,22 @@ test('Avatar broadens Identity Avatar into the umbrella while keeping the origin
 
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(previewsSrc, /export function BotMarkPreview/);
+});
+
+// Issue #607 semantic-accuracy follow-up: ServerAvatarBadge is declared `private struct` inside
+// SettingsView.swift, so no agent outside that file can instantiate it — it must not remain listed
+// as a canonical (externally constructible) symbol, even though it stays truthfully documented as
+// adopted production evidence in prose/usedIn.
+test('Issue #607 follow-up: Hermes Avatar\'s canonicalSymbols exclude the private ServerAvatarBadge while keeping it truthful in prose/usedIn', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Avatar');
+  const ref = extractHermesReferenceBlock(section);
+  const canonical = extractBracketBlock(ref, /canonicalSymbols:\s*\[/);
+
+  assert.doesNotMatch(canonical, /ServerAvatarBadge/, 'ServerAvatarBadge is private (SettingsView.swift) and must not be listed as a canonical/externally-constructible symbol');
+  assert.match(canonical, /HermexAvatar/, 'expected the real, externally usable HermexAvatar to remain canonical');
+  assert.match(canonical, /HermesAvatarSize/, 'expected the real, externally usable HermesAvatarSize to remain canonical');
+  assert.match(section, /ServerAvatarBadge/, 'ServerAvatarBadge must remain truthfully documented in prose/usedIn, just not as a canonical symbol');
 });
 
 test('Row Divider documents the shared SwiftUI HermexDivider as a new, foundation-only component with no production call site', () => {
@@ -2062,6 +2166,29 @@ test('List / ListItem documents the new HermexList .compactOverlay style (standa
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
   assert.match(body, /compactOverlay/, 'expected the List gallery to demonstrate the compact-overlay style alongside the unchanged standard specimen');
+});
+
+// Correction (final-review source accuracy): List / ListItem's canonicalSymbols, Swift usage
+// example, and source paths all point at the real native ListItem.swift, so its structured
+// compositionSlots/machineConfigurations must describe that native anatomy — not the React Native
+// catalog reconstruction's own metadata/trailing/loading surface, which has no native equivalent.
+test('Correction (final-review source accuracy): List / ListItem\'s compositionSlots describe the real native ListItem.swift anatomy (leading, title, titleAccessory, subtitle, trailingAccessory, in that order) and machineConfigurations expose native ListItemState.isPending/isDisabled and HermexList.Style.compactOverlay, never metadata/trailing/Pressable/loading', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'List / ListItem');
+  const ref = extractHermesReferenceBlock(section);
+
+  const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
+  const slotNames = [...slotsSrc.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(slotNames, ['leading', 'title', 'titleAccessory', 'subtitle', 'trailingAccessory'], 'expected the exact native ListItem.swift composition slot sequence');
+  assert.doesNotMatch(slotsSrc, /name:\s*'metadata'/, 'metadata is a React Native catalog-reconstruction-only slot with no native ListItem.swift equivalent');
+  assert.doesNotMatch(slotsSrc, /name:\s*'trailing'/, 'trailing is a React Native catalog-reconstruction-only slot name; native Swift ListItem only exposes trailingAccessory');
+  assert.doesNotMatch(slotsSrc, /Pressable/, 'native SwiftUI ListItem has no Pressable; that is a React Native-only concept');
+
+  const configsSrc = extractBracketBlock(ref, /machineConfigurations:\s*\[/);
+  assert.doesNotMatch(configsSrc, /loading:\s*true/, 'loading: true is a React Native catalog-reconstruction-only prop with no native ListItem machine configuration');
+  assert.match(configsSrc, /'ListItemState\.isPending':\s*true/, 'expected a native ListItemState.isPending machine configuration');
+  assert.match(configsSrc, /'ListItemState\.isDisabled':\s*true/, 'expected a native ListItemState.isDisabled machine configuration');
+  assert.match(configsSrc, /'HermexList\.Style':\s*'\.compactOverlay'/, 'expected the native HermexList.Style.compactOverlay machine configuration to remain');
 });
 
 // Correction (2026-09-26 catalog/production reconciliation): Picker Row's retired shared metrics
@@ -3150,6 +3277,26 @@ test('Correction (gap 4): the ListItem preview exercises selected, commitPending
   assert.match(previewBody, /onPress=\{[^}]*\}[\s\S]{0,400}trailing=\{<Button/);
 });
 
+// Issue #607 semantic-accuracy follow-up: the catalog's `loading`/SkeletonGroup prop is a React
+// Native catalog-reconstruction concept with no equivalent in native ListItem.swift — the native
+// `ListItem` instead models a pending row with `ListItemState.isPending` rendering a single-row
+// `ProgressView`, a different concept from the catalog's multi-slot Shimmer/SkeletonGroup loading
+// placeholder. Both must be named accurately and the catalog-only one must be explicitly scoped.
+test('Issue #607 follow-up: List / ListItem scopes SkeletonGroup to the React Native catalog reconstruction only and separately documents the real native ListItemState.isPending/ProgressView pending row', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'List / ListItem');
+
+  assert.doesNotMatch(
+    section,
+    /A loading row announces "Loading" once via SkeletonGroup instead of once per Shimmer block\./,
+    'must not state SkeletonGroup grouping as if it were native Swift ListItem accessibility behavior',
+  );
+  assert.match(section, /SkeletonGroup/, 'SkeletonGroup should still be documented as the catalog reconstruction\'s own loading mechanism');
+  assert.match(section, /React Native catalog reconstruction|catalog-only|catalog reconstruction/i, 'expected SkeletonGroup to be explicitly scoped to the catalog reconstruction, not native Swift');
+  assert.match(section, /ListItemState\.isPending/, 'expected the real native Swift pending state to be named');
+  assert.match(section, /ProgressView/, 'expected the real native Swift pending indicator to be named');
+});
+
 // ─── Component families and Patterns (2026-09-26 revised specification) ─────────────────────────
 // Source-contract tests for the approved four-group taxonomy (Foundations/Materials/Components/
 // Patterns), Materials' Adaptive Glass, Card's Section/Request/Compact variants, the Banner family,
@@ -3323,7 +3470,7 @@ test('Attachment file-type colors come from the adopted HERMES_COLOR_RAMPS, neve
   }
 });
 
-test('Attachment renders real Icon/Button composition instead of text glyphs, for the file icon, remove control, and retry control', () => {
+test('Attachment renders real Icon/Button composition instead of text glyphs, for the file icon and remove control, and the failure tile no longer depicts a caller-owned Retry control', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'AttachmentTileGallery');
   // Scoped to the glyph as rendered JSX text content (`>×<`), not the character in general — "×" is
@@ -3334,7 +3481,10 @@ test('Attachment renders real Icon/Button composition instead of text glyphs, fo
   assert.match(body, /<Icon\b[^>]*name="paperclip"/, 'expected the file-type icon to be a real Icon, not a text glyph');
   assert.match(body, /<Icon\b[^>]*name="(?:alert-circle|triangle-alert)"/, 'expected the failure badge to be a real Icon, not an emoji');
   assert.match(body, /<Button\b[^>]*iconName="clear"/, 'expected the remove control to compose the real Button, not a plain View with an "×" Text');
-  assert.match(body, /<Button\b[^>]*label="Retry"/, 'expected a real Button-based retry control on the failure tile');
+  // Issue #607 final correction pass: AttachmentTile.swift defines no Retry/failure-badge affordance
+  // — that recovery UI is caller-owned production chrome, not part of this foundation family — so the
+  // smallest accurate result removes it rather than relabeling it (see the dedicated correction test).
+  assert.doesNotMatch(body, /label="Retry"/, 'expected the caller-owned Retry control to be removed from this foundation-only family');
 });
 
 test('Attachment loading state is a single full-box Shimmer/SkeletonGroup placeholder, not the retired hand-built "Uploading…" tile', () => {
@@ -3449,6 +3599,19 @@ test('Banner documents Information, Warning, Error, Success, and Offline variant
   assert.doesNotMatch(body, /accessibilityHidden/, 'decorative-icon semantics come from Banner\'s own default, not a per-preview override');
 });
 
+// Correction (final-review example/source parity): the "Description-only inset banner" usage
+// example's own title claims inset presentation, but its Swift code never passed the native
+// presentation argument HermexBanner.swift actually exposes — it would really render full-width.
+test('Correction (final-review example/source parity): Banner\'s "Description-only inset banner" usage example actually passes the native inset presentation argument', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermes Banner');
+  const ref = extractHermesReferenceBlock(section);
+  const examplesSrc = extractBracketBlock(ref, /usageExamples:\s*\[/);
+  const match = examplesSrc.match(/name:\s*'Description-only inset banner'[\s\S]*?code:\s*`([\s\S]*?)`/);
+  assert.ok(match, 'expected a "Description-only inset banner" usage example');
+  assert.match(match[1], /presentation:\s*\.inset\b/, 'expected the Description-only inset banner example to pass presentation: .inset');
+});
+
 // DSR2-15: title and description are independently caller-optional on the native HermexBanner —
 // title+description, title-only, and description-only are all supported content combinations, with
 // no interactive collapse/disclosure state (omission is a caller content choice). The preview must
@@ -3494,6 +3657,47 @@ test('Banner\'s human copy and preview name the native HermexBanner API and demo
   assert.doesNotMatch(bannerSrc, /title\s*=\s*'Banner title'/, 'must not default title to a placeholder string');
   assert.doesNotMatch(bannerSrc, /description\s*=\s*'Description text goes here'/, 'must not default description to a placeholder string');
   assert.match(bannerSrc, /\{title \? \(/, 'expected the standard callout\'s title to render only when a title is actually supplied, not an always-rendered Text node');
+});
+
+test('Issue #607: Banner\'s standard layout puts a description-only banner\'s description in the header row beside the icon, not behind an icon-only header plus an indented descriptionPad second row', () => {
+  const bannerSrc = read('native/components/Banner/Banner.tsx');
+
+  // A shared description/link node, reusable in either position, so the header-row and
+  // descriptionPad renderings can never drift apart in what content/link logic they show.
+  assert.match(bannerSrc, /const descriptionNode = description \|\| link \? \(/, 'expected a shared description/link node reusable in both the header row and the indented second row');
+
+  // The header row must fall back to that node — in the title's own primary-position style — when
+  // title is absent, instead of rendering only the icon (plus an optional trailingIcon). Scoped to
+  // the standard callout's own `body` (not the collapsible callout's separate header row above it).
+  // Slice through the separately gated title+description row because the icon may legitimately use
+  // a nested first-line alignment box inside this header row.
+  const standardBodyStart = bannerSrc.indexOf('const body = (pressed: boolean) => (');
+  assert.ok(standardBodyStart >= 0, 'expected the standard callout\'s body to be defined');
+  const headerRowStart = bannerSrc.indexOf('<View style={[styles.headerRow, styles.standardHeaderRow]}>', standardBodyStart);
+  assert.ok(headerRowStart >= 0, 'expected the standard callout to compose its shared row with the native-parity top-alignment override');
+  const headerRowEnd = bannerSrc.indexOf('{title && descriptionNode ? (', headerRowStart);
+  assert.ok(headerRowEnd >= 0, 'expected the separately gated title+description row after the header row');
+  const headerRow = bannerSrc.slice(headerRowStart, headerRowEnd);
+  assert.match(headerRow, /:\s*descriptionNode\s*\?\s*\(/, 'expected the header row to render descriptionNode in place of an absent title');
+  assert.match(headerRow, /styles\.title,\s*styles\.titleFlex/, 'expected the promoted description to reuse the title\'s own primary-position style, not a secondary/quieter one');
+
+  // Native HermexBanner uses HStack(alignment: .top). The reconstruction must preserve that anatomy:
+  // a wrapping description-only message starts beside the icon instead of vertically centering the
+  // icon against the full multi-line text block.
+  assert.match(
+    bannerSrc,
+    /standardHeaderRow:\s*\{[\s\S]*?alignItems:\s*'flex-start'/,
+    'expected the icon and primary text region to top-align like native HermexBanner',
+  );
+  assert.match(
+    headerRow,
+    /style=\{\[styles\.headerRow, styles\.standardHeaderRow\]\}/,
+    'expected the native-parity top alignment on the standard Banner row without changing the separate collapsible reconstruction',
+  );
+
+  // The indented second row (descriptionPad) must stay gated on title being present, so it never
+  // renders for a description-only banner — the bug this fixes.
+  assert.match(bannerSrc, /\{title && descriptionNode \? \(/, 'expected the descriptionPad second row to render only when title is also present');
 });
 
 test('Banner\'s hermesReference has no production usedIn entry and cites only its foundation source', () => {
@@ -3574,12 +3778,16 @@ test('Correction (gap 3): the generic Button implements real default Press Feedb
 test('Correction (gap 3): the Buttons preview documents the real four-way emphasis mapping (including Neutral) and demonstrates the Adaptive Glass surface as a style composition, never a new Button variant', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ButtonDecisionAndTactilePreview');
-  assert.match(body, /variant="tertiary"/, 'expected a Neutral-role example — the accurate mapping needs all four Hermex emphasis roles demonstrated, not three');
+  // Issue #607 final correction pass: native Neutral has a subtle fill with no border — the generic
+  // secondary variant's own fill, not the fill-less tertiary variant — distinguished from Secondary
+  // (same fill plus an explicit border) by that border alone. See the dedicated Buttons correction
+  // test below for the full emphasis-mapping assertion.
+  assert.match(body, /label="Neutral"\s+variant="secondary"/, 'expected a Neutral-role example — the accurate mapping needs all four Hermex emphasis roles demonstrated, not three');
   assert.match(body, /Neutral/);
   assert.match(
     body,
-    /neutral.*tertiary|tertiary.*neutral/is,
-    'expected the mapping caption to name the accurate neutral → tertiary pairing, not silently drop the Neutral role',
+    /neutral.*secondary|secondary.*neutral/is,
+    'expected the mapping caption to name the accurate neutral → secondary-fill pairing, not silently drop the Neutral role',
   );
   assert.match(body, /Adaptive Glass/);
   assert.match(body, /style composition|composing Adaptive Glass|not a (?:new|separate) (?:Button )?variant/i);
@@ -3599,6 +3807,20 @@ test('Transcript Log Row documents its Buttons and Divider composition alongside
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Transcript Log Row');
   assert.match(section, /Hermex typography, spacing, radius, motion, Buttons, and Divider/);
+});
+
+// Correction (final-review source accuracy): TranscriptLogRowView.swift's three ViewBuilder slots
+// are icon, status, and expandedBody — the collapsed-row status word has no catalog slot at all,
+// and the expanded scrollable body was misnamed "detail", which is really the separate `detail:
+// String?` initializer value shown in the collapsed row, not the expanded generic body.
+test('Correction (final-review source accuracy): Transcript Log Row\'s compositionSlots match TranscriptLogRowView.swift exactly — icon, status, and expandedBody, in that order', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Transcript Log Row');
+  const ref = extractHermesReferenceBlock(section);
+
+  const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
+  const slotNames = [...slotsSrc.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(slotNames, ['icon', 'status', 'expandedBody'], 'expected the exact native TranscriptLogRowView.swift composition slot sequence');
 });
 
 // Controller correction (2026-09-26, gap 5), carried forward for Round 2: the preview rendered a
@@ -4757,14 +4979,81 @@ test('manifest.ts supports an includeTokenGalleries option (default off, preserv
   assert.match(manifestSrc, /adoptionStatus\?:\s*HermesAdoptionStatus/);
 });
 
+test('Issue #607: manifest.ts declares and serializes structured composition-slot/constraint metadata and implementationNotes (including native sourcePaths), so a tool can distinguish the browser reconstruction from production Swift source', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  assert.match(manifestSrc, /compositionSlots\?:\s*HermesCompositionSlot\[\]/, 'expected ManifestHermesReference to expose compositionSlots');
+  assert.match(manifestSrc, /compositionConstraints\?:\s*HermesCompositionConstraint\[\]/, 'expected ManifestHermesReference to expose compositionConstraints');
+  assert.match(manifestSrc, /implementationNotes\?:\s*HermesImplementationNotes/, 'expected ManifestHermesReference to expose implementationNotes');
+  assert.match(manifestSrc, /compositionSlots:\s*meta\.compositionSlots/, 'expected buildHermesManifestReference to serialize compositionSlots');
+  assert.match(manifestSrc, /compositionConstraints:\s*meta\.compositionConstraints/, 'expected buildHermesManifestReference to serialize compositionConstraints');
+  assert.match(manifestSrc, /implementationNotes:\s*meta\.implementationNotes/, 'expected buildHermesManifestReference to serialize implementationNotes (including native sourcePaths)');
+
+  const typesSrc = read('native/catalog/types.ts');
+  assert.match(typesSrc, /export interface HermesCompositionSlot/, 'expected a structured HermesCompositionSlot type, not a prose-only blob');
+  assert.match(typesSrc, /export interface HermesCompositionConstraint/, 'expected a structured HermesCompositionConstraint type, not a prose-only blob');
+  assert.match(typesSrc, /compositionSlots\?:\s*HermesCompositionSlot\[\]/, 'expected HermesReferenceMeta to expose compositionSlots');
+  assert.match(typesSrc, /compositionConstraints\?:\s*HermesCompositionConstraint\[\]/, 'expected HermesReferenceMeta to expose compositionConstraints');
+});
+
+test('Issue #607: Banner and Composer Toolbar declare truthful structured composition metadata reaching the manifest', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+
+  const bannerSection = extractHermesSection(sectionsSrc, 'Hermes Banner');
+  const bannerRef = extractHermesReferenceBlock(bannerSection);
+  assert.match(bannerRef, /compositionSlots:\s*\[/, 'expected Banner to declare compositionSlots');
+  assert.match(bannerRef, /name:\s*'title'/, 'expected Banner\'s compositionSlots to name the title region');
+  assert.match(bannerRef, /name:\s*'description'/, 'expected Banner\'s compositionSlots to name the description region');
+  assert.match(bannerRef, /name:\s*'icon'/, 'expected Banner\'s compositionSlots to name the icon region');
+  assert.match(bannerRef, /name:\s*'action'/, 'expected Banner\'s compositionSlots to name the action region');
+  assert.match(bannerRef, /compositionConstraints:\s*\[/, 'expected Banner to declare compositionConstraints');
+  assert.match(bannerRef, /kind:\s*'at-least-one-of'/, 'expected Banner\'s constraint kind to be at-least-one-of');
+  assert.match(bannerRef, /slots:\s*\['title',\s*'description'\]/, 'expected Banner\'s constraint to govern the title/description slots');
+
+  const composerToolbarSection = extractHermesSection(sectionsSrc, 'Composer Toolbar');
+  const composerToolbarRef = extractHermesReferenceBlock(composerToolbarSection);
+  assert.match(composerToolbarRef, /compositionSlots:\s*\[/, 'expected Composer Toolbar to declare compositionSlots');
+  assert.match(composerToolbarRef, /name:\s*'content'/, 'expected Composer Toolbar\'s compositionSlots to name the content slot');
+  assert.match(composerToolbarRef, /cardinality:\s*'zero-or-more'/, 'expected Composer Toolbar\'s content slot to be zero-or-more, not a single value');
+  assert.match(composerToolbarRef, /acceptedContent:\s*\['generic-view',\s*'control',\s*'display-only-tag',\s*'future-component'\]/, 'expected Composer Toolbar\'s accepted content categories to be named');
+  assert.match(composerToolbarRef, /ownership:/, 'expected Composer Toolbar\'s content slot to document layout vs. child ownership');
+});
+
 test('the Hermex catalog builds and exposes its own manifest (including Foundations token galleries, unlike the filtered-out default) directly inside the catalog, discoverable without leaving the default route', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
-  assert.match(sectionsSrc, /import\s*\{\s*buildComponentManifest\s*\}\s*from\s*'\.\.\/manifest'/, 'expected hermesSections.tsx to import buildComponentManifest');
-  assert.match(sectionsSrc, /buildComponentManifest\(\s*hermesSections,\s*hermesNav,\s*\{\s*includeTokenGalleries:\s*true\s*\}\s*\)/, 'expected the Hermex manifest to be built with token galleries included');
+  assert.match(sectionsSrc, /import\s*\{\s*buildHermesManifestEnvelope\s*\}\s*from\s*'\.\.\/manifest'/, 'expected hermesSections.tsx to import buildHermesManifestEnvelope');
+  assert.match(sectionsSrc, /buildHermesManifestEnvelope\(\s*hermesSections,\s*hermesNav\s*\)/, 'expected the Hermex manifest to be built via the versioned envelope, which always includes token galleries');
   assert.match(sectionsSrc, /export function HermesManifest/, 'expected an exported HermesManifest component rendering the built manifest');
 
   const catalogSrc = hermesCatalogSource();
   assert.match(catalogSrc, /HermesManifest/, 'expected the manifest surface to actually be wired into the rendered Hermex catalog (e.g. inside the Overview), not just defined and unused');
+});
+
+test('Issue #607 Slice A: manifest.ts exposes a versioned HermesManifestEnvelope (schemaVersion + runtime + entries) stating the one SwiftUI-production/React-Native-reconstruction runtime fact once, machine-readably, instead of leaving it to per-entry prose', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  assert.match(manifestSrc, /export interface HermesManifestRuntime\s*\{/, 'expected a structured HermesManifestRuntime type');
+  assert.match(manifestSrc, /productionRuntime:\s*'swiftui'/);
+  assert.match(manifestSrc, /catalogRuntime:\s*'react-native-documentation-reconstruction'/);
+  assert.match(manifestSrc, /export const HERMES_MANIFEST_RUNTIME:\s*HermesManifestRuntime/, 'expected one shared runtime-truth constant, not one per entry');
+  assert.match(manifestSrc, /export interface HermesManifestEnvelope\s*\{/);
+  assert.match(manifestSrc, /schemaVersion:\s*1/);
+  assert.match(manifestSrc, /runtime:\s*HermesManifestRuntime/);
+  assert.match(manifestSrc, /entries:\s*ComponentManifestEntry\[\]/);
+  assert.match(
+    manifestSrc,
+    /export function buildHermesManifestEnvelope[\s\S]*?entries:\s*buildComponentManifest\(sections,\s*groups,\s*\{\s*includeTokenGalleries:\s*true\s*\}\)/,
+    'expected buildHermesManifestEnvelope to wrap buildComponentManifest with includeTokenGalleries always on, not a second parallel manifest builder',
+  );
+
+  // The retained template/framework routes must keep calling buildComponentManifest directly —
+  // the envelope is additive, not a breaking replacement of the shared builder's own signature.
+  const catalogExampleSrc = read(CATALOG_EXAMPLE_PATH);
+  assert.match(catalogExampleSrc, /buildComponentManifest\(sections,\s*nav\)/, 'expected the template route\'s own manifest page to keep calling buildComponentManifest unchanged');
+});
+
+test('Issue #607 Slice A: manifest.ts carries displayName through to ComponentManifestEntry, falling back to id for an entry with no override, the same default SectionDef.displayName itself documents', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  assert.match(manifestSrc, /displayName:\s*string;/, 'expected ComponentManifestEntry to declare a required displayName');
+  assert.match(manifestSrc, /displayName:\s*def\.displayName\s*\?\?\s*def\.id/, 'expected buildComponentManifest to fall back to id when displayName is unset');
 });
 
 // adoptionStatus is declared either inline ({ state: '...', detail: '...' }) or via one of the two
@@ -4905,6 +5194,36 @@ function extractBraceBlock(src, startPattern) {
 }
 
 const extractHermesReferenceBlock = (sectionSrc) => extractBraceBlock(sectionSrc, /hermesReference:\s*\{/);
+
+// Bracket-depth counterpart to extractBraceBlock, for a `key: [...]` array value that may itself
+// contain nested arrays/objects (e.g. compositionSlots' own acceptedContent: [...] per slot) — a
+// non-greedy regex up to the first `]` would stop at the first nested array's own close instead of
+// the field's own. Returns the array's own inner contents (excluding the outer [ and ]).
+function extractBracketBlock(src, startPattern) {
+  const match = src.match(startPattern);
+  assert.ok(match, `expected to find a block starting with ${startPattern}`);
+  const start = match.index + match[0].length - 1;
+  assert.equal(src[start], '[', `expected ${startPattern} to be immediately followed by [`);
+  let depth = 0;
+  for (let i = start; i < src.length; i++) {
+    const c = src[i];
+    if (c === "'" || c === '"' || c === '`') {
+      const quote = c;
+      i += 1;
+      while (i < src.length && src[i] !== quote) {
+        if (src[i] === '\\') i += 1;
+        i += 1;
+      }
+      continue;
+    }
+    if (c === '[') depth++;
+    else if (c === ']') {
+      depth -= 1;
+      if (depth === 0) return src.slice(start + 1, i);
+    }
+  }
+  throw new Error('unterminated bracket block');
+}
 
 const extractAlternativeNames = (referenceBlockSrc) => {
   const match = referenceBlockSrc.match(/alternatives:\s*\[([\s\S]*?)\]/);
@@ -5282,59 +5601,65 @@ test('Issue #DSF-04: the Segmented Control catalog gallery\'s Fixed caption trut
 // naming this same batch adds to HermexCardTests.swift/HermexRadioTests.swift/HermexCheckboxTests.swift
 // — a naming choice for this required mapping, not a constraint stated in the plan itself.
 
-test('DSF-07 (Batch B, RED): the Hermex Card gallery defines an explicit HERMEX_CARD_COLORS mapping derived from HERMES_COLOR_RAMPS.Neutral, mirroring the native HermexCardColors pairs, instead of hand-typed hex/rgba literals', () => {
+test('DSF-07 (Batch B) correction (Issue #607 follow-up): the Hermex Card gallery\'s HERMEX_CARD_COLORS mapping derives only the two real HermexCardColors surface roles from HERMES_COLOR_RAMPS.Neutral, instead of hand-typed hex/rgba literals or a retired component-local border role', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const objMatch = sectionsSrc.match(/const HERMEX_CARD_COLORS[\s\S]*?\};/);
   assert.ok(objMatch, 'expected a top-level HERMEX_CARD_COLORS object in hermesSections.tsx, derived from HERMES_COLOR_RAMPS.Neutral');
   const obj = objMatch[0];
   assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*50\s*\]/, 'expected the primary surface to derive from HERMES_COLOR_RAMPS.Neutral[50], mirroring native .adaptive(light: .s50, dark: .s950)');
   assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*100\s*\]/, 'expected the secondary/compact surface to derive from HERMES_COLOR_RAMPS.Neutral[100], mirroring native .adaptive(light: .s100, dark: .s900)');
-  assert.match(obj, /HERMES_COLOR_RAMPS\.Neutral\[\s*400\s*\]/, 'expected the standard border to derive from HERMES_COLOR_RAMPS.Neutral[400], mirroring native .adaptive(light: .s400, dark: .s600)');
   assert.doesNotMatch(obj, /#[0-9a-fA-F]{3,8}\b/, 'expected HERMEX_CARD_COLORS to derive from the ramp, not a hand-typed hex literal');
+  assert.doesNotMatch(obj, /standardBorder/, 'HermexCardColors declares no border role — DSR2-01 moved it to the shared HermexSurfaceBorderColors');
+  assert.doesNotMatch(obj, /increasedContrastBorder/, 'HermexCardColors declares no border role — DSR2-01 moved it to the shared HermexSurfaceBorderColors');
 });
 
-test('DSF-07 (Batch B, RED): the Hermex Card gallery styles for every cataloged variant (default/glass, request-opaque, outlined) use HERMEX_CARD_COLORS for background/border instead of local raw color literals', () => {
+test('DSF-07 (Batch B) correction (Issue #607 follow-up): the Hermex Card gallery styles for every cataloged variant (default/glass, request-opaque, outlined) use HERMEX_CARD_COLORS for background and the shared HERMEX_SURFACE_BORDER_COLORS for border, instead of local raw color literals or a retired HERMEX_CARD_COLORS border role', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
 
   const cardBox = extractStyleEntry(sectionsSrc, 'cardBox');
-  assert.match(cardBox, /HERMEX_CARD_COLORS/, 'expected cardBox (the default/glass and compact variants\' wrapper) to use HERMEX_CARD_COLORS instead of a raw rgba literal');
+  assert.match(cardBox, /HERMEX_CARD_COLORS\.primarySurface/, 'expected cardBox (the default/glass and compact variants\' wrapper) to use HERMEX_CARD_COLORS for its background instead of a raw rgba literal');
+  assert.match(cardBox, /HERMEX_SURFACE_BORDER_COLORS\.resting/, 'expected cardBox\'s border to use the shared HERMEX_SURFACE_BORDER_COLORS.resting role, not a retired HERMEX_CARD_COLORS border member');
   assert.doesNotMatch(cardBox, /rgba\(/, 'expected the raw rgba background/border literals to be gone from cardBox');
+  assert.doesNotMatch(cardBox, /HERMEX_CARD_COLORS\.standardBorder/, 'the retired HERMEX_CARD_COLORS.standardBorder member must be gone from cardBox');
 
   const cardBoxOpaque = extractStyleEntry(sectionsSrc, 'cardBoxOpaque');
-  assert.match(cardBoxOpaque, /HERMEX_CARD_COLORS/, 'expected cardBoxOpaque (the request-opaque variant) to use HERMEX_CARD_COLORS instead of a raw hex literal');
+  assert.match(cardBoxOpaque, /HERMEX_CARD_COLORS\.primarySurface/, 'expected cardBoxOpaque (the request-opaque variant) to use HERMEX_CARD_COLORS for its background instead of a raw hex literal');
+  assert.match(cardBoxOpaque, /HERMEX_SURFACE_BORDER_COLORS\.resting/, 'expected cardBoxOpaque\'s border to use the shared HERMEX_SURFACE_BORDER_COLORS.resting role, not a retired HERMEX_CARD_COLORS border member');
   assert.doesNotMatch(cardBoxOpaque, /#[0-9a-fA-F]{3,8}\b/, 'expected the raw hex background/border literal to be gone from cardBoxOpaque');
+  assert.doesNotMatch(cardBoxOpaque, /HERMEX_CARD_COLORS\.standardBorder/, 'the retired HERMEX_CARD_COLORS.standardBorder member must be gone from cardBoxOpaque');
 
   // The outlined variant currently relies entirely on the generic template Card's own
   // DS_SEMANTIC.border.light / DS_SEMANTIC.surface.white default — not an explicit Hermex Color
   // mapping. DSF-07 requires an explicit mapping for every variant, including outlined, so
-  // CardChromePreview itself must apply a HERMEX_CARD_COLORS-derived style override for it.
+  // CardChromePreview itself must apply a HERMEX_CARD_COLORS/HERMEX_SURFACE_BORDER_COLORS-derived
+  // style override for it.
   const cardChromePreviewBody = extractFunctionBody(sectionsSrc, 'CardChromePreview');
   assert.match(
     cardChromePreviewBody,
     /HERMEX_CARD_COLORS/,
-    'expected CardChromePreview to apply an explicit HERMEX_CARD_COLORS-derived style to the outlined Card (e.g. via its style prop), not rely solely on the generic template default'
+    'expected CardChromePreview to apply an explicit HERMEX_CARD_COLORS-derived background to the outlined Card (e.g. via its style prop), not rely solely on the generic template default'
+  );
+  assert.match(
+    cardChromePreviewBody,
+    /HERMEX_SURFACE_BORDER_COLORS/,
+    'expected CardChromePreview to apply the shared HERMEX_SURFACE_BORDER_COLORS border to the outlined Card instead of a retired HERMEX_CARD_COLORS border member'
   );
 });
 
-test('DSF-07 correction (RED): HERMEX_CARD_COLORS defines an increasedContrastBorder pair derived from the corrected HERMES_COLOR_RAMPS.Neutral[600] light anchor, with the dark counterpart (Neutral[400]) documented in the Hermes Card catalog entry since this static catalog renders only the light appearance', () => {
+test('DSF-07 correction (Issue #607 follow-up): HermexSurfaceBorderColors.resting/.increasedContrast — not a retired HermexCardColors.standardBorder/increasedContrastBorder — are documented in the Hermes Card catalog entry with their real light/dark Neutral anchors', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
-  const objMatch = sectionsSrc.match(/const HERMEX_CARD_COLORS[\s\S]*?\};/);
-  assert.ok(objMatch, 'expected a top-level HERMEX_CARD_COLORS object in hermesSections.tsx');
-  const obj = objMatch[0];
-  assert.match(obj, /increasedContrastBorder/, 'expected HERMEX_CARD_COLORS to define the fourth increasedContrastBorder pair its own Card notes already claim exists (the retired Neutral[500]/Neutral[500] pair was replaced with Neutral[600]/Neutral[400])');
-  assert.match(
-    obj,
-    /increasedContrastBorder:\s*HERMES_COLOR_RAMPS\.Neutral\[\s*600\s*\]/,
-    'expected the Increased Contrast border light anchor to derive from the corrected HERMES_COLOR_RAMPS.Neutral[600] (native light: .s600), not the retired Neutral[500]'
-  );
-
   const cardSection = extractHermesSection(sectionsSrc, 'Hermes Card');
   const implementationNotes = extractBraceBlock(cardSection, /implementationNotes:\s*\{/);
-  assert.match(
-    implementationNotes,
-    /Neutral(?:\.s?400|\[\s*400\s*\])|#AEAEB1/,
-    'expected the Hermes Card implementation notes to document the dark Increased Contrast border anchor (Neutral 400 / #AEAEB1), since this static catalog only renders the light Neutral[600] anchor'
-  );
+
+  assert.doesNotMatch(implementationNotes, /HermexCardColors\.(?:standardBorder|increasedContrastBorder)/, 'HermexCardColors does not define a border role');
+  assert.match(implementationNotes, /HermexSurfaceBorderColors\.resting/, 'expected the real resting border role to be named');
+  assert.match(implementationNotes, /HermexSurfaceBorderColors\.increasedContrast/, 'expected the real increasedContrast border role to be named');
+  // resting: light Neutral.s600 (#808084), dark Neutral.s400 (#AEAEB1) — this static catalog renders only the light anchor.
+  assert.match(implementationNotes, /Neutral\.s600 \/ #808084/i, 'expected the resting role\'s real light anchor (Neutral.s600 / #808084) to be documented');
+  assert.match(implementationNotes, /Neutral\.s400 \/ #AEAEB1/i, 'expected the resting role\'s real dark anchor (Neutral.s400 / #AEAEB1) to be documented, since this static catalog only renders the light anchor');
+  // increasedContrast: light Neutral.s800 (#58585B), dark Neutral.s200 (#DFDFE1).
+  assert.match(implementationNotes, /Neutral\.s800 \/ #58585B/i, 'expected the increasedContrast role\'s real light anchor (Neutral.s800 / #58585B) to be documented');
+  assert.match(implementationNotes, /Neutral\.s200 \/ #DFDFE1/i, 'expected the increasedContrast role\'s real dark anchor (Neutral.s200 / #DFDFE1) to be documented');
 });
 
 test('DSF-08/09 (Batch B, RED): the generic catalog Radio exposes an optional, backward-compatible color-configuration seam sufficient for Hermex selected/unselected colors, actually consumed by the rendered control, while its own default stays DS_SEMANTIC.emphasis.info when omitted', () => {
@@ -5424,7 +5749,7 @@ test('DSF-07/08/09 correction (RED): every non-500 Neutral pairing this batch co
   // Mirrors HERMES_COLOR_RAMPS.Neutral in hermesColorCatalogData.ts (pinned by the DSF-07 test
   // above via a regex against the real file); duplicated here as plain numbers because this test
   // only needs the contrast math, not the ramp's own source-of-truth definition.
-  const NEUTRAL = { 50: '#F9F9FA', 100: '#F1F1F2', 400: '#AEAEB1', 500: '#8E8E93', 600: '#808084', 900: '#434345', 950: '#2D2D2F' };
+  const NEUTRAL = { 50: '#F9F9FA', 100: '#F1F1F2', 200: '#DFDFE1', 400: '#AEAEB1', 500: '#8E8E93', 600: '#808084', 800: '#58585B', 900: '#434345', 950: '#2D2D2F' };
 
   function relativeLuminance(hex) {
     const clean = hex.replace('#', '');
@@ -5452,12 +5777,21 @@ test('DSF-07/08/09 correction (RED): every non-500 Neutral pairing this batch co
   assert.ok(contrastRatio(NEUTRAL[950], NEUTRAL[50]) >= 4.5, 'selected/selectedForeground must be >=4.5:1 in light appearance');
   assert.ok(contrastRatio(NEUTRAL[50], NEUTRAL[950]) >= 4.5, 'selected/selectedForeground must be >=4.5:1 in dark appearance');
 
-  // Card Increased Contrast border (corrected): light Neutral[600], dark Neutral[400], against both
-  // the primary (Neutral[50]/Neutral[950]) and secondary (Neutral[100]/Neutral[900]) Card surfaces.
-  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[50]) >= 3, 'light Increased Contrast border must be >=3:1 against the primary Card surface');
-  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[100]) >= 3, 'light Increased Contrast border must be >=3:1 against the secondary Card surface');
-  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[950]) >= 3, 'dark Increased Contrast border must be >=3:1 against the primary Card surface');
-  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[900]) >= 3, 'dark Increased Contrast border must be >=3:1 against the secondary Card surface');
+  // Card resting border (HermexSurfaceBorderColors.resting): light Neutral[600], dark Neutral[400],
+  // against both the primary (Neutral[50]/Neutral[950]) and secondary (Neutral[100]/Neutral[900])
+  // Card surfaces. (Issue #607 follow-up: this pair is .resting, not .increasedContrast — the prior
+  // comment/messages here mislabeled it.)
+  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[50]) >= 3, 'light resting border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[600], NEUTRAL[100]) >= 3, 'light resting border must be >=3:1 against the secondary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[950]) >= 3, 'dark resting border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[400], NEUTRAL[900]) >= 3, 'dark resting border must be >=3:1 against the secondary Card surface');
+
+  // Card Increased Contrast border (HermexSurfaceBorderColors.increasedContrast): light Neutral[800],
+  // dark Neutral[200], against both Card surfaces.
+  assert.ok(contrastRatio(NEUTRAL[800], NEUTRAL[50]) >= 3, 'light Increased Contrast border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[800], NEUTRAL[100]) >= 3, 'light Increased Contrast border must be >=3:1 against the secondary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[200], NEUTRAL[950]) >= 3, 'dark Increased Contrast border must be >=3:1 against the primary Card surface');
+  assert.ok(contrastRatio(NEUTRAL[200], NEUTRAL[900]) >= 3, 'dark Increased Contrast border must be >=3:1 against the secondary Card surface');
 
   // Documents, rather than silently forgets, the pairing this batch retires: the old light
   // unselectedBorder Neutral[400] measured ~2.1:1 against the primary surface and must not return
@@ -5889,16 +6223,26 @@ test('DSR3-03: the Details inspector\'s flat content order (Use when, Avoid when
 
 // ─── Task 8: Catalog specimen/metadata/guidance parity for DSR3-01, 05, 06, 07, 08, 09, 10 ─────────
 
-test('DSR3-01: the Composer Toolbar gallery reconstruction uses 16px all-around padding (not the stale 6px) and demonstrates an explicit 24px vertical divider specimen', () => {
+test('Issue #607 round 3/4: the Composer Toolbar gallery reconstruction uses 24px radius and 8px all-around padding (not the superseded 12px radius / 16px padding) and demonstrates an explicit 24px vertical divider specimen', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const elevatedStyleMatch = previewsSrc.match(/composerToolbarElevated:\s*\{[^}]*\}/);
   assert.ok(elevatedStyleMatch, 'expected a composerToolbarElevated style');
-  assert.match(elevatedStyleMatch[0], /padding:\s*16\b/, 'expected composerToolbarElevated.padding to be 16 (DSR3-01\'s HermesSpacing.s16 all-around padding)');
-  assert.doesNotMatch(elevatedStyleMatch[0], /padding:\s*6\b/, 'the stale 6px padding must be gone');
+  assert.match(elevatedStyleMatch[0], /padding:\s*DS_SPACING\[400\]/, 'expected composerToolbarElevated.padding to use DS_SPACING[400] (8px, matching native HermesSpacing.s8)');
+  assert.match(elevatedStyleMatch[0], /borderRadius:\s*DS_RADIUS\.large/, 'expected composerToolbarElevated.borderRadius to use DS_RADIUS.large (24px, matching native HermesRadius.r24)');
+  assert.doesNotMatch(elevatedStyleMatch[0], /padding:\s*16\b/, 'the superseded 16px padding must be gone');
+  assert.doesNotMatch(elevatedStyleMatch[0], /borderRadius:\s*12\b/, 'the superseded 12px radius must be gone');
 
   const galleryBody = extractFunctionBody(previewsSrc, 'ComposerToolbarFamilyGallery');
   assert.match(galleryBody, /Divider/, 'expected an explicit divider specimen inside the Composer Toolbar gallery');
   assert.match(previewsSrc, /composerToolbarDivider:\s*\{[^}]*height:\s*24\b/s, 'expected a 24px-tall vertical divider style, matching HermexComposerToolbarDivider\'s HermesSpacing.s24 visible height');
+});
+
+test('Issue #607: the Composer Toolbar gallery demonstrates mixed content — a display-only Tag/pill-like specimen alongside a real control — in the same toolbar row, not a button-only concept', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'ComposerToolbarFamilyGallery');
+  assert.match(galleryBody, /name="Elevated — mixed content"/, 'expected a mixed-content specimen in the Composer Toolbar gallery');
+  assert.match(galleryBody, /<TagSwatch\b/, 'expected the mixed-content specimen to include the display-only Tag reconstruction');
+  assert.match(galleryBody, /<Button\b/, 'expected the mixed-content specimen to include a real control');
 });
 
 test('DSR3-07: List/ListItem demonstrates a rounded, non-scaling pressed reconstruction (ListItemMetrics.cornerRadius / rounded surface, no scaleEffect/transform: scale) alongside the normal state, plus standard/none content-inset guidance', () => {
@@ -5922,11 +6266,20 @@ test('DSR3-06: the Popover Menu reconstruction uses one 16px shell inset and doe
   assert.doesNotMatch(previewsSrc, /popoverList:\s*\{[^}]*padding:/s, 'the List wrapper itself must not add a second, stacking horizontal inset on top of the 16px shell inset');
 });
 
-test('DSR3-08: the Accordion List gallery demonstrates both a leading-present and a no-leading header specimen', () => {
+test('DSR3-08: the Accordion List gallery demonstrates both a leading-present and a no-leading header specimen, and the reconstruction removes the leading column instead of leaving an empty avatar-width gap', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const galleryBody = extractFunctionBody(previewsSrc, 'AccordionListFamilyGallery');
   assert.match(galleryBody, /leading:\s*null/, 'expected a no-leading header specimen (leading: null)');
   assert.match(previewsSrc, /leading:\s*<Avatar/, 'expected the existing leading-present specimens to remain');
+
+  const accordionSrc = read('native/components/AccordionList/AccordionList.tsx');
+  assert.match(accordionSrc, /const hasLeading = header\.leading != null/, 'expected the reconstruction to detect whether a real leading view exists');
+  assert.match(accordionSrc, /leading=\{\s*hasLeading\s*\?[^:]+:\s*undefined\s*\}/s, 'expected a no-leading header to omit the fixed avatar-width slot entirely');
+  assert.match(accordionSrc, /hasLeading\s*&&\s*styles\.bodyRow/, 'expected no-leading body rows to omit the avatar-derived indentation');
+  assert.match(accordionSrc, /hasLeading\s*\?\s*styles\.bodyDividerInset\s*:\s*styles\.bodyDividerInsetNoLeading/, 'expected no-leading body dividers to use only the row text inset');
+
+  const swiftSrc = read('../HermesMobile/Features/Shared/AccordionList.swift');
+  assert.match(swiftSrc, /bodyLeadingInset\s*=\s*hasHeaderLeading\s*\?[^:]+:\s*HermesSpacing\.s0/, 'expected native AccordionList to keep zero avatar-derived body indent on the no-leading initializer path');
 });
 
 test('DSR3-09: the Selection Sheet gallery demonstrates both a multi-select horizontal and a multi-select vertical footer specimen', () => {
@@ -6170,4 +6523,781 @@ test('DSR3-607 round 4: an open specimen Details header raises its stacking cont
   const src = read(CATALOG_SPECIMEN_HEADER_PATH);
   assert.match(src, /style=\{\[styles\.root,\s*open\s*&&\s*styles\.rootOpen\]\}/);
   assert.match(src, /rootOpen:\s*\{[^}]*zIndex:\s*\d+/s);
+});
+
+// ─── Issue #607 Slice A: catalog-wide AI-readability completeness ───────────────────────────────
+// Every one of the 37 Hermex entries must carry: a non-empty canonicalSymbols list, at least one
+// Swift usageExample, explicit (possibly empty) compositionSlots/compositionConstraints, and either
+// tokenFacts (Foundations) or machineConfigurations (any other render()-based entry with no
+// data-driven variants/states) so the manifest never reports an empty behavioral surface.
+
+const HERMES_FOUNDATIONS_IDS = [
+  'Hermex Colors', 'Hermex Spacing', 'Hermex Typography', 'Hermex Font',
+  'Hermex Motion', 'Hermex Radius & Geometry', 'Hermex Shadow', 'Hermex Iconography',
+];
+
+function allHermesSectionIds(src) {
+  const ids = [...src.matchAll(/^ {2}\{\n {4}id: '([^']+)',/gm)].map((m) => m[1]);
+  assert.equal(ids.length, 37, `expected exactly 37 Hermex catalog entries, found ${ids.length}`);
+  return ids;
+}
+
+test('Issue #607 Slice A: types.ts declares HermesUsageExample, HermesMachineConfiguration, and HermesTokenFact, and HermesReferenceMeta exposes all four new structured fields', () => {
+  const typesSrc = read(TYPES_PATH);
+  assert.match(typesSrc, /export interface HermesUsageExample\s*\{[^}]*name:\s*string[^}]*language:\s*'swift'[^}]*code:\s*string/s);
+  assert.match(typesSrc, /export interface HermesMachineConfiguration\s*\{[^}]*name:\s*string/s);
+  assert.match(typesSrc, /export interface HermesTokenFact\s*\{[^}]*name:\s*string[^}]*value:\s*string/s);
+
+  const metaMatch = typesSrc.match(/export interface HermesReferenceMeta\s*\{[\s\S]*?\n\}/);
+  assert.ok(metaMatch, 'expected an exported HermesReferenceMeta interface');
+  const meta = metaMatch[0];
+  assert.match(meta, /canonicalSymbols\?:\s*string\[\]/);
+  assert.match(meta, /usageExamples\?:\s*HermesUsageExample\[\]/);
+  assert.match(meta, /machineConfigurations\?:\s*HermesMachineConfiguration\[\]/);
+  assert.match(meta, /tokenFacts\?:\s*HermesTokenFact\[\]/);
+});
+
+test('Issue #607 Slice A: manifest.ts serializes canonicalSymbols, usageExamples, machineConfigurations, and tokenFacts through to plain JSON', () => {
+  const manifestSrc = read('native/catalog/manifest.ts');
+  assert.match(manifestSrc, /canonicalSymbols\?:\s*string\[\]/);
+  assert.match(manifestSrc, /usageExamples\?:\s*HermesUsageExample\[\]/);
+  assert.match(manifestSrc, /machineConfigurations\?:\s*HermesMachineConfiguration\[\]/);
+  assert.match(manifestSrc, /tokenFacts\?:\s*HermesTokenFact\[\]/);
+  assert.match(manifestSrc, /canonicalSymbols:\s*meta\.canonicalSymbols/);
+  assert.match(manifestSrc, /usageExamples:\s*meta\.usageExamples/);
+  assert.match(manifestSrc, /machineConfigurations:\s*meta\.machineConfigurations/);
+  assert.match(manifestSrc, /tokenFacts:\s*meta\.tokenFacts/);
+});
+
+test('Issue #607 Slice A: exactly 37 Hermex entries exist, in the exact 8/1/1/23/4 Foundations/Materials/Native iOS/Components/Patterns group partition', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  const navMatch = src.match(/export const hermesNav:[\s\S]*?\n\];/);
+  assert.ok(navMatch, 'expected an exported hermesNav');
+  const groupBlocks = [...navMatch[0].matchAll(/label:\s*'([^']+)',[\s\S]*?ids:\s*\[([\s\S]*?)\],/g)];
+  const countsByLabel = Object.fromEntries(
+    groupBlocks.map(([, label, idsBlock]) => [label, [...idsBlock.matchAll(/'[^']+'/g)].length]),
+  );
+  assert.deepEqual(
+    countsByLabel,
+    { Foundations: 8, Materials: 1, 'Native iOS': 1, Components: 23, Patterns: 4 },
+    'expected the exact 8/1/1/23/4 group partition',
+  );
+  const totalGrouped = Object.values(countsByLabel).reduce((a, b) => a + b, 0);
+  assert.equal(totalGrouped, 37);
+  assert.equal(ids.length, 37);
+});
+
+test('Issue #607 Slice A: every one of the 37 Hermex entries declares a non-empty canonicalSymbols list and at least one Swift usageExample', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+
+    const symbolsSrc = extractBracketBlock(ref, /canonicalSymbols:\s*\[/);
+    const symbolNames = [...symbolsSrc.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]);
+    assert.ok(symbolNames.length > 0, `expected "${id}"'s canonicalSymbols to be non-empty`);
+    for (const name of symbolNames) {
+      assert.ok(name.trim().length > 0, `expected "${id}"'s canonicalSymbols entries to be non-empty strings`);
+    }
+
+    const examplesSrc = extractBracketBlock(ref, /usageExamples:\s*\[/);
+    const names = [...examplesSrc.matchAll(/name:\s*'([^']+)'/g)];
+    assert.ok(names.length > 0, `expected "${id}" to declare at least one usageExamples entry with a name`);
+    assert.match(examplesSrc, /language:\s*'swift'/, `expected "${id}"'s usageExamples to declare language: 'swift'`);
+    assert.match(examplesSrc, /code:\s*`[^`]+`/, `expected "${id}"'s usageExamples to declare non-empty code`);
+  }
+});
+
+test('Issue #607 Slice A: every one of the 37 Hermex entries declares explicit compositionSlots and compositionConstraints arrays (empty only for a genuinely atomic/token/native entry), with unique slot names and constraints that reference real slot names', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+
+    const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
+    const slotNames = [...slotsSrc.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => m[1]);
+    const uniqueSlotNames = new Set(slotNames);
+    assert.equal(slotNames.length, uniqueSlotNames.size, `expected "${id}"'s compositionSlots names to be unique, got [${slotNames.join(', ')}]`);
+
+    const constraintsSrc = extractBracketBlock(ref, /compositionConstraints:\s*\[/);
+    const constraintSlotNames = [...constraintsSrc.matchAll(/slots:\s*\[([^\]]*)\]/g)]
+      .flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((mm) => mm[1]));
+    for (const refName of constraintSlotNames) {
+      assert.ok(uniqueSlotNames.has(refName), `expected "${id}"'s compositionConstraints to reference a real slot name, got "${refName}" not in [${slotNames.join(', ')}]`);
+    }
+  }
+});
+
+// Splits an array literal's inner source (as returned by extractBracketBlock) into its own
+// top-level `{ ... }` object strings, tracking brace depth so a slot's own nested `layout: { ... }`
+// object doesn't end the split early — the per-slot counterpart to extractBracketBlock itself.
+function splitTopLevelObjects(arraySrc) {
+  const objects = [];
+  let depth = 0;
+  let start = -1;
+  for (let i = 0; i < arraySrc.length; i++) {
+    const c = arraySrc[i];
+    if (c === "'" || c === '"' || c === '`') {
+      const quote = c;
+      i += 1;
+      while (i < arraySrc.length && arraySrc[i] !== quote) {
+        if (arraySrc[i] === '\\') i += 1;
+        i += 1;
+      }
+      continue;
+    }
+    if (c === '{') {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (c === '}') {
+      depth -= 1;
+      if (depth === 0) objects.push(arraySrc.slice(start, i + 1));
+    }
+  }
+  return objects;
+}
+
+const HERMES_SLOT_ROLES = new Set([
+  'leading-icon', 'leading-accessory', 'leading-action', 'inline-accessory', 'primary-text',
+  'secondary-text', 'caption', 'metadata', 'body-content', 'header', 'center-content', 'footer',
+  'trailing-action', 'trailing-accessory', 'trigger', 'surface-content',
+]);
+const HERMES_SLOT_PLACEMENTS = new Set(['component-fixed', 'caller-ordered']);
+const HERMES_SLOT_AXES = new Set(['horizontal', 'vertical', 'none']);
+const HERMES_SLOT_OVERFLOWS = new Set(['wrap', 'clip', 'scroll', 'truncate', 'not-applicable']);
+const HERMES_SLOT_INTERACTION_OWNERSHIPS = new Set(['component-owned', 'child-owned', 'none']);
+const HERMES_SLOT_ACCESSIBILITY_OWNERSHIPS = new Set(['component-owned', 'child-owned', 'combined-element']);
+
+test('Issue #607 Slice B: every non-empty compositionSlots entry across all 37 Hermex entries declares a unique 0-based order, a role/overflow/interactionOwnership/accessibilityOwnership from their closed vocabularies, and a layout object with a valid placement/axis/position', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  let totalNonEmptySlotEntries = 0;
+  let entriesWithNonEmptySlots = 0;
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+    const slotsSrc = extractBracketBlock(ref, /compositionSlots:\s*\[/);
+    const slotObjects = splitTopLevelObjects(slotsSrc);
+    if (slotObjects.length === 0) continue;
+    entriesWithNonEmptySlots += 1;
+
+    const orders = [];
+    for (const slotSrc of slotObjects) {
+      totalNonEmptySlotEntries += 1;
+      const nameMatch = slotSrc.match(/name:\s*'([^']+)'/);
+      const slotName = nameMatch ? nameMatch[1] : '<unknown>';
+      const label = `"${id}".compositionSlots["${slotName}"]`;
+
+      const orderMatch = slotSrc.match(/order:\s*(\d+)/);
+      assert.ok(orderMatch, `expected ${label} to declare a numeric order`);
+      orders.push(Number(orderMatch[1]));
+
+      const roleMatch = slotSrc.match(/role:\s*'([^']+)'/);
+      assert.ok(roleMatch, `expected ${label} to declare a role`);
+      assert.ok(HERMES_SLOT_ROLES.has(roleMatch[1]), `expected ${label}'s role "${roleMatch[1]}" to be in the closed HermesCompositionSlotRole vocabulary`);
+
+      const overflowMatch = slotSrc.match(/overflow:\s*'([^']+)'/);
+      assert.ok(overflowMatch, `expected ${label} to declare overflow`);
+      assert.ok(HERMES_SLOT_OVERFLOWS.has(overflowMatch[1]), `expected ${label}'s overflow "${overflowMatch[1]}" to be in the closed HermesCompositionOverflow vocabulary`);
+
+      const interactionMatch = slotSrc.match(/interactionOwnership:\s*'([^']+)'/);
+      assert.ok(interactionMatch, `expected ${label} to declare interactionOwnership`);
+      assert.ok(HERMES_SLOT_INTERACTION_OWNERSHIPS.has(interactionMatch[1]), `expected ${label}'s interactionOwnership "${interactionMatch[1]}" to be in the closed vocabulary`);
+
+      const accessibilityMatch = slotSrc.match(/accessibilityOwnership:\s*'([^']+)'/);
+      assert.ok(accessibilityMatch, `expected ${label} to declare accessibilityOwnership`);
+      assert.ok(HERMES_SLOT_ACCESSIBILITY_OWNERSHIPS.has(accessibilityMatch[1]), `expected ${label}'s accessibilityOwnership "${accessibilityMatch[1]}" to be in the closed vocabulary`);
+
+      const layoutMatch = slotSrc.match(/layout:\s*\{([^}]*)\}/);
+      assert.ok(layoutMatch, `expected ${label} to declare a layout object`);
+      const layoutSrc = layoutMatch[1];
+      const placementMatch = layoutSrc.match(/placement:\s*'([^']+)'/);
+      assert.ok(placementMatch && HERMES_SLOT_PLACEMENTS.has(placementMatch[1]), `expected ${label}'s layout.placement to be in the closed vocabulary`);
+      const axisMatch = layoutSrc.match(/axis:\s*'([^']+)'/);
+      assert.ok(axisMatch && HERMES_SLOT_AXES.has(axisMatch[1]), `expected ${label}'s layout.axis to be in the closed vocabulary`);
+      const positionMatch = layoutSrc.match(/position:\s*(?:'([^']+)'|"([^"]+)")/);
+      assert.ok(positionMatch && (positionMatch[1] ?? positionMatch[2]).trim().length > 0, `expected ${label}'s layout.position to be a non-empty string`);
+    }
+
+    const uniqueOrders = new Set(orders);
+    assert.equal(orders.length, uniqueOrders.size, `expected "${id}"'s compositionSlots order values to be unique, got [${orders.join(', ')}]`);
+    const sorted = [...orders].sort((a, b) => a - b);
+    assert.deepEqual(sorted, orders.map((_, i) => i).length === orders.length ? [...Array(orders.length).keys()] : sorted, `expected "${id}"'s compositionSlots order values to be a stable 0-based sequence, got [${orders.join(', ')}]`);
+  }
+
+  assert.ok(entriesWithNonEmptySlots > 0, 'expected at least one entry with non-empty compositionSlots to exercise this test');
+  assert.ok(totalNonEmptySlotEntries > 0, 'expected at least one compositionSlots entry to exercise this test');
+});
+
+test('Issue #607 Slice B: every one of the 37 Hermex entries declares non-empty implementationNotes.sourcePaths, and every cited path exists in the repository (resolved repo-root-relative, or catalog-relative for a "native/..." catalog reconstruction path)', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+  const REPO_ROOT = path.join(ROOT, '..');
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+    const notes = extractBraceBlock(ref, /implementationNotes:\s*\{/);
+    const sourcePathsMatch = notes.match(/sourcePaths:\s*\[([\s\S]*?)\]/);
+    assert.ok(sourcePathsMatch, `expected "${id}" to declare implementationNotes.sourcePaths`);
+    const sourcePaths = [...sourcePathsMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    assert.ok(sourcePaths.length > 0, `expected "${id}" to cite at least one source path`);
+    for (const sourcePath of sourcePaths) {
+      const resolved = sourcePath.startsWith('native/') ? path.join(ROOT, sourcePath) : path.join(REPO_ROOT, sourcePath);
+      assert.ok(existsSync(resolved), `expected cited source path "${sourcePath}" (from "${id}") to exist in the repository`);
+    }
+  }
+});
+
+// ─── Issue #607 AI-readability semantic-accuracy correction ─────────────────────────────────────
+// A canonical symbol or Swift usage example that names or calls something absent from the entry's
+// own cited Swift source is worse than no guidance at all — it sends an agent chasing a symbol or
+// call shape that will not compile. These two contracts catch that error class directly: every
+// canonicalSymbols entry must resolve to a real declaration in its own entry's cited Swift source
+// (or a short, individually reviewed platform-API exception below), and a short, explicit denylist
+// of the fabricated symbols/call shapes found in the semantic-accuracy audit must never reappear.
+
+// Real Apple-framework APIs a Hermex component composes but does not itself declare — reviewed
+// individually, not a general escape hatch. Each is the exact canonicalSymbols string the one entry
+// below declares for a documented platform modifier.
+const HERMES_CANONICAL_SYMBOL_PLATFORM_EXCEPTIONS = new Set([
+  '.popover(isPresented:)', // Hermes Tooltip: native SwiftUI presentation modifier, not a Hermex declaration.
+]);
+
+// Strips a canonicalSymbols string down to the bare identifiers a declaration search can match:
+// drops a leading `.` (callable modifier/property syntax), truncates at the first `(` (parameter
+// labels aren't declaration text — `appFont(role:)` and `appFont(_:)` strip to the same `appFont`),
+// and splits a dotted nested-type/member path (`AppFont.Role`) into segments.
+function normalizeCanonicalSymbol(raw) {
+  let s = raw.startsWith('.') ? raw.slice(1) : raw;
+  const parenIdx = s.indexOf('(');
+  if (parenIdx !== -1) s = s.slice(0, parenIdx);
+  return s.split('.').filter(Boolean);
+}
+
+// A segment is "declared" when the concatenated cited Swift source contains a declaration keyword
+// immediately before it — how Swift actually introduces a name — rather than merely containing the
+// word somewhere (a comment, a string, or another symbol's name as a substring).
+function canonicalSymbolSegmentIsDeclared(segment, swiftSource) {
+  const declarationPattern = new RegExp(`\\b(?:struct|class|enum|protocol|func|case|let|var)\\s+${segment}\\b`);
+  return declarationPattern.test(swiftSource);
+}
+
+test('Issue #607 AI-readability correction: every canonicalSymbols entry resolves to a real declaration in its own entry\'s cited Swift source, or is a reviewed platform-API exception', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+  const REPO_ROOT = path.join(ROOT, '..');
+
+  let totalSymbols = 0;
+  let totalExceptions = 0;
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+
+    const notes = extractBraceBlock(ref, /implementationNotes:\s*\{/);
+    const sourcePathsMatch = notes.match(/sourcePaths:\s*\[([\s\S]*?)\]/);
+    const sourcePaths = sourcePathsMatch ? [...sourcePathsMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [];
+    const swiftSourcePaths = sourcePaths.filter((p) => p.endsWith('.swift'));
+    const swiftSource = swiftSourcePaths.map((p) => readFileSync(path.join(REPO_ROOT, p), 'utf8')).join('\n');
+
+    const symbolsSrc = extractBracketBlock(ref, /canonicalSymbols:\s*\[/);
+    const symbolNames = [...symbolsSrc.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]);
+
+    for (const rawSymbol of symbolNames) {
+      totalSymbols += 1;
+      if (HERMES_CANONICAL_SYMBOL_PLATFORM_EXCEPTIONS.has(rawSymbol)) {
+        totalExceptions += 1;
+        continue;
+      }
+      assert.ok(swiftSourcePaths.length > 0, `expected "${id}" to cite at least one .swift source path to resolve canonicalSymbols against`);
+
+      const segments = normalizeCanonicalSymbol(rawSymbol);
+      assert.ok(segments.length > 0, `expected "${id}"'s canonicalSymbols entry "${rawSymbol}" to normalize to at least one identifier segment`);
+      assert.ok(
+        canonicalSymbolSegmentIsDeclared(segments[0], swiftSource),
+        `expected "${id}"'s canonicalSymbols entry "${rawSymbol}" (base identifier "${segments[0]}") to resolve to a real declaration in its cited Swift source [${swiftSourcePaths.join(', ')}] — a filename or concept is not a Swift symbol`,
+      );
+      for (const nested of segments.slice(1)) {
+        assert.ok(
+          new RegExp(`\\b${nested}\\b`).test(swiftSource),
+          `expected "${id}"'s canonicalSymbols entry "${rawSymbol}"'s nested/member segment "${nested}" to appear in its cited Swift source`,
+        );
+      }
+    }
+  }
+
+  assert.ok(totalSymbols > 0, 'expected at least one canonicalSymbols entry to exercise this test');
+  assert.ok(totalExceptions <= 1, 'expected the reviewed platform-API exception set to stay small and explicit, not grow into a general escape hatch');
+});
+
+test('Issue #607 AI-readability correction: known fabricated Swift symbols and call shapes from the semantic-accuracy audit never reappear in the catalog', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+
+  // Each entry is a verbatim snippet from the pre-correction catalog, confirmed fabricated against
+  // its own cited Swift source during the Issue #607 semantic-accuracy audit (wrong argument label,
+  // a type that does not exist, or a member that does not exist on the named type).
+  const FORBIDDEN_SNIPPETS = [
+    '.appFont(role:',                                   // real modifier is `.appFont(_:)` — no `role:` label.
+    'AttachmentTile(',                                  // no such type; AttachmentTile.swift declares AttachmentFileGlyph/AttachmentFileBadge/etc.
+    "'AttachmentTile'",
+    'SkeletonPlaceholder(',                             // the real View type is `Skeleton`; `.skeletonPlaceholder()` is the modifier.
+    "'SkeletonPlaceholder'",
+    'HermexCard(',                                      // no such type; the real API is the `.hermexCardSurface(_:cornerRadius:)` modifier.
+    'variant: .neutral',                                // HermexBanner's first parameter is positional `_ semantic: Semantic`, case `.offline`.
+    'checked: isChecked',                               // HermexCheckbox's property is `isChecked`, not `checked`.
+    'HermexBottomSheet(title:',                          // HermexBottomSheet's first parameter is positional `_ title:`.
+    'HeaderLogoColor(hex:',                              // HeaderLogoColor is an enum namespace, not an initializable type; use `.color(for:)`.
+    '.hermexSearch(title:',                              // real modifier is `.hermexSearch(_:text:prompt:isEnabled:onSubmit:)`.
+    'TranscriptTurnFolding\'',                           // no such type; TranscriptTurnFolding.swift declares TranscriptTurnFolds et al.
+    'ComposerChipRendering.image(for:',                  // real signature is `.image(label:icon:metrics:traits:isRightToLeft:usesAccentIcon:)`.
+    '.modifier(AdaptiveGlassModifier(',                  // private type; the public API is the `.adaptiveGlass(...)` modifier function.
+    "'AdaptiveGlassModifier'",                           // private type must not be listed as a canonical (externally constructible) symbol.
+    'HermesShadow.controlElevatedResting.lightOpacity',  // HermesShadow is an enum case; `.lightOpacity`/`.radius`/`.y` only exist on `.resolved(for:)`.
+    'HermexCardColors.standardBorder',                   // retired by DSR2-01; border roles live on the shared HermexSurfaceBorderColors.resting/.increasedContrast.
+    'HermexCardColors.increasedContrastBorder',          // retired by DSR2-01; border roles live on the shared HermexSurfaceBorderColors.resting/.increasedContrast.
+    "'ServerAvatarBadge'",                               // private struct (SettingsView.swift); must not be listed as a canonical (externally constructible) symbol.
+  ];
+
+  for (const needle of FORBIDDEN_SNIPPETS) {
+    assert.ok(!src.includes(needle), `expected the known-fabricated snippet ${JSON.stringify(needle)} to never reappear in hermesSections.tsx`);
+  }
+});
+
+// ─── Issue #607 Slice B: generated checked-in manifest ──────────────────────────────────────────
+
+const HERMEX_MANIFEST_PATH = 'hermex-manifest.json';
+const GENERATE_MANIFEST_SCRIPT_PATH = 'scripts/generate-hermex-manifest.mjs';
+
+test('Issue #607 Slice B: README.md and WHEN_TO_USE.md document the generated manifest, its freshness check, and the design-system-guide lookup/select/receipt commands', () => {
+  const readme = read('README.md');
+  const whenToUse = read('WHEN_TO_USE.md');
+  for (const doc of [readme, whenToUse]) {
+    assert.match(doc, /hermex-manifest\.json/, 'expected the doc to name the generated manifest file');
+    assert.match(doc, /generate-hermex-manifest\.mjs/, 'expected the doc to name the generator script');
+    assert.match(doc, /design-system-guide/, 'expected the doc to name the lookup/receipt CLI');
+  }
+  assert.match(whenToUse, /receipt/, 'expected WHEN_TO_USE.md to document the receipt subcommand');
+});
+
+test('Issue #607 Slice B: hermex-manifest.json exists, is fresh (matches `generate-hermex-manifest.mjs --check`), and is byte-stable across repeated checks', () => {
+  assert.ok(existsSync(path.join(ROOT, GENERATE_MANIFEST_SCRIPT_PATH)), 'expected the manifest generator script to exist');
+  assert.ok(existsSync(path.join(ROOT, HERMEX_MANIFEST_PATH)), 'expected the checked-in hermex-manifest.json to exist');
+
+  const before = read(HERMEX_MANIFEST_PATH);
+  const run = () => execFileSync(process.execPath, [GENERATE_MANIFEST_SCRIPT_PATH, '--check'], { cwd: ROOT, encoding: 'utf8' });
+  assert.doesNotThrow(() => run(), 'expected `--check` to pass against the checked-in manifest');
+  assert.doesNotThrow(() => run(), 'expected a second `--check` run to also pass, proving `--check` never mutates the file');
+  const after = read(HERMEX_MANIFEST_PATH);
+  assert.equal(after, before, 'expected hermex-manifest.json bytes to stay unchanged across repeated --check runs');
+});
+
+test('Issue #607 Slice B: hermex-manifest.json is a versioned envelope with the exact 37-entry / 8-1-1-23-4 category parity, two-space indentation, and a trailing newline', () => {
+  const raw = read(HERMEX_MANIFEST_PATH);
+  assert.ok(raw.endsWith('\n') && !raw.endsWith('\n\n'), 'expected exactly one trailing newline');
+  assert.doesNotMatch(raw, /\t/, 'expected two-space indentation, not tabs');
+
+  const envelope = JSON.parse(raw);
+  assert.equal(envelope.schemaVersion, 1);
+  assert.equal(envelope.runtime.productionRuntime, 'swiftui');
+  assert.equal(envelope.runtime.catalogRuntime, 'react-native-documentation-reconstruction');
+  assert.equal(envelope.entries.length, 37);
+
+  const countsByCategory = {};
+  for (const entry of envelope.entries) countsByCategory[entry.category] = (countsByCategory[entry.category] ?? 0) + 1;
+  assert.deepEqual(countsByCategory, { Foundations: 8, Materials: 1, 'Native iOS': 1, Components: 23, Patterns: 4 });
+
+  for (const entry of envelope.entries) {
+    assert.ok(entry.displayName && entry.displayName.length > 0, `expected "${entry.id}" to carry a non-empty displayName`);
+  }
+});
+
+test('Issue #607 Slice B: hermex-manifest.json is generated from the live hermesSections/hermesNav source, not a hand-maintained duplicate — generate-hermex-manifest.mjs requires the real hermesSections.tsx/manifest.ts exports rather than re-parsing or re-declaring the catalog data', () => {
+  const generatorSrc = read(GENERATE_MANIFEST_SCRIPT_PATH);
+  assert.match(generatorSrc, /hermesSections\.tsx/);
+  assert.match(generatorSrc, /manifest\.ts/);
+  assert.match(generatorSrc, /buildHermesManifestEnvelope/);
+  assert.doesNotMatch(generatorSrc, /JSON\.parse\(.*hermesSections/, 'expected the generator to require() the real module, not parse its source text');
+});
+
+test('Issue #607 Slice B: the manifest generator stubs React and its JSX runtime as well as React Native, so CI freshness checking does not depend on the later gitignored design-system-catalog/node_modules symlink', () => {
+  const generatorSrc = read(GENERATE_MANIFEST_SCRIPT_PATH);
+  assert.match(
+    generatorSrc,
+    /STUBBED_PACKAGE_PREFIXES\s*=\s*\[[^\]]*'react'/s,
+    'expected the metadata-only loader to intercept react and react/jsx-runtime before Node module resolution',
+  );
+  assert.match(generatorSrc, /'react-native'/, 'expected the existing React Native inert stub coverage to remain');
+});
+
+test('Issue #607 Slice A: every Foundations entry declares non-empty structured tokenFacts (name + value), reusing this catalog\'s own existing typed token data rather than a second hand-maintained catalogue', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  for (const id of HERMES_FOUNDATIONS_IDS) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+    const tokenFactsSrc = extractBracketBlock(ref, /tokenFacts:\s*\[/);
+    const names = [...tokenFactsSrc.matchAll(/name:\s*/g)];
+    assert.ok(names.length > 0, `expected "${id}" to declare at least one tokenFacts entry`);
+    assert.match(tokenFactsSrc, /value:\s*/, `expected "${id}"'s tokenFacts entries to declare a value`);
+  }
+});
+
+test('Issue #607 Slice A: every non-Foundations entry whose live catalog uses a custom render() function with no data-driven variants/states declares non-empty machineConfigurations, so the manifest never reports an empty behavioral surface', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  for (const id of ids) {
+    if (HERMES_FOUNDATIONS_IDS.includes(id)) continue;
+    const section = extractHermesSection(src, id);
+    const hasRender = /\brender:\s*\(\)\s*=>/.test(section);
+    const hasVariantsOrStates = /\n {4}variants:\s*\{/.test(section) || /\n {4}states:\s*\{/.test(section);
+    if (!hasRender || hasVariantsOrStates) continue;
+
+    const ref = extractHermesReferenceBlock(section);
+    const configsSrc = extractBracketBlock(ref, /machineConfigurations:\s*\[/);
+    const names = [...configsSrc.matchAll(/name:\s*'([^']+)'/g)];
+    assert.ok(names.length > 0, `expected "${id}" to declare at least one non-empty machineConfigurations entry`);
+  }
+});
+
+test('Issue #607 Slice A: every declared alternative name resolves to a current Hermex entry\'s own display name/id or an explicitly reviewed native-platform/current-production alternative', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ids = allHermesSectionIds(src);
+
+  const displayNames = new Set();
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    displayNames.add(id);
+    const displayNameMatch = section.match(/^ {4}displayName:\s*'([^']+)',/m);
+    if (displayNameMatch) displayNames.add(displayNameMatch[1]);
+  }
+
+  const REVIEWED_NATIVE_OR_PRODUCTION_PATTERN = /\(production\)$|^Native /;
+
+  for (const id of ids) {
+    const section = extractHermesSection(src, id);
+    const ref = extractHermesReferenceBlock(section);
+    const altNames = extractAlternativeNames(ref);
+    for (const name of altNames) {
+      assert.ok(
+        displayNames.has(name) || REVIEWED_NATIVE_OR_PRODUCTION_PATTERN.test(name),
+        `expected "${id}"'s alternative "${name}" to resolve to a current entry display name or an explicitly reviewed native/production alternative`,
+      );
+    }
+  }
+});
+
+// ─── Issue #607 final catalog correction pass (controller-dispositioned content + visual fixes) ──
+// Every test below pins one Fable content finding or one Opus visual finding from
+// .codex-tmp/final-audits-20261001/{fable-content-audit,opus-visual-audit}.normalized.json. Grouped
+// by entry, content first then visual, matching the controller's disposition list.
+
+test('Correction (#607 final pass, Dialog): useWhen states the one-bounded-decision rule and avoidWhen routes a several-settings task to Bottom Sheet/Selection Sheet and anchored actions to Popover Menu', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Dialog'));
+
+  assert.doesNotMatch(ref, /piece of information/, 'useWhen must no longer position Dialog as an information container');
+  assert.match(ref, /\bone\b.{0,20}bounded decision|one decision/i, 'expected useWhen to state the one-bounded-decision rule');
+  assert.match(ref, /Confirm\/Cancel|one or two choices|one or two actions/i, 'expected useWhen to allow exactly one or two choices for that one decision');
+
+  assert.match(ref, /Bottom Sheet/, 'expected avoidWhen to route a several-settings task to Bottom Sheet');
+  assert.match(ref, /Selection Sheet/, 'expected avoidWhen to route a several-settings task to Selection Sheet');
+  assert.match(ref, /Popover Menu/, 'expected avoidWhen/alternatives to name Popover Menu for a short list of anchored actions');
+
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Hermes Popover Menu') || alts.includes('Popover Menu'), 'expected Dialog to add Popover Menu as a structured alternative');
+  assert.ok(alts.includes('Hermes Selection Sheet') || alts.includes('Selection Sheet'), 'expected Dialog to add Selection Sheet as a structured alternative');
+});
+
+test('Correction (#607 final pass, Bottom Sheet): useWhen states a real product job (short form, editable content, multi-option selection/configuration, or a longer scrolling flow), drops the confirmation-flow collision with Dialog, and names Dialog/Selection Sheet as alternatives', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Bottom Sheet');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.match(ref, /more than one decision/i, 'expected useWhen to state the more-than-one-decision product job');
+  assert.match(ref, /multi-option selection|configuration workflow|configure.{0,20}settings/i, 'expected useWhen to name multi-option selection/configuration as a job');
+  assert.doesNotMatch(section, /a picker, a short form, or a confirmation flow/, 'expected the stale, Dialog-colliding whenToUse clause to be gone');
+  assert.doesNotMatch(ref, /next approved, separate Dialog family/, 'expected the stale "next approved, separate Dialog family" wording to be gone now that Dialog ships in this branch');
+
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Hermes Dialog') || alts.includes('Dialog'), 'expected Bottom Sheet to name Dialog as an alternative');
+  assert.ok(alts.includes('Hermes Selection Sheet') || alts.includes('Selection Sheet'), 'expected Bottom Sheet to name Selection Sheet as an alternative');
+});
+
+test('Correction (#607 final pass, Popover Menu): avoidWhen excludes informational content and navigation surfaces, and Tooltip is named as the anchored-information alternative', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Popover Menu'));
+
+  assert.match(ref, /information|explanatory/i, 'expected avoidWhen to exclude informational/explanatory content');
+  assert.match(ref, /navigation surface|destination/i, 'expected avoidWhen to exclude a general navigation surface');
+  assert.match(ref, /Tooltip/, 'expected Tooltip to be named as the anchored-information alternative');
+
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Hermes Tooltip') || alts.includes('Tooltip'), 'expected Popover Menu to add Tooltip as a structured alternative');
+});
+
+test('Correction (#607 final pass, Selection Sheet): alternatives name Bottom Sheet for a several-independent-settings task instead of forcing it into one option list', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Selection Sheet'));
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Bottom Sheet'), 'expected Selection Sheet to name Bottom Sheet as an alternative');
+  assert.match(ref, /independent settings|several settings|fixed option list/i, 'expected the Bottom Sheet alternative to state the one-option-list-vs-several-settings boundary');
+});
+
+test('Correction (#607 final pass, Search): the Text Input alternative states the real query-vs-kept-value boundary, routing any filter/lookup field (even inline) to Search', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Search'));
+  assert.doesNotMatch(ref, /inline filter or lookup field that is not attached to a navigation surface/, 'expected the stale Text-Input-bound inline-filter wording to be gone');
+  assert.match(ref, /name.{0,15}URL.{0,15}credential|credential.{0,15}code/is, 'expected the corrected Text Input alternative to name a kept value such as name/URL/credential/code');
+  assert.match(ref, /even inline/i, 'expected the corrected alternative to state that an inline filter is still Search');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Text Input'), 'expected Search to keep Text Input as the named alternative');
+});
+
+test('Correction (#607 final pass, Avatar): useWhen matches real Swift — ServerAvatarBadge, HermexAvatar (system-image only), and Bots\' own face system — never a fabricated generic image/icon/initials Avatar API', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Avatar'));
+  assert.doesNotMatch(ref, /generic catalog Avatar's own image\/icon\/initials precedence/, 'expected the fabricated generic Avatar API recommendation to be gone');
+  assert.match(ref, /ServerAvatarBadge/, 'expected useWhen to name ServerAvatarBadge for server/account initials identity');
+  assert.match(ref, /HermexAvatar/, 'expected useWhen to name HermexAvatar for a system-image badge at a named size');
+  assert.match(ref, /no (?:image or initials mode|photo or initials mode)/i, 'expected useWhen to state HermexAvatar has no image/initials mode');
+});
+
+test('Correction (#607 final pass, Colors): useWhen routes a new Hermex component surface/border to the contrast-validated Neutral pairs, not a raw platform color, while keeping text/status bound to Apple system Color', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Colors'));
+  assert.doesNotMatch(ref, /For surfaces, text, borders, and status colors, use the Apple system Color/, 'expected the stale surfaces-use-platform-color sentence to be corrected');
+  assert.match(ref, /Color\(\.label\)/, 'expected text/status colors to stay bound to the real Apple system Color (existing coverage)');
+  assert.match(ref, /HermexCardColors/, 'expected useWhen to name HermexCardColors for card fills');
+  assert.match(ref, /HermexSurfaceBorderColors/, 'expected useWhen to name HermexSurfaceBorderColors for borders');
+  assert.match(ref, /HermexSelectionControlColors/, 'expected useWhen to name HermexSelectionControlColors for selection controls');
+  assert.match(ref, /rather than a raw platform color|never a raw platform color/i, 'expected useWhen to state the component-scoped-pair-over-platform-color rule');
+});
+
+test('Correction (#607 final pass, Content Unavailable): alternatives name Skeleton Loading for a loading state that should preserve replacing-content layout', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Content Unavailable'));
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Skeleton Loading'), 'expected Content Unavailable to name Skeleton Loading as an alternative');
+  assert.match(ref, /preserve.{0,20}layout|known geometry/i, 'expected the Skeleton Loading alternative to state the known-geometry boundary');
+});
+
+test('Correction (#607 final pass, Tooltip): alternatives name Popover Menu for an anchored action list instead of explanatory content', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermes Tooltip'));
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Hermes Popover Menu') || alts.includes('Popover Menu'), 'expected Tooltip to name Popover Menu as an alternative');
+});
+
+test('Correction (#607 final pass, Composer): the Text Input alternative no longer sends multiline text to Text Input, since Text Input\'s own entry states TextEditor is not one of its variants', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Composer'));
+  assert.doesNotMatch(ref, /ordinary single- or multi-line field outside the chat composer — TextField\/TextEditor/, 'expected the Text Input alternative to stop claiming TextEditor as a Text Input variant');
+  const alts = extractAlternativeNames(ref);
+  assert.ok(alts.includes('Text Input'), 'expected Composer to keep Text Input as the named alternative');
+});
+
+test('Correction (#607 final pass, Font): useWhen states a deciding condition rather than meta-commentary about the entry itself', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const ref = extractHermesReferenceBlock(extractHermesSection(src, 'Hermex Font'));
+  assert.doesNotMatch(ref, /This entry states one rule/, 'expected the meta-commentary opening to be replaced by a deciding condition');
+  assert.match(ref, /never pass weight or design/i, 'expected useWhen to still state the underlying rule');
+});
+
+// ─── Visual/source corrections (Opus) ─────────────────────────────────────────────────────────
+
+test('Correction (#607 final pass, Card): CardChromePreview no longer renders the SectionCard-style uppercase title above the title-less Request/Compact surface modifiers', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const cardChromePreviewBody = extractFunctionBody(sectionsSrc, 'CardChromePreview');
+  assert.doesNotMatch(
+    cardChromePreviewBody,
+    /recon\.cardTitle\}>\{title\}<\/Text>\s*\n\s*<View style=\{!isOutlined/,
+    'expected the external recon.cardTitle caption to stop rendering unconditionally above every non-outlined kind',
+  );
+  const section = extractHermesSection(sectionsSrc, 'Hermes Card');
+  assert.match(section, /<CardChromePreview[^>]*kind="request"/);
+  assert.match(section, /<CardChromePreview[^>]*kind="compact"/);
+});
+
+test('Correction (#607 final pass, Attachment): each mapped file type renders a visually distinct icon (not one generic glyph everywhere), a spreadsheet/tablecells example exists, and the failure specimen no longer depicts a caller-owned Retry control', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'AttachmentTileGallery');
+
+  const iconNames = [...body.matchAll(/<Icon\b[^>]*name="([^"]+)"/g)].map((m) => m[1]);
+  const distinctFileIconNames = new Set(iconNames.filter((n) => n !== 'alert-circle' && n !== 'triangle-alert'));
+  assert.ok(distinctFileIconNames.size >= 3, `expected at least 3 visually distinct file-type icon names, got: ${[...distinctFileIconNames].join(', ')}`);
+
+  assert.match(body, /spreadsheet/i, 'expected a spreadsheet example in the Attachment gallery');
+  assert.match(body, new RegExp('HERMES_COLOR_RAMPS\\.Green\\[500\\]'), 'expected the spreadsheet example to use the documented Green 500 tint');
+
+  assert.doesNotMatch(body, /label="Retry"/, 'expected the caller-owned Retry control to be removed from the foundation-only Attachment family (smallest accurate result)');
+  assert.doesNotMatch(body, /preview\.attachmentRetry/, 'expected the retired attachmentRetry style reference to be gone from the gallery');
+});
+
+test('Correction (#607 final pass, Attachment prose): no longer claims a Retry Button as part of this foundation family\'s failure specimen', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Attachment');
+  assert.doesNotMatch(section, /plus a Retry Button/, 'expected the Attachment section prose to stop claiming a Retry Button in its failure specimen');
+});
+
+test('Correction (#607 final pass, Popover Menu visual): the destructive row no longer renders a visible trailing "Destructive" text accessory; the real native row keeps the meaning in an accessibility hint only', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'PopoverMenuFamilyGallery');
+  assert.doesNotMatch(body, /popoverDestructiveText/, 'expected the visible trailing "Destructive" text accessory style to be removed from the destructive row');
+  assert.doesNotMatch(body, />\s*Destructive\s*</, 'expected no visible "Destructive" text node in the gallery');
+});
+
+test('Correction (#607 final pass, List/ListItem): the Picker configuration depicts native standard selection chrome with a filled primary pill and an automatic inverse checkmark, not a caller-owned accent check', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'ListItemFamilyGallery');
+  const pickerStart = body.indexOf('Picker configuration');
+  assert.notEqual(pickerStart, -1, 'expected the Picker configuration specimen to still exist');
+  const pickerSectionSrc = body.slice(pickerStart, pickerStart + 1200);
+  assert.doesNotMatch(pickerSectionSrc, /trailing=\{<Text[^>]*>✓<\/Text>\}/, 'expected the checkmark to stop masquerading as caller-owned trailing accessory content');
+  assert.match(pickerSectionSrc, /<ListItemSelectedRowDemo\s+label="GPT-5\.1"/, 'expected a native-faithful static reconstruction of standard selected-row chrome');
+
+  const selectedBody = extractFunctionBody(previewsSrc, 'ListItemSelectedRowDemo');
+  assert.match(selectedBody, /listItemSelectedPill/, 'expected the selected row to use the filled selection-pill surface');
+  assert.match(selectedBody, /listItemSelectedForeground/, 'expected the selected title and automatic checkmark to use the inverse foreground');
+});
+
+test('Correction (#607 final pass, Selection Sheet): Done renders the primary emphasis and Cancel the secondary emphasis in both footer axes, matching HermexSelectionSheet.multiFooter', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'SelectionSheetMultiFooterDemo');
+  assert.doesNotMatch(body, /variant="tertiary"\s+label="Cancel"/, 'expected Cancel to stop using the borderless tertiary variant');
+  const doneMatches = [...body.matchAll(/variant="([a-z]+)"\s+label="Done"/g)].map((m) => m[1]);
+  const cancelMatches = [...body.matchAll(/variant="([a-z]+)"\s+label="Cancel"/g)].map((m) => m[1]);
+  assert.equal(doneMatches.length, 2, 'expected exactly two Done buttons (horizontal + vertical axis)');
+  assert.equal(cancelMatches.length, 2, 'expected exactly two Cancel buttons (horizontal + vertical axis)');
+  for (const variant of doneMatches) assert.equal(variant, 'primary', 'expected Done to use the primary emphasis in every axis');
+  for (const variant of cancelMatches) assert.equal(variant, 'secondary', 'expected Cancel to use the secondary emphasis in every axis');
+});
+
+test('Correction (#607 final pass, Transcript Log Row): the collapsed row orders the chevron before the compact status glyph (status at the extreme trailing edge), and a statically expanded specimen exists', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'TranscriptLogRowPreview');
+  assert.doesNotMatch(body, /fontWeight:\s*'700',\s*color:\s*'#34C759'/, 'expected the wide bold green status word styling to be gone');
+  const chevronIndex = body.indexOf('<DisclosureChevron');
+  const statusIndex = body.search(/logStatus/i);
+  assert.notEqual(chevronIndex, -1, 'expected the chevron to still render');
+  assert.notEqual(statusIndex, -1, 'expected a status element to still render');
+  assert.ok(chevronIndex < statusIndex, 'expected the chevron to precede the status glyph so status sits at the extreme trailing edge');
+  assert.match(body, /Expanded/i, 'expected a statically expanded specimen label');
+});
+
+test('Banner visual follow-up: every text region uses the AA semantic foreground, status icons use the native 16pt size in a first-line box, and Offline keeps its orange full-width treatment', () => {
+  const bannerSrc = read('native/components/Banner/Banner.tsx');
+  assert.match(
+    bannerSrc,
+    /styles\.title,\s*styles\.titleFlex,\s*\{\s*marginBottom:\s*0\s*\},\s*\{\s*color:\s*contentTextColor\s*\}/,
+    'expected title and description-only text to use the per-variant semantic foreground',
+  );
+  assert.match(
+    bannerSrc,
+    /styles\.description,\s*styles\.descriptionPad,\s*\{\s*color:\s*contentTextColor\s*\}/,
+    'expected supporting description text to use the same per-variant semantic foreground',
+  );
+  assert.doesNotMatch(bannerSrc, /linkText:[\s\S]{0,120}color:/, 'expected inline Banner links to inherit the semantic foreground rather than switching to a generic blue');
+  assert.match(bannerSrc, /size=\{DS_ICON_SIZE\.sm\}/, 'expected the status icon to use the native HermexBanner 16pt small size');
+  assert.match(bannerSrc, /statusIconLineBox:[\s\S]{0,180}height:\s*DS_TYPOGRAPHY\.labelSm\.lineHeight[\s\S]{0,100}justifyContent:\s*'center'/, 'expected the status icon to be centered in the title first-line box while the row itself remains top-aligned');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const bannerGalleryBody = extractFunctionBody(previewsSrc, 'BannerFamilyGallery');
+  assert.doesNotMatch(bannerGalleryBody, /variant="neutral"\s+icon="alert-circle"/, 'expected the Offline specimen to stop using neutral/alert-circle');
+  assert.match(bannerGalleryBody, /icon="(?:wifi-slash|triangle-alert|info-circle)"[\s\S]{0,40}Offline|Offline[\s\S]{0,120}icon="(?:wifi-slash|triangle-alert|info-circle)"/, 'expected the Offline specimen to carry a distinct, non-alert-circle icon override');
+});
+
+test('Correction (#607 final pass, Row Divider): a 16pt row-aligned leading-inset specimen is depicted alongside the default s0 specimen', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'HermexDividerPreview');
+  assert.match(body, /leadingInset=\{?16\}?|leadingInset.*16|marginLeft:\s*16/i, 'expected a visible 16pt leading-inset specimen');
+});
+
+test('Correction (#607 final pass, Text Input): the field label renders as the primary subheadline-semibold treatment, visibly distinct from the footnote helper/error style', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'HermexTextInputFamilyGallery');
+  assert.doesNotMatch(body, /style=\{preview\.caption\}>Name<\/Text>/, 'expected the Name field label to stop using the quiet caption style');
+  assert.doesNotMatch(body, /style=\{preview\.caption\}>Password<\/Text>/, 'expected the Password field label to stop using the quiet caption style');
+  assert.match(body, /style=\{preview\.fieldLabel\}>Name<\/Text>/, 'expected the Name field label to use the distinct, semibold primary field-label style');
+  assert.match(body, /style=\{preview\.fieldLabel\}>Password<\/Text>/, 'expected the Password field label to use the distinct, semibold primary field-label style');
+
+  const fieldLabelStyle = previewsSrc.match(/fieldLabel:\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(fieldLabelStyle, /fontWeight:\s*'600'/, 'expected the field label style to be semibold');
+  assert.match(fieldLabelStyle, /fontSize:\s*15\b/, 'expected the field label style to use the subheadline size (15)');
+});
+
+test('Correction (#607 final pass, Dialog visual): the horizontal footer buttons size intrinsically and hug the trailing edge, with no flex: 1 stretching', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  assert.doesNotMatch(previewsSrc.match(/dialogFooterButton:\s*\{[^}]*\}/)?.[0] ?? '', /flex:\s*1/, 'expected the dialogFooterButton style to drop flex: 1 so actions size intrinsically');
+});
+
+test('Correction (#607 final pass, Buttons): Neutral composes a subtle fill with no border, and Secondary keeps that fill plus an explicit border, so the two are distinguishable by border alone', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'ButtonDecisionAndTactilePreview');
+  assert.doesNotMatch(body, /label="Neutral"\s+variant="tertiary"/, 'expected Neutral to stop using the fill-less tertiary variant');
+  assert.match(body, /label="Neutral"\s+variant="secondary"/, 'expected Neutral to compose the generic secondary variant for its subtle fill');
+  assert.match(body, /label="Not now"\s+variant="secondary"\s+size="medium"\s+style=\{preview\.buttonSecondaryBordered\}/, 'expected the Secondary specimen to add an explicit border style distinguishing it from Neutral');
+});
+
+test('Correction (#607 final pass, Toast): no invented vertical divider renders between the message and action, and the action prop description drops its divider claim', () => {
+  const toastSrc = read('native/components/Toast/Toast.tsx');
+  assert.match(toastSrc, /showDivider/, 'expected an explicit, backward-compatible showDivider seam on the generic Toast');
+
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const toastGalleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
+  assert.match(toastGalleryBody, /showDivider=\{false\}/, 'expected the Hermex Toast specimen to suppress the generic divider');
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const toastSection = extractHermesSection(sectionsSrc, 'Hermes Toast');
+  assert.doesNotMatch(toastSection, /separated from the message by a vertical divider/, 'expected the action prop description to drop its divider claim');
+});
+
+test('Correction (#607 final pass, Tooltip visual): the trigger label describes a tap, not press-and-hold, and the anchored content surface is statically depicted', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const body = extractFunctionBody(previewsSrc, 'TooltipFamilyGallery');
+  assert.doesNotMatch(body, /Press and hold the info glyph/, 'expected the press-and-hold heading to be replaced with tap-trigger wording');
+  assert.match(body, /\btap\b/i, 'expected the heading to describe the real tap trigger');
+  assert.match(body, /280|max-?width/i, 'expected a statically-depicted content surface naming the 280pt max width');
+});
+
+test('Correction (#607 final controller follow-up, Banner metadata): Offline maps to the native .offline semantic instead of neutral plus an icon override', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Hermes Banner');
+  const ref = extractHermesReferenceBlock(section);
+
+  assert.doesNotMatch(section, /Offline uses neutral with an icon override/i);
+  assert.doesNotMatch(ref, /name:\s*'Offline'[\s\S]{0,120}variant:\s*'neutral'/i);
+  assert.match(section, /Offline[\s\S]{0,120}\.offline/i, 'expected the catalog metadata to name the real native Offline semantic');
+});
+
+test('Correction (#607 final controller follow-up, Search boundary): filter and lookup queries are Search regardless of whether the field sits in navigation, a list, a sheet, or a card', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const searchRef = extractHermesReferenceBlock(extractHermesSection(sectionsSrc, 'Search'));
+  const textInputRef = extractHermesReferenceBlock(extractHermesSection(sectionsSrc, 'Text Input'));
+
+  assert.match(searchRef, /query that filters or looks up content/i);
+  assert.match(searchRef, /sheet or card/i);
+  assert.doesNotMatch(textInputRef, /For a field attached to a navigation surface or searchable list/i);
+  assert.match(textInputRef, /query that filters or looks up content/i);
+});
+
+test('Correction (#607 final controller follow-up, Toast visual): every rendered Hermex Toast specimen suppresses the generic catalog divider', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+  const galleryBody = extractFunctionBody(previewsSrc, 'ToastFamilyGallery');
+  const motionBody = extractFunctionBody(previewsSrc, 'ToastMotionDemo');
+  const staticToastTags = [...galleryBody.matchAll(/<Toast\b[\s\S]*?\/>/g)].map((match) => match[0]);
+
+  assert.equal(staticToastTags.length, 5, 'expected the four semantic specimens plus the trailing-action specimen');
+  for (const tag of staticToastTags) {
+    assert.match(tag, /showDivider=\{false\}/, `expected every Hermex Toast specimen to suppress the generic divider: ${tag}`);
+  }
+  assert.match(motionBody, /<Toast\b[\s\S]*?showDivider=\{false\}[\s\S]*?\/>/, 'expected the motion specimen to suppress the generic divider too');
 });

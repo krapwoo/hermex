@@ -9,12 +9,12 @@ import SwiftUI
 /// one of the two must be present, guarded by a debug/runtime invariant. This suite also pins zero
 /// production adoption in this branch and the DEBUG overlay lab's deterministic Banner fixtures.
 ///
-/// This suite is written before `HermexBanner.swift` exists and before `HermexOverlayLab.swift`
-/// adopts it, so most of the contracts below are expected to fail red through
-/// one explicit, readable XCTest assertion rather than a raw file-not-found/compile error — mirroring
-/// the established pattern in `HermexSelectionSheetTests`/`HermexComposerToolbarTests`. A handful of
-/// preservation contracts (composer status priority order, the dismiss action's icon/label, voice
-/// status surfaces) pin behavior that must survive the coming change and are expected to already pass.
+/// Non-directly-observable behavior (the conditional title/description rendering, the guard against
+/// both being absent, the accessibility-containment branch) stays a source contract read against the
+/// shared file itself via `hermexBannerSource()`, mirroring the established pattern in
+/// `HermexSelectionSheetTests`/`HermexComposerToolbarTests`. A handful of preservation contracts
+/// (composer status priority order, the dismiss action's icon/label, voice status surfaces) pin
+/// behavior that must survive this change and remain passing throughout.
 final class HermexBannerTests: XCTestCase {
     private static let bannerSourcePath = "HermesMobile/Features/Shared/HermexBanner.swift"
     private static let legacyBannerSourcePath = "HermesMobile/Features/Shared/Banner.swift"
@@ -51,6 +51,34 @@ final class HermexBannerTests: XCTestCase {
         return try? String(contentsOf: url, encoding: .utf8)
     }
 
+    private func relativeLuminance(hex: String) -> Double {
+        let digits = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+        let scanner = Scanner(string: digits)
+        var value: UInt64 = 0
+        scanner.scanHexInt64(&value)
+        let channels = [
+            Double((value & 0xFF0000) >> 16) / 255,
+            Double((value & 0x00FF00) >> 8) / 255,
+            Double(value & 0x0000FF) / 255,
+        ].map { channel in
+            channel <= 0.03928 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+    }
+
+    private func contrastRatio(_ foreground: String, backgroundRGB: (Double, Double, Double)) -> Double {
+        let foregroundLuminance = relativeLuminance(hex: foreground)
+        let backgroundHex = String(
+            format: "#%02X%02X%02X",
+            Int((backgroundRGB.0 * 255).rounded()),
+            Int((backgroundRGB.1 * 255).rounded()),
+            Int((backgroundRGB.2 * 255).rounded())
+        )
+        let backgroundLuminance = relativeLuminance(hex: backgroundHex)
+        return (max(foregroundLuminance, backgroundLuminance) + 0.05)
+            / (min(foregroundLuminance, backgroundLuminance) + 0.05)
+    }
+
     // MARK: - Pure model contracts: semantics, presentation, and content combinations
 
     func testEverySemanticHasATintAndADefaultIcon() {
@@ -61,6 +89,57 @@ final class HermexBannerTests: XCTestCase {
         XCTAssertEqual(HermexBanner.Semantic.offline.tint, .orange)
 
         XCTAssertEqual(HermexBanner.Semantic.offline.defaultIcon, "wifi.slash")
+    }
+
+    func testEverySemanticDeclaresAnAdaptiveForegroundFromItsOwnColorFamily() throws {
+        guard let src = hermexBannerSource() else { return }
+        for expectedPair in [
+            "HermesColorRamp.Blue.s800, dark: HermesColorRamp.Blue.s300",
+            "HermesColorRamp.Gold.s950, dark: HermesColorRamp.Gold.s300",
+            "HermesColorRamp.Red.s800, dark: HermesColorRamp.Red.s300",
+            "HermesColorRamp.Green.s900, dark: HermesColorRamp.Green.s300",
+            "HermesColorRamp.Orange.s900, dark: HermesColorRamp.Orange.s300",
+        ] {
+            XCTAssertTrue(src.contains(expectedPair), "expected Banner semantic foreground pair: \(expectedPair)")
+        }
+    }
+
+    func testSemanticForegroundPairsClearWCAGAAAgainstAnyTwelvePercentTintOverLightOrDarkBase() {
+        let foregroundPairs = [
+            ("information", HermesColorRamp.Blue.s800.hex, HermesColorRamp.Blue.s300.hex),
+            ("warning", HermesColorRamp.Gold.s950.hex, HermesColorRamp.Gold.s300.hex),
+            ("error", HermesColorRamp.Red.s800.hex, HermesColorRamp.Red.s300.hex),
+            ("success", HermesColorRamp.Green.s900.hex, HermesColorRamp.Green.s300.hex),
+            ("offline", HermesColorRamp.Orange.s900.hex, HermesColorRamp.Orange.s300.hex),
+        ]
+        let lightBackgroundCorners = [0.88, 1.0].flatMap { red in
+            [0.88, 1.0].flatMap { green in
+                [0.88, 1.0].map { blue in (red, green, blue) }
+            }
+        }
+        let darkBackgroundCorners = [0.0, 0.12].flatMap { red in
+            [0.0, 0.12].flatMap { green in
+                [0.0, 0.12].map { blue in (red, green, blue) }
+            }
+        }
+
+        for (name, lightForeground, darkForeground) in foregroundPairs {
+            let lightMinimum = lightBackgroundCorners.map { contrastRatio(lightForeground, backgroundRGB: $0) }.min() ?? 0
+            let darkMinimum = darkBackgroundCorners.map { contrastRatio(darkForeground, backgroundRGB: $0) }.min() ?? 0
+            XCTAssertGreaterThanOrEqual(lightMinimum, 4.5, "expected \(name) light foreground to clear WCAG AA")
+            XCTAssertGreaterThanOrEqual(darkMinimum, 4.5, "expected \(name) dark foreground to clear WCAG AA")
+        }
+    }
+
+    func testEveryBannerTextAndIconRegionUsesTheSemanticForeground() throws {
+        guard let src = hermexBannerSource() else { return }
+        XCTAssertEqual(
+            src.components(separatedBy: ".foregroundStyle(semantic.foreground)").count - 1,
+            5,
+            "expected leading icon, title, description, action title, and action icon to use the semantic foreground"
+        )
+        XCTAssertFalse(src.contains(".foregroundStyle(.primary)"))
+        XCTAssertFalse(src.contains(".foregroundStyle(.secondary)"))
     }
 
     func testInitializerAcceptsIndependentOptionalTitleAndDescription() {
@@ -234,8 +313,8 @@ final class HermexBannerTests: XCTestCase {
             "expected a semantic default icon, so meaning is never conveyed by color tint alone"
         )
         XCTAssertTrue(
-            src.contains(".foregroundStyle(semantic.tint)"),
-            "expected tint to style the existing icon/text, not stand alone as the only semantic signal"
+            src.contains(".foregroundStyle(semantic.foreground)"),
+            "expected the contrast-validated semantic foreground to style the existing icon/text, not stand alone as the only semantic signal"
         )
     }
 

@@ -17,9 +17,18 @@ decision contract in `native/catalog/hermes/hermesSections.tsx` (the `hermesRefe
 Those four fields render live in the catalog under the exact labels **Use when** / **Avoid when** /
 **Alternatives** / **Adoption status** (`HermesReferenceDetails`), and the same facts are available
 as plain JSON from the catalog's own machine-readable manifest (`HermesOverview` → "Machine-readable
-manifest", built via `buildComponentManifest()` in `native/catalog/manifest.ts`) for a tool or agent
-instead of a human. Read an entry's own fields there before guessing from its name or description
-alone — this file exists to explain *the decision model*, not to duplicate every entry's prose.
+manifest", built via `buildHermesManifestEnvelope()` wrapping the shared `buildComponentManifest()` in
+`native/catalog/manifest.ts`) for a tool or agent instead of a human. Every entry's `hermesReference`
+also carries `canonicalSymbols` (the native Swift symbols to search for), at least one Swift
+`usageExamples` entry, explicit `compositionSlots`/`compositionConstraints`, and — for a Foundations
+token group — structured `tokenFacts`, so an agent can select and compose an entry from the manifest
+alone. That manifest is checked in, generated, at `design-system-catalog/hermex-manifest.json`
+(regenerate with `node scripts/generate-hermex-manifest.mjs`; `--check` is what CI runs), and the
+repo-root `scripts/design-system-guide` reads only that file to answer a ranked lookup, an exact
+`--select`, and a structured decision `receipt` — see "Checking a decision mechanically" below.
+Read an entry's own fields there before guessing from its name or
+description alone — this file exists to explain *the decision model*, not to duplicate every entry's
+prose.
 
 ## The decision model in practice
 
@@ -84,8 +93,11 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   its own — the caller decides when to act on a complete code.
 - **Composer Toolbar** — `HermexComposerToolbar` is a new, foundation-available Components entry
   with zero production adoption: the current Chat/Bots composer toolbars keep their own separate,
-  unmigrated `ComposerToolbarScroller` unchanged. It is one horizontally scrollable row of arbitrary
-  caller content in an elevated or transparent appearance, and never owns a Send/Stop-style action.
+  unmigrated `ComposerToolbarScroller` unchanged. It is one ordered, zero-or-more arbitrary-content
+  slot — not a button-only concept — laid out in one horizontally scrollable row (elevated or
+  transparent appearance), mixing generic views, controls, and display-only content (e.g. a Tag)
+  freely; it never owns a Send/Stop-style action. The elevated appearance's radius is the explicit
+  `HermesRadius.r24` token, and its all-around padding is `HermesSpacing.s8`.
 - **Composer Chip** — documented inside the Composer pattern, not as a standalone component: it is
   production's real, already-adopted inline text-embedded reference subsystem
   (`ComposerChipToken`/`ComposerChipRendering`/`ComposerChipTextView`) for a recognized skill,
@@ -95,6 +107,27 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   surfaces on the platform primitive (`.searchable`) rather than a custom component. Their
   `adoptionStatus` is `native-platform`, not `foundation-available` — there is no Hermex-owned
   alternative to adopt later, by design.
+
+## Checking a decision mechanically
+
+Before adding a new frontend literal, a new/customized component, or a lookalike of an existing one,
+run `scripts/design-system-guide` (repo root) against the checked-in `hermex-manifest.json`:
+
+```sh
+scripts/design-system-guide "exclusive selection"                 # ranked human-readable lookup
+scripts/design-system-guide --json "exclusive selection"          # same, machine-readable
+scripts/design-system-guide --select "Hermes Radio"               # exact entry by id or display name
+scripts/design-system-guide receipt \
+  --query "exclusive selection" --select "Hermes Radio" \
+  --reject "Segmented Control::Use for compact two-to-five option switching, not a longer form group." \
+  --new-component no \
+  --new-component-reason "Hermes Radio already models one choice from a mutually exclusive group."
+```
+
+The `receipt` subcommand's output — query, selected entry, every rejected alternative with a reason,
+and whether a new token/component is actually needed — is what goes in the owning issue/PR/handoff
+(see `AGENTS.md` § Design System). It is evidence a decision was checked against the catalog, not an
+automatic approval gate: nothing blocks on it, and the maintainer can still override it.
 
 ## Reading an entry's `adoptionStatus`
 

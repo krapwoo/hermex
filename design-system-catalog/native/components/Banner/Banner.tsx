@@ -86,8 +86,10 @@ export function Banner({
           <>
             {pressed && <View style={styles.pressOverlay} pointerEvents="none" />}
             <View style={styles.headerRow}>
-              <Icon name={iconName} size={DS_ICON_SIZE.xs} color={contentTextColor} />
-              <Text style={[styles.title, styles.titleFlex, { color: contentTextColor, marginBottom: 0 }]}>
+              <View style={styles.statusIconLineBox}>
+                <Icon name={iconName} size={DS_ICON_SIZE.sm} color={contentTextColor} />
+              </View>
+              <Text style={[styles.title, styles.titleFlex, { marginBottom: 0 }, { color: contentTextColor }]}>
                 {title}
               </Text>
               <AnimatedChevron expanded={expanded} size={DS_ICON_SIZE.xs} color={contentTextColor} />
@@ -117,27 +119,47 @@ export function Banner({
   }
 
   // ── Standard callout (title + description) ────────────────────────────────────
+  // The description/link content, shared by two possible positions below: the header row's
+  // primary text position when title is absent (so a description-only banner never renders an
+  // icon-only header plus an indented second row), and the indented second row when title is
+  // present (descriptionPad aligns its first line under the title, in line with the icon+gap).
+  const descriptionNode = description || link ? (
+    <>
+      {description ?? ''}
+      {description && link ? ' ' : null}
+      {link ? (
+        <Text style={styles.linkText} onPress={link.onPress} accessibilityRole="link">
+          {link.label}
+        </Text>
+      ) : null}
+    </>
+  ) : null;
+
   const body = (pressed: boolean) => (
     <>
       {onPress && pressed && <View style={styles.pressOverlay} pointerEvents="none" />}
-      <View style={styles.headerRow}>
-        <Icon name={iconName} size={DS_ICON_SIZE.xs} color={contentTextColor} />
+      <View style={[styles.headerRow, styles.standardHeaderRow]}>
+        <View style={styles.statusIconLineBox}>
+          <Icon name={iconName} size={DS_ICON_SIZE.sm} color={contentTextColor} />
+        </View>
         {title ? (
-          <Text style={[styles.title, styles.titleFlex, { color: contentTextColor, marginBottom: 0 }]}>
+          <Text style={[styles.title, styles.titleFlex, { marginBottom: 0 }, { color: contentTextColor }]}>
             {title}
           </Text>
+        ) : descriptionNode ? (
+          <Text style={[styles.title, styles.titleFlex, { marginBottom: 0 }, { color: contentTextColor }]}>
+            {descriptionNode}
+          </Text>
         ) : null}
-        {trailingIcon ? <Icon name={trailingIcon} size={DS_ICON_SIZE.xs} color={contentTextColor} /> : null}
+        {trailingIcon ? (
+          <View style={styles.statusIconLineBox}>
+            <Icon name={trailingIcon} size={DS_ICON_SIZE.sm} color={contentTextColor} />
+          </View>
+        ) : null}
       </View>
-      {description || link ? (
+      {title && descriptionNode ? (
         <Text style={[styles.description, styles.descriptionPad, { color: contentTextColor }]}>
-          {description ?? ''}
-          {description && link ? ' ' : null}
-          {link ? (
-            <Text style={styles.linkText} onPress={link.onPress} accessibilityRole="link">
-              {link.label}
-            </Text>
-          ) : null}
+          {descriptionNode}
         </Text>
       ) : null}
       {action ? (
@@ -192,12 +214,8 @@ const styles = StyleSheet.create({
   actionLabel: {
     ...DS_TYPOGRAPHY.labelSm,
   },
-  // Was undistinguished from the surrounding description text (just inherited its color via
-  // nested-Text color inheritance) — underline alone with no color difference is easy to miss at a
-  // glance and gives nothing to fall back on if the underline is ever dropped.
   linkText: {
     textDecorationLine: 'underline',
-    color: DS_SEMANTIC.text.link,
   },
   // Callout: the header carries the top + horizontal padding so the pressed state fills it; the
   // bottom padding lives on the container (constant) so nothing jumps when toggling — only the
@@ -216,9 +234,25 @@ const styles = StyleSheet.create({
     paddingTop: DS_SPACING[800],
     paddingHorizontal: DS_SPACING[800],
   },
+  // Production HermexBanner uses HStack(alignment: .top). Keep this on the standard reconstruction
+  // only: a multi-line description-only message starts beside the icon rather than centering the
+  // icon against the entire text block, while the separate collapsible catalog example keeps its
+  // own centered disclosure-row geometry.
+  standardHeaderRow: {
+    alignItems: 'flex-start',
+  },
+  // The native Banner pairs a 16pt icon with subheadline text. The SVG reconstruction needs an
+  // explicit first-line box so its visual center aligns with the 20px title line while a multi-line
+  // description-only message still keeps the icon beside its first line, not the whole text block.
+  statusIconLineBox: {
+    width: DS_ICON_SIZE.sm,
+    height: DS_TYPOGRAPHY.labelSm.lineHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   title: {
     ...DS_TYPOGRAPHY.labelSm,
-    color: DS_SEMANTIC.text.regular,
     marginBottom: DS_SPACING[200],
   },
   titleFlex: {
@@ -226,12 +260,11 @@ const styles = StyleSheet.create({
   },
   description: {
     ...DS_TYPOGRAPHY.bodySm,
-    color: DS_SEMANTIC.text.regular,
   },
   descriptionPad: {
     // Start-aligns with the title: headerRow padding (800) + icon + gap (400). Logical start/end
     // (not left/right) so the indent follows the icon+title when the layout mirrors in RTL.
-    paddingStart: DS_SPACING[800] + DS_ICON_SIZE.xs + DS_SPACING[400],
+    paddingStart: DS_SPACING[800] + DS_ICON_SIZE.sm + DS_SPACING[400],
     paddingEnd: DS_SPACING[800],
     paddingTop: DS_SPACING[200],
   },

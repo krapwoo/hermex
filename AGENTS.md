@@ -98,6 +98,17 @@ truth lives in `native/catalog/hermes/hermesSections.tsx`, not duplicated prose.
 (useWhen/avoidWhen/alternatives/adoptionStatus, props, variants, states) must change in the same PR as
 the shared Swift API it documents — see `CONTRIBUTING.md` § Hermex Design System.
 
+Before introducing a new frontend literal, a new/customized component, or a lookalike of an existing
+one — in the production app or the catalog — run `scripts/design-system-guide "<what you're trying to
+build>"` (or `--json` for the machine-readable form) against the checked-in, generated
+`design-system-catalog/hermex-manifest.json` and include its `receipt` output in the owning issue, PR,
+or handoff: `scripts/design-system-guide receipt --query "..." --select "<entry>" --reject "<rejected
+entry>::<reason>" --new-component yes|no --new-component-reason "<reason>"`. The receipt is evidence
+that the decision was checked against the catalog, not an automatic approval gate — it does not block
+anything by itself, and the maintainer can still override it. Regenerate the manifest (`node
+design-system-catalog/scripts/generate-hermex-manifest.mjs`) in the same PR as any catalog metadata
+change; CI fails if it drifts (`--check`).
+
 ## Working with the server
 
 - There is no in-repo dev server. Hermex is developed against a self-hosted `hermes-webui` reachable over real HTTPS; `curl https://<your-server>/health` before debugging the client. For simulator-only work `http://localhost:8787` works when the server runs on the same Mac. Setup options live in `DEVELOPMENT.md`.

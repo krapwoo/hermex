@@ -252,8 +252,14 @@ jobs:
       - name: Install design-system-catalog dependencies
         run: npm ci --prefix design-system-catalog/native-preview
 
+      - name: Check hermex-manifest.json freshness against the live catalog source
+        run: node design-system-catalog/scripts/generate-hermex-manifest.mjs --check
+
       - name: Run design-system-catalog Node contract test
         run: node --test design-system-catalog/test/hermes-catalog.test.mjs
+
+      - name: Run the design-system-guide lookup/receipt contract tests
+        run: python3 -m unittest scripts.tests.test_design_system_guide -v
 
       - name: Typecheck design-system-catalog/native-preview
         run: |

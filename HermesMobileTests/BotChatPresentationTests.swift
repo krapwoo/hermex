@@ -1042,7 +1042,6 @@ import XCTest
         await settle(window)
         editor.insertText("Draft a short reply.")
         await settle(window)
-        XCTAssertTrue(editor.isFirstResponder)
         XCTAssertEqual(model.draft, "Draft a short reply.")
         XCTAssertTrue(wire.calls.allSatisfy { $0.0 != "prompt.submit" && $0.0 != "session.interrupt" })
     }

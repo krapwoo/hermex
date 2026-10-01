@@ -282,6 +282,16 @@ struct HermexOverlayLab: View {
             .padding(HermexCardMetrics.contentPadding)
             .hermexCardSurface(.outlined)
             .accessibilityIdentifier("overlay-lab-composer-toolbar-transparent")
+
+            // One ordered, zero-or-more arbitrary-content slot, not a button-only concept: mixes a
+            // display-only Tag with a real control in the same row to demonstrate that.
+            Text(verbatim: "Elevated, mixed content").font(.subheadline.weight(.semibold))
+            HermexComposerToolbar(appearance: .elevated) {
+                Tag(label: "Draft", tint: .orange, size: .compact)
+                Button("Model") {}
+                    .buttonStyle(.hermex(.small, emphasis: .secondary))
+            }
+            .accessibilityIdentifier("overlay-lab-composer-toolbar-mixed-content")
         }
     }
 }

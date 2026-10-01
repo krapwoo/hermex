@@ -26,6 +26,10 @@ REQUIRED_CATALOG_PATHS = [
     "design-system-catalog/native-preview/LICENSE",
     "design-system-catalog/native-preview/assets/icon.png",
     "design-system-catalog/native-preview/dist/index.html",
+    "design-system-catalog/hermex-manifest.json",
+    "design-system-catalog/scripts/generate-hermex-manifest.mjs",
+    "scripts/design-system-guide",
+    "scripts/tests/test_design_system_guide.py",
 ]
 
 # Dependency, generated, evidence, planning, and agent-runtime artifacts that must never land
@@ -118,6 +122,16 @@ class DesignSystemCatalogRepositoryTests(unittest.TestCase):
             r"design-system-catalog/native-preview[\s\S]{0,400}npx tsc --noEmit",
             "PR CI must typecheck the in-repository native-preview package",
         )
+        self.assertIn(
+            "node design-system-catalog/scripts/generate-hermex-manifest.mjs --check",
+            workflow,
+            "PR CI must fail when hermex-manifest.json drifts from the live hermesSections/hermesNav source",
+        )
+        self.assertIn(
+            "python3 -m unittest scripts.tests.test_design_system_guide -v",
+            workflow,
+            "PR CI must run the design-system-guide lookup/receipt contract tests",
+        )
 
     def test_pr_ci_treats_catalog_only_changes_as_skipping_the_macos_suite_while_keeping_the_contract_job(self):
         workflow = read(".github/workflows/pr-ci.yml")
@@ -184,6 +198,18 @@ class DesignSystemCatalogRepositoryTests(unittest.TestCase):
             contributing + development,
             r"does not (?:rewrite code|prove every production screen (?:is|has been) migrated)",
         )
+
+    def test_agents_contributing_and_development_docs_describe_the_design_system_guide_workflow(self):
+        agents = read("AGENTS.md")
+        contributing = read("CONTRIBUTING.md")
+        development = read("DEVELOPMENT.md")
+        self.assertIn("design-system-guide", agents)
+        self.assertIn("receipt", agents)
+        self.assertIn("design-system-guide", contributing)
+        self.assertIn("hermex-manifest.json", contributing)
+        self.assertIn("design-system-guide", development)
+        self.assertIn("generate-hermex-manifest.mjs", development)
+        self.assertIn("--check", development)
 
     def test_catalog_readme_identifies_the_catalog_and_swiftui_source_as_one_repository(self):
         readme = read("design-system-catalog/README.md")

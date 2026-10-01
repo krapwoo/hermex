@@ -2,20 +2,18 @@ import SwiftUI
 import XCTest
 @testable import HermesMobile
 
-/// Contracts for `HermexComposerToolbar` (`HermexComposerToolbar.swift`, not yet created): the
-/// shared horizontal composer-toolbar row generalized from `ComposerToolbarScroller`
-/// (`ChatComposerToolbarScroller.swift`) as a catalog foundation for future adoption. The current
-/// Chat and Bots feature-local scrollers remain unchanged and are not migrated by this suite.
-/// These tests reference the future public/pure symbols
-/// (`HermexComposerToolbarAppearance`, `HermexComposerToolbarEdgeFades`, `HermexComposerToolbar`)
-/// directly, so this suite is expected to fail to compile until a later task adds them — mirroring
-/// the established pattern in `HermexCodeInputTests`. Non-directly-observable behavior (exact view
+/// Contracts for `HermexComposerToolbar` (`HermexComposerToolbar.swift`): the shared horizontal
+/// composer-toolbar row generalized from `ComposerToolbarScroller` (`ChatComposerToolbarScroller.swift`)
+/// as a catalog foundation for future adoption. The current Chat and Bots feature-local scrollers
+/// remain unchanged and are not migrated by this suite. Non-directly-observable behavior (exact view
 /// body wiring, the conditional appearance branch, the fade-visibility gate) stays a source
 /// contract read against the shared file itself via `requiredSource()`/`hermexComposerToolbarRegion()`,
 /// mirroring `HermexSurfaceBorderTests`/`HermexPopoverMenuTests`/`HermexCodeInputTests`, each of
 /// which fails through one explicit XCTest assertion rather than an uncaught file error. Production
 /// preservation contracts pin that `ComposerToolbarScroller` keeps its current public behavior and
-/// that no production call site adopts `HermexComposerToolbar` yet.
+/// that no production call site adopts `HermexComposerToolbar` yet. Issue #607 round 3/4 corrects
+/// the elevated appearance's radius to `HermesRadius.r24` and its all-around padding to
+/// `HermesSpacing.s8`, superseding the earlier `HermesRadius.card`/`HermesSpacing.s16` values.
 final class HermexComposerToolbarTests: XCTestCase {
     private static let sourcePath = "HermesMobile/Features/Shared/HermexComposerToolbar.swift"
     private static let productionScrollerPath = "HermesMobile/Features/Chat/ChatComposerToolbarScroller.swift"
@@ -243,17 +241,22 @@ final class HermexComposerToolbarTests: XCTestCase {
         XCTAssertTrue(region.contains("HermesSpacing.s8"), "expected HermesSpacing.s8 item spacing")
     }
 
-    // DSR3-01: the row content padding is all-around HermesSpacing.s16, not horizontal-only, so the
-    // toolbar's own vertical breathing room matches its horizontal breathing room.
-    func testSourceAppliesAllAroundPaddingWithHermesSpacingS16() throws {
+    // Issue #607 round 3/4: the row content padding is all-around HermesSpacing.s8, not
+    // horizontal-only and not the superseded HermesSpacing.s16, so the toolbar's own vertical
+    // breathing room matches its horizontal breathing room at the corrected value.
+    func testSourceAppliesAllAroundPaddingWithHermesSpacingS8() throws {
         let region = try hermexComposerToolbarRegion()
         XCTAssertTrue(
-            region.contains(".padding(HermesSpacing.s16)"),
-            "expected .padding(HermesSpacing.s16) applied on all sides"
+            region.contains(".padding(HermesSpacing.s8)"),
+            "expected .padding(HermesSpacing.s8) applied on all sides"
         )
         XCTAssertFalse(
-            region.contains(".padding(.horizontal, HermesSpacing.s16)"),
+            region.contains(".padding(.horizontal, HermesSpacing.s8)"),
             "expected the horizontal-only padding to be replaced by the all-around padding"
+        )
+        XCTAssertFalse(
+            region.contains(".padding(HermesSpacing.s16)"),
+            "expected the superseded HermesSpacing.s16 all-around padding to be gone"
         )
     }
 
@@ -323,10 +326,13 @@ final class HermexComposerToolbarTests: XCTestCase {
 
     // MARK: - Source contract: appearance-specific rendering
 
-    func testElevatedAppearanceUsesSystemBackgroundCardRadiusAndControlElevatedShadow() throws {
+    // Issue #607 round 3/4 corrects the elevated radius from the superseded HermesRadius.card to
+    // the explicit HermesRadius.r24 token.
+    func testElevatedAppearanceUsesSystemBackgroundR24RadiusAndControlElevatedShadow() throws {
         let region = try hermexComposerToolbarRegion()
         XCTAssertTrue(region.contains("Color(.systemBackground)"), "expected adaptive Color(.systemBackground)")
-        XCTAssertTrue(region.contains("HermesRadius.card"), "expected HermesRadius.card")
+        XCTAssertTrue(region.contains("HermesRadius.r24"), "expected the explicit HermesRadius.r24 token")
+        XCTAssertFalse(region.contains("HermesRadius.card"), "expected the superseded HermesRadius.card to be gone")
         XCTAssertTrue(region.contains(".hermesShadow(.controlElevatedResting)"), "expected the controlElevatedResting shadow token")
     }
 
@@ -373,6 +379,24 @@ final class HermexComposerToolbarTests: XCTestCase {
         XCTAssertTrue(
             region.contains(".accessibilityHidden(true)"),
             "expected the divider to be decorative and accessibility-hidden"
+        )
+    }
+
+    // MARK: - Source contract: documented as one ordered, zero-or-more generic content slot
+
+    func testSourceDocumentsOneOrderedZeroOrMoreGenericContentSlotOwnedByTheToolbarForLayoutAndByEachChildForSemantics() throws {
+        let src = try requiredSource()
+        XCTAssertTrue(
+            src.contains("one ordered, zero-or-more arbitrary-content slot"),
+            "expected the doc comment to describe one ordered, zero-or-more arbitrary-content slot, not a button-only concept"
+        )
+        XCTAssertTrue(
+            src.contains("never a typed toolbar-item model or named"),
+            "expected the doc comment to rule out typed toolbar-item infrastructure or named leading/trailing slots"
+        )
+        XCTAssertTrue(
+            src.contains("each child owns its own semantics, interaction, and minimum hit target"),
+            "expected the doc comment to state child-owned semantics/interaction/hit-target, distinct from toolbar-owned layout"
         )
     }
 
@@ -469,6 +493,21 @@ final class HermexComposerToolbarTests: XCTestCase {
             src.components(separatedBy: "HermexComposerToolbar(").count - 1 >= 3,
             "expected at least three real HermexComposerToolbar( specimens (elevated fitting, elevated overflowing, transparent)"
         )
+    }
+
+    // One ordered, zero-or-more arbitrary-content slot, not a button-only concept: the DEBUG lab
+    // must visibly demonstrate mixed content — a display-only Tag alongside a real control — in the
+    // same toolbar row.
+    func testDebugLabDemonstratesMixedContentWithADisplayOnlyTagAndAnActualControl() throws {
+        let src = try requiredExistingSource(Self.overlayLabPath)
+        guard let identifierRange = src.range(of: "\"overlay-lab-composer-toolbar-mixed-content\"") else {
+            XCTFail("expected a stable identifier for overlay-lab-composer-toolbar-mixed-content")
+            return
+        }
+        let windowStart = src.index(identifierRange.lowerBound, offsetBy: -400, limitedBy: src.startIndex) ?? src.startIndex
+        let window = String(src[windowStart..<identifierRange.upperBound])
+        XCTAssertTrue(window.contains("Tag("), "expected the mixed-content specimen to include the display-only Tag component")
+        XCTAssertTrue(window.contains("Button("), "expected the mixed-content specimen to include an actual control")
     }
 
     func testDebugLabComposerToolbarFixturesContainNoSendOrStopControl() throws {

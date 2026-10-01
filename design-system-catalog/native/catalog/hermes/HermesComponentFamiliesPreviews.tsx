@@ -19,7 +19,7 @@ import { AccessibilityInfo, Animated, Platform, View, Text, Pressable, ScrollVie
 import { AccordionList, Avatar, Badge, Banner, Button, Card, Checkbox, Divider, List, ListItem, Radio, Shimmer, SkeletonGroup, Toast, Tooltip, TopNav } from '../../components';
 import { Icon } from '../../../icons/Icon.native';
 import type { IconName } from '../../../icons';
-import { DS_ICON_SIZE, DS_RADIUS } from '../../../tokens';
+import { DS_ICON_SIZE, DS_RADIUS, DS_SPACING } from '../../../tokens';
 import { CATALOG_SPECIMEN_GRID_GAP } from '../tokens';
 import { CatalogSpecimenHeader } from '../CatalogSpecimenHeader';
 import { HERMES_COLOR_RAMPS, HERMES_SEMANTIC_COLORS } from './hermesColorCatalogData';
@@ -66,6 +66,24 @@ const preview = StyleSheet.create({
   buttonBrandPrimary: { backgroundColor: HERMES_COLOR_RAMPS.Gold[500] },
   buttonBrandPrimaryLabel: { color: '#000000' },
   buttonGlassSurface: { backgroundColor: 'rgba(240,240,245,0.85)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.10)' },
+  // Secondary keeps the same generic `secondary` fill as Neutral, plus this explicit hairline border —
+  // the one visible difference HermexButtonStyle draws between its neutral and secondary emphases.
+  buttonSecondaryBordered: { borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)' },
+
+  // Tooltip — a static reconstruction of the native .popover content surface: 12pt padding
+  // (HermesSpacing.s12), 280pt max width, and a top arrow edge pointing back at the trigger.
+  tooltipSurfaceWrap: { alignItems: 'flex-start', gap: 0 },
+  tooltipArrow: {
+    width: 0, height: 0, marginLeft: 16,
+    borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 6,
+    borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: '#ffffff',
+  },
+  tooltipSurface: {
+    maxWidth: 280, padding: 12, borderRadius: 10, backgroundColor: '#ffffff',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.10)',
+    shadowColor: '#000000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+  },
+  tooltipSurfaceText: { fontSize: 15, color: '#1c1c1e' },
 
   // Bot mark
   botMarkPreview: {
@@ -77,6 +95,12 @@ const preview = StyleSheet.create({
   },
   botEye: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' },
   avatarSystemImageCell: { alignItems: 'center', gap: 4 },
+
+  // Banner — HermexBanner.background paints .fullWidth as a bare, square-cornered, borderless tint
+  // fill and .inset as a HermesRadius.card rounded rect with a hairline border; the generic Banner's
+  // own calloutContainer is always rounded, so a full-width specimen overrides that corner radius to
+  // 0 here rather than relying on margin alone to carry the distinction.
+  bannerFullWidth: { borderRadius: 0 },
 
   // Attachment
   // Sized from HERMES_ATTACHMENT_SIZE.messageGridCell at each call site (not a fixed width/height
@@ -121,7 +145,6 @@ const preview = StyleSheet.create({
   // Positioned from HERMES_ATTACHMENT_SIZE.removeOverlap at the call site.
   attachmentRemove: { position: 'absolute' },
   attachmentFailureBadge: { position: 'absolute', bottom: -4, right: -4 },
-  attachmentRetry: { marginTop: 4 },
 
   // TopNav — a bounded, clipped frame so the full-width bar reads as one contained specimen rather
   // than stretching to the whole documentation column.
@@ -138,10 +161,15 @@ const preview = StyleSheet.create({
   },
   logIconSlot: { width: 20, alignItems: 'center' },
   logSummary: { flex: 1, fontSize: 13, color: '#1c1c1e' },
-  logStatus: { fontSize: 11, fontWeight: '700', color: '#34C759' },
+  // Trailing group order matches native exactly: chevron, then the compact status slot at the
+  // extreme trailing edge — never a wide status word inboard of the chevron.
+  logTrailingGroup: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  logStatusSlot: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   logBody: {
-    marginLeft: 26, marginTop: 4, padding: 8, borderRadius: 8,
+    // 28pt body indent (iconWidth 20 + HermesSpacing.s8 8), matching TranscriptLogRowMetrics.bodyIndent.
+    marginLeft: 28, marginTop: 4, padding: 8, borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.04)', maxHeight: 60,
+    borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: 'rgba(0,0,0,0.12)',
   },
   logBodyText: { fontSize: 11, fontFamily: 'Menlo', color: '#3a3a3c' },
 
@@ -153,9 +181,11 @@ const preview = StyleSheet.create({
     backgroundColor: HERMES_COLOR_RAMPS.Blue[100], borderRadius: 6, paddingHorizontal: 4,
   },
   // Composer Toolbar — the elevated appearance's own adaptive surface/radius/shadow reconstruction.
-  // DSR3-01: 16px all-around padding (HermesSpacing.s16), replacing the stale 6px.
+  // Issue #607 round 3/4 correction: 24px radius (DS_RADIUS.large, matching native HermesRadius.r24)
+  // and 8px all-around padding (DS_SPACING[400], matching native HermesSpacing.s8) — replacing the
+  // superseded 12px radius and 16px padding.
   composerToolbarElevated: {
-    borderRadius: 12, backgroundColor: '#ffffff', padding: 16,
+    borderRadius: DS_RADIUS.large, backgroundColor: '#ffffff', padding: DS_SPACING[400],
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
   },
   composerToolbarOverflowContent: { minWidth: 520, flexWrap: 'nowrap' },
@@ -199,6 +229,9 @@ const preview = StyleSheet.create({
   // rather than a second, independently-tuned inset stacking on top of it.
   searchClearTarget: { alignItems: 'flex-end', justifyContent: 'center' },
   nativeFieldGroup: { gap: 4, width: 280 },
+  // HermexTextInputShell renders the label as .subheadline.weight(.semibold) in .primary — a 15pt
+  // semibold primary label, visibly above the footnote-weight helper/error line below the field.
+  fieldLabel: { fontSize: 15, fontWeight: '600', color: '#1c1c1e' },
   nativeFieldInput: {
     minHeight: 44, fontSize: 16, color: '#1c1c1e', paddingHorizontal: 12, paddingVertical: 10,
     borderRadius: 10, backgroundColor: '#efeff4',
@@ -276,7 +309,11 @@ const preview = StyleSheet.create({
   dialogBodyText: { fontSize: 13, color: '#3a3a3c', lineHeight: 18 },
   dialogFooter: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
   dialogFooterVertical: { flexDirection: 'column', justifyContent: 'flex-start' },
-  dialogFooterButton: { flex: 1 },
+  // Issue #607 final correction pass: HermexDialog.footerLayout's horizontal case adds a leading
+  // Spacer so the caller's own intrinsically-sized actions hug the trailing edge — it never stretches
+  // them. dialogFooter's own justifyContent: 'flex-end' already reproduces that hugging; this style
+  // intentionally stays empty (no flex: 1) so the buttons size to their own content.
+  dialogFooterButton: {},
   dialogFooterButtonFull: { width: '100%' },
 
   // Popover Menu — a static trigger + floating compactOverlay List/ListItem card, shown inline for
@@ -314,7 +351,6 @@ const preview = StyleSheet.create({
   // No horizontal padding here — the 16px shell inset lives on the surface above; adding one here too
   // would stack a second, doubled inset on top of it.
   popoverList: { width: '100%' },
-  popoverDestructiveText: { fontSize: 11, fontWeight: '700', color: '#d70015' },
   // The interactive demo's own outside-tap dismissal target — `StyleSheet.absoluteFill`, the same
   // convention Dialog/BottomSheet use for their own backdrops (bounded to this demo's own card, not
   // the full page, since this is an inline catalog specimen rather than a real floating overlay).
@@ -371,6 +407,18 @@ const preview = StyleSheet.create({
   listItemPressedRow: { borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16 },
   listItemPressedRowInsetNone: { paddingHorizontal: 0 },
   listItemPressedRowActive: { backgroundColor: 'rgba(120,120,128,0.16)' },
+  // Native ListItem's default selected state: the whole row becomes a Color.primary pill and both
+  // title and automatic checkmark invert to the system background color. This explicit reconstruction
+  // is necessary because the shared generic RN ListItem's `selected` prop carries semantics only.
+  listItemSelectedPill: {
+    minHeight: 48, marginHorizontal: 12, paddingHorizontal: 12, borderRadius: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#1c1c1e',
+  },
+  listItemSelectedTitle: { flex: 1 },
+  listItemSelectedForeground: { fontSize: 16, color: '#ffffff' },
+  // contentInset: .none on a real ListItem row — overrides the row's own default horizontal padding
+  // so the s12-vs-none difference is visible at rest, the same composition Popover Menu uses.
+  listItemContentInsetNone: { paddingHorizontal: 0 },
 
   // Checkbox/Radio — component-scoped adaptive Neutral selected-fill swatch (same Light/Dark frame precedent
   // as HermesSemanticColorReference.tsx's SampleFrame, kept local since it's a one-off two-frame
@@ -505,6 +553,13 @@ export function HermexDividerPreview() {
         <Divider opacity={1} />
         <Text style={preview.caption}>Caller override via the opacity prop — Card's footer divider</Text>
       </View>
+      <View style={[preview.dividerCard, preview.dividerLightCard]}>
+        <Text style={[preview.label, { color: '#1c1c1e' }]}>Light background — 16pt leading inset</Text>
+        <View style={{ marginLeft: 16 }}>
+          <Divider />
+        </View>
+        <Text style={preview.caption}>HermexDivider(leadingInset: HermesSpacing.s16) — row-aligned under a leading icon/avatar column</Text>
+      </View>
       <View style={[preview.dividerCard, preview.dividerDarkCard]}>
         <Text style={[preview.label, { color: '#ffffff' }]}>Dark background</Text>
         <Divider style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} />
@@ -594,16 +649,19 @@ export function ButtonDecisionAndTactilePreview() {
       <Text style={[preview.label, { marginTop: 8 }]}>Emphasis roles (Brand Primary/Neutral/Primary/Secondary/Destructive)</Text>
       <View style={preview.row}>
         <Button label="Brand primary" variant="primary" size="medium" style={preview.buttonBrandPrimary} textStyle={preview.buttonBrandPrimaryLabel} onPress={() => {}} />
-        <Button label="Neutral" variant="tertiary" size="medium" onPress={() => {}} />
+        <Button label="Neutral" variant="secondary" size="medium" onPress={() => {}} />
         <Button label="Approve" variant="primary" size="medium" onPress={() => {}} />
-        <Button label="Not now" variant="secondary" size="medium" onPress={() => {}} />
+        <Button label="Not now" variant="secondary" size="medium" style={preview.buttonSecondaryBordered} onPress={() => {}} />
         <Button label="Deny" variant="destructive" size="medium" onPress={() => {}} />
       </View>
       <Text style={preview.caption}>
-        Brand Primary uses Hermex Gold 500 with Gold 600 pressed and a black label. Neutral maps to
-        the generic Button's `tertiary` variant; Primary/Secondary/Destructive map onto the
-        identically-named generic variants. Pending Request's Yes/No/Approve/Deny controls keep that
-        decision mapping; the Tip Jar CTA uses Brand Primary.
+        Brand Primary uses Hermex Gold 500 with Gold 600 pressed and a black label. Neutral composes
+        the generic Button's `secondary` variant for its subtle fill, with no added border; Secondary
+        reuses that same fill plus an explicit hairline border so the two stay visually distinct, the
+        way native HermexButtonStyle's neutral (fill, no border) and secondary (fill, hairline border)
+        emphases do; Primary/Destructive map onto the identically-named generic variants. Pending
+        Request's Yes/No/Approve/Deny controls keep that decision mapping; the Tip Jar CTA uses Brand
+        Primary.
       </Text>
       <Text style={[preview.label, { marginTop: 8 }]}>Adaptive Glass surface (composition, not a variant)</Text>
       <View style={preview.row}>
@@ -858,7 +916,7 @@ export function HermexTextInputFamilyGallery() {
     <View style={preview.stack}>
       <View style={preview.nativeFieldGroup}>
         <Text style={preview.label}>Default — HermexTextField</Text>
-        <Text style={preview.caption}>Name</Text>
+        <Text style={preview.fieldLabel}>Name</Text>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -869,7 +927,7 @@ export function HermexTextInputFamilyGallery() {
       </View>
       <View style={preview.nativeFieldGroup}>
         <Text style={preview.label}>Password — HermexSecureField</Text>
-        <Text style={preview.caption}>Password</Text>
+        <Text style={preview.fieldLabel}>Password</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
@@ -881,7 +939,7 @@ export function HermexTextInputFamilyGallery() {
       </View>
       <View style={[preview.nativeFieldGroup, { gap: 12 }]}>
         <Text style={preview.label}>Code — HermexCodeInput</Text>
-        <Text style={preview.caption}>Verification code</Text>
+        <Text style={preview.fieldLabel}>Verification code</Text>
         <HermexCodeInputSpecimen
           title="4 digits — partial"
           length={4}
@@ -1280,9 +1338,9 @@ export function PopoverMenuFamilyGallery() {
           <ListItem title="Rename" onPress={() => {}} />
           <ListItem title="Archive" disabled onPress={() => {}} />
           <ListItem
+            leading={<Icon name="circle-x" size={DS_ICON_SIZE.sm} color={HERMES_COLOR_RAMPS.Red[500]} />}
             title="Delete"
             onPress={() => {}}
-            trailing={<Text style={preview.popoverDestructiveText}>Destructive</Text>}
           />
         </PopoverMenuSpecimen>
 
@@ -1561,17 +1619,16 @@ export function ListItemFamilyGallery() {
             accessibility state and a trailing checkmark, a distinct `commitPending` state once a choice
             is submitted (real content stays visible, unlike the `loading` skeleton above it), and the
             existing loading/disabled states. Model, profile, task-configuration, and skill pickers all
-            target this configuration rather than a standalone Picker Row component.
+            target this configuration rather than a standalone Picker Row component. The generic
+            catalog ListItem's own `selected` prop carries the accessibility state but does not render
+            native pill chrome, so the selected row below is an explicit source-faithful reconstruction:
+            a Color.primary pill with inverse title/checkmark foreground. Its checkmark is generated by
+            selected state, not supplied through the caller-owned trailing accessory slot.
           </Text>
         }
       >
       <List>
-        <ListItem
-          title="GPT-5.1"
-          selected
-          onPress={() => {}}
-          trailing={<Text style={[preview.caption, { color: '#3478F6', fontWeight: '700' }]}>✓</Text>}
-        />
+        <ListItemSelectedRowDemo label="GPT-5.1" />
         <ListItem title="Claude Opus 5" onPress={() => {}} />
         <ListItem title="Applying selection…" commitPending />
         <ListItem title="Fetching models…" loading />
@@ -1638,23 +1695,40 @@ export function ListItemFamilyGallery() {
         name="Pressed feedback · Content inset"
         details={
           <Text style={preview.detailsText}>
-            Press and hold either demo below to see the pressed feedback. Every tappable row's pressed
-            surface is a rounded rectangle at `ListItemMetrics.cornerRadius`
-            — never the plain full-bleed rectangle fill this generic template's own `pressed` style still
-            uses — with no spatial scale, transitioning color/opacity over `HermesMotion.Bundle
-            .stateChange` (150ms). `contentInset: .standard` (left) keeps ListItem's existing horizontal
-            inset; `contentInset: .none` (right) removes it — the composition Popover Menu uses so its
-            own 16pt shell inset is never doubled (see the Popover Menu entry). Disabled and pending rows
-            show no pressed feedback at all.
+            Both rows below render at rest, so the `contentInset: .standard` (left, HermesSpacing.s12
+            horizontal) versus `contentInset: .none` (right, no horizontal inset) difference — a
+            resting-state geometry fact, not an interaction — is visible without pressing anything. The
+            third row is statically pressed: every tappable row's pressed surface is a rounded rectangle
+            at `ListItemMetrics.cornerRadius` — never the plain full-bleed rectangle fill this generic
+            template's own `pressed` style still uses — with no spatial scale, transitioning
+            color/opacity over `HermesMotion.Bundle.stateChange` (150ms). `.none` is the composition
+            Popover Menu uses so its own 16pt shell inset is never doubled (see the Popover Menu entry).
+            Disabled and pending rows show no pressed feedback at all.
           </Text>
         }
       >
       <View style={preview.row}>
-        <ListItemPressedRowDemo label="Standard inset" inset="standard" />
-        <ListItemPressedRowDemo label="None inset (Popover composition)" inset="none" />
+        <ListItem leading={<Avatar initials="A" size={32} />} title="Standard inset" trailing={<Text style={preview.caption}>›</Text>} onPress={() => {}} />
+        <ListItem leading={<Avatar initials="B" size={32} />} title="None inset" trailing={<Text style={preview.caption}>›</Text>} onPress={() => {}} style={preview.listItemContentInsetNone} />
+        <ListItemPressedRowDemo label="Statically pressed" inset="standard" forcePressed />
       </View>
       </PreviewSpecimen>
     </PreviewSpecimenGrid>
+  );
+}
+
+function ListItemSelectedRowDemo({ label }: { label: string }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: true }}
+      onPress={() => {}}
+      style={preview.listItemSelectedPill}
+    >
+      <Text style={[preview.listItemSelectedForeground, preview.listItemSelectedTitle]}>{label}</Text>
+      <Text style={[preview.listItemSelectedForeground, { fontWeight: '600' }]} accessibilityElementsHidden>✓</Text>
+    </Pressable>
   );
 }
 
@@ -1662,12 +1736,12 @@ export function ListItemFamilyGallery() {
 // template's own ListItem has no such style (a plain rectangle `pressed` fill, no rounding, no
 // content-inset seam), so this demonstrates the real Hermex treatment directly rather than a
 // bolted-on prop this shared component doesn't have.
-function ListItemPressedRowDemo({ label, inset }: { label: string; inset: 'standard' | 'none' }) {
-  const [pressed, setPressed] = useState(false);
+function ListItemPressedRowDemo({ label, inset, forcePressed = false }: { label: string; inset: 'standard' | 'none'; forcePressed?: boolean }) {
+  const [pressed, setPressed] = useState(forcePressed);
   return (
     <Pressable
       onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      onPressOut={() => setPressed(forcePressed)}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={[
@@ -2047,7 +2121,12 @@ export function AttachmentTileGallery() {
             the fileIconPanelWidth × fileIconPanelHeight (58×68pt) icon panel and is fixed to
             composerFileTileWidth × composerFileTileMinHeight (222×92pt; 280×112pt under accessibility
             text sizes), with composerFileTextWidth (128pt; 160pt accessibility). It adds a real remove
-            Button overlapping the corner by removeOverlap (6pt); the sent message tile does not.
+            Button overlapping the corner by removeOverlap (6pt); the sent message tile does not. Each
+            mapped file type renders its own distinct glyph and tint — a spreadsheet (Green 500) example
+            sits alongside the PDF (Red 500) and text-like (Blue 500) tiles here. This icon set has no
+            tablecells/doc.text/archivebox SF Symbols, so `waypoints`/`menu`/`briefcase` stand in for
+            them here only to keep every mapped type visually distinct — AttachmentFileType's own real
+            SF Symbol mapping is documented in the prop table above.
           </Text>
         }
       >
@@ -2057,13 +2136,18 @@ export function AttachmentTileGallery() {
           <Text style={[preview.tileName, messageFileNameWidth]} numberOfLines={2}>quarterly-report.pdf</Text>
           <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Red[500] }]}>PDF</Text>
         </Card>
+        <Card density="compact" style={[preview.messageFileTile, gridCellSize]}>
+          <Icon name="waypoints" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Green[500]} />
+          <Text style={[preview.tileName, messageFileNameWidth]} numberOfLines={2}>Q3-actuals.xlsx</Text>
+          <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Green[500] }]}>XLSX</Text>
+        </Card>
         <View>
           <Card
             density="compact"
             style={[preview.composerFileTile, { width: HERMES_ATTACHMENT_SIZE.composerFileTileWidth, minHeight: HERMES_ATTACHMENT_SIZE.composerFileTileMinHeight }]}
           >
             <View style={[preview.fileIconPanel, fileIconPanelSize, { backgroundColor: HERMES_COLOR_RAMPS.Blue[100] }]}>
-              <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Blue[500]} />
+              <Icon name="menu" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Blue[500]} />
               <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Blue[500] }]}>MD</Text>
             </View>
             <View style={[preview.composerTileText, { width: HERMES_ATTACHMENT_SIZE.composerFileTextWidth }]}>
@@ -2156,8 +2240,10 @@ export function AttachmentTileGallery() {
             <Text style={preview.detailsText}>
               File fallback (no extension match, Neutral 500), an in-flight loading state — a single
               full-box Shimmer placeholder sized to the same messageGridCell box it stands in for, not a
-              hand-built tile — and an upload-failure state (archive, Orange 500) with a real Icon badge
-              plus a Retry Button. The loading Shimmer stands in for indefinite loading only — not a
+              hand-built tile — and an upload-failure state (archive, Orange 500) with a real Icon badge.
+              Retry is caller-owned recovery UI composed around the tile in production
+              (MessageBubbleView/ChatComposerAttachmentStripView), not part of this foundation family, so
+              it is not depicted here. The loading Shimmer stands in for indefinite loading only — not a
               measurable upload percentage, which the production tile shows separately. AttachmentFileType
               still owns the icon/tint/label mapping; each surface keeps its own tile layout, upload/retry,
               and remove/preview interaction.
@@ -2178,14 +2264,13 @@ export function AttachmentTileGallery() {
         <Shimmer variant="container" width={HERMES_ATTACHMENT_SIZE.messageGridCell} height={HERMES_ATTACHMENT_SIZE.messageGridCell} style={preview.tileBox} />
         <View>
           <View style={[preview.tileBox, gridCellSize]}>
-            <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Orange[500]} />
+            <Icon name="briefcase" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Orange[500]} />
             <Text style={[preview.tileName, { color: HERMES_COLOR_RAMPS.Orange[500] }]} numberOfLines={2}>backup.zip</Text>
             <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Orange[500] }]}>ZIP</Text>
           </View>
           <View style={preview.attachmentFailureBadge}>
             <Icon name="alert-circle" size={DS_ICON_SIZE.sm} color={HERMES_COLOR_RAMPS.Red[500]} />
           </View>
-          <Button label="Retry" size="extraSmall" variant="tertiary" onPress={() => {}} style={preview.attachmentRetry} />
         </View>
       </View>
       </PreviewSpecimen>
@@ -2212,11 +2297,14 @@ export function BannerFamilyGallery() {
           <Text style={preview.detailsText}>
             One shared Offline Banner replaces the two near-duplicate offline-cache notices (Sessions
             list and Chat transcript), which previously differed in copy (hyphen vs. em dash), padding,
-            and whether their icon was hidden from VoiceOver.
+            and whether their icon was hidden from VoiceOver. HermexBanner.offlineCache() presents an
+            orange, full-width, square-cornered, borderless band with a wifi-slash glyph — the warning
+            variant's tint and triangle-alert glyph are this icon set's closest stand-ins for that
+            orange wifi-slash SF Symbol, and borderRadius: 0 reconstructs the square-cornered edge.
           </Text>
         }
       >
-      <Banner variant="neutral" icon="alert-circle" title="Offline — viewing cached version" />
+      <Banner variant="warning" icon="triangle-alert" title="Offline — viewing cached version" style={preview.bannerFullWidth} />
       </PreviewSpecimen>
       <PreviewSpecimen
         name="Optional action · Inset vs. full-width"
@@ -2235,6 +2323,7 @@ export function BannerFamilyGallery() {
           title="Update required"
           description="A new version fixes a known issue."
           action={{ label: 'Update', onPress: () => {} }}
+          style={preview.bannerFullWidth}
         />
         <View style={{ paddingHorizontal: 16 }}>
           <Banner variant="info" title="Inset presentation" description="Padded inside its container, not edge-to-edge." />
@@ -2372,6 +2461,7 @@ export function TranscriptLogRowPreview() {
 
   return (
     <View style={preview.stack}>
+      <Text style={preview.label}>Collapsed (tap to expand)</Text>
       <Pressable
         onPress={() => setExpanded((value) => !value)}
         accessibilityRole="button"
@@ -2383,8 +2473,12 @@ export function TranscriptLogRowPreview() {
           <Text>🛠️</Text>
         </View>
         <Text style={preview.logSummary} numberOfLines={1}>Ran `npm test` — 42 passed</Text>
-        <Text style={preview.logStatus}>Passed</Text>
-        <DisclosureChevron expanded={expanded} />
+        <View style={preview.logTrailingGroup}>
+          <DisclosureChevron expanded={expanded} />
+          <View style={preview.logStatusSlot}>
+            <Icon name="check" size={11} color="#8a8a8a" />
+          </View>
+        </View>
       </Pressable>
       {expanded && (
         <Pressable
@@ -2396,13 +2490,33 @@ export function TranscriptLogRowPreview() {
         </Pressable>
       )}
       {copied && <Text style={preview.caption}>Copied to clipboard (long-press reconstruction).</Text>}
+
+      <Text style={[preview.label, { marginTop: 8 }]}>Expanded (static)</Text>
+      <View style={preview.logRow}>
+        <View style={preview.logIconSlot}>
+          <Text>🛠️</Text>
+        </View>
+        <Text style={preview.logSummary} numberOfLines={1}>Ran `npm lint` — 1 warning</Text>
+        <View style={preview.logTrailingGroup}>
+          <DisclosureChevron expanded />
+          <View style={preview.logStatusSlot}>
+            <Icon name="alert-circle" size={11} color={HERMES_COLOR_RAMPS.Red[500]} />
+          </View>
+        </View>
+      </View>
+      <View style={preview.logBody}>
+        <Text style={preview.logBodyText} numberOfLines={3}>WARN src/legacy.ts:42{'\n'}'foo' is defined but never used.</Text>
+      </View>
+
       <Text style={preview.caption}>
         Production's three call sites — a tool-call log, the "Thinking" reasoning block (Chat), and
         a bot activity/plan row (Bots) — compose this exact, already-adopted TranscriptLogRowView
-        anatomy: icon slot, summary, optional status, and a chevron that expands into a scrollable
-        detail body. The row itself toggles expand/collapse (accessibilityState.expanded); a long
-        press on the expanded body copies its content. The shared downward chevron rotates upward
-        when expanded.
+        anatomy: icon slot, summary, a chevron, then a compact 16×16 status glyph at the extreme
+        trailing edge (a checkmark/xmark/ellipsis in secondary, or red for a failure — never a wide
+        status word), and a chevron that expands into a scrollable detail body indented 28pt under the
+        row text behind a leading hairline rule. The row itself toggles expand/collapse
+        (accessibilityState.expanded); a long press on the expanded body copies its content. The
+        shared downward chevron rotates upward when expanded.
       </Text>
     </View>
   );
@@ -2460,8 +2574,12 @@ export function TranscriptActivityPreview() {
           >
             <View style={preview.logIconSlot}><Text>🛠️</Text></View>
             <Text style={preview.logSummary} numberOfLines={1}>Ran `npm test` — 42 passed</Text>
-            <Text style={preview.logStatus}>Passed</Text>
-            <DisclosureChevron expanded={logExpanded} />
+            <View style={preview.logTrailingGroup}>
+              <DisclosureChevron expanded={logExpanded} />
+              <View style={preview.logStatusSlot}>
+                <Icon name="check" size={11} color="#8a8a8a" />
+              </View>
+            </View>
           </Pressable>
           {logExpanded && (
             <View style={preview.logBody}>
@@ -2613,16 +2731,16 @@ export function ComposerToolbarFamilyGallery() {
         fill
         details={
           <Text style={preview.detailsText}>
-            One `ScrollView(.horizontal)` row with `HermesSpacing.s16` padding on all sides (not only
+            One `ScrollView(.horizontal)` row with `HermesSpacing.s8` padding on all sides (not only
             horizontal) and edge fades that reveal only where content is hidden behind that edge, with a
-            Reduce-Motion-safe fade animation. Elevated draws its own adaptive surface, radius, and
-            shadow; transparent leaves the surface to the caller (here, a Card). Arbitrary caller
-            content — never a Send or Stop control, which this shared foundation never demonstrates or
-            owns. A caller inserts `HermexComposerToolbarDivider` explicitly between logical control
-            groups (last example) — a hairline, 24pt-tall, vertically centered, decorative divider that
-            scrolls with the row's own content; the toolbar never inserts one automatically. Foundation-
-            available; zero production screens have adopted it — the current Chat/Bots composer toolbars
-            keep their own separate, feature-local ComposerToolbarScroller unchanged.
+            Reduce-Motion-safe fade animation. Elevated draws its own adaptive surface, `HermesRadius.r24`
+            radius, and shadow; transparent leaves the surface to the caller (here, a Card). Arbitrary
+            caller content — never a Send or Stop control, which this shared foundation never
+            demonstrates or owns. A caller inserts `HermexComposerToolbarDivider` explicitly between
+            logical control groups (last example) — a hairline, 24pt-tall, vertically centered, decorative
+            divider that scrolls with the row's own content; the toolbar never inserts one automatically.
+            Foundation-available; zero production screens have adopted it — the current Chat/Bots composer
+            toolbars keep their own separate, feature-local ComposerToolbarScroller unchanged.
           </Text>
         }
       >
@@ -2632,6 +2750,26 @@ export function ComposerToolbarFamilyGallery() {
           <Button label="Profile" size="small" variant="secondary" onPress={() => {}} />
           <Divider style={preview.composerToolbarDivider} />
           <Button label="Branch" size="small" variant="secondary" onPress={() => {}} />
+        </View>
+      </ScrollView>
+      </PreviewSpecimen>
+      <PreviewSpecimen
+        name="Elevated — mixed content"
+        fill
+        details={
+          <Text style={preview.detailsText}>
+            The content slot is one ordered, zero-or-more arbitrary-content slot, not a button-only
+            concept: the toolbar owns horizontal ordering, spacing, scrolling, and fades, while each
+            child owns its own semantics, interaction, and minimum hit target. Mixes a display-only
+            Tag/pill-like specimen (the same reconstruction demonstrated in the Tag family, never
+            tappable) alongside a real Button control in the same row.
+          </Text>
+        }
+      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={preview.composerToolbarElevated}>
+        <View style={preview.row}>
+          <TagSwatch label="Draft" tint="#8E8E93" hPad={8} vPad={2} />
+          <Button label="Model" size="small" variant="secondary" onPress={() => {}} />
         </View>
       </ScrollView>
       </PreviewSpecimen>
@@ -2652,6 +2790,7 @@ function ToastMotionDemo() {
         iconName="circle-check"
         style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }}
         visible={visible}
+        showDivider={false}
       />
     </View>
   );
@@ -2677,10 +2816,10 @@ export function ToastFamilyGallery() {
         }
       >
       <View style={{ gap: 8 }}>
-        <Toast message="Synced with server" iconName="circle-check" style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }} />
-        <Toast message="Cached offline data may be stale" iconName="info" style={{ backgroundColor: HERMES_COLOR_RAMPS.Blue[700] }} />
-        <Toast message="Reconnecting…" iconName="triangle-alert" style={{ backgroundColor: HERMES_COLOR_RAMPS.Orange[800] }} />
-        <Toast message="Could not send message" iconName="circle-slash" style={{ backgroundColor: HERMES_COLOR_RAMPS.Red[700] }} />
+        <Toast message="Synced with server" iconName="circle-check" style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }} showDivider={false} />
+        <Toast message="Cached offline data may be stale" iconName="info" style={{ backgroundColor: HERMES_COLOR_RAMPS.Blue[700] }} showDivider={false} />
+        <Toast message="Reconnecting…" iconName="triangle-alert" style={{ backgroundColor: HERMES_COLOR_RAMPS.Orange[800] }} showDivider={false} />
+        <Toast message="Could not send message" iconName="circle-slash" style={{ backgroundColor: HERMES_COLOR_RAMPS.Red[700] }} showDivider={false} />
       </View>
       </PreviewSpecimen>
       <PreviewSpecimen
@@ -2701,7 +2840,9 @@ export function ToastFamilyGallery() {
             colors untouched, since no `variant` is passed. HermexToast's own trailing action is a plain
             white `Button(action.title)`, styled `.foregroundStyle(.white)`, never a filled capsule or a
             separate neutral-button composition, and keeps a 44pt minimum tap target via the generic
-            ghost Button's own hitSlop.
+            ghost Button's own hitSlop. `showDivider={false}` on every specimen above matches
+            HermexToast's own anatomy — icon, message, Spacer, action — which separates message from
+            action by spacing alone, never a divider.
           </Text>
         }
       >
@@ -2710,6 +2851,7 @@ export function ToastFamilyGallery() {
         iconName="circle-check"
         style={{ backgroundColor: HERMES_COLOR_RAMPS.Green[800] }}
         action={{ label: 'Undo', onPress: () => {} }}
+        showDivider={false}
       />
       </PreviewSpecimen>
     </PreviewSpecimenGrid>
@@ -2735,17 +2877,36 @@ function TooltipInteractiveDemo() {
   );
 }
 
+// A static reconstruction of the native `.popover` content surface itself — the component's entire
+// visual payload — shown inline for inspection the same way the Dialog/Popover Menu/Bottom Sheet
+// specimens render their own overlay surfaces statically, rather than only behind an interactive demo.
+function TooltipContentSurfacePreview() {
+  return (
+    <View style={preview.tooltipSurfaceWrap}>
+      <View style={preview.tooltipArrow} />
+      <View style={preview.tooltipSurface}>
+        <Text style={preview.tooltipSurfaceText}>Context window usage resets each session.</Text>
+      </View>
+    </View>
+  );
+}
+
 export function TooltipFamilyGallery() {
   return (
     <View style={preview.stack}>
-      <Text style={preview.label}>Press and hold the info glyph (no hover-only path)</Text>
+      <Text style={preview.label}>Tap the info glyph to open (no press-and-hold, no hover-only path)</Text>
       <TooltipInteractiveDemo />
+      <Text style={[preview.label, { marginTop: 8 }]}>Anchored content surface (static)</Text>
+      <TooltipContentSurfacePreview />
       <Text style={preview.caption}>
         The generic catalog Tooltip is a fully-controlled bubble a caller drives from press
         in/out — mobile has no hover. Production HermexTooltip anchors the same explanatory content
         through the native `.popover` presentation path instead of a hand-drawn bubble/arrow, behind
-        an explicit tap trigger; dismissal is the popover's own native recovery path (tap outside, or
-        Escape on a hardware keyboard) rather than a release gesture.
+        an explicit tap trigger (a plain Button that opens the popover and leaves it open); dismissal
+        is the popover's own native recovery path (tap outside, or Escape on a hardware keyboard)
+        rather than a release gesture. The content surface itself is subheadline primary text with
+        12pt padding (HermesSpacing.s12), a 280pt max width, and a top arrow edge pointing back at the
+        trigger — presentationCompactAdaptation(.none) keeps it a popover on every size class.
       </Text>
     </View>
   );
@@ -2892,13 +3053,13 @@ function SelectionSheetMultiFooterDemo({ axis }: { axis: 'horizontal' | 'vertica
         <View style={[preview.bottomSheetFooter, axis === 'vertical' && preview.bottomSheetFooterVertical]}>
           {axis === 'horizontal' ? (
             <>
-              <Button variant="tertiary" label="Cancel" onPress={() => setDraft(committed)} style={preview.bottomSheetFooterButton} />
-              <Button variant="secondary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButton} />
+              <Button variant="secondary" label="Cancel" onPress={() => setDraft(committed)} style={[preview.bottomSheetFooterButton, preview.buttonSecondaryBordered]} />
+              <Button variant="primary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButton} />
             </>
           ) : (
             <>
-              <Button variant="secondary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButtonFull} />
-              <Button variant="tertiary" label="Cancel" onPress={() => setDraft(committed)} style={preview.bottomSheetFooterButtonFull} />
+              <Button variant="primary" label="Done" onPress={() => setCommitted(draft)} style={preview.bottomSheetFooterButtonFull} />
+              <Button variant="secondary" label="Cancel" onPress={() => setDraft(committed)} style={[preview.bottomSheetFooterButtonFull, preview.buttonSecondaryBordered]} />
             </>
           )}
         </View>

@@ -42,6 +42,11 @@ export interface ToastProps {
    *  extraSmall neutral Button reconstruction, which cannot color-match a status tint. Renders in
    *  the same trailing slot when set; unrelated call sites keep using `action` unchanged. */
   actionNode?: ReactNode;
+  /** Whether to draw the vertical rule between the message and the action slot. @default true,
+   *  preserving every existing call site's current look. Production HermexToast separates the two by
+   *  spacing alone (HStack(spacing: s12) { icon, message, Spacer, action }) with no divider of its
+   *  own — the Hermex catalog's own Toast specimen passes `false` to match that exactly. */
+  showDivider?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -53,7 +58,7 @@ export interface ToastProps {
  * measure-free, JS-driven (`useNativeDriver: false`, so it's visible in the web preview too, not
  * just on native) enter/exit pattern Dialog/BottomSheet use for their own show/hide.
  */
-export function Toast({ message, visible = true, variant, iconName, iconColor, action, actionNode, style }: ToastProps) {
+export function Toast({ message, visible = true, variant, iconName, iconColor, action, actionNode, showDivider = true, style }: ToastProps) {
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
 
@@ -103,8 +108,9 @@ export function Toast({ message, visible = true, variant, iconName, iconColor, a
           {/* A plain vertical rule tinted to resolvedTextColor at reduced opacity — not the shared
               Divider component, which is a fixed subtle-black horizontal line meant for light
               surfaces; Toast's own background can be dark (base) or a light tint (variant), so the
-              divider has to adapt to whichever text colour is active instead. */}
-          <View style={[styles.divider, { backgroundColor: resolvedTextColor }]} />
+              divider has to adapt to whichever text colour is active instead. Caller-suppressible via
+              showDivider — production HermexToast separates message/action by spacing alone. */}
+          {showDivider && <View style={[styles.divider, { backgroundColor: resolvedTextColor }]} />}
           {actionNode ?? (
             // Always ghost + label-only — Toast's action is a quiet inline affordance, never a second
             // visual weight competing with the message. Ghost's own padding is already 0, so it sits

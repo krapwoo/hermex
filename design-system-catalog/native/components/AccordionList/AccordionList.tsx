@@ -126,6 +126,7 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
 
   const renderGroupRows = (section: Section) => {
     const header = getHeader(section);
+    const hasLeading = header.leading != null;
     const expanded = resolvedExpandedIds.includes(section.id);
     const rows = getBodyItems(section);
 
@@ -134,7 +135,9 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
         <ListItem
           title={header.title}
           description={header.description}
-          leading={<View style={styles.headerLeading}>{header.leading}</View>}
+          leading={
+            hasLeading ? <View style={styles.headerLeading}>{header.leading}</View> : undefined
+          }
           titleAccessory={header.titleAccessory}
           titleRole="label"
           rowIndicator={
@@ -163,13 +166,17 @@ export function AccordionList<Section extends { id: string }, Row extends { id: 
                 <React.Fragment key={row.id}>
                   {React.cloneElement(renderedRow, {
                     style: [
-                      styles.bodyRow,
+                      hasLeading && styles.bodyRow,
                       appearance === 'cardless' && styles.transparentRow,
                       renderedRow.props.style,
                     ],
                   })}
                   {showInternal && index < rows.length - 1 && (
-                    <View style={styles.bodyDividerInset}>
+                    <View
+                      style={
+                        hasLeading ? styles.bodyDividerInset : styles.bodyDividerInsetNoLeading
+                      }
+                    >
                       <Divider />
                     </View>
                   )}
@@ -306,6 +313,9 @@ const styles = StyleSheet.create({
   // start at that column and still end flush with the row's own right edge.
   bodyDividerInset: {
     paddingLeft: AVATAR_SIZE.small + DS_SPACING[600] + DS_SPACING[400],
+  },
+  bodyDividerInsetNoLeading: {
+    paddingLeft: DS_SPACING[400],
   },
   collapseClip: {
     overflow: 'hidden',

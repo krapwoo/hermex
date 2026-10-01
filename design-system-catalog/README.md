@@ -155,14 +155,32 @@ as a documentation shell:
   no sidebar Manifest entry — the machine-readable manifest lives inside `HermesOverview`'s own
   "Machine-readable manifest" disclosure instead (see below).
 - **Machine-readable manifest** — every entry above, including every Foundations token gallery, is
-  also available as plain JSON: `buildComponentManifest(hermesSections, hermesNav,
-  { includeTokenGalleries: true })` in `native/catalog/manifest.ts`, rendered live (so it can't drift
-  out of sync) behind `HermesOverview`'s own "Machine-readable manifest" disclosure. Each entry
-  carries its `useWhen`/`avoidWhen`/`alternatives`/`adoptionStatus`, so a tool or agent gets the same
-  decision contract a human reader sees, without guessing from prose. The template route's own
+  also available as plain JSON: `buildHermesManifestEnvelope(hermesSections, hermesNav)` in
+  `native/catalog/manifest.ts` — a thin, always-`includeTokenGalleries`-on wrapper around the shared
+  `buildComponentManifest()` that also states the catalog's one runtime-truth fact once
+  (`HERMES_MANIFEST_RUNTIME`: production is SwiftUI, this catalog is a React Native documentation
+  reconstruction) — rendered live (so it can't drift out of sync) behind `HermesOverview`'s own
+  "Machine-readable manifest" disclosure. Each entry carries its own `useWhen`/`avoidWhen`/
+  `alternatives`/`adoptionStatus`, non-empty `canonicalSymbols` and `usageExamples`, explicit
+  `compositionSlots`/`compositionConstraints`, and — for a Foundations token group — structured
+  `tokenFacts`, so a tool or agent gets the same decision contract a human reader sees, without
+  guessing from prose. The template route's own
   Manifest entry (`?catalog=template` → "Reference" group) keeps its separate, component-only,
   token-galleries-excluded default — `includeTokenGalleries` is opt-in, so that entry's existing
   shape never changed.
+- **Checked-in generated manifest + lookup/receipt CLI** — `hermex-manifest.json` (this directory)
+  is a deterministic, generated snapshot of that same `buildHermesManifestEnvelope(hermesSections,
+  hermesNav)` call, produced by `scripts/generate-hermex-manifest.mjs` (loads the real `.tsx`/`.ts`
+  source through the `typescript` package already vendored under `native-preview/node_modules`, no
+  new dependency, never renders UI) so a tool/agent can read the catalog's decision contract without
+  running Expo or parsing TSX. Regenerate it with `node scripts/generate-hermex-manifest.mjs` in the
+  same PR as any `hermesSections.tsx`/`types.ts`/`manifest.ts` change; `--check` fails nonzero (and
+  is what PR CI runs) when the checked-in file is stale or missing. Never hand-edit the JSON. The
+  repo-root `scripts/design-system-guide` (Python, stdlib only) reads only that file to answer
+  `scripts/design-system-guide "<query>"` (ranked lookup, `--json` for machine-readable), `--select
+  "<id or display name>"` (exact lookup), and `receipt --query ... --select ... --reject
+  "<name>::<reason>" --new-component yes|no --new-component-reason "<reason>"` (a structured decision
+  receipt to paste into an issue/PR/handoff — see `AGENTS.md` § Design System).
 
 Hermex is SwiftUI; every live example in this catalog is an explicitly-captioned RN documentation
 reconstruction of that SwiftUI source, not the production runtime. See the catalog's intro callout

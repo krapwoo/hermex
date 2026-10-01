@@ -98,6 +98,17 @@ For frontend contributions:
   versioned in this repository, not maintained separately. See
   [`DEVELOPMENT.md`](DEVELOPMENT.md#design-system-catalog) for install/test/
   typecheck/launch commands.
+- Before adding a new frontend literal, a new/customized component, or a
+  lookalike of an existing one, run `scripts/design-system-guide "<query>"`
+  against the checked-in `design-system-catalog/hermex-manifest.json` and
+  include its `receipt` subcommand output (query, selected entry, rejected
+  alternatives with reasons, and whether a new component is actually needed)
+  in the PR description. `design-system-catalog/hermex-manifest.json` is a
+  **generated** artifact — regenerate it with `node
+  design-system-catalog/scripts/generate-hermex-manifest.mjs` in the same PR
+  as any `hermesSections.tsx`/`types.ts`/`manifest.ts` change; PR CI's Design
+  System Contract job fails closed if it drifts (`--check`). Never hand-edit
+  the JSON file directly.
 - `scripts/hermex_design_system_adoption_audit.py` (PR CI's Design System
   Contract job) protects the foundation layer: it fails closed if a required
   foundation file or one of its load-bearing API snippets goes missing, if the

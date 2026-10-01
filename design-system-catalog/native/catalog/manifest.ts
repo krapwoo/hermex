@@ -1,4 +1,18 @@
-import type { HermesAdoptionStatus, HermesAlternative, HermesReferenceDestination, HermesReferenceMeta, NavGroup, PropDef, SectionDef } from './types';
+import type {
+  HermesAdoptionStatus,
+  HermesAlternative,
+  HermesCompositionConstraint,
+  HermesCompositionSlot,
+  HermesImplementationNotes,
+  HermesMachineConfiguration,
+  HermesReferenceDestination,
+  HermesReferenceMeta,
+  HermesTokenFact,
+  HermesUsageExample,
+  NavGroup,
+  PropDef,
+  SectionDef,
+} from './types';
 
 /** One documented variant/state instance, stripped of its `node` (a React element isn't JSON-
  *  serializable, and isn't useful to a consumer that only wants to know what's demonstrated). */
@@ -18,11 +32,32 @@ export interface ManifestHermesReference {
   adoptionStatus?: HermesAdoptionStatus;
   useSummary?: string;
   usedIn?: HermesReferenceDestination[];
+  /** Technical provenance, including the native Swift `sourcePaths` this entry documents — so a
+   *  consumer of the manifest can tell a React Native browser reconstruction apart from the
+   *  production Swift source it describes. */
+  implementationNotes?: HermesImplementationNotes;
+  /** This component's named content regions/slots — see `HermesCompositionSlot` in types.ts. */
+  compositionSlots?: HermesCompositionSlot[];
+  /** Structured cross-slot composition rules — see `HermesCompositionConstraint` in types.ts. */
+  compositionConstraints?: HermesCompositionConstraint[];
+  /** Native Swift API/type/token/pattern symbols to search for — see `HermesReferenceMeta.
+   *  canonicalSymbols` in types.ts. */
+  canonicalSymbols?: string[];
+  /** Canonical Swift usage examples — see `HermesUsageExample` in types.ts. */
+  usageExamples?: HermesUsageExample[];
+  /** JSON-safe behavioral configuration descriptors for a `render()`-based entry — see
+   *  `HermesMachineConfiguration` in types.ts. */
+  machineConfigurations?: HermesMachineConfiguration[];
+  /** Structured Foundations token facts — see `HermesTokenFact` in types.ts. */
+  tokenFacts?: HermesTokenFact[];
 }
 
 /** One component's structured documentation — everything `SectionDef` carries, minus the JSX. */
 export interface ComponentManifestEntry {
   id: string;
+  /** The reader-facing name shown as this section's page title/sidebar label — falls back to `id`
+   *  itself (`SectionDef.displayName`'s own default) when the section sets no override. */
+  displayName: string;
   path?: string;
   description: string;
   /** The deciding question against this component's closest look-alike, if it has one — see
@@ -52,6 +87,13 @@ const buildHermesManifestReference = (meta: HermesReferenceMeta): ManifestHermes
   adoptionStatus: meta.adoptionStatus,
   useSummary: meta.useSummary,
   usedIn: meta.usedIn,
+  implementationNotes: meta.implementationNotes,
+  compositionSlots: meta.compositionSlots,
+  compositionConstraints: meta.compositionConstraints,
+  canonicalSymbols: meta.canonicalSymbols,
+  usageExamples: meta.usageExamples,
+  machineConfigurations: meta.machineConfigurations,
+  tokenFacts: meta.tokenFacts,
 });
 
 /**
@@ -84,6 +126,7 @@ export function buildComponentManifest<TId extends string>(
     .filter((def) => includeTokenGalleries || !def.tokenGallery)
     .map((def) => ({
       id: def.id,
+      displayName: def.displayName ?? def.id,
       path: def.path,
       description: def.description,
       whenToUse: def.whenToUse,
@@ -95,4 +138,42 @@ export function buildComponentManifest<TId extends string>(
       ...(def.tokenGallery ? { tokenGallery: true as const } : {}),
       ...(def.hermesReference ? { hermesReference: buildHermesManifestReference(def.hermesReference) } : {}),
     }));
+}
+
+/** The one runtime-truth fact every Hermex manifest consumer needs stated once, machine-readably, at
+ *  the envelope level — never repeated (or risking contradiction) per entry: the production app is
+ *  SwiftUI, and this catalog's own live React Native examples are a documentation reconstruction of
+ *  that SwiftUI source, not the production runtime itself. See the matching prose in `HermesOverview`
+ *  (hermesSections.tsx). */
+export interface HermesManifestRuntime {
+  productionRuntime: 'swiftui';
+  catalogRuntime: 'react-native-documentation-reconstruction';
+  detail: string;
+}
+
+export const HERMES_MANIFEST_RUNTIME: HermesManifestRuntime = {
+  productionRuntime: 'swiftui',
+  catalogRuntime: 'react-native-documentation-reconstruction',
+  detail:
+    'Hermex ships no React Native runtime. Every live example in this catalog is a React Native documentation reconstruction built from reading the production SwiftUI source, not the production SwiftUI runtime itself.',
+};
+
+/** A versioned envelope around `buildComponentManifest`'s own entry array — adds the one
+ *  catalog-wide runtime-truth fact above once, rather than letting each of the 37 entries restate
+ *  (and risk contradicting) the same fact in prose. Entry-level data is unchanged; this only wraps it. */
+export interface HermesManifestEnvelope {
+  schemaVersion: 1;
+  runtime: HermesManifestRuntime;
+  entries: ComponentManifestEntry[];
+}
+
+export function buildHermesManifestEnvelope<TId extends string>(
+  sections: SectionDef<TId>[],
+  groups: NavGroup<TId>[],
+): HermesManifestEnvelope {
+  return {
+    schemaVersion: 1,
+    runtime: HERMES_MANIFEST_RUNTIME,
+    entries: buildComponentManifest(sections, groups, { includeTokenGalleries: true }),
+  };
 }

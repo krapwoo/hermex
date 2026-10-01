@@ -29,6 +29,24 @@ struct HermexBanner: View {
             }
         }
 
+        /// Contrast-validated semantic foreground for all Banner content. Light appearance uses a
+        /// darker step from the status family; dark appearance uses a lighter step from that same
+        /// family. Every pair clears WCAG AA against any 12%-tinted fill over a light or dark base.
+        var foreground: Color {
+            switch self {
+            case .information:
+                HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Blue.s800, dark: HermesColorRamp.Blue.s300)
+            case .warning:
+                HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Gold.s950, dark: HermesColorRamp.Gold.s300)
+            case .error:
+                HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Red.s800, dark: HermesColorRamp.Red.s300)
+            case .success:
+                HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Green.s900, dark: HermesColorRamp.Green.s300)
+            case .offline:
+                HermesColorRamp.Neutral.adaptive(light: HermesColorRamp.Orange.s900, dark: HermesColorRamp.Orange.s300)
+            }
+        }
+
         var defaultIcon: String {
             switch self {
             case .information:
@@ -108,7 +126,7 @@ struct HermexBanner: View {
             if let icon {
                 Image(systemName: icon)
                     .font(.system(size: HermesIconSize.small))
-                    .foregroundStyle(semantic.tint)
+                    .foregroundStyle(semantic.foreground)
                     .accessibilityHidden(isIconDecorative)
             }
 
@@ -116,12 +134,12 @@ struct HermexBanner: View {
                 if let title {
                     title
                         .appFont(.subheadlineSemibold)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(semantic.foreground)
                 }
                 if let description {
                     description
                         .appFont(title == nil ? .subheadlineSemibold : .footnote)
-                        .foregroundStyle(title == nil ? .primary : .secondary)
+                        .foregroundStyle(semantic.foreground)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -143,11 +161,11 @@ struct HermexBanner: View {
             if let title = action.title {
                 Text(title)
                     .appFont(.subheadlineSemibold)
-                    .foregroundStyle(semantic.tint)
+                    .foregroundStyle(semantic.foreground)
             } else if let icon = action.icon {
                 Image(systemName: icon)
                     .font(.system(size: HermesIconSize.small))
-                    .foregroundStyle(semantic.tint)
+                    .foregroundStyle(semantic.foreground)
                     .frame(minWidth: 44, minHeight: 44)
             }
         }

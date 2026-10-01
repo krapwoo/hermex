@@ -155,9 +155,34 @@ ln -s native-preview/node_modules design-system-catalog/node_modules
 
 # Launch the catalog at http://localhost:8096
 cd design-system-catalog/native-preview && npm run web
+
+# Regenerate the machine-readable manifest after a hermesSections.tsx/types.ts/manifest.ts change
+node design-system-catalog/scripts/generate-hermex-manifest.mjs
+# Check it's fresh without rewriting it (what CI runs)
+node design-system-catalog/scripts/generate-hermex-manifest.mjs --check
+
+# Deterministic lookup/exact-select/decision-receipt over that generated manifest — no network,
+# no fuzzy matching; see AGENTS.md § Design System for when to run this
+scripts/design-system-guide "exclusive selection"
+scripts/design-system-guide --json "exclusive selection"
+scripts/design-system-guide --select "Hermes Radio"
+scripts/design-system-guide receipt --query "exclusive selection" --select "Hermes Radio" \
+  --reject "Segmented Control::Use for compact two-to-five option switching, not a longer form group." \
+  --new-component no --new-component-reason "Hermes Radio already models one choice from a mutually exclusive group."
 ```
 
-PR CI's `Design System Contract` job runs these Node/TypeScript checks and the catalog's
+`design-system-catalog/hermex-manifest.json` is a **generated** artifact — it is the canonical
+`hermesSections`/`hermesNav` catalog data (the same data `buildHermesManifestEnvelope()` in
+`native/catalog/manifest.ts` serializes for the catalog's own in-browser "Machine-readable manifest"
+disclosure) run through `design-system-catalog/scripts/generate-hermex-manifest.mjs` and written to
+disk with stable ordering, two-space indentation, and no timestamp, so it is byte-identical for a
+given catalog source. Regenerate it in the same PR as any `hermesSections.tsx`/`types.ts`/
+`manifest.ts` change; never hand-edit the JSON directly, since the generator will overwrite it and
+PR CI's `--check` run will fail if it ever drifts from the live source.
+
+PR CI's `Design System Contract` job runs these Node/TypeScript checks, the manifest freshness
+check, the `design-system-guide` contract tests
+(`python3 -m unittest scripts.tests.test_design_system_guide -v`), and the catalog's
 repository-location contract (`scripts/tests/test_design_system_catalog_repository.py`) on every
 PR; a catalog-only change (`design-system-catalog/**`) skips the macOS XCTest job but never skips
 this one.

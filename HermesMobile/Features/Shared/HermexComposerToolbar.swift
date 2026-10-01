@@ -7,10 +7,15 @@ enum HermexComposerToolbarAppearance {
     case transparent
 }
 
-/// Shared horizontal composer-toolbar row: one `ScrollView(.horizontal)` containing
-/// one content `HStack`, with edge fades that reveal only where content is hidden
-/// behind that edge. Catalog foundation for future adoption; current Chat/Bots
-/// feature-local scrollers (`ComposerToolbarScroller`) are unchanged by this type.
+/// Shared horizontal composer-toolbar row: one ordered, zero-or-more arbitrary-content slot —
+/// a generic `@ViewBuilder content` closure, never a typed toolbar-item model or named
+/// leading/trailing slots — laid out in one `ScrollView(.horizontal)` containing one content
+/// `HStack`, with edge fades that reveal only where content is hidden behind that edge. The
+/// toolbar owns horizontal ordering, spacing, scrolling, fades, and its own optional surface;
+/// each child owns its own semantics, interaction, and minimum hit target. Accepted content
+/// includes any generic SwiftUI View, a control (e.g. `Button`), and display-only content (e.g.
+/// a `Tag`) — mixed freely in the same row. Catalog foundation for future adoption; current
+/// Chat/Bots feature-local scrollers (`ComposerToolbarScroller`) are unchanged by this type.
 struct HermexComposerToolbar<Content: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.layoutDirection) private var layoutDirection
@@ -37,7 +42,7 @@ struct HermexComposerToolbar<Content: View>: View {
             HStack(spacing: itemSpacing) {
                 content
             }
-            .padding(HermesSpacing.s16)
+            .padding(HermesSpacing.s8)
             .frame(minHeight: minimumRowHeight, alignment: .leading)
         }
         .scrollIndicators(.hidden)
@@ -60,7 +65,7 @@ struct HermexComposerToolbar<Content: View>: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: fades)
         .background {
             if appearance == .elevated {
-                RoundedRectangle(cornerRadius: HermesRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: HermesRadius.r24, style: .continuous)
                     .fill(Color(.systemBackground))
                     .hermesShadow(.controlElevatedResting)
             }
