@@ -2501,11 +2501,11 @@ test('the still-unadopted Radius/Geometry proposal\'s retained-exception fact ci
 // Correction (PR #974 Design System target correction, 2026-10-04): the Transcript Log Row catalog
 // specimen's own leading geometry is the approved Design System *target*, not a production-parity
 // claim (that is the separate bodyIndent test above, which stays pinned to production's real,
-// unchanged 26pt literal). The target composes the canonical DS_SPACING[400] row gap (8px) with a
+// unchanged 26pt literal). The target composes a raw, component-local 8px row gap with a
 // 20pt icon slot, deriving a 28pt expanded-body leading inset — and every preview use of that same
 // row geometry (Transcript Log Row's own body, and Transcript Activity's nested indent) has to share
 // the one derived constant rather than repeating an unrelated literal.
-test('Correction (PR #974 Design System target correction): the Transcript Log Row catalog specimen uses the canonical DS_SPACING[400] row gap and a shared, derived 28pt (20pt icon slot + 8pt spacing token) expanded-body leading inset as the Design System target — not a production-parity claim', () => {
+test('Correction (PR #974 Design System target correction): the Transcript Log Row catalog specimen uses a raw local 8px row gap and a shared, derived 28pt (20pt icon slot + 8pt gap) expanded-body leading inset as the Design System target — not a production-parity claim', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
 
   const iconWidthMatch = previewsSrc.match(/const LOG_ICON_SLOT_WIDTH\s*=\s*(\d+)\s*;/);
@@ -2513,15 +2513,20 @@ test('Correction (PR #974 Design System target correction): the Transcript Log R
   const iconSlotWidth = Number(iconWidthMatch[1]);
   assert.equal(iconSlotWidth, 20, 'expected the shared icon-slot width constant to stay 20pt');
 
+  const rowGapMatch = previewsSrc.match(/const LOG_ROW_GAP\s*=\s*(\d+)\s*;/);
+  assert.ok(rowGapMatch, 'expected one component-local LOG_ROW_GAP constant rather than a shared Design System spacing-token reference');
+  const rowGap = Number(rowGapMatch[1]);
+  assert.equal(rowGap, 8, 'expected the Transcript Log Row catalog target to use a raw local 8px gap');
+
   assert.match(
     previewsSrc,
-    /const LOG_BODY_LEADING_INSET\s*=\s*LOG_ICON_SLOT_WIDTH\s*\+\s*DS_SPACING\[400\]\s*;/,
-    'expected the expanded-body leading inset to be derived as the icon-slot width plus DS_SPACING[400] (the canonical 8px spacing token), not a standalone literal'
+    /const LOG_BODY_LEADING_INSET\s*=\s*LOG_ICON_SLOT_WIDTH\s*\+\s*LOG_ROW_GAP\s*;/,
+    'expected the expanded-body leading inset to be derived as the icon-slot width plus the component-local raw 8px gap'
   );
 
   const logRow = extractBraceBlock(previewsSrc, /logRow:\s*\{/);
-  assert.doesNotMatch(logRow, /gap:\s*\d+\b/, 'the catalog specimen\'s row gap must use the DS_SPACING[400] token, not any numeric literal (including the superseded 6px value)');
-  assert.match(logRow, /gap:\s*DS_SPACING\[400\]/, 'expected the Design System target row gap to be DS_SPACING[400] (8px)');
+  assert.doesNotMatch(logRow, /DS_SPACING\[400\]/, 'the Transcript Log Row gap must not link to the shared Design System spacing token');
+  assert.match(logRow, /gap:\s*LOG_ROW_GAP\b/, 'expected the row style to use the component-local raw 8px gap');
 
   const logIconSlot = extractBraceBlock(previewsSrc, /logIconSlot:\s*\{/);
   assert.match(logIconSlot, /width:\s*LOG_ICON_SLOT_WIDTH\b/, 'expected logIconSlot to reference the shared icon-slot width constant rather than a bare literal');
@@ -2534,8 +2539,7 @@ test('Correction (PR #974 Design System target correction): the Transcript Log R
   assert.doesNotMatch(activityBody, /marginLeft:\s*26\b/, 'Transcript Activity\'s nested leading indent must not retain the unrelated 26px literal either');
   assert.match(activityBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected Transcript Activity\'s nested indent to share the same derived Design System target leading inset');
 
-  // DS_SPACING[400] is the canonical 8px spacing token; 20 (icon slot) + 8 (DS_SPACING[400]) = 28.
-  assert.equal(iconSlotWidth + 8, 28, 'expected the derived target to compose to 28pt (20pt icon slot + the 8px DS_SPACING[400] token)');
+  assert.equal(iconSlotWidth + rowGap, 28, 'expected the derived target to compose to 28pt (20pt icon slot + the raw local 8px gap)');
 });
 
 // Correction (PR #974 Design System target correction, 2026-10-04): the catalog's prose has to keep
@@ -2563,7 +2567,8 @@ test('Correction (PR #974 Design System target correction): Transcript Log Row\'
   const section = extractHermesSection(sectionsSrc, 'Transcript Log Row');
   assert.match(section, /28pt/, 'expected the Transcript Log Row section to state its own catalog specimen\'s 28pt Design System target explicitly');
   assert.match(section, /20pt icon slot/i, 'expected the target to be explained as composing the 20pt icon slot');
-  assert.match(section, /DS_SPACING\[400\]/, 'expected the target to cite the canonical DS_SPACING[400] token, not a bare "8pt" literal');
+  assert.match(section, /raw 8px gap/i, 'expected the target to describe its component-local raw 8px gap');
+  assert.doesNotMatch(section, /DS_SPACING\[400\]/, 'expected no shared Design System spacing-token linkage in the Transcript Log Row section');
   assert.match(section, /defer/i, 'expected the section to explicitly state that migrating production onto the catalog target is deferred, not already done');
   assert.doesNotMatch(section, /bodyIndent is now 28|bodyIndent.{0,20}28pt/i, 'expected no phrasing that claims TranscriptLogRowMetrics.bodyIndent itself is 28pt');
 });
