@@ -13,6 +13,14 @@ separate PRs, not something a regex census in this script can usefully gate.
 It also intentionally does NOT ban `.font`, other typography modifiers, literal colors, or literal
 spacing across production generally — there is no sound, ownership-aware contract for banning those
 globally yet.
+
+This audit also enforces a second, narrower contract: a fail-closed production-disconnection
+boundary for three named files (`AppTheme.swift`, `TranscriptLogRowView.swift`,
+`CustomAttachmentPicker.swift` — see `PRODUCTION_BOUNDARY_PATTERNS`) that briefly took on direct
+dependencies on this foundation during Issue #607 and were deliberately reverted. The boundary check
+exists so those reverted dependencies cannot drift back in silently; it does not forbid these files
+from adopting the foundation for real, it only requires that adoption be a deliberate, explicit
+update to `PRODUCTION_BOUNDARY_PATTERNS` in the same bounded change, not a silent reintroduction.
 """
 from __future__ import annotations
 
@@ -178,6 +186,40 @@ REJECTED_ICON_SIZES = {14, 18, 22, 28}
 # 32pt avatar -> 20pt icon, 40pt avatar -> 24pt icon, 48pt avatar -> 32pt icon.
 APPROVED_AVATAR_ICON_PAIRINGS = {32: 20, 40: 24, 48: 32}
 
+# ─── Production disconnection boundary ───────────────────────────────────────────────────────────
+# AppTheme.swift, TranscriptLogRowView.swift, and CustomAttachmentPicker.swift briefly gained direct
+# dependencies on the Issue #607 foundation and were disconnected again (restored to their
+# pre-existing literals/APIs/local implementation — see the PR #974 issue-correction). This check
+# fails closed if one of them regains a dependency on a pattern below, so any real future adoption
+# has to update this audit deliberately rather than drift back in unnoticed. It is not a permanent
+# ban on adopting the foundation in these files — the failure message says so.
+PRODUCTION_BOUNDARY_PATTERNS: list[tuple[str, list[str]]] = [
+    ("HermesMobile/Config/AppTheme.swift", [r"HermesProductPalette"]),
+    (
+        "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
+        [r"HermesSpacing", r"HermesRadius", r"HermesIconSize", r"HermesMotion", r"AppFont\.Role", r"\.appFont\("],
+    ),
+    ("HermesMobile/Features/Chat/CustomAttachmentPicker.swift", [r"HermexSameWindowOverlay"]),
+]
+
+
+def check_production_boundary() -> list[str]:
+    failures = []
+    for rel_path, patterns in PRODUCTION_BOUNDARY_PATTERNS:
+        full_path = REPO_ROOT / rel_path
+        if not full_path.is_file():
+            continue
+        text = read(rel_path)
+        for pattern in patterns:
+            if re.search(pattern, text):
+                failures.append(
+                    f"{rel_path} reintroduces a direct dependency on /{pattern}/ — adopting the Issue #607 "
+                    "foundation here requires an explicit adoption update to this audit, not a silent "
+                    "reintroduction"
+                )
+    return failures
+
+
 def read(rel_path: str) -> str:
     return (REPO_ROOT / rel_path).read_text(encoding="utf-8")
 
@@ -306,6 +348,7 @@ CHECKS = [
     ("load-bearing API snippets", check_required_snippets),
     ("icon-size scale", check_icon_scale),
     ("avatar/icon pairing", check_avatar_pairing),
+    ("production disconnection boundary", check_production_boundary),
 ]
 
 

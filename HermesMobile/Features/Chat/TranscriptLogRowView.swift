@@ -5,14 +5,8 @@ import UIKit
 enum TranscriptLogRowMetrics {
     /// Row height at the default text size; text grows the row at larger sizes.
     static let minimumHeight: CGFloat = 32
-    /// Icon column width.
-    static let iconWidth: CGFloat = 20
-    /// Icon column height.
-    static let iconHeight: CGFloat = 18
-    /// Gap between the icon column and the row's text.
-    static let rowSpacing: CGFloat = HermesSpacing.s8
     /// Icon column width plus the gap, so the expanded body indents under the text.
-    static let bodyIndent: CGFloat = iconWidth + rowSpacing
+    static let bodyIndent: CGFloat = 26
     /// Tallest an expanded body gets before it scrolls inside its own window.
     /// Fixed at every Dynamic Type size so a long result never owns the screen.
     static let bodyWindowHeight: CGFloat = 240
@@ -114,21 +108,21 @@ struct TranscriptLogRowView<Icon: View, Accessory: View, Status: View, ExpandedB
     @State private var copiedResetTask: Task<Void, Never>?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: HermesSpacing.s0) {
+        VStack(alignment: .leading, spacing: 0) {
             rowLine
 
-            VStack(alignment: .leading, spacing: HermesSpacing.s0) {
+            VStack(alignment: .leading, spacing: 0) {
                 if isExpanded {
                     TranscriptLogRowBodyWindow(content: expandedBody)
-                        .padding(.leading, HermesSpacing.s12)
+                        .padding(.leading, 12)
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.quaternary)
                                 .frame(width: 1)
                         }
                         .padding(.leading, TranscriptLogRowMetrics.bodyIndent)
-                        .padding(.top, HermesSpacing.s2)
-                        .padding(.bottom, HermesSpacing.s8)
+                        .padding(.top, 2)
+                        .padding(.bottom, 6)
                         .transition(
                             .asymmetric(
                                 insertion: .opacity,
@@ -144,46 +138,41 @@ struct TranscriptLogRowView<Icon: View, Accessory: View, Status: View, ExpandedB
     }
 
     private var rowLine: some View {
-        HStack(alignment: usesStackedLabel ? .top : .center, spacing: HermesSpacing.s8) {
+        HStack(alignment: usesStackedLabel ? .top : .center, spacing: 6) {
             icon()
-                .frame(width: TranscriptLogRowMetrics.iconWidth, height: TranscriptLogRowMetrics.iconHeight)
+                .frame(width: 20, height: 18)
 
             label
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: HermesSpacing.s2) {
+            HStack(spacing: 1) {
                 if showsCopied {
                     Text("Copied")
-                        .appFont(.captionSemibold)
+                        .font(AppFont.caption2(weight: .semibold))
                         .foregroundStyle(.green)
-                        .padding(.trailing, HermesSpacing.s4)
+                        .padding(.trailing, 4)
                 }
 
                 if !usesStackedLabel {
                     accessory()
                         .fixedSize()
-                        .padding(.trailing, HermesSpacing.s4)
+                        .padding(.trailing, 4)
                 }
 
-                Image(systemName: "chevron.down")
-                    .font(.system(size: HermesIconSize.xs, weight: .semibold))
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
-                    .frame(width: HermesIconSize.small, height: HermesIconSize.small)
-                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    .animation(
-                        reduceMotion ? nil : .easeInOut(duration: HermesMotion.Duration.d150),
-                        value: isExpanded
-                    )
+                    .frame(width: 16, height: 16)
 
                 status()
-                    .frame(width: HermesIconSize.small, height: HermesIconSize.small)
+                    .frame(width: 16, height: 16)
             }
         }
-        .padding(.horizontal, HermesSpacing.s2)
+        .padding(.horizontal, 2)
         .frame(minHeight: TranscriptLogRowMetrics.minimumHeight)
         .background(
             Color.primary.opacity(isPressed ? 0.06 : 0),
-            in: RoundedRectangle(cornerRadius: HermesRadius.r8, style: .continuous)
+            in: RoundedRectangle(cornerRadius: 6, style: .continuous)
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: toggle)
@@ -193,7 +182,6 @@ struct TranscriptLogRowView<Icon: View, Accessory: View, Status: View, ExpandedB
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
         .accessibilityHint(
             isExpanded
                 ? "Double tap to hide details. Long press to copy."
@@ -210,7 +198,7 @@ struct TranscriptLogRowView<Icon: View, Accessory: View, Status: View, ExpandedB
     @ViewBuilder
     private var label: some View {
         if usesStackedLabel {
-            VStack(alignment: .leading, spacing: HermesSpacing.s2) {
+            VStack(alignment: .leading, spacing: 2) {
                 summaryText
                 if let detail {
                     detailText(detail).lineLimit(2)
@@ -227,13 +215,13 @@ struct TranscriptLogRowView<Icon: View, Accessory: View, Status: View, ExpandedB
 
     private var summaryText: Text {
         Text(summary)
-            .appFont(.captionSemibold, dynamicTypeSize: dynamicTypeSize)
+            .font(AppFont.caption(weight: .semibold))
             .foregroundStyle(isFailure ? Color.red : Color.primary)
     }
 
     private func detailText(_ detail: String) -> Text {
         Text(detail)
-            .appFont(.caption, dynamicTypeSize: dynamicTypeSize)
+            .font(AppFont.caption())
             .foregroundStyle(.secondary)
     }
 

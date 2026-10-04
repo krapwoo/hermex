@@ -38,6 +38,7 @@ const ICON_GENERATOR_SCRIPT_PATH = 'scripts/generate-icon-previews.mjs';
 const ICON_RENDERER_PACKAGE_PATH = 'icon-renderer/Package.swift';
 const ICON_RENDERER_TEST_PATH = 'icon-renderer/Tests/IconRenderTests/IconRenderTests.swift';
 const ICON_RENDERER_GITIGNORE_PATH = 'icon-renderer/.gitignore';
+const NATIVE_ICON_PATH = 'icons/Icon.native.tsx';
 const NATIVE_PREVIEW_PACKAGE_JSON_PATH = 'native-preview/package.json';
 const GENERATED_ICON_DIRECTORY_PATH = 'native-preview/public/generated-icons';
 const SIMULATOR_UDID_PATTERN = /\b[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\b/i;
@@ -1751,9 +1752,55 @@ test('Correction: web Loading honors reduced motion with a static render and doe
   assert.match(src, /const reduceMotion = useReduceMotion\(\)/, 'expected Loading to read the reduced-motion preference');
   assert.match(
     src,
-    /useEffect\(\(\)\s*=>\s*\{\s*if\s*\(\s*reduceMotion\s*\)/,
-    'expected the animation useEffect to check reduceMotion first and return early instead of unconditionally starting Animated.loop',
+    /useEffect\(\(\)\s*=>\s*\{\s*if\s*\(\s*reduceMotion\s*!==\s*false\s*\)/,
+    'expected the animation effect to treat an unresolved or explicitly-enabled preference as static, and start Animated.loop only once it resolves to exactly false',
   );
+});
+
+// Correction (PR #974 issue correction, 2026-10-04): the fix above still left a startup race —
+// `useReduceMotion()` defaulted its state to a plain `false`, which reads as "not reduced" for every
+// render between mount and the moment `AccessibilityInfo.isReduceMotionEnabled()` resolves. On a
+// device where Reduce Motion is actually on, Loading would still start `Animated.loop` for that
+// window before snapping to static. The preference must be representable as explicitly unresolved
+// (`null`), and the loop may start only once it explicitly resolves to `false`.
+test('Correction (2026-10-04): web Loading represents Reduce Motion as unresolved until AccessibilityInfo resolves, never defaulting to "not reduced"', () => {
+  const src = read('native/components/Loading/Loading.tsx');
+  assert.match(
+    src,
+    /function useReduceMotion\s*\(\s*\)\s*:\s*boolean\s*\|\s*null/,
+    'expected useReduceMotion to return boolean | null, so "unresolved" is representable and distinct from "not reduced"',
+  );
+  assert.match(
+    src,
+    /useState<boolean \| null>\(null\)/,
+    'expected the reduced-motion state to start as an explicit unresolved (null) state',
+  );
+  assert.doesNotMatch(
+    src,
+    /useState\(false\)/,
+    'expected no plain `useState(false)` default for the reduced-motion preference — that default is exactly the startup race this correction closes',
+  );
+  assert.match(
+    src,
+    /if\s*\(\s*reduceMotion\s*!==\s*false\s*\)\s*\{/,
+    'expected the animation effect to stay static for both an unresolved (null) and an explicitly enabled (true) preference',
+  );
+});
+
+test('Correction (2026-10-04): circular Loading keeps its accessible name without leaking native-only boolean props into the web SVG', () => {
+  const src = read('native/components/Loading/Loading.tsx');
+  const svgStart = src.indexOf('<Svg');
+  const svgEnd = src.indexOf('</Svg>', svgStart);
+  assert.notEqual(svgStart, -1, 'expected the circular Loading SVG');
+  assert.notEqual(svgEnd, -1, 'expected the circular Loading SVG closing tag');
+  const circleSvg = src.slice(svgStart, svgEnd + '</Svg>'.length);
+
+  assert.match(src, /Platform\.OS === 'web'/, 'expected platform-specific SVG accessibility props');
+  assert.match(src, /'aria-label': 'Loading'/, 'expected the web SVG to retain its accessible name');
+  assert.match(src, /role: 'progressbar'/, 'expected the web SVG to retain its progressbar role');
+  assert.match(circleSvg, /\{\.\.\.circleAccessibilityProps\}/, 'expected the SVG to consume the platform-specific props');
+  assert.doesNotMatch(circleSvg, /\baccessible\b/, 'native-only accessible must not leak into the web SVG element');
+  assert.doesNotMatch(circleSvg, /accessibilityLabel=/, 'native-only accessibilityLabel must not leak into the web SVG element');
 });
 
 test('Correction: README documents checked-in browser icons, explicit regeneration, the destination override, and the honest per-tile fallback', () => {
@@ -2380,33 +2427,37 @@ test('Transcript Log Row preserves the real production copy/accessibility contra
   assert.match(section, /Double tap to show details\. Long press to copy\./, 'expected the exact collapsed-state accessibility hint TranscriptLogRowView.swift uses');
 });
 
-// DSR2-11: production's bodyIndent is a derived metric (iconWidth + rowSpacing = 20 + 8 = 28pt), not
-// the stale pre-migration 26pt literal it replaced — both catalog records must agree with the code.
-test('Correction (DSR2-11): both catalog records of TranscriptLogRowMetrics.bodyIndent state 28pt (iconWidth 20 + HermesSpacing.s8 8), matching the native TranscriptLogRowView.swift computed value, with no surviving 26pt record', () => {
+// Correction (PR #974 issue correction, 2026-10-04): TranscriptLogRowView.swift was never migrated
+// onto a derived iconWidth+rowSpacing formula — current master's bodyIndent is, and remains, the
+// exact 26pt literal. Both catalog records must agree with the real, unchanged production code.
+test('Correction (PR #974 issue correction): both catalog records of TranscriptLogRowMetrics.bodyIndent state the current-master exact 26pt literal, with no derived iconWidth/rowSpacing formula and no surviving 28pt record', () => {
   const nativeSrc = read('../HermesMobile/Features/Chat/TranscriptLogRowView.swift');
-  assert.match(nativeSrc, /static let iconWidth: CGFloat = 20/, 'expected the native iconWidth to still be 20');
-  assert.match(nativeSrc, /static let rowSpacing: CGFloat = HermesSpacing\.s8/, 'expected the native rowSpacing to still derive from HermesSpacing.s8');
-  assert.match(nativeSrc, /static let bodyIndent: CGFloat = iconWidth \+ rowSpacing/, 'expected bodyIndent to still be derived, not a literal');
+  assert.match(nativeSrc, /static let bodyIndent: CGFloat = 26/, 'expected the native bodyIndent to be the exact 26pt literal, matching current master');
+  assert.doesNotMatch(nativeSrc, /iconWidth|rowSpacing/, 'expected no derived iconWidth/rowSpacing constants — TranscriptLogRowView.swift stays the real, unchanged production row');
 
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const records = [...sectionsSrc.matchAll(/\{\s*name:\s*'TranscriptLogRowMetrics\.bodyIndent'[\s\S]*?\},/g)].map((m) => m[0]);
   assert.equal(records.length, 2, 'expected exactly two catalog records of TranscriptLogRowMetrics.bodyIndent (the human props table and the machine GEOMETRY_FACTS table)');
   for (const record of records) {
-    assert.doesNotMatch(record, /26pt|default:\s*'26'/, 'stale 26pt bodyIndent value must not remain in either record');
-    assert.match(record, /28pt|default:\s*'28'/, 'expected the corrected 28pt bodyIndent value in every record');
+    assert.doesNotMatch(record, /28pt|default:\s*'28'/, 'stale 28pt bodyIndent value must not remain in either record');
+    assert.match(record, /26pt|default:\s*'26'/, 'expected the current-master 26pt bodyIndent value in every record');
   }
 });
 
-// Correction (production reconciliation), carried forward for Round 2: production's row uses one
-// token-sized downward chevron and rotates it upward from the actual expansion state. The catalog
-// follows the same state model instead of swapping glyphs or rendering an arbitrary fixed direction.
-test('Correction (production reconciliation): the Transcript Log Row preview rotates one downward shared Icon upward from actual expansion state', () => {
+// Correction (PR #974 issue correction, 2026-10-04): production's row swaps between two SF Symbol
+// names (chevron.up / chevron.down) from isExpanded — it does not rotate a single downward chevron.
+// The catalog's browser reconstruction follows the same glyph-swap model, not a rotation transform.
+test('Correction (PR #974 issue correction): the Transcript Log Row preview swaps chevron-down/chevron-up glyphs from actual expansion state, matching production\'s Image(systemName:) swap, with no rotation transform anywhere', () => {
+  const nativeSrc = read('../HermesMobile/Features/Chat/TranscriptLogRowView.swift');
+  assert.match(nativeSrc, /Image\(systemName:\s*isExpanded \? "chevron\.up" : "chevron\.down"\)/, 'expected production to swap SF Symbol names from isExpanded, not rotate one glyph');
+  assert.doesNotMatch(nativeSrc, /rotationEffect/, 'expected no rotation transform on the production chevron');
+
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(previewsSrc, /import\s*\{[^}]*\bDS_ICON_SIZE\b[^}]*\}\s*from\s*'\.\.\/\.\.\/\.\.\/tokens'/, 'expected DS_ICON_SIZE to be imported rather than an arbitrary chevron size literal');
   const chevronBody = extractFunctionBody(previewsSrc, 'DisclosureChevron');
-  assert.match(chevronBody, /name="chevron-down"\s+size=\{DS_ICON_SIZE\.\w+\}/);
-  assert.match(chevronBody, /rotate:\s*expanded\s*\?\s*'180deg'\s*:\s*'0deg'/);
-  assert.doesNotMatch(chevronBody, /chevron-up/, 'rotation, not a second icon, owns the expanded state');
+  assert.match(chevronBody, /size=\{DS_ICON_SIZE\.\w+\}/);
+  assert.match(chevronBody, /expanded\s*\?\s*'chevron-up'\s*:\s*'chevron-down'/, 'expected the browser reconstruction to swap chevron-up/chevron-down from expansion state, matching production');
+  assert.doesNotMatch(chevronBody, /rotate:/, 'expected no rotation transform in the browser reconstruction');
 
   for (const fnName of ['TranscriptLogRowPreview', 'TranscriptActivityPreview']) {
     const body = extractFunctionBody(previewsSrc, fnName);
@@ -2419,6 +2470,16 @@ test('Correction (production reconciliation): the Transcript Log Row preview rot
   assert.match(section, /<TranscriptLogRowPreview/);
 
   assert.match(previewsSrc, /export function TranscriptLogRowPreview/);
+});
+
+// Correction (PR #974 issue correction, 2026-10-04): the catalog must not call Transcript Log Row
+// production-adopted/unchanged while also narrating a branch-only production edit (a disconnection,
+// a migration, or a "now" value) to the same row — those two claims contradict each other.
+test('Correction (PR #974 issue correction): Transcript Log Row\'s catalog entry does not narrate a branch-only production change to TranscriptLogRowView.swift while calling the row production-adopted and unchanged', () => {
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(sectionsSrc, 'Transcript Log Row');
+  assert.doesNotMatch(section, /disconnected/i, 'expected no "disconnected" narration — the row was never connected to the new foundation to begin with');
+  assert.doesNotMatch(section, /rowSpacing is now|bodyIndent contract is unchanged/i, 'expected no narration implying a branch-only edit to a derived formula that does not exist in production');
 });
 
 test('the reusable-geometry facts table and Hermex Radius & Geometry cite only the real, adopted TranscriptLogRowMetrics/TranscriptLogRowView.swift — no DisclosureRowMetrics duplicate survives anywhere', () => {
@@ -3277,6 +3338,41 @@ test('Correction (2026-09-26): the generic catalog Shimmer honors system Reduce 
   assert.match(implSrc, /reduceMotion/, 'expected a reduceMotion-driven code path in Breathing/Shimmer');
 });
 
+// Correction (PR #974 issue correction, 2026-10-04): Shimmer had the same startup race as Loading —
+// the module-level `reduceMotionEnabled` defaulted to a plain `false`, so `ensureSharedProgressStarted()`
+// and `Breathing`'s own render could treat an unresolved preference as "not reduced" and start the
+// shared Animated.loop (or an Animated color interpolation) before AccessibilityInfo ever resolves.
+// The preference must be explicitly unresolved (`null`) until it resolves, and the shared loop may
+// start only once it resolves to exactly `false`.
+test('Correction (2026-10-04): the generic catalog Shimmer keeps its module-level preference explicitly unresolved until AccessibilityInfo resolves, and starts the shared loop only once it resolves to disabled', () => {
+  const implSrc = read('native/components/Shimmer/Shimmer.tsx');
+  assert.match(
+    implSrc,
+    /let reduceMotionEnabled:\s*boolean\s*\|\s*null\s*=\s*null/,
+    'expected the module-level preference to start as an explicit unresolved (null) state, not a false default that reads as "not reduced" before AccessibilityInfo resolves',
+  );
+  assert.match(
+    implSrc,
+    /function ensureSharedProgressStarted\(\)[\s\S]{0,80}if\s*\(\s*sharedProgressStarted\s*\|\|\s*reduceMotionEnabled\s*!==\s*false\s*\)\s*return/,
+    'expected ensureSharedProgressStarted to stay static for both an unresolved and an explicitly enabled preference, starting only once it resolves to exactly false',
+  );
+  assert.match(
+    implSrc,
+    /const \[enabled, setEnabled\] = useState<boolean \| null>\(reduceMotionEnabled\)/,
+    'expected the per-instance hook state to be typed boolean | null, matching the tri-state module preference',
+  );
+  assert.match(
+    implSrc,
+    /if\s*\(\s*reduceMotion\s*===\s*false\s*\)\s*ensureSharedProgressStarted\(\)/,
+    'expected Breathing to request the shared loop only once its own preference resolves to exactly false',
+  );
+  assert.match(
+    implSrc,
+    /if\s*\(\s*reduceMotion\s*!==\s*false\s*\)\s*return\s*high/,
+    'expected Breathing to render a static color for both an unresolved and an explicitly enabled preference, never an Animated interpolation',
+  );
+});
+
 test('Correction (2026-09-26): the generic catalog Divider owns opacity as a component prop with a translucent default, and the preview demonstrates it via the prop instead of external style opacity', () => {
   const implSrc = read('native/components/Divider/Divider.tsx');
   assert.match(implSrc, /opacity\??:\s*number/, 'expected an opacity prop on DividerProps');
@@ -3950,10 +4046,15 @@ test('List / ListItem documents an accessibility-label override and Dynamic Type
   assert.match(section, /Dynamic Type/);
 });
 
-test('Transcript Log Row documents its Buttons and Divider composition alongside Hermex typography/spacing/radius/motion', () => {
+// Correction (PR #974 issue correction, 2026-10-04): TranscriptLogRowView.swift was disconnected
+// from the new Issue #607 foundation tokens (HermesSpacing/HermesRadius/HermesIconSize/HermesMotion/
+// .appFont) back to its own pre-existing exact literals and typography APIs. The catalog must state
+// that truthfully instead of claiming a composition that no longer exists in the production source.
+test('Transcript Log Row truthfully states it keeps its own pre-existing spacing/radius/typography values rather than claiming it uses the new Hermex token layer', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Transcript Log Row');
-  assert.match(section, /Hermex typography, spacing, radius, motion, Buttons, and Divider/);
+  assert.doesNotMatch(section, /Hermex typography, spacing, radius, motion, Buttons, and Divider/);
+  assert.match(section, /does not import the new Issue #607 foundation tokens/);
 });
 
 // Correction (final-review source accuracy): TranscriptLogRowView.swift's ViewBuilder slots are
@@ -4626,13 +4727,26 @@ test('the foundation branch-status table names current verified adoption excepti
   const tableMatch = sectionsSrc.match(/const FOUNDATION_BRANCH_STATUS: FoundationStatusRow\[\] = \[[\s\S]*?\n\];/);
   assert.ok(tableMatch, 'expected a FOUNDATION_BRANCH_STATUS array literal');
   const table = tableMatch[0];
-  assert.match(table, /AppTheme\.swift/);
-  assert.match(table, /HermesProductPalette/);
-  assert.match(table, /No production screen reads from them yet/i);
+  // PR #974 issue correction: AppTheme.swift's HeaderLogoColor briefly sourced HermesProductPalette;
+  // it has been disconnected back to its own exact literal hex strings, so the tokens row names no
+  // adoption exception anymore.
+  assert.doesNotMatch(table, /AppTheme\.swift/);
+  assert.doesNotMatch(table, /HermesProductPalette/);
+  assert.match(table, /No production screen reads from them\.?/i);
   assert.match(table, /HermexBanner/i, 'expected Banner foundation availability to be named');
   assert.doesNotMatch(table, /main chat composer/i, 'must not claim a new Banner production adoption');
   assert.match(table, /TranscriptLogRowView|Transcript Log Row/i, 'expected the pre-existing production Transcript Log Row adoption to be named');
   assert.doesNotMatch(table, /None has a production call site in this branch/i, 'must not retain the now-false zero-adoption claim');
+});
+
+test('Hermex Colors keeps its foundation symbols and example separate from existing product callers', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const section = extractHermesSection(src, 'Hermex Colors');
+  const canonicalSymbols = section.match(/canonicalSymbols:\s*\[([\s\S]*?)\]/)?.[1] ?? '';
+
+  assert.doesNotMatch(canonicalSymbols, /HeaderLogoColor/, 'HeaderLogoColor remains an independent production type, not a canonical symbol of the unadopted color foundation');
+  assert.doesNotMatch(section, /code:\s*`HeaderLogoColor\.color\(for:\s*HermesProductPalette/, 'the usage example must not imply the production HeaderLogoColor type consumes HermesProductPalette');
+  assert.match(section, /code:\s*`let accentHex = HermesProductPalette\.headerAccentBlue`/, 'expected a foundation-only product-palette example');
 });
 
 // ─── #607 correction slice: Content Unavailable, HermexList, HermesUsageSize — foundation-only ────
@@ -7523,4 +7637,17 @@ test('Correction (#607 final controller follow-up, Toast visual): every rendered
     assert.match(tag, /showDivider=\{false\}/, `expected every Hermex Toast specimen to suppress the generic divider: ${tag}`);
   }
   assert.match(motionBody, /<Toast\b[\s\S]*?showDivider=\{false\}[\s\S]*?\/>/, 'expected the motion specimen to suppress the generic divider too');
+});
+
+test('Correction (#607 final review, browser console): native icon keys are passed directly instead of spread through primitive props', () => {
+  const iconSrc = read(NATIVE_ICON_PATH);
+
+  assert.doesNotMatch(iconSrc, /const common:[^\n]*=\s*\{\s*key:/, 'React keys must not be included in a spread props object');
+  assert.match(iconSrc, /renderPrimitive\(p,\s*i,\s*common\)/, 'the primitive index should be passed separately as the React key');
+  for (const primitive of ['Path', 'Rect', 'Circle', 'Line', 'Polyline', 'Polygon']) {
+    assert.match(iconSrc, new RegExp(`<${primitive}\\s+key=\\{key\\}\\s+\\{\\.\\.\\.common\\}`), `expected ${primitive} to receive key directly`);
+  }
+  assert.match(iconSrc, /Platform\.OS === 'web'/, 'web SVG accessibility should use web-native attributes');
+  assert.match(iconSrc, /'aria-label': accessibilityLabel/, 'web SVGs should keep their accessible name without leaking React Native props');
+  assert.doesNotMatch(iconSrc, /accessibilityLabel=\{accessibilityLabel\}/, 'accessibilityLabel must not be passed unconditionally to the web SVG element');
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing, AccessibilityInfo, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { View, Animated, Easing, AccessibilityInfo, Platform, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { DS_SEMANTIC, DS_MOTION_LOOP_DURATION } from '../../../tokens';
 
@@ -8,8 +8,11 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 // Same pattern as Shimmer.tsx/Button.tsx/HermesMotionReference.tsx: read the system preference once
 // via `AccessibilityInfo.isReduceMotionEnabled()`, then keep it current via `reduceMotionChanged` —
 // no new dependency, both calls are the existing `react-native` AccessibilityInfo API.
-function useReduceMotion(): boolean {
-  const [reduceMotion, setReduceMotion] = useState(false);
+// `null` until `AccessibilityInfo.isReduceMotionEnabled()` resolves — an unresolved preference must
+// never read as "not reduced", which would briefly start the loop below on a device that actually has
+// Reduce Motion on.
+function useReduceMotion(): boolean | null {
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   useEffect(() => {
     let mounted = true;
     AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
@@ -79,9 +82,10 @@ export function Loading({
   const progress = useRef(new Animated.Value(variant === 'circle' ? ARC_LEN : 0)).current;
 
   useEffect(() => {
-    if (reduceMotion) {
-      // A static half-drawn arc / half-filled bar — still reads as "loading", never an unconditional
-      // off-screen or always-repainting Animated.loop.
+    if (reduceMotion !== false) {
+      // Unresolved (null) or explicitly enabled (true): a static half-drawn arc / half-filled bar —
+      // still reads as "loading", never an unconditional off-screen or always-repainting
+      // Animated.loop, and never started before the preference explicitly resolves to disabled.
       progress.setValue(variant === 'circle' ? 0 : 0.5);
       return;
     }
@@ -121,6 +125,11 @@ export function Loading({
     );
   }
 
+  const circleAccessibilityProps =
+    Platform.OS === 'web'
+      ? { 'aria-label': 'Loading', role: 'progressbar' as const }
+      : { accessible: true, accessibilityRole: 'progressbar' as const, accessibilityLabel: 'Loading' };
+
   return (
     <Svg
       width={size}
@@ -128,9 +137,7 @@ export function Loading({
       viewBox="0 0 20 20"
       fill="none"
       style={style}
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel="Loading"
+      {...circleAccessibilityProps}
     >
       <AnimatedPath d={ARC_PATH} stroke={color} strokeWidth={2} strokeDasharray={ARC_LEN} strokeDashoffset={progress} />
     </Svg>

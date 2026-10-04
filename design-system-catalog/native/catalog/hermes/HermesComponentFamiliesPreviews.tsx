@@ -44,6 +44,7 @@ type IconName =
   | 'briefcase'
   | 'alert-circle'
   | 'chevron-down'
+  | 'chevron-up'
   | 'check'
   | 'info';
 
@@ -115,6 +116,12 @@ function Icon({ name, size, color }: { name: IconName; size: number; color: stri
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path d="M6 9.5 12 15.5 18 9.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'chevron-up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M6 14.5 12 8.5 18 14.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       );
     case 'check':
@@ -271,8 +278,8 @@ const preview = StyleSheet.create({
   logTrailingGroup: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   logStatusSlot: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   logBody: {
-    // 28pt body indent (iconWidth 20 + HermesSpacing.s8 8), matching TranscriptLogRowMetrics.bodyIndent.
-    marginLeft: 28, marginTop: 4, padding: 8, borderRadius: 8,
+    // 26pt body indent, matching TranscriptLogRowMetrics.bodyIndent's exact literal.
+    marginLeft: 26, marginTop: 4, padding: 8, borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.04)', maxHeight: 60,
     borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: 'rgba(0,0,0,0.12)',
   },
@@ -2512,14 +2519,13 @@ export function TopNavFamilyGallery() {
  * accessibilityState.expanded and toggling on its own onPress, not a separate underlined text
  * control below a non-interactive row. Expand/collapse is an immediate show/hide in this browser
  * reference; production adds the Reduce-Motion-aware transition. A long press on the expanded body
- * reconstructs the real row's copy-to-clipboard behavior. The shared downward chevron rotates 180°
- * when expanded, while accessibilityState.expanded carries the same state semantically.
+ * reconstructs the real row's copy-to-clipboard behavior. The shared chevron swaps between the
+ * downward and upward glyph from actual expansion state, matching production's
+ * `Image(systemName: isExpanded ? "chevron.up" : "chevron.down")` — not a rotation transform.
  */
 function DisclosureChevron({ expanded }: { expanded: boolean }) {
   return (
-    <View style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}>
-      <Icon name="chevron-down" size={DS_ICON_SIZE.xxs} color="#8a8a8a" />
-    </View>
+    <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={DS_ICON_SIZE.xxs} color="#8a8a8a" />
   );
 }
 
@@ -2581,10 +2587,10 @@ export function TranscriptLogRowPreview() {
         a bot activity/plan row (Bots) — compose this exact, already-adopted TranscriptLogRowView
         anatomy: icon slot, summary, a chevron, then a compact 16×16 status glyph at the extreme
         trailing edge (a checkmark/xmark/ellipsis in secondary, or red for a failure — never a wide
-        status word), and a chevron that expands into a scrollable detail body indented 28pt under the
+        status word), and a chevron that expands into a scrollable detail body indented 26pt under the
         row text behind a leading hairline rule. The row itself toggles expand/collapse
         (accessibilityState.expanded); a long press on the expanded body copies its content. The
-        shared downward chevron rotates upward when expanded.
+        shared chevron swaps from the downward to the upward glyph when expanded.
       </Text>
     </View>
   );

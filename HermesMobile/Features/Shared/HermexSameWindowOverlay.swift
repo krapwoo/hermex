@@ -1,20 +1,21 @@
 import SwiftUI
 import UIKit
 
-/// Where a `HermexSameWindowOverlay` fills to: `.root` spans the whole root view (Dialog, Popover
-/// Menu), `.aboveKeyboard` stops at the keyboard layout guide's top so a composer stays first
-/// responder underneath (the attachment picker).
+/// Where a `HermexSameWindowOverlay` fills to: `.root` spans the whole root view, currently used by
+/// Dialog and Popover Menu. `.aboveKeyboard` stops at the keyboard layout guide's top instead, so a
+/// composer underneath could stay first responder; it is a reusable foundation capability with no
+/// current production caller and is not exercised by the current test suite.
 enum HermexSameWindowOverlayBounds {
     case root
     case aboveKeyboard
 }
 
 /// Mounts a transparent SwiftUI overlay as a sibling above the app's current root view, inside the
-/// existing window, instead of presenting a new controller. This is the reusable mechanism the
-/// attachment picker's overlay proved first (`HermexKeyboardRetainingOverlay`, now a thin `.
-/// aboveKeyboard` wrapper around this type): sibling attachment, a transparent detached
-/// `UIHostingController`, environment forwarding, and deterministic teardown are all shared; only
-/// the bounds policy and the accessibility identifier are caller-owned.
+/// existing window, instead of presenting a new controller: sibling attachment, a transparent
+/// detached `UIHostingController`, environment forwarding, and deterministic teardown. The
+/// attachment picker keeps its own separate, pre-existing local same-window implementation
+/// (`HermexKeyboardRetainingOverlay` in `CustomAttachmentPicker.swift`) and does not import this
+/// type — do not assume the picker adopts this shared mechanism.
 struct HermexSameWindowOverlay<Overlay: View>: UIViewControllerRepresentable {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme

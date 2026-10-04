@@ -6,6 +6,7 @@
  * overrides (used by the transit icons) win over the def-level mode.
  */
 import React from 'react';
+import { Platform } from 'react-native';
 import Svg, { Path, Rect, Circle, Line, Polyline, Polygon } from 'react-native-svg';
 import { DS_SEMANTIC, DS_ICON_SIZE } from '../tokens';
 import { ICON_PATHS, type IconPrimitive } from './paths';
@@ -31,6 +32,11 @@ export function Icon({
 
   const isStroke = def.mode === 'stroke';
   const defStrokeWidth = strokeWidth ?? def.strokeWidth ?? 2;
+  const accessibilityProps = accessibilityLabel
+    ? Platform.OS === 'web'
+      ? { 'aria-label': accessibilityLabel, role: 'img' as const }
+      : { accessibilityLabel }
+    : {};
 
   return (
     <Svg
@@ -38,7 +44,7 @@ export function Icon({
       height={size}
       viewBox={def.viewBox}
       fill="none"
-      accessibilityLabel={accessibilityLabel}
+      {...accessibilityProps}
     >
       {def.primitives.map((p, i) => {
         // Per-primitive override wins; otherwise fall back to the def mode.
@@ -46,7 +52,7 @@ export function Icon({
         const stroke = resolvePaint(p.stroke, color) ?? (isStroke ? color : undefined);
         const hasStroke = stroke !== undefined && stroke !== 'none';
 
-        const common: Record<string, unknown> = { key: i, fill, fillRule: p.fillRule };
+        const common: Record<string, unknown> = { fill, fillRule: p.fillRule };
         if (hasStroke) {
           common.stroke = stroke;
           common.strokeWidth = p.strokeWidth ?? defStrokeWidth;
@@ -59,26 +65,26 @@ export function Icon({
         if (p.translateX !== undefined) common.translateX = p.translateX;
         if (p.translateY !== undefined) common.translateY = p.translateY;
 
-        return renderPrimitive(p, common);
+        return renderPrimitive(p, i, common);
       })}
     </Svg>
   );
 }
 
-function renderPrimitive(p: IconPrimitive, common: Record<string, unknown>): React.ReactElement | null {
+function renderPrimitive(p: IconPrimitive, key: number, common: Record<string, unknown>): React.ReactElement | null {
   switch (p.tag) {
     case 'path':
-      return <Path {...common} d={p.d} />;
+      return <Path key={key} {...common} d={p.d} />;
     case 'rect':
-      return <Rect {...common} x={p.x} y={p.y} width={p.width} height={p.height} rx={p.rx} ry={p.ry} />;
+      return <Rect key={key} {...common} x={p.x} y={p.y} width={p.width} height={p.height} rx={p.rx} ry={p.ry} />;
     case 'circle':
-      return <Circle {...common} cx={p.cx} cy={p.cy} r={p.r} />;
+      return <Circle key={key} {...common} cx={p.cx} cy={p.cy} r={p.r} />;
     case 'line':
-      return <Line {...common} x1={p.x1} y1={p.y1} x2={p.x2} y2={p.y2} />;
+      return <Line key={key} {...common} x1={p.x1} y1={p.y1} x2={p.x2} y2={p.y2} />;
     case 'polyline':
-      return <Polyline {...common} points={p.points} />;
+      return <Polyline key={key} {...common} points={p.points} />;
     case 'polygon':
-      return <Polygon {...common} points={p.points} />;
+      return <Polygon key={key} {...common} points={p.points} />;
     default:
       return null;
   }

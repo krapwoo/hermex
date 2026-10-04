@@ -1189,6 +1189,128 @@ class Round3SharedIntegrationTests(unittest.TestCase):
         )
 
 
+class ProductionDisconnectionBoundaryTests(unittest.TestCase):
+    """PR #974 issue-correction: AppTheme.swift, TranscriptLogRowView.swift, and
+    CustomAttachmentPicker.swift briefly gained direct dependencies on the Issue #607 foundation and
+    were disconnected again (restored to their pre-existing literals/APIs/local implementation). These
+    pin that boundary so a future edit cannot silently reintroduce one of those dependencies — any
+    real adoption must update this audit deliberately instead of drifting back in unnoticed."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = pathlib.Path(self.temp.name)
+
+    def test_app_theme_reintroducing_hermes_product_palette_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Config/AppTheme.swift",
+            "enum HeaderLogoColor {\n    static let defaultHex = HermesProductPalette.headerAccentYellow\n}",
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "AppTheme.swift" in f and "HermesProductPalette" in f and "explicit adoption update" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_app_theme_with_exact_literal_values_passes(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Config/AppTheme.swift",
+            "enum HeaderLogoColor {\n    static let defaultHex = \"#FFD700\"\n}",
+        )
+        self.assertEqual(audit.run(self.root), [])
+
+    def test_transcript_log_row_view_reintroducing_any_named_foundation_token_fails(self):
+        for forbidden_snippet in [
+            "HermesSpacing.s0",
+            "HermesRadius.r8",
+            "HermesIconSize.xs",
+            "HermesMotion.Duration.d150",
+            "AppFont.Role",
+            ".appFont(.caption)",
+        ]:
+            with self.subTest(forbidden_snippet=forbidden_snippet):
+                build_valid_fixture_tree(self.root)
+                write(
+                    self.root,
+                    "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
+                    f"enum TranscriptLogRowMetrics {{}}\nlet x = {forbidden_snippet}",
+                )
+                failures = audit.run(self.root)
+                self.assertTrue(
+                    any(
+                        "TranscriptLogRowView.swift" in f and "explicit adoption update" in f
+                        for f in failures
+                    ),
+                    f"expected a failure for {forbidden_snippet}: {failures}",
+                )
+
+    def test_transcript_log_row_view_with_only_literals_passes(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
+            "enum TranscriptLogRowMetrics {\n    static let rowSpacing: CGFloat = 8\n}",
+        )
+        self.assertEqual(audit.run(self.root), [])
+
+    def test_custom_attachment_picker_reintroducing_hermex_same_window_overlay_fails(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Chat/CustomAttachmentPicker.swift",
+            (
+                "struct HermexKeyboardRetainingOverlay<Overlay: View>: View {\n"
+                "    var body: some View {\n"
+                "        HermexSameWindowOverlay(isPresented: true, bounds: .aboveKeyboard, "
+                "accessibilityIdentifier: \"x\") { EmptyView() }\n"
+                "    }\n"
+                "}"
+            ),
+        )
+        failures = audit.run(self.root)
+        self.assertTrue(
+            any(
+                "CustomAttachmentPicker.swift" in f
+                and "HermexSameWindowOverlay" in f
+                and "explicit adoption update" in f
+                for f in failures
+            ),
+            failures,
+        )
+
+    def test_custom_attachment_picker_with_its_own_local_overlay_passes(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Chat/CustomAttachmentPicker.swift",
+            "struct HermexKeyboardRetainingOverlay<Overlay: View>: UIViewControllerRepresentable {}",
+        )
+        self.assertEqual(audit.run(self.root), [])
+
+    def test_failure_message_phrases_as_requiring_an_update_not_a_permanent_ban(self):
+        build_valid_fixture_tree(self.root)
+        write(self.root, "HermesMobile/Config/AppTheme.swift", "let x = HermesProductPalette.headerAccentYellow")
+        failures = audit.run(self.root)
+        joined = " ".join(failures)
+        self.assertIn("explicit adoption update", joined)
+        self.assertNotIn("permanently prohibited", joined)
+        self.assertNotIn("never allowed", joined)
+
+    def test_absent_files_are_not_flagged(self):
+        # AppTheme.swift and CustomAttachmentPicker.swift are not part of the minimal fixture tree;
+        # the boundary check must skip a missing file rather than fail closed on it (that is
+        # check_required_files's job for the foundation files it actually requires).
+        build_valid_fixture_tree(self.root)
+        self.assertEqual(audit.run(self.root), [])
+
+
 class CliTests(unittest.TestCase):
     def test_cli_exits_nonzero_with_readable_failures_on_a_broken_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:

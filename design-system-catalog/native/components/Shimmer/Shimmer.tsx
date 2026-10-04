@@ -28,7 +28,7 @@ const PULSE_CYCLE_MS = DS_MOTION_LOOP_DURATION.pulse;
 const sharedProgress = new Animated.Value(0);
 let sharedProgressStarted = false;
 function ensureSharedProgressStarted(): void {
-  if (sharedProgressStarted || reduceMotionEnabled) return;
+  if (sharedProgressStarted || reduceMotionEnabled !== false) return;
   sharedProgressStarted = true;
   Animated.loop(
     Animated.timing(sharedProgress, {
@@ -45,7 +45,10 @@ function ensureSharedProgressStarted(): void {
 // `AccessibilityInfo.isReduceMotionEnabled()`, then keep it current via the `reduceMotionChanged`
 // event so a preference flipped while the app is open takes effect immediately — no new dependency,
 // both calls are the existing `react-native` AccessibilityInfo API.
-let reduceMotionEnabled = false;
+// `null` until `AccessibilityInfo.isReduceMotionEnabled()` resolves — an unresolved preference must
+// never read as "not reduced", which would let ensureSharedProgressStarted() and Breathing's render
+// briefly treat it as disabled before the preference actually resolves.
+let reduceMotionEnabled: boolean | null = null;
 const reduceMotionListeners = new Set<(enabled: boolean) => void>();
 
 AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
@@ -65,8 +68,8 @@ AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) => {
   reduceMotionListeners.forEach((listener) => listener(enabled));
 });
 
-function useReduceMotion(): boolean {
-  const [enabled, setEnabled] = useState(reduceMotionEnabled);
+function useReduceMotion(): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(reduceMotionEnabled);
   useEffect(() => {
     reduceMotionListeners.add(setEnabled);
     return () => {
@@ -98,7 +101,7 @@ export function Breathing({
   const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    if (!reduceMotion) ensureSharedProgressStarted();
+    if (reduceMotion === false) ensureSharedProgressStarted();
   }, [reduceMotion]);
 
   // (progress + phase) % 1, then a triangle wave: high at 0, low at 0.5, high at 1 — equivalent to the
@@ -106,7 +109,7 @@ export function Breathing({
   // Motion drops the interpolation entirely for a flat, non-looping fill — never a paused animated
   // value, so there is no chance of it resuming mid-pulse if the preference flips back off later.
   const backgroundColor = useMemo(() => {
-    if (reduceMotion) return high;
+    if (reduceMotion !== false) return high;
     return Animated.modulo(Animated.add(sharedProgress, phase), 1).interpolate({
       inputRange: [0, 0.5, 1],
       outputRange: [high, low, high],

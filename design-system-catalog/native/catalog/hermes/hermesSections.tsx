@@ -223,15 +223,16 @@ const recon = StyleSheet.create({
 
 // Compact, truthful branch-status summary — replaces the former screen-by-screen production-
 // adoption matrix. This branch is foundation-only: it adds Design System tokens/components to the
-// repository candidate, but does not migrate any production screen onto them. The one verified
-// exception (AppTheme.swift's HeaderLogoColor sourcing its hex values from the new
-// HermesProductPalette token) is named explicitly rather than folded into a broader claim.
+// repository candidate, but does not migrate any production screen onto them. (PR #974
+// issue correction: AppTheme.swift's HeaderLogoColor briefly sourced its hex values from the new
+// HermesProductPalette token; it has been disconnected back to its own exact literal hex strings, so
+// there is no production-adoption exception to name here anymore.)
 interface FoundationStatusRow {
   area: string;
   note: string;
 }
 const FOUNDATION_BRANCH_STATUS: FoundationStatusRow[] = [
-  { area: 'Tokens (Colors, Spacing, Motion, Radius & Geometry, Shadow, Iconography, Typography, Font)', note: 'Defined and available in this branch\'s foundation layer. No production screen reads from them yet, with one exception: AppTheme.swift\'s HeaderLogoColor sources its six header-accent hex values from the new HermesProductPalette token instead of literal hex strings.' },
+  { area: 'Tokens (Colors, Spacing, Motion, Radius & Geometry, Shadow, Iconography, Typography, Font)', note: 'Defined and available in this branch\'s foundation layer. No production screen reads from them.' },
   { area: 'Components (Card, Button, Checkbox, Radio, Selection Sheet, Toast, Tooltip, TopNav, Avatar, Divider, Banner, Tag, Attachment, Skeleton, List/ListItem, Composer Toolbar, Segmented Control)', note: 'Implemented and available in this branch\'s foundation layer, with SwiftUI unit-test coverage. New families, including HermexBanner, remain foundation-only. Transcript Log Row documents the pre-existing production TranscriptLogRowView; every entry below states its own adoption status.' },
   { area: 'Patterns (Content Unavailable) and pre-existing patterns (Adaptive Glass, Pending Request, Composer, Transcript Activity)', note: 'Content Unavailable is the same story as the components above — a new, unadopted foundation candidate. Adaptive Glass and the Pending Request surfaces predate this branch and remain genuinely in production use; their entries describe that existing, unchanged production reality.' },
 ];
@@ -718,7 +719,7 @@ const GEOMETRY_FACTS: GeometryFact[] = [
   { name: 'ChatComposerMetrics.actionSize', value: '44pt', source: 'HermesMobile/Features/Chat/ChatComposerPresentation.swift', use: "The round send/stop action button's diameter." },
   { name: 'ChatComposerMetrics.pillInset', value: '5pt', source: 'HermesMobile/Features/Chat/ChatComposerPresentation.swift', use: "Inset used in the collapsed pill's own corner-radius derivation." },
   { name: 'TranscriptLogRowMetrics.minimumHeight', value: '32pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Log row height at the default text size (the real, adopted, unchanged production source — see Transcript Log Row).' },
-  { name: 'TranscriptLogRowMetrics.bodyIndent', value: '28pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Icon column width plus gap, so an expanded body indents under the row text.' },
+  { name: 'TranscriptLogRowMetrics.bodyIndent', value: '26pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Icon column width plus gap, so an expanded body indents under the row text.' },
   { name: 'TranscriptLogRowMetrics.bodyWindowHeight', value: '240pt', source: 'HermesMobile/Features/Chat/TranscriptLogRowView.swift', use: 'Fixed cap an expanded log body scrolls inside.' },
   { name: 'AdaptiveReadableContentWidth.secondaryDestination', value: '800pt', source: 'HermesMobile/Features/Shared/AdaptiveGlassModifier.swift', use: 'Max readable content width for a secondary-destination screen class.' },
   { name: 'AdaptiveReadableContentWidth.workspace', value: '1,000pt', source: 'HermesMobile/Features/Shared/AdaptiveGlassModifier.swift', use: 'Max readable content width for a workspace-class screen.' },
@@ -1744,7 +1745,7 @@ AttachmentFileBadge(
           'HermesMobile/Features/Shared/HermexOverlayLifecycle.swift',
         ],
         notes: [
-          'Mounted through HermexSameWindowOverlay (.root bounds) — the same reusable same-window UIHostingController host the attachment picker\'s HermexKeyboardRetainingOverlay now wraps (.aboveKeyboard bounds) — rather than any native .alert, .sheet, fullScreenCover, Menu, or .popover.',
+          'Mounted through HermexSameWindowOverlay (.root bounds) — the same reusable same-window UIHostingController mechanism the attachment picker\'s HermexKeyboardRetainingOverlay originally proved. That picker (HermesMobile/Features/Chat/CustomAttachmentPicker.swift) keeps its own local, pre-existing same-window implementation in production rather than importing this foundation file — rather than any native .alert, .sheet, fullScreenCover, Menu, or .popover.',
           'The header row uses HStack(alignment: .center) so the heading and close control align on the same vertical center. The close control composes the shared HermexButton at size: .extraSmall, emphasis: .neutral, isGlass: true — the same adaptive-glass chrome as Buttons\' Glass surface — wrapped in a 44pt minWidth/minHeight frame so the compact 24pt visual keeps the project-standard touch target. The horizontal footer case adds a leading Spacer so the caller\'s own action order hugs the semantic trailing edge without reordering it; the vertical case is unchanged.',
           'Exactly-once dismissal and deferred-action completion are owned by a small generation-based HermexOverlayLifecycle state machine, shared with the same-window host mechanism and intended for reuse by the next approved family in this same slice (Popover Menu, not yet part of this branch).',
           'Entry/exit motion reuses the existing HermesMotion.Bundle.overlayEnter/overlayExit bundles (scrim fade plus centered 0.95→1 scale and opacity); Reduce Motion removes the scale and keeps an opacity-only state change. Reduce Transparency falls back through the existing hermexCardSurface(.glass) solid-card treatment.',
@@ -2566,11 +2567,11 @@ AttachmentFileBadge(
   {
     id: 'Transcript Log Row',
     description:
-      'An icon slot, a one-line summary, an optional trailing accessory, an optional status word, and a chevron that expands into a scrollable detail body — the real, production-adopted anatomy behind a tool-call log line, the "Thinking" reasoning block, and a bot activity/plan row (TranscriptLogRowView.swift). At ordinary Dynamic Type sizes the accessory sits trailing, before the chevron; at accessibility sizes it moves below the summary/detail. Uses Hermex typography, spacing, radius, motion, Buttons, and Divider.',
+      'An icon slot, a one-line summary, an optional trailing accessory, an optional status word, and a chevron that expands into a scrollable detail body — the real, production-adopted anatomy behind a tool-call log line, the "Thinking" reasoning block, and a bot activity/plan row (TranscriptLogRowView.swift). At ordinary Dynamic Type sizes the accessory sits trailing, before the chevron; at accessibility sizes it moves below the summary/detail. This pre-existing production row keeps its own exact spacing, radius, icon-size, and typography values/APIs; it does not import the new Issue #607 foundation tokens.',
     whenToUse: 'Use it for compact transcript activity: one collapsed line with a summary, an optional trailing accessory, and optional status that can expand into a bounded, scrollable detail body; for a persistent always-visible detail, use Card instead.',
     props: [
       { name: 'TranscriptLogRowMetrics.minimumHeight', type: 'CGFloat', default: '32', desc: 'Row height at the default text size.' },
-      { name: 'TranscriptLogRowMetrics.bodyIndent', type: 'CGFloat', default: '28', desc: 'Icon column width + gap, so the expanded body indents under the row text.' },
+      { name: 'TranscriptLogRowMetrics.bodyIndent', type: 'CGFloat', default: '26', desc: 'Icon column width + gap, so the expanded body indents under the row text.' },
       { name: 'TranscriptLogRowMetrics.bodyWindowHeight', type: 'CGFloat', default: '240', desc: 'Fixed cap the expanded body scrolls inside.' },
     ],
     a11y: 'Tap toggles expand/collapse; a long press on the expanded body copies its content, briefly showing "Copied" before reverting to "Copy". VoiceOver reads "Double tap to show details. Long press to copy." while collapsed, and "Double tap to hide details. Long press to copy." while expanded — each caller supplies its own icon and detail text/accessibility label. The row ignores its own child accessibility semantics for the optional trailing accessory, so a caller that supplies one must fold the accessory\'s meaning into `accessibilityLabel`.',
@@ -2991,25 +2992,24 @@ AttachmentFileBadge(
       avoidWhen: 'Avoid consuming a non-500 ramp step in any UI pairing until that pairing has passed contrast validation in light, dark, and Increased Contrast (spec §4.1). Avoid inventing a Hermex semantic-color type — the roles are names for platform colors, not a Swift API.',
       alternatives: [],
       adoptionStatus: {
-        state: 'partially-adopted',
-        detail: 'AppTheme.swift\'s HeaderLogoColor: adopted, sourcing HermesProductPalette. The color ramp scale and ProjectCreationSheet\'s palette: foundation-only, no other production call site yet. The semantic color roles are documentation-only bindings to platform colors, not a foundation Swift API — there is no Hermex semantic-color type to adopt.',
+        state: 'foundation-available',
+        detail: 'HermesColorRamp and HermesProductPalette exist and are foundation-available on this branch; zero production call sites import either of them. AppTheme.swift\'s HeaderLogoColor and ProjectCreationSheet\'s project palette both keep their own pre-existing literal hex values — disconnected back from a brief HermesProductPalette dependency (PR #974 issue correction). The semantic color roles are documentation-only bindings to platform colors, not a foundation Swift API — there is no Hermex semantic-color type to adopt.',
       },
-      useSummary: 'Narrow, real adoption: AppTheme.swift\'s HeaderLogoColor sources its six header-accent hex values from the new HermesProductPalette token instead of literal hex strings. The color ramp scale and ProjectCreationSheet\'s project palette remain foundation-only, with no other production call site yet. The semantic color roles are documentation-only bindings to platform colors, not a Swift API awaiting adoption.',
-      usedIn: [
-        { screen: 'Appearance', path: 'Settings → Appearance', effect: 'Choose the header accent and preview its foreground contrast — HeaderLogoColor\'s six presets now read from HermesProductPalette.' },
-      ],
+      useSummary: 'Foundation-only: HermesColorRamp and HermesProductPalette are defined and available, but no production call site imports either of them in this branch. AppTheme.swift\'s HeaderLogoColor and ProjectCreationSheet\'s project palette both keep their own pre-existing literal hex values. The semantic color roles are documentation-only bindings to platform colors, not a Swift API awaiting adoption.',
+      usedIn: [],
       implementationNotes: {
-        status: 'AppTheme.swift\'s HeaderLogoColor: adopted, sourcing HermesProductPalette. The color ramp scale and ProjectCreationSheet\'s palette: foundation-only, no other production call site yet. The semantic color roles are documentation-only bindings to platform colors, not a foundation Swift API — there is no Hermex semantic-color type to adopt.',
+        status: FOUNDATION_ONLY_STATUS,
         sourcePaths: ['HermesMobile/Config/AppTheme.swift', 'HermesMobile/Config/HermesColor.swift'],
         notes: [
-          'HeaderLogoColor\'s 6 presets derive their hex values from HermesProductPalette, pinned by HermesColorTests/HermesProductPaletteTests — the one verified production caller of anything in HermesColor.swift.',
-          'ProjectCreationSheet.swift\'s 8 project accent presets keep their own existing literal hex values in this branch; they do not import HermesColorRamp or HermesProductPalette.',
+          'HeaderLogoColor\'s 6 presets keep their own pre-existing literal hex values (AppTheme.swift); they do not import HermesColorRamp or HermesProductPalette.',
+          'ProjectCreationSheet.swift\'s 8 project accent presets keep their own existing literal hex values in this branch; they do not import HermesColorRamp or HermesProductPalette either.',
           'Status/state colors (e.g. offline banners, selection pills) use Apple\'s own SwiftUI semantic colors directly — Hermex defines no separate status color layer.',
+          'Report only: no production call site imports or composes HermesColorRamp/HermesProductPalette in this branch; every existing literal-hex caller keeps its own current values unchanged. Migrating one onto this foundation is scoped to a separate adoption issue, not this slice.',
         ],
       },
-      canonicalSymbols: ['HermesColorRamp', 'HermesProductPalette', 'HeaderLogoColor'],
+      canonicalSymbols: ['HermesColorRamp', 'HermesProductPalette'],
       usageExamples: [
-        { name: 'Choosing a header accent from the product palette', language: 'swift', code: `HeaderLogoColor.color(for: HermesProductPalette.headerAccentBlue)` },
+        { name: 'Reading a header-accent foundation value', language: 'swift', code: `let accentHex = HermesProductPalette.headerAccentBlue` },
       ],
       tokenFacts: [
         { name: 'HermesColorRamp.Neutral', value: '500 anchor #8E8E93 (11 steps, 50-950)' },

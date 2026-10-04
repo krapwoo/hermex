@@ -215,6 +215,16 @@ It does not count or restrict native-control call sites anywhere in production, 
 rewrite code, and does not require or prove that any production screen has migrated onto a
 Design System component — see the script's own module docstring for the exact contract.
 
+The same job also runs a second, narrower check inside that script: a fail-closed
+production-disconnection boundary for `HermesMobile/Config/AppTheme.swift`,
+`HermesMobile/Features/Chat/TranscriptLogRowView.swift`, and
+`HermesMobile/Features/Chat/CustomAttachmentPicker.swift`. These three briefly took on direct
+dependencies on the Issue #607 foundation and were deliberately reverted (see PR #974's
+issue-correction); the boundary check exists so those reverted dependencies cannot drift back in
+silently. It is not a permanent ban on adopting the foundation in these files — legitimate future
+adoption is allowed, but it must come with an explicit update to `PRODUCTION_BOUNDARY_PATTERNS` in
+the same bounded change, not a silent reintroduction.
+
 ```zsh
 # Fixture tests for the audit script itself
 python3 -m unittest scripts.tests.test_hermex_design_system_adoption_audit -v
