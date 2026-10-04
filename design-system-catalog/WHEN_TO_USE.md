@@ -106,10 +106,11 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   (`ComposerChipToken`/`ComposerChipRendering`/`ComposerChipTextView`) for a recognized skill,
   workspace file, bot mention, or quote rendered inline with editable/transcript text. There is no
   standalone chip component to adopt — every reference renders through one uniform chip image today.
-- **Native iOS patterns (Search) vs a Hermex-owned wrapper** — Hermex intentionally keeps some
-  surfaces on the platform primitive (`.searchable`) rather than a custom component. Their
-  `adoptionStatus` is `native-platform`, not `foundation-available` — there is no Hermex-owned
-  alternative to adopt later, by design.
+- **Search vs a generic Text Input** — `HermexSearchField` is the Hermex-owned Search foundation and
+  is `partially-adopted`: `HermexSelectionSheet.swift` already renders it directly, while production's
+  eight existing screen-level `.searchable` call sites remain unchanged. Use `.hermexSearch` for a
+  future pinned list-search migration, but keep each screen migration in a separate issue; the shared
+  field preserves native text-editing semantics through its system-backed `TextField`.
 
 ## Checking a decision mechanically
 

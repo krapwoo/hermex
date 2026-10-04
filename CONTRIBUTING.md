@@ -90,8 +90,8 @@ For frontend contributions:
 - Use the existing Hermex typography, color, spacing, radius, motion, shadow, and
   component APIs before introducing a literal or feature-local lookalike.
 - Keep native platform behavior where it owns the interaction — for example
-  `.searchable`, navigation/toolbars, system lists, menus, and alerts — and layer
-  Hermex styling around those semantics rather than replacing them.
+  navigation/toolbars, system lists, menus, alerts, and text-editing semantics —
+  and layer Hermex styling around those semantics rather than replacing them.
 - Use `Tag` only for display-only metadata. Tappable choices use Button,
   Segmented Control, Checkbox, or another semantic control.
 - Update `design-system-catalog/` in the same PR whenever a shared token,

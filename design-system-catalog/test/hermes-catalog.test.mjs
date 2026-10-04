@@ -168,6 +168,24 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
   assert.doesNotMatch(previews, /NativeSegmentedControlGallery|native iOS segmented Picker/);
 });
 
+test('Search guidance names the partially adopted Hermex foundation without contradicting deferred native call sites', () => {
+  const guide = read('WHEN_TO_USE.md');
+  const contributing = read('../CONTRIBUTING.md');
+
+  assert.match(guide, /HermexSearchField/);
+  assert.match(guide, /partially-adopted/);
+  assert.match(guide, /HermexSelectionSheet\.swift/);
+  assert.match(guide, /eight existing screen-level `\.searchable` call sites/);
+  assert.match(guide, /separate issue/);
+  assert.doesNotMatch(guide, /no Hermex-owned alternative to adopt later/);
+  assert.doesNotMatch(guide, /Search[\s\S]{0,500}adoptionStatus[^\n]*native-platform/);
+  assert.doesNotMatch(
+    contributing,
+    /platform behavior[^\n]*\n(?:[^\n]*\n){0,2}[^\n]*`\.searchable`/,
+    'the contributor policy should not classify .searchable as the permanent native-only Search path',
+  );
+});
+
 test("the default route never imports or assembles CatalogExample's template nav/sections, while CatalogExample.tsx itself (used by the separate ?catalog=template route) is fully preserved", () => {
   const catalogSrc = read(HERMES_CATALOG_PATH);
   // Scoped to the actual code constructs a merge would require (an import statement, the identifiers
@@ -5357,7 +5375,7 @@ test('WHEN_TO_USE.md is a truthful Hermex decision guide: it explains the decisi
   assert.match(whenToUse, /Hermex/);
   assert.match(whenToUse, /hermesSections\.tsx|hermesReference/, 'expected WHEN_TO_USE.md to point at the structured Hermex source of truth');
   for (const templateOnly of ['SearchField', 'FieldContainer', 'PillRow', 'UnderlineTabs']) {
-    assert.doesNotMatch(whenToUse, new RegExp(templateOnly), `WHEN_TO_USE.md must not still describe the generic template-only component "${templateOnly}", which Hermex does not own`);
+    assert.doesNotMatch(whenToUse, new RegExp(`\\b${templateOnly}\\b`), `WHEN_TO_USE.md must not still describe the generic template-only component "${templateOnly}", which Hermex does not own`);
   }
 });
 
