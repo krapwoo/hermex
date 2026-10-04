@@ -141,6 +141,15 @@ function Icon({ name, size, color }: { name: IconName; size: number; color: stri
   }
 }
 
+// Transcript Log Row's approved Design System *target* geometry (issue #607 Design System target
+// correction, PR #974, 2026-10-04) — not a claim about current production, which keeps its own real,
+// unchanged TranscriptLogRowMetrics.bodyIndent literal (26pt; see that record in hermesSections.tsx).
+// The target composes the canonical DS_SPACING[400] row gap with this icon-slot width so the
+// expanded body's leading inset derives from the two tokens instead of repeating an unrelated
+// literal at every use site.
+const LOG_ICON_SLOT_WIDTH = 20;
+const LOG_BODY_LEADING_INSET = LOG_ICON_SLOT_WIDTH + DS_SPACING[400];
+
 const preview = StyleSheet.create({
   stack: { gap: 12 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' },
@@ -266,20 +275,20 @@ const preview = StyleSheet.create({
   },
   topNavActionButton: { minWidth: 44, minHeight: 44 },
 
-  // Disclosure / Log Row
+  // Disclosure / Log Row — Design System target geometry (see LOG_ICON_SLOT_WIDTH/
+  // LOG_BODY_LEADING_INSET above): the canonical DS_SPACING[400] row gap, not production parity.
   logRow: {
-    width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32,
+    width: '100%', flexDirection: 'row', alignItems: 'center', gap: DS_SPACING[400], minHeight: 32,
     paddingVertical: 4,
   },
-  logIconSlot: { width: 20, alignItems: 'center' },
+  logIconSlot: { width: LOG_ICON_SLOT_WIDTH, alignItems: 'center' },
   logSummary: { flex: 1, fontSize: 13, color: '#1c1c1e' },
   // Trailing group order matches native exactly: chevron, then the compact status slot at the
   // extreme trailing edge — never a wide status word inboard of the chevron.
   logTrailingGroup: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   logStatusSlot: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   logBody: {
-    // 26pt body indent, matching TranscriptLogRowMetrics.bodyIndent's exact literal.
-    marginLeft: 26, marginTop: 4, padding: 8, borderRadius: 8,
+    marginLeft: LOG_BODY_LEADING_INSET, marginTop: 4, padding: 8, borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.04)', maxHeight: 60,
     borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: 'rgba(0,0,0,0.12)',
   },
@@ -2587,8 +2596,11 @@ export function TranscriptLogRowPreview() {
         a bot activity/plan row (Bots) — compose this exact, already-adopted TranscriptLogRowView
         anatomy: icon slot, summary, a chevron, then a compact 16×16 status glyph at the extreme
         trailing edge (a checkmark/xmark/ellipsis in secondary, or red for a failure — never a wide
-        status word), and a chevron that expands into a scrollable detail body indented 26pt under the
-        row text behind a leading hairline rule. The row itself toggles expand/collapse
+        status word), and a chevron that expands into a scrollable detail body. This catalog
+        specimen renders the approved Design System target indent — the 20pt icon slot plus the 8px
+        DS_SPACING[400] token, 28pt — behind a leading hairline rule; production's own
+        TranscriptLogRowMetrics.bodyIndent stays its real, unchanged 26pt literal, and migrating it
+        onto this target is deferred. The row itself toggles expand/collapse
         (accessibilityState.expanded); a long press on the expanded body copies its content. The
         shared chevron swaps from the downward to the upward glyph when expanded.
       </Text>
@@ -2637,7 +2649,7 @@ export function TranscriptActivityPreview() {
       </Pressable>
 
       {turnExpanded && (
-        <View style={{ marginLeft: 26, gap: 10 }}>
+        <View style={{ marginLeft: LOG_BODY_LEADING_INSET, gap: 10 }}>
           <Text style={preview.label}>Activity Disclosure Row — "Thinking" reasoning block</Text>
           <Pressable
             onPress={() => setLogExpanded((value) => !value)}

@@ -1294,6 +1294,42 @@ class ProductionDisconnectionBoundaryTests(unittest.TestCase):
         )
         self.assertEqual(audit.run(self.root), [])
 
+    # ─── PR #974 current Greptile correction: comments must not trip the boundary check ──────────
+    # A `//` or `/* ... */` comment that merely mentions a forbidden symbol is not a dependency —
+    # only a real code reference is. These two pin that the check ignores comments; the pre-existing
+    # tests above (test_app_theme_reintroducing_hermes_product_palette_fails,
+    # test_transcript_log_row_view_reintroducing_any_named_foundation_token_fails,
+    # test_custom_attachment_picker_reintroducing_hermex_same_window_overlay_fails) pin that it still
+    # catches a real code reference.
+
+    def test_app_theme_line_comment_mentioning_hermes_product_palette_does_not_fail(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Config/AppTheme.swift",
+            (
+                "// Someday reconsider HermesProductPalette.headerAccentYellow here.\n"
+                "enum HeaderLogoColor {\n"
+                "    static let defaultHex = \"#FFD700\"\n"
+                "}"
+            ),
+        )
+        self.assertEqual(audit.run(self.root), [])
+
+    def test_transcript_log_row_view_block_comment_mentioning_forbidden_token_does_not_fail(self):
+        build_valid_fixture_tree(self.root)
+        write(
+            self.root,
+            "HermesMobile/Features/Chat/TranscriptLogRowView.swift",
+            (
+                "enum TranscriptLogRowMetrics {\n"
+                "    /* was HermesSpacing.s0 before the Issue #607 revert */\n"
+                "    static let rowSpacing: CGFloat = 8\n"
+                "}"
+            ),
+        )
+        self.assertEqual(audit.run(self.root), [])
+
     def test_failure_message_phrases_as_requiring_an_update_not_a_permanent_ban(self):
         build_valid_fixture_tree(self.root)
         write(self.root, "HermesMobile/Config/AppTheme.swift", "let x = HermesProductPalette.headerAccentYellow")

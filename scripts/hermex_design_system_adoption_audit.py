@@ -203,13 +203,63 @@ PRODUCTION_BOUNDARY_PATTERNS: list[tuple[str, list[str]]] = [
 ]
 
 
+def _strip_swift_comments(text: str) -> str:
+    """Removes `//` and (nesting-aware) `/* ... */` comments from Swift source so a comment that
+    merely mentions a forbidden symbol cannot trip a dependency check. Does not treat `//`/`/*`
+    found inside a double-quoted string literal as a comment start, and preserves every original
+    newline so line-oriented regexes/messages built from the result stay readable."""
+    out: list[str] = []
+    i, n = 0, len(text)
+    in_string = False
+    while i < n:
+        ch = text[i]
+        if in_string:
+            out.append(ch)
+            if ch == "\\" and i + 1 < n:
+                out.append(text[i + 1])
+                i += 2
+                continue
+            if ch == '"':
+                in_string = False
+            i += 1
+            continue
+        if ch == '"':
+            in_string = True
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "/":
+            while i < n and text[i] != "\n":
+                i += 1
+            continue
+        if ch == "/" and i + 1 < n and text[i + 1] == "*":
+            depth = 1
+            i += 2
+            while i < n and depth > 0:
+                if text[i] == "/" and i + 1 < n and text[i + 1] == "*":
+                    depth += 1
+                    i += 2
+                    continue
+                if text[i] == "*" and i + 1 < n and text[i + 1] == "/":
+                    depth -= 1
+                    i += 2
+                    continue
+                if text[i] == "\n":
+                    out.append("\n")
+                i += 1
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def check_production_boundary() -> list[str]:
     failures = []
     for rel_path, patterns in PRODUCTION_BOUNDARY_PATTERNS:
         full_path = REPO_ROOT / rel_path
         if not full_path.is_file():
             continue
-        text = read(rel_path)
+        text = _strip_swift_comments(read(rel_path))
         for pattern in patterns:
             if re.search(pattern, text):
                 failures.append(

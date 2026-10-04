@@ -2498,6 +2498,76 @@ test('the still-unadopted Radius/Geometry proposal\'s retained-exception fact ci
   assert.match(proposal, /name:\s*'TranscriptLogRowMetrics\.bodyWindowHeight'/);
 });
 
+// Correction (PR #974 Design System target correction, 2026-10-04): the Transcript Log Row catalog
+// specimen's own leading geometry is the approved Design System *target*, not a production-parity
+// claim (that is the separate bodyIndent test above, which stays pinned to production's real,
+// unchanged 26pt literal). The target composes the canonical DS_SPACING[400] row gap (8px) with a
+// 20pt icon slot, deriving a 28pt expanded-body leading inset — and every preview use of that same
+// row geometry (Transcript Log Row's own body, and Transcript Activity's nested indent) has to share
+// the one derived constant rather than repeating an unrelated literal.
+test('Correction (PR #974 Design System target correction): the Transcript Log Row catalog specimen uses the canonical DS_SPACING[400] row gap and a shared, derived 28pt (20pt icon slot + 8pt spacing token) expanded-body leading inset as the Design System target — not a production-parity claim', () => {
+  const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
+
+  const iconWidthMatch = previewsSrc.match(/const LOG_ICON_SLOT_WIDTH\s*=\s*(\d+)\s*;/);
+  assert.ok(iconWidthMatch, 'expected a shared, named icon-slot width constant (LOG_ICON_SLOT_WIDTH) rather than a bare literal repeated at each use site');
+  const iconSlotWidth = Number(iconWidthMatch[1]);
+  assert.equal(iconSlotWidth, 20, 'expected the shared icon-slot width constant to stay 20pt');
+
+  assert.match(
+    previewsSrc,
+    /const LOG_BODY_LEADING_INSET\s*=\s*LOG_ICON_SLOT_WIDTH\s*\+\s*DS_SPACING\[400\]\s*;/,
+    'expected the expanded-body leading inset to be derived as the icon-slot width plus DS_SPACING[400] (the canonical 8px spacing token), not a standalone literal'
+  );
+
+  const logRow = extractBraceBlock(previewsSrc, /logRow:\s*\{/);
+  assert.doesNotMatch(logRow, /gap:\s*\d+\b/, 'the catalog specimen\'s row gap must use the DS_SPACING[400] token, not any numeric literal (including the superseded 6px value)');
+  assert.match(logRow, /gap:\s*DS_SPACING\[400\]/, 'expected the Design System target row gap to be DS_SPACING[400] (8px)');
+
+  const logIconSlot = extractBraceBlock(previewsSrc, /logIconSlot:\s*\{/);
+  assert.match(logIconSlot, /width:\s*LOG_ICON_SLOT_WIDTH\b/, 'expected logIconSlot to reference the shared icon-slot width constant rather than a bare literal');
+
+  const logBody = extractBraceBlock(previewsSrc, /logBody:\s*\{/);
+  assert.doesNotMatch(logBody, /marginLeft:\s*26\b/, 'the unrelated 26px production-literal margin must not remain on the Design System target specimen');
+  assert.match(logBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected the expanded body to use the shared derived leading inset rather than a literal');
+
+  const activityBody = extractFunctionBody(previewsSrc, 'TranscriptActivityPreview');
+  assert.doesNotMatch(activityBody, /marginLeft:\s*26\b/, 'Transcript Activity\'s nested leading indent must not retain the unrelated 26px literal either');
+  assert.match(activityBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected Transcript Activity\'s nested indent to share the same derived Design System target leading inset');
+
+  // DS_SPACING[400] is the canonical 8px spacing token; 20 (icon slot) + 8 (DS_SPACING[400]) = 28.
+  assert.equal(iconSlotWidth + 8, 28, 'expected the derived target to compose to 28pt (20pt icon slot + the 8px DS_SPACING[400] token)');
+});
+
+// Correction (PR #974 Design System target correction, 2026-10-04): the catalog's prose has to keep
+// two distinct facts separately true at once — production's own TranscriptLogRowMetrics.bodyIndent
+// is still truthfully 26pt (TranscriptLogRowView.swift is unchanged in this PR; see the dedicated
+// bodyIndent test above), while the catalog specimen's own geometry is explicitly the approved 28pt
+// Design System target with production migration stated as deferred, not implied as already done.
+test('Correction (PR #974 Design System target correction): Transcript Log Row\'s catalog prose keeps the production bodyIndent fact (26pt, unchanged) distinct from the catalog\'s own 28pt Design System target specimen, with production migration explicitly stated as deferred', () => {
+  const nativeSrc = read('../HermesMobile/Features/Chat/TranscriptLogRowView.swift');
+  assert.match(nativeSrc, /static let bodyIndent: CGFloat = 26/, 'expected production\'s bodyIndent to remain the real, unchanged 26pt literal in this PR');
+
+  const sectionsSrc = read(HERMES_SECTIONS_PATH);
+
+  // Fact 1: both bodyIndent metadata records still truthfully state production's own 26pt value,
+  // with no 28pt leaking into the production-fact records themselves.
+  const bodyIndentRecords = [...sectionsSrc.matchAll(/\{\s*name:\s*'TranscriptLogRowMetrics\.bodyIndent'[\s\S]*?\},/g)].map((m) => m[0]);
+  assert.equal(bodyIndentRecords.length, 2, 'expected exactly two catalog records of TranscriptLogRowMetrics.bodyIndent (the human props table and the machine GEOMETRY_FACTS table)');
+  for (const record of bodyIndentRecords) {
+    assert.match(record, /26pt|default:\s*'26'/, 'expected every TranscriptLogRowMetrics.bodyIndent record to keep stating production\'s real 26pt value');
+    assert.doesNotMatch(record, /28pt|default:\s*'28'/, 'the catalog specimen\'s 28pt Design System target must not leak into the production bodyIndent fact itself');
+  }
+
+  // Fact 2: the Transcript Log Row section's own prose states the catalog specimen's target
+  // explicitly and separately, as a target with migration deferred — not production parity.
+  const section = extractHermesSection(sectionsSrc, 'Transcript Log Row');
+  assert.match(section, /28pt/, 'expected the Transcript Log Row section to state its own catalog specimen\'s 28pt Design System target explicitly');
+  assert.match(section, /20pt icon slot/i, 'expected the target to be explained as composing the 20pt icon slot');
+  assert.match(section, /DS_SPACING\[400\]/, 'expected the target to cite the canonical DS_SPACING[400] token, not a bare "8pt" literal');
+  assert.match(section, /defer/i, 'expected the section to explicitly state that migrating production onto the catalog target is deferred, not already done');
+  assert.doesNotMatch(section, /bodyIndent is now 28|bodyIndent.{0,20}28pt/i, 'expected no phrasing that claims TranscriptLogRowMetrics.bodyIndent itself is 28pt');
+});
+
 test('Attachment documents the new, foundation-only AttachmentFileType/AttachmentTile family, Compact Card composition, and the mini-preview staying outside Card, without claiming a production call site', () => {
   const src = read(HERMES_SECTIONS_PATH);
   const section = extractHermesSection(src, 'Attachment');
