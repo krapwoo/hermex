@@ -4,8 +4,10 @@ import OSLog
 /// The one gateway WebSocket a `HermesConnection` shares among its Bot screens. The inbox,
 /// each open chat, a room, the creator and the editor hold their own `BotClient` on it.
 /// The socket opens when the first of them connects and closes when the last one leaves,
-/// so it lives exactly while some Bot screen is connected, and backgrounding (every screen
-/// leaves) still closes it.
+/// so it lives exactly while some Bot screen is connected. An `.inactive` scene (Control
+/// Center, a notification banner) keeps it; `.background` closes it once, silently
+/// (`closeForBackground()`). The chat, inbox, rooms and editor reconnect on `.active`;
+/// the creators reconnect on their next Create.
 ///
 /// Every socket mints a fresh ticket and runs one handshake before anything else:
 /// `gateway.ready` (recording `replay_epoch`), then `client.capabilities` as the first
@@ -61,7 +63,7 @@ import OSLog
         let continuation: CheckedContinuation<BotJSON, Error>
         /// The screen that sent it; nil for the handshake's own call.
         let consumer: Int?
-        /// `HermesCall.method`, for the log.
+        /// `HermesCall.method`, for the log and the connection's missing methods.
         let method: String
         let deadline: Task<Void, Never>
         let rejection: HermesCall.Rejection
@@ -115,6 +117,18 @@ import OSLog
             let label = socketLabel(generation)
             HermesConnectionLog.logger.notice("\(label, privacy: .public) closed, last screen left")
         }
+        end(nil)
+    }
+
+    /// Closes the socket because the app went to the background, so the host sees a clean
+    /// close rather than a half-open socket the tunnel notices only at its idle cutoff.
+    /// Silent: no attached screen hears it, because each suspends on `.background` itself.
+    /// The chat, inbox, rooms and editor reconnect on `.active` onto a fresh socket, ticket
+    /// and handshake; the creators reconnect on their next Create.
+    func closeForBackground() {
+        guard socket != nil || opening != nil else { return }
+        let label = socketLabel(generation)
+        HermesConnectionLog.logger.notice("\(label, privacy: .public) closed, app in background")
         end(nil)
     }
 
@@ -345,6 +359,9 @@ import OSLog
         }
         entry.deadline.cancel()
         if let code = frame["error"]["code"].integer {
+            // The host lacks this method, so every screen on the connection leaves it off.
+            // The handshake's own `client.capabilities` is exempt: an older host connects as before.
+            if code == -32601, entry.consumer != nil { http.noteUnavailable(entry.method) }
             switch entry.rejection {
             case .room:
                 entry.continuation.resume(throwing: BotRoomFailure(code: code, reason: frame["error"]["data"]["reason"].text))
@@ -375,8 +392,8 @@ import OSLog
 
     /// Closes the socket, fails every call on it with `.transport` and drops every screen.
     /// The attached ones hear `error` once, and the log records it; nil ends it silently
-    /// (the last screen left, or opening failed and its waiters get the error from `join`),
-    /// and the caller logs why.
+    /// (the last screen left, the app went to the background, or opening failed and its
+    /// waiters get the error from `join`), and the caller logs why.
     private func end(_ error: Error?) {
         let label = socketLabel(generation), wasLive = socket != nil || opening != nil
         generation += 1
