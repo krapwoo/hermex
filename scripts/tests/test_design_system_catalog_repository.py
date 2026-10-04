@@ -196,7 +196,7 @@ class DesignSystemCatalogRepositoryTests(unittest.TestCase):
         # contracts, it does not rewrite code, and it does not prove every screen migrated.
         self.assertRegex(
             contributing + development,
-            r"does not (?:rewrite code|prove every production screen (?:is|has been) migrated)",
+            r"does not\s+(?:rewrite code|prove every production screen (?:is|has been) migrated)",
         )
 
     def test_agents_contributing_and_development_docs_describe_the_design_system_guide_workflow(self):
