@@ -3042,79 +3042,78 @@ test('the still-unadopted Radius/Geometry proposal\'s retained-exception fact ci
   assert.match(proposal, /name:\s*'TranscriptLogRowMetrics\.bodyWindowHeight'/);
 });
 
-// Correction (PR #974 Design System target correction, 2026-10-04): the Transcript Log Row catalog
-// specimen's own leading geometry is the approved Design System *target*, not a production-parity
-// claim (that is the separate bodyIndent test above, which stays pinned to production's real,
-// unchanged 26pt literal). The target composes a raw, component-local 8px row gap with a
-// 20pt icon slot, deriving a 28pt expanded-body leading inset — and every preview use of that same
-// row geometry (Transcript Log Row's own body, and Transcript Activity's nested indent) has to share
-// the one derived constant rather than repeating an unrelated literal.
-test('Correction (PR #974 Design System target correction): the Transcript Log Row catalog specimen uses a raw local 8px row gap and a shared, derived 28pt (20pt icon slot + 8pt gap) expanded-body leading inset as the Design System target — not a production-parity claim', () => {
+// Correction (PR #974 production parity correction, 2026-10-05): the Transcript Log Row catalog
+// specimen's leading geometry must mirror production's own TranscriptLogRowView.swift exactly — a
+// 20pt icon slot plus a 6pt row gap, deriving the same 26pt expanded-body leading inset as
+// TranscriptLogRowMetrics.bodyIndent (see the dedicated bodyIndent test below). This supersedes the
+// earlier branch-local 28px/8px Design System target: every preview use of this row geometry
+// (Transcript Log Row's own body, and Transcript Activity's nested indent) shares the one derived
+// constant rather than repeating a literal.
+test('Correction (PR #974 production parity correction): the Transcript Log Row catalog specimen mirrors production\'s 20pt icon slot + 6pt row gap and derives the same 26pt expanded-body leading inset — a production-parity claim, not a Design System target', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
 
   const iconWidthMatch = previewsSrc.match(/const LOG_ICON_SLOT_WIDTH\s*=\s*(\d+)\s*;/);
   assert.ok(iconWidthMatch, 'expected a shared, named icon-slot width constant (LOG_ICON_SLOT_WIDTH) rather than a bare literal repeated at each use site');
   const iconSlotWidth = Number(iconWidthMatch[1]);
-  assert.equal(iconSlotWidth, 20, 'expected the shared icon-slot width constant to stay 20pt');
+  assert.equal(iconSlotWidth, 20, 'expected the shared icon-slot width constant to mirror production\'s 20pt icon width');
 
   const rowGapMatch = previewsSrc.match(/const LOG_ROW_GAP\s*=\s*(\d+)\s*;/);
-  assert.ok(rowGapMatch, 'expected one component-local LOG_ROW_GAP constant rather than a shared Design System spacing-token reference');
+  assert.ok(rowGapMatch, 'expected one named LOG_ROW_GAP constant');
   const rowGap = Number(rowGapMatch[1]);
-  assert.equal(rowGap, 8, 'expected the Transcript Log Row catalog target to use a raw local 8px gap');
+  assert.equal(rowGap, 6, 'expected the Transcript Log Row catalog gap to mirror production\'s 6pt HStack spacing, not the earlier branch-only 8px target');
 
   assert.match(
     previewsSrc,
     /const LOG_BODY_LEADING_INSET\s*=\s*LOG_ICON_SLOT_WIDTH\s*\+\s*LOG_ROW_GAP\s*;/,
-    'expected the expanded-body leading inset to be derived as the icon-slot width plus the component-local raw 8px gap'
+    'expected the expanded-body leading inset to be derived as the icon-slot width plus the row gap'
   );
 
   const logRow = extractBraceBlock(previewsSrc, /logRow:\s*\{/);
   assert.doesNotMatch(logRow, /DS_SPACING\[400\]/, 'the Transcript Log Row gap must not link to the shared Design System spacing token');
-  assert.match(logRow, /gap:\s*LOG_ROW_GAP\b/, 'expected the row style to use the component-local raw 8px gap');
+  assert.match(logRow, /gap:\s*LOG_ROW_GAP\b/, 'expected the row style to use the named row-gap constant');
 
   const logIconSlot = extractBraceBlock(previewsSrc, /logIconSlot:\s*\{/);
   assert.match(logIconSlot, /width:\s*LOG_ICON_SLOT_WIDTH\b/, 'expected logIconSlot to reference the shared icon-slot width constant rather than a bare literal');
 
   const logBody = extractBraceBlock(previewsSrc, /logBody:\s*\{/);
-  assert.doesNotMatch(logBody, /marginLeft:\s*26\b/, 'the unrelated 26px production-literal margin must not remain on the Design System target specimen');
+  assert.doesNotMatch(logBody, /marginLeft:\s*28\b/, 'the earlier branch-only 28px target margin must not remain');
   assert.match(logBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected the expanded body to use the shared derived leading inset rather than a literal');
 
   const activityBody = extractFunctionBody(previewsSrc, 'TranscriptActivityPreview');
-  assert.doesNotMatch(activityBody, /marginLeft:\s*26\b/, 'Transcript Activity\'s nested leading indent must not retain the unrelated 26px literal either');
-  assert.match(activityBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected Transcript Activity\'s nested indent to share the same derived Design System target leading inset');
+  assert.doesNotMatch(activityBody, /marginLeft:\s*28\b/, 'Transcript Activity\'s nested leading indent must not retain the earlier branch-only 28px literal either');
+  assert.match(activityBody, /marginLeft:\s*LOG_BODY_LEADING_INSET\b/, 'expected Transcript Activity\'s nested indent to share the same derived leading inset');
 
-  assert.equal(iconSlotWidth + rowGap, 28, 'expected the derived target to compose to 28pt (20pt icon slot + the raw local 8px gap)');
+  assert.equal(iconSlotWidth + rowGap, 26, 'expected the derived inset to compose to production\'s 26pt (20pt icon slot + 6pt gap)');
 });
 
-// Correction (PR #974 Design System target correction, 2026-10-04): the catalog's prose has to keep
-// two distinct facts separately true at once — production's own TranscriptLogRowMetrics.bodyIndent
-// is still truthfully 26pt (TranscriptLogRowView.swift is unchanged in this PR; see the dedicated
-// bodyIndent test above), while the catalog specimen's own geometry is explicitly the approved 28pt
-// Design System target with production migration stated as deferred, not implied as already done.
-test('Correction (PR #974 Design System target correction): Transcript Log Row\'s catalog prose keeps the production bodyIndent fact (26pt, unchanged) distinct from the catalog\'s own 28pt Design System target specimen, with production migration explicitly stated as deferred', () => {
+// Correction (PR #974 production parity correction, 2026-10-05): the catalog's prose must describe
+// this already-existing, production-adopted row truthfully — the catalog specimen now mirrors
+// production's real TranscriptLogRowMetrics.bodyIndent (26pt) exactly, so there is no longer a
+// separate "Design System target" distinct from production, no surviving 28pt value, no raw 8px gap,
+// and no deferred-migration narrative for this component: it does not migrate any normal production
+// screen onto a new Design System foundation.
+test('Correction (PR #974 production parity correction): Transcript Log Row\'s catalog prose describes production parity, with no surviving 28pt target, raw 8px gap, or deferred migration narrative', () => {
   const nativeSrc = read('../HermesMobile/Features/Chat/TranscriptLogRowView.swift');
-  assert.match(nativeSrc, /static let bodyIndent: CGFloat = 26/, 'expected production\'s bodyIndent to remain the real, unchanged 26pt literal in this PR');
+  assert.match(nativeSrc, /static let bodyIndent: CGFloat = 26/, 'expected production\'s bodyIndent to remain the real, unchanged 26pt literal — this correction does not touch production Swift');
 
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
 
-  // Fact 1: both bodyIndent metadata records still truthfully state production's own 26pt value,
-  // with no 28pt leaking into the production-fact records themselves.
   const bodyIndentRecords = [...sectionsSrc.matchAll(/\{\s*name:\s*'TranscriptLogRowMetrics\.bodyIndent'[\s\S]*?\},/g)].map((m) => m[0]);
   assert.equal(bodyIndentRecords.length, 2, 'expected exactly two catalog records of TranscriptLogRowMetrics.bodyIndent (the human props table and the machine GEOMETRY_FACTS table)');
   for (const record of bodyIndentRecords) {
     assert.match(record, /26pt|default:\s*'26'/, 'expected every TranscriptLogRowMetrics.bodyIndent record to keep stating production\'s real 26pt value');
-    assert.doesNotMatch(record, /28pt|default:\s*'28'/, 'the catalog specimen\'s 28pt Design System target must not leak into the production bodyIndent fact itself');
+    assert.doesNotMatch(record, /28pt|default:\s*'28'/, 'no 28pt value must leak into the production bodyIndent fact');
   }
 
-  // Fact 2: the Transcript Log Row section's own prose states the catalog specimen's target
-  // explicitly and separately, as a target with migration deferred — not production parity.
   const section = extractHermesSection(sectionsSrc, 'Transcript Log Row');
-  assert.match(section, /28pt/, 'expected the Transcript Log Row section to state its own catalog specimen\'s 28pt Design System target explicitly');
-  assert.match(section, /20pt icon slot/i, 'expected the target to be explained as composing the 20pt icon slot');
-  assert.match(section, /raw 8px gap/i, 'expected the target to describe its component-local raw 8px gap');
-  assert.doesNotMatch(section, /DS_SPACING\[400\]/, 'expected no shared Design System spacing-token linkage in the Transcript Log Row section');
-  assert.match(section, /defer/i, 'expected the section to explicitly state that migrating production onto the catalog target is deferred, not already done');
-  assert.doesNotMatch(section, /bodyIndent is now 28|bodyIndent.{0,20}28pt/i, 'expected no phrasing that claims TranscriptLogRowMetrics.bodyIndent itself is 28pt');
+  assert.doesNotMatch(section, /28pt/, 'expected no surviving 28pt target anywhere in the Transcript Log Row section');
+  assert.doesNotMatch(section, /raw 8px gap/i, 'expected no surviving raw 8px gap narration');
+  assert.doesNotMatch(section, /Design System target/i, 'expected no "Design System target" framing — the catalog specimen now mirrors production directly');
+  assert.doesNotMatch(section, /defer/i, 'expected no deferred-migration narrative for this already-production-adopted component');
+  assert.match(section, /20pt icon slot/i, 'expected the section to describe the shared 20pt icon slot that matches production');
+  assert.match(section, /6pt (?:row )?gap/i, 'expected the section to describe the shared 6pt row gap that matches production');
+  assert.match(section, /production/i, 'expected the section to state this documents the already-existing, production-adopted row');
+  assert.doesNotMatch(section, /migrat\w*\s+(?:it\s+|this\s+)?onto|deferred migrat|migrating\s+\w+\s+onto/i, 'expected no narrative migrating TranscriptLogRowMetrics.bodyIndent onto a separate target — this correction documents an already-production-adopted component, not a migration of a normal production screen onto a new Design System foundation');
 });
 
 test('Attachment documents the new, foundation-only AttachmentFileType/AttachmentTile family, Compact Card composition, and the mini-preview staying outside Card, without claiming a production call site', () => {

@@ -141,14 +141,13 @@ function Icon({ name, size, color }: { name: IconName; size: number; color: stri
   }
 }
 
-// Transcript Log Row's approved Design System *target* geometry (issue #607 Design System target
-// correction, PR #974, 2026-10-04) — not a claim about current production, which keeps its own real,
-// unchanged TranscriptLogRowMetrics.bodyIndent literal (26pt; see that record in hermesSections.tsx).
-// The target composes a raw, component-local 8px row gap with this icon-slot width so the expanded
-// body's leading inset stays internally aligned without linking this reconstruction to a shared
-// Design System spacing token.
+// Transcript Log Row's catalog geometry mirrors production's real TranscriptLogRowView.swift
+// exactly (PR #974 production parity correction, 2026-10-05): a 20pt icon slot plus the row's 6pt
+// HStack spacing, composing to the same 26pt TranscriptLogRowMetrics.bodyIndent literal (see that
+// record in hermesSections.tsx). This documents the already-adopted production row; it does not
+// link this reconstruction to a shared Design System spacing token.
 const LOG_ICON_SLOT_WIDTH = 20;
-const LOG_ROW_GAP = 8;
+const LOG_ROW_GAP = 6;
 const LOG_BODY_LEADING_INSET = LOG_ICON_SLOT_WIDTH + LOG_ROW_GAP;
 
 const preview = StyleSheet.create({
@@ -276,8 +275,9 @@ const preview = StyleSheet.create({
   },
   topNavActionButton: { minWidth: 44, minHeight: 44 },
 
-  // Disclosure / Log Row — Design System target geometry (see LOG_ICON_SLOT_WIDTH/LOG_ROW_GAP/
-  // LOG_BODY_LEADING_INSET above): a component-local raw 8px gap, not production parity.
+  // Disclosure / Log Row — production parity geometry (see LOG_ICON_SLOT_WIDTH/LOG_ROW_GAP/
+  // LOG_BODY_LEADING_INSET above): mirrors TranscriptLogRowView.swift's real 20pt icon slot + 6pt
+  // row gap.
   logRow: {
     width: '100%', flexDirection: 'row', alignItems: 'center', gap: LOG_ROW_GAP, minHeight: 32,
     paddingVertical: 4,
@@ -2598,10 +2598,9 @@ export function TranscriptLogRowPreview() {
         anatomy: icon slot, summary, a chevron, then a compact 16×16 status glyph at the extreme
         trailing edge (a checkmark/xmark/ellipsis in secondary, or red for a failure — never a wide
         status word), and a chevron that expands into a scrollable detail body. This catalog
-        specimen renders the approved Design System target indent — the 20pt icon slot plus a raw,
-        component-local 8px gap, 28pt — behind a leading hairline rule; production's own
-        TranscriptLogRowMetrics.bodyIndent stays its real, unchanged 26pt literal, and migrating it
-        onto this target is deferred. The row itself toggles expand/collapse
+        specimen renders the same leading indent as production — the 20pt icon slot plus the row's
+        6pt gap, 26pt — behind a leading hairline rule, matching production's own
+        TranscriptLogRowMetrics.bodyIndent exactly. The row itself toggles expand/collapse
         (accessibilityState.expanded); a long press on the expanded body copies its content. The
         shared chevron swaps from the downward to the upward glyph when expanded.
       </Text>
