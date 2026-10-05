@@ -23,10 +23,11 @@ enum TopNavActionStyle: Equatable {
     }
 }
 
-/// The shared top-navigation bar: native `ToolbarContent`, not an in-content fake nav bar. Every
-/// production top-navigation toolbar (standard push/pop screens, and modal sheets/editors with
-/// Cancel/Save semantics) composes from this one component, so no call site hand-assembles raw
-/// `ToolbarItem`/`ToolbarItemGroup` placements for leading, center, or trailing top-bar content.
+/// A shared foundation for top-navigation toolbars: native `ToolbarContent`, not an in-content fake
+/// nav bar, assembling leading/center/trailing `ToolbarItem`/`ToolbarItemGroup` placements for
+/// standard push/pop screens and modal sheets/editors with Cancel/Save semantics. `HermexBottomSheet`
+/// composes it today; normal production screens still hand-assemble their own raw
+/// `ToolbarItem`/`ToolbarItemGroup` placements and have not migrated onto this component.
 ///
 /// Five slots: `leadingPrimary` and `leadingSecondary` share `leadingPlacement`; `trailingPrimary`
 /// and `trailingSecondary` share `trailingPlacement`. Each slot is a `ViewBuilder` that itself can

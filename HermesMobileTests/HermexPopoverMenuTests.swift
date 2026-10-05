@@ -544,9 +544,14 @@ import UIKit
 
         // VoiceOver starts on the first enabled action. The List's UIKit collection view also
         // inherits the surface identifier, but is not the focused accessibility element.
-        let focusedAction = try XCTUnwrap(accessibilityNode(
-            withIdentifier: "hermex-popover-menu-action-first", in: window
-        ))
+        guard let focusedAction = accessibilityNode(withIdentifier: "hermex-popover-menu-action-first", in: window) else {
+            try XCTSkipUnless(
+                accessibilityTreeIsPublished(in: window, knownNodeIdentifier: "popover-harness-trigger"),
+                "No accessibility tree is published in-process on this toolchain."
+            )
+            XCTFail("expected the first enabled action's own accessibility node even though other accessibility nodes are published")
+            return
+        }
         XCTAssertTrue(focusedAction.accessibilityPerformEscape())
         await settle(window)
 
@@ -588,9 +593,19 @@ import UIKit
 
     func testMenuSurfaceClaimsTouchesOverItsOwnBoundsInsteadOfTheOutsideDismissLayer() async throws {
         // A real, observable hit-test — not a source assertion — mirroring
-        // `HermexDialogTests.testBackdropInterceptsTouchesWithoutDismissing`: a touch over the
-        // menu's own rendered bounds must be claimed inside its host, never fall through to the
-        // full-screen clear outside-tap layer sitting behind it in the same ZStack.
+        // `HermexDialogTests.testBackdropInterceptsTouchesWithoutDismissing`, strengthened to
+        // actually distinguish the menu's own content from the full-screen outside-dismiss backdrop
+        // sitting behind it in the same ZStack: both the backdrop and the menu surface are
+        // descendants of the shared overlay host, so merely landing somewhere inside that host does
+        // not by itself prove which layer claimed the touch — and calling `hitTest` never delivers a
+        // real tap through a gesture recognizer, so it cannot observe whether the backdrop's
+        // `onTapGesture` would have fired either. Instead this compares the hit at the menu's own
+        // rendered content against the hit at a point clearly over just the backdrop: they must
+        // resolve to different views, and the menu's hit must be more specific than the bare host.
+        // `HermexList`'s own backing `UICollectionView` is a concrete, always-present UIKit view
+        // (the same List-is-UICollectionView-backed pattern `ModelPickerSheetTests` establishes), so
+        // this reads real on-screen geometry without depending on SwiftUI's in-process accessibility
+        // tree.
         let model = HermexPopoverMenuHarnessModel()
         let window = try show(HermexPopoverMenuHarnessView(model: model))
         defer { close(window) }
@@ -598,20 +613,26 @@ import UIKit
         model.isPresented = true
         await settle(window)
 
-        let surface = try XCTUnwrap(accessibilityNode(
-            withIdentifier: HermexPopoverMenuPresentation.surfaceAccessibilityIdentifier, in: window
-        ))
-        let surfaceFrame = surface.accessibilityFrame
-        XCTAssertFalse(surfaceFrame.isEmpty, "expected the presented surface to report a real on-screen frame")
-
         let overlayHost = try XCTUnwrap(descendants(window).first {
             $0.accessibilityIdentifier == HermexPopoverMenuPresentation.overlayHostAccessibilityIdentifier
         })
-        let hit = try XCTUnwrap(window.hitTest(CGPoint(x: surfaceFrame.midX, y: surfaceFrame.midY), with: nil))
-        XCTAssertTrue(
-            hit === overlayHost || hit.isDescendant(of: overlayHost),
-            "a touch over the menu surface's own bounds must be claimed within its host, never fall through to the outside dismiss layer"
-        )
+        let collectionView = try XCTUnwrap(descendants(window).compactMap { $0 as? UICollectionView }.first,
+                                            "expected HermexList's backing UICollectionView to be mounted")
+        let surfaceFrame = collectionView.convert(collectionView.bounds, to: window)
+        XCTAssertFalse(surfaceFrame.isEmpty, "expected the presented surface to report a real on-screen frame")
+
+        let hitOnSurface = try XCTUnwrap(window.hitTest(CGPoint(x: surfaceFrame.midX, y: surfaceFrame.midY), with: nil))
+        let hitOnBackdrop = try XCTUnwrap(window.hitTest(CGPoint(x: window.bounds.minX + 4, y: window.bounds.minY + 4), with: nil))
+
+        XCTAssertTrue(hitOnSurface.isDescendant(of: overlayHost),
+                      "a touch over the menu surface's own bounds must be claimed within its host")
+        XCTAssertTrue(hitOnBackdrop.isDescendant(of: overlayHost),
+                      "a touch over the backdrop must still be claimed by the host, never fall through past it")
+        XCTAssertFalse(hitOnSurface === hitOnBackdrop,
+                       "a touch over the menu's own rendered content must resolve to a different view than a touch over the outside-dismiss backdrop")
+        XCTAssertFalse(hitOnSurface === overlayHost,
+                       "a touch over the menu surface must be claimed by its own specific content, not merely the generic full-screen host that also backs the backdrop")
+
         XCTAssertTrue(
             descendants(window).contains { $0.accessibilityIdentifier == HermexPopoverMenuPresentation.overlayHostAccessibilityIdentifier },
             "the menu must remain presented — a touch over its own surface must not have triggered an outside dismissal"
@@ -637,24 +658,31 @@ import UIKit
         model.isPresented = true
         await settle(window)
 
-        let trigger = try XCTUnwrap(accessibilityNode(withIdentifier: "popover-harness-trigger", in: window))
-        let menu = try XCTUnwrap(accessibilityNode(
-            withIdentifier: HermexPopoverMenuPresentation.surfaceAccessibilityIdentifier, in: window
-        ))
-        let readerFrames = descendants(window).filter {
-            String(describing: type(of: $0)).contains("AnchorView")
-                || String(describing: type(of: $0)).contains("GeometryView")
-        }.map { "\(type(of: $0)): \($0.convert($0.bounds, to: window))" }
-        // `.accessibilityElement(children: .contain)` reports the union of the action rows, not the
-        // decorative shell padding around them. Expand that content frame back to the card's visual
-        // frame before asserting the resolver's trigger gap.
-        let menuCardFrame = menu.accessibilityFrame.insetBy(
+        // Reads real on-screen geometry from concrete UIKit-backed views instead of SwiftUI's
+        // in-process accessibility tree: the trigger's own anchor-reader backing view
+        // (`HermexPopoverTriggerAnchorReader.AnchorView`, matched by type name since the type
+        // itself is private to `HermexPopoverMenu.swift`) and `HermexList`'s backing
+        // `UICollectionView` (the same List-is-UICollectionView-backed pattern
+        // `ModelPickerSheetTests` establishes).
+        let triggerAnchor = try XCTUnwrap(
+            descendants(window).first { String(describing: type(of: $0)).contains("AnchorView") },
+            "expected the trigger's anchor-reader backing view to be mounted"
+        )
+        let triggerFrame = triggerAnchor.convert(triggerAnchor.bounds, to: window)
+
+        let collectionView = try XCTUnwrap(descendants(window).compactMap { $0 as? UICollectionView }.first,
+                                            "expected HermexList's backing UICollectionView to be mounted")
+        let menuContentFrame = collectionView.convert(collectionView.bounds, to: window)
+        // The collection view reports only the rows' own content, not the decorative shell padding
+        // around them. Expand that content frame back to the card's visual frame before asserting
+        // the resolver's trigger gap.
+        let menuCardFrame = menuContentFrame.insetBy(
             dx: -HermexPopoverMenuMetrics.contentPadding,
             dy: -HermexPopoverMenuMetrics.contentPadding
         )
-        XCTAssertEqual(menuCardFrame.minY - trigger.accessibilityFrame.maxY,
+        XCTAssertEqual(menuCardFrame.minY - triggerFrame.maxY,
                        HermexPopoverMenuMetrics.anchorGap, accuracy: 1,
-                       "the menu must use the trigger's scrolled position, not a cached screen coordinate; trigger=\(trigger.accessibilityFrame), menuContent=\(menu.accessibilityFrame), menuCard=\(menuCardFrame), offset=\(scroller.contentOffset), readers=\(readerFrames)")
+                       "the menu must use the trigger's scrolled position, not a cached screen coordinate; trigger=\(triggerFrame), menuContent=\(menuContentFrame), menuCard=\(menuCardFrame), offset=\(scroller.contentOffset)")
     }
 
     // MARK: - Test harness
@@ -675,6 +703,17 @@ import UIKit
 
     private func descendants(_ view: UIView) -> [UIView] {
         [view] + view.subviews.flatMap(descendants)
+    }
+
+    /// Distinguishes "no accessibility tree is published in-process on this toolchain" (the gap
+    /// `BotChatPresentationTests` already documents for some build SDKs) from "this overlay's own
+    /// node specifically never mounted" — a real regression. Probes a plain, always-present node
+    /// outside the overlay (the harness's own trigger, hosted the ordinary way as the window's root
+    /// view) rather than the identifier a caller is actually asserting on, so a true toolchain gap
+    /// and a real missing-node bug are never confused with each other — the same helper
+    /// `HermexDialogTests` uses.
+    private func accessibilityTreeIsPublished(in window: UIWindow, knownNodeIdentifier: String) -> Bool {
+        accessibilityNode(withIdentifier: knownNodeIdentifier, in: window) != nil
     }
 
     /// Finds the accessibility element (a real `UIView`, or one of SwiftUI's own non-view

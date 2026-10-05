@@ -151,12 +151,14 @@ extension View {
 
 extension DynamicTypeSize {
     /// Explicit, exhaustive map from SwiftUI's `DynamicTypeSize` to UIKit's
-    /// `UIContentSizeCategory`, so `Text.appFont(...)` can drive TY-2's
-    /// UIFontMetrics resolver off a caller-supplied environment value instead
-    /// of the ambient (and, for SwiftUI's own `\.dynamicTypeSize` environment,
-    /// unreliable) `UITraitCollection.current`. Every case is named on
-    /// purpose — a future case Apple adds must be mapped here deliberately,
-    /// never silently absorbed by a catch-all default.
+    /// `UIContentSizeCategory`, so a caller needing a `UIFontMetrics`/
+    /// `UITraitCollection`-based scaling result (`HermexPopoverMenuContentSizing.
+    /// estimatedRowHeight`, for instance) can drive it off a caller-supplied
+    /// `DynamicTypeSize` environment value instead of the ambient (and, for
+    /// SwiftUI's own `\.dynamicTypeSize` environment, unreliable)
+    /// `UITraitCollection.current`. Every case is named on purpose — a future
+    /// case Apple adds must be mapped here deliberately, never silently
+    /// absorbed by a catch-all default.
     var appFontContentSizeCategory: UIContentSizeCategory {
         switch self {
         case .xSmall: return .extraSmall
@@ -197,8 +199,9 @@ extension Text {
     /// not reflect SwiftUI's `.environment(\.dynamicTypeSize, ...)` overrides
     /// (proven by `AppFontDynamicTypeRenderTests`, which measured identical
     /// rendered widths at `.large` and `.accessibility3` under that
-    /// approach). Callers pass their own `@Environment(\.dynamicTypeSize)`
-    /// value explicitly, exactly as `TranscriptLogRowView` does.
+    /// approach). No normal production caller composes this overload yet;
+    /// `AppFontModifierBuildProofTests` and `AppFontDynamicTypeRenderTests`
+    /// exercise its explicit-size contract.
     func appFont(_ role: AppFont.Role, dynamicTypeSize: DynamicTypeSize) -> Text {
         let traitCollection = UITraitCollection(preferredContentSizeCategory: dynamicTypeSize.appFontContentSizeCategory)
         let scaledSize = AppFont.scaledFont(role: role, traitCollection: traitCollection).pointSize

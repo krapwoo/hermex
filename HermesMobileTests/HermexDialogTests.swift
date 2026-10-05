@@ -390,9 +390,16 @@ import XCTest
         model.isPresented = true
         await settle(window)
 
-        let surface = try XCTUnwrap(accessibilityNode(
+        guard let surface = accessibilityNode(
             withIdentifier: HermexDialogPresentation.surfaceAccessibilityIdentifier, in: window
-        ))
+        ) else {
+            try XCTSkipUnless(
+                accessibilityTreeIsPublished(in: window, knownNodeIdentifier: "dialog-harness-trigger"),
+                "No accessibility tree is published in-process on this toolchain."
+            )
+            XCTFail("expected the dialog surface's own accessibility node even though other accessibility nodes are published")
+            return
+        }
         XCTAssertTrue(surface.accessibilityPerformEscape())
         await settle(window)
 
@@ -489,6 +496,16 @@ import XCTest
 
     private func descendants(_ view: UIView) -> [UIView] {
         [view] + view.subviews.flatMap(descendants)
+    }
+
+    /// Distinguishes "no accessibility tree is published in-process on this toolchain" (the gap
+    /// `BotChatPresentationTests` already documents for some build SDKs) from "this overlay's own
+    /// node specifically never mounted" — a real regression. Probes a plain, always-present node
+    /// outside the overlay (the harness's own trigger, hosted the ordinary way as the window's root
+    /// view) rather than the identifier a caller is actually asserting on, so a true toolchain gap
+    /// and a real missing-node bug are never confused with each other.
+    private func accessibilityTreeIsPublished(in window: UIWindow, knownNodeIdentifier: String) -> Bool {
+        accessibilityNode(withIdentifier: knownNodeIdentifier, in: window) != nil
     }
 
     /// Every accessibility label exposed under a view — hosted view labels plus explicit

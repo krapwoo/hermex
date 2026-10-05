@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Row geometry and selection chrome shared by every picker row in Settings and the Task editor, so
-/// Default Model, Default Profile, and the Task editor's Model/Profile/Skills pickers stay visually
-/// identical. Replaces the standalone "Picker Row" component: every caller below composes `ListItem`
-/// directly instead of hand-rolling this HStack/frame/pill scaffolding.
+/// A shared foundation for row geometry and selection chrome. Selection Sheet, Accordion List, and
+/// Popover Menu compose it today; Settings and the Task editor's Default Model/Default Profile and
+/// Model/Profile/Skills pickers still hand-roll their own `PickerRowMetrics`-based row scaffolding
+/// (`ModelPickerSheet.swift`) and have not migrated onto this component.
 enum ListItemMetrics {
     static let minHeight: CGFloat = 48
     static let cornerRadius: CGFloat = HermesRadius.field
