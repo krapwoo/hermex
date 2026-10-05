@@ -10,16 +10,13 @@ import XCTest
 /// contract read against the shared file itself via `requiredSource()`/`hermexComposerToolbarRegion()`,
 /// mirroring `HermexSurfaceBorderTests`/`HermexPopoverMenuTests`/`HermexCodeInputTests`, each of
 /// which fails through one explicit XCTest assertion rather than an uncaught file error. Production
-/// preservation contracts pin that `ComposerToolbarScroller` keeps its current public behavior and
-/// that no production call site adopts `HermexComposerToolbar` yet. Issue #607 round 3/4 corrects
+/// preservation contracts pin `ComposerToolbarScroller`'s current public behavior while leaving a
+/// later intentional `HermexComposerToolbar` adoption available. Issue #607 round 3/4 corrects
 /// the elevated appearance's radius to `HermesRadius.r24` and its all-around padding to
 /// `HermesSpacing.s8`, superseding the earlier `HermesRadius.card`/`HermesSpacing.s16` values.
 final class HermexComposerToolbarTests: XCTestCase {
     private static let sourcePath = "HermesMobile/Features/Shared/HermexComposerToolbar.swift"
     private static let productionScrollerPath = "HermesMobile/Features/Chat/ChatComposerToolbarScroller.swift"
-    private static let chatComposerViewPath = "HermesMobile/Features/Chat/ChatComposerView.swift"
-    private static let botChatComposerViewPath = "HermesMobile/Features/Bots/BotChatComposerView.swift"
-    private static let botRoomComposerViewPath = "HermesMobile/Features/Bots/BotRoomComposerView.swift"
 
     private func resourceURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
@@ -446,26 +443,8 @@ final class HermexComposerToolbarTests: XCTestCase {
         )
     }
 
-    // MARK: - Production preservation: not yet adopted anywhere
-
-    func testHermexComposerToolbarIsNotYetAdoptedInChatComposerView() throws {
-        let src = try requiredExistingSource(Self.chatComposerViewPath)
-        XCTAssertFalse(src.contains("HermexComposerToolbar("))
-    }
-
-    func testHermexComposerToolbarIsNotYetAdoptedInBotChatComposerView() throws {
-        let src = try requiredExistingSource(Self.botChatComposerViewPath)
-        XCTAssertFalse(src.contains("HermexComposerToolbar("))
-    }
-
-    func testHermexComposerToolbarIsNotYetAdoptedInBotRoomComposerView() throws {
-        let src = try requiredExistingSource(Self.botRoomComposerViewPath)
-        XCTAssertFalse(src.contains("HermexComposerToolbar("))
-    }
-
     // MARK: - DEBUG lab reachability (DSR2-09): real elevated fitting/overflowing and transparent
-    // specimens, stably identified, with no Send/Stop control anywhere in the fixture section — the
-    // overlay lab is the one permitted non-foundation-file caller of HermexComposerToolbar(.
+    // specimens, stably identified, with no Send/Stop control anywhere in the fixture section.
 
     private static let overlayLabPath = "HermesMobile/Features/Shared/HermexOverlayLab.swift"
 

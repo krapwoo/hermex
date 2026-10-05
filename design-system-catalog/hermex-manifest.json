@@ -1784,12 +1784,12 @@
           }
         ],
         "adoptionStatus": {
-          "state": "partially-adopted",
-          "detail": "HermexSelectionSheet.swift already composes HermexSearchField directly for its optional search slot — a real, current production call site, so this is not a genuinely uncalled foundation component. Production's eight existing screen-level search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating a screen onto `.hermexSearch` is deferred to a separate issue."
+          "state": "foundation-available",
+          "detail": "HermexSearchField is internally composed by the foundation-only `HermexSelectionSheet.swift` for its optional search slot — but HermexSelectionSheet itself has no normal-runtime production call site (its only caller is the DEBUG-only HermexOverlayLab), so that internal composition is not a production adoption of Search. Production's eight existing screen-level search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating a screen onto `.hermexSearch` is deferred to a separate issue."
         },
-        "useSummary": "HermexSelectionSheet.swift is a real, current caller of HermexSearchField; no top-level screen has migrated off `.searchable` yet. Production keeps its existing eight direct `.searchable` call sites unchanged.",
+        "useSummary": "HermexSearchField is foundation-only: it is composed internally by the foundation-only `HermexSelectionSheet.swift`, which itself has no normal-runtime production call site. No production screen has adopted `HermexSearchField` or `.hermexSearch`; production keeps its existing eight direct `.searchable` call sites unchanged.",
         "implementationNotes": {
-          "status": "HermexSelectionSheet.swift composes HermexSearchField directly; no screen-level `.searchable` call site has migrated yet.",
+          "status": "Foundation-available; composed internally by the foundation-only HermexSelectionSheet.swift, which has no normal-runtime production call site. No screen-level `.searchable` call site has migrated yet.",
           "sourcePaths": [
             "HermesMobile/Features/Shared/HermexSearch.swift",
             "HermesMobile/Features/Shared/HermexSelectionSheet.swift"
@@ -1797,7 +1797,7 @@
           "notes": [
             "One canonical visual implementation: `HermexSearchField` owns chrome, local `@FocusState`, the clear control, and `.submitLabel(.search)`/`.onSubmit` wiring around a native `TextField`; `.hermexSearch(...)` only composes that same field as a `.safeAreaInset(edge: .top)` — there is no second field implementation.",
             "Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience; Hermex cannot truthfully reproduce that native placement contract once it draws its own chrome.",
-            "HermexSelectionSheet.swift's optional search slot renders HermexSearchField directly — a real, current production call site, distinct from the screen-level `.searchable` migration below.",
+            "HermexSelectionSheet.swift's optional search slot renders HermexSearchField directly, but HermexSelectionSheet.swift itself is only called by the DEBUG-only HermexOverlayLab — not a normal-runtime production screen — so this internal composition is not a production call site for Search.",
             "Report only: production's eight existing direct `.searchable` screen call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating a screen onto `.hermexSearch` is scoped to a separate issue, not this slice."
           ]
         },

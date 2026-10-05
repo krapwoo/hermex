@@ -2,25 +2,31 @@
   "literals": [
     {
       "name": "archivebox",
-      "count": 6,
+      "count": 9,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:589",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:851",
-        "HermesMobile/Features/SessionList/SessionListView.swift:884",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:686",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:967",
+        "HermesMobile/Features/SessionList/SessionListView.swift:1051",
+        "HermesMobile/Features/SessionList/SessionListView.swift:1468",
         "HermesMobile/Features/Settings/ArchivedSessionsView.swift:60",
         "HermesMobile/Features/Settings/ArchivedSessionsView.swift:79",
-        "HermesMobile/Features/Settings/SettingsView.swift:119"
+        "HermesMobile/Features/Settings/SettingsView.swift:134",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:729",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:746"
       ]
     },
     {
       "name": "arrow.clockwise",
-      "count": 10,
+      "count": 13,
       "sites": [
-        "HermesMobile/Features/Chat/ChatMessageActions.swift:79",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:642",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:57",
+        "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:112",
+        "HermesMobile/Features/Chat/ChatMessageActions.swift:142",
         "HermesMobile/Features/Insights/InsightsView.swift:32",
         "HermesMobile/Features/Insights/ProviderLimitsCard.swift:191",
         "HermesMobile/Features/Memory/MemoryView.swift:27",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:924",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1040",
         "HermesMobile/Features/Skills/SkillsView.swift:29",
         "HermesMobile/Features/Skills/SkillsView.swift:299",
         "HermesMobile/Features/Tasks/TaskDetailView.swift:234",
@@ -32,14 +38,14 @@
       "name": "arrow.clockwise.circle",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:808"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:807"
       ]
     },
     {
       "name": "arrow.counterclockwise",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:236",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:239",
         "HermesMobile/Features/Settings/StreamingLabView.swift:57"
       ]
     },
@@ -47,14 +53,14 @@
       "name": "arrow.down",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ChatTranscriptView.swift:858"
+        "HermesMobile/Features/Chat/ChatTranscriptView.swift:938"
       ]
     },
     {
       "name": "arrow.down.circle",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:352",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:633",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:60"
       ]
     },
@@ -62,23 +68,31 @@
       "name": "arrow.triangle.2.circlepath",
       "count": 7,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:250",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:342",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:344",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:253",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:345",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:347",
         "HermesMobile/Features/Kanban/KanbanCardEditorView.swift:194",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1229",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1232",
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:92"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1228",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1231",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:157"
+      ]
+    },
+    {
+      "name": "arrow.triangle.2.circlepath.camera",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Chat/CameraPickerView.swift:480"
       ]
     },
     {
       "name": "arrow.triangle.branch",
-      "count": 7,
+      "count": 8,
       "sites": [
-        "HermesMobile/Features/Chat/ChatMessageActions.swift:98",
+        "HermesMobile/Features/Chat/ChatMessageActions.swift:161",
+        "HermesMobile/Features/Chat/ForkOrigin.swift:48",
         "HermesMobile/Features/Kanban/KanbanCardEditorView.swift:211",
-        "HermesMobile/Features/Settings/SettingsView.swift:330",
-        "HermesMobile/Features/Settings/SettingsView.swift:455",
+        "HermesMobile/Features/Settings/SettingsView.swift:402",
+        "HermesMobile/Features/Settings/SettingsView.swift:519",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:65",
         "HermesMobile/Features/Workspace/GitBranchPickerView.swift:25",
         "HermesMobile/Features/Workspace/GitWorkspaceView.swift:128"
@@ -95,25 +109,25 @@
       "name": "arrow.turn.down.left",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:282"
-      ]
-    },
-    {
-      "name": "arrow.turn.up.right",
-      "count": 1,
-      "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:257"
+        "HermesMobile/Features/Settings/SettingsView.swift:364"
       ]
     },
     {
       "name": "arrow.up",
       "count": 5,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:298",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:821",
-        "HermesMobile/Features/Chat/ChatTranscriptView.swift:899",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:476",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:646",
+        "HermesMobile/Features/Chat/ChatTranscriptView.swift:981",
         "HermesMobile/Features/Chat/PendingRequestSurfaces.swift:91",
-        "HermesMobile/Features/SessionList/SessionListView.swift:1725"
+        "HermesMobile/Features/SessionList/SessionListView.swift:2126"
+      ]
+    },
+    {
+      "name": "arrow.up.arrow.down",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Bots/BotsInboxView.swift:201"
       ]
     },
     {
@@ -128,7 +142,7 @@
       "name": "arrow.up.circle",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:1021",
+        "HermesMobile/Features/Settings/SettingsView.swift:1146",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:48"
       ]
     },
@@ -136,13 +150,14 @@
       "name": "arrow.up.circle.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:246"
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:262"
       ]
     },
     {
       "name": "arrow.up.doc",
-      "count": 2,
+      "count": 3,
       "sites": [
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:649",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:43",
         "HermesMobile/Features/Workspace/GitInlineCommitButton.swift:40"
       ]
@@ -158,7 +173,7 @@
       "name": "arrow.up.message",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:192"
+        "HermesMobile/Features/Settings/SettingsView.swift:235"
       ]
     },
     {
@@ -170,9 +185,17 @@
     },
     {
       "name": "bell",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Bots/HermexPushSectionView.swift:40",
+        "HermesMobile/Features/Settings/SettingsView.swift:211"
+      ]
+    },
+    {
+      "name": "bell.slash",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:180"
+        "HermesMobile/Features/Bots/HermexPushSectionView.swift:237"
       ]
     },
     {
@@ -180,6 +203,13 @@
       "count": 1,
       "sites": [
         "HermesMobile/Features/Bots/BotChatControlViews.swift:41"
+      ]
+    },
+    {
+      "name": "bolt.fill",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Bots/BotSlashAutocompleteView.swift:19"
       ]
     },
     {
@@ -198,51 +228,49 @@
     },
     {
       "name": "brain",
-      "count": 2,
+      "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:335",
-        "HermesMobile/Features/Settings/SettingsView.swift:364"
+        "HermesMobile/Features/Settings/SettingsView.swift:438"
       ]
     },
     {
       "name": "brain.head.profile",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:218"
+        "HermesMobile/Features/Settings/SettingsView.swift:300"
       ]
     },
     {
       "name": "bubble.left",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:2149",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:421"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:2148",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:515"
       ]
     },
     {
       "name": "bubble.left.and.bubble.right",
-      "count": 5,
+      "count": 4,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatView.swift:121",
-        "HermesMobile/Features/Bots/BotsInboxView.swift:92",
-        "HermesMobile/Features/Chat/ChatTranscriptView.swift:108",
-        "HermesMobile/Features/SessionList/SessionListView.swift:453",
-        "HermesMobile/Features/SessionList/SessionListView.swift:1686"
+        "HermesMobile/Features/Bots/BotChatView.swift:213",
+        "HermesMobile/Features/Chat/ChatTranscriptView.swift:136",
+        "HermesMobile/Features/SessionList/SessionListView.swift:620",
+        "HermesMobile/Features/SessionList/SessionListView.swift:2087"
       ]
     },
     {
       "name": "building.2",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:2142"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:2141"
       ]
     },
     {
       "name": "calendar.badge.clock",
       "count": 3,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:716",
-        "HermesMobile/Features/Settings/SettingsView.swift:340",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:815",
+        "HermesMobile/Features/Settings/SettingsView.swift:414",
         "HermesMobile/Features/Tasks/TasksView.swift:103"
       ]
     },
@@ -250,14 +278,16 @@
       "name": "camera",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerView.swift:913"
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:604"
       ]
     },
     {
       "name": "camera.fill",
-      "count": 1,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:189"
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:192",
+        "HermesMobile/Features/Chat/CameraPickerView.swift:414",
+        "HermesMobile/Features/Chat/CameraPickerView.swift:512"
       ]
     },
     {
@@ -265,7 +295,7 @@
       "count": 2,
       "sites": [
         "HermesMobile/Features/Insights/InsightsView.swift:69",
-        "HermesMobile/Features/Settings/SettingsView.swift:372"
+        "HermesMobile/Features/Settings/SettingsView.swift:446"
       ]
     },
     {
@@ -278,20 +308,25 @@
     },
     {
       "name": "checkmark",
-      "count": 16,
+      "count": 21,
       "sites": [
-        "HermesMobile/Features/Bots/BotCreateView.swift:182",
-        "HermesMobile/Features/Chat/ChatView.swift:224",
+        "HermesMobile/Features/Bots/BotCreateView.swift:226",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:77",
+        "HermesMobile/Features/Chat/ChatView.swift:223",
         "HermesMobile/Features/Chat/SlashCommandAutocompleteView.swift:386",
         "HermesMobile/Features/Chat/SlashCommandAutocompleteView.swift:393",
-        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:40",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1371",
+        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:44",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1370",
+        "HermesMobile/Features/Onboarding/OnboardingComponents.swift:353",
         "HermesMobile/Features/SessionList/ProjectCreationSheet.swift:179",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1192",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1308",
         "HermesMobile/Features/Settings/DefaultProfilePickerView.swift:215",
-        "HermesMobile/Features/Settings/SettingsView.swift:1565",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:165",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:441",
+        "HermesMobile/Features/Settings/SettingsView.swift:1657",
+        "HermesMobile/Features/Shared/HermexCheckbox.swift:79",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:662",
+        "HermesMobile/Features/Shared/ListItem.swift:198",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:184",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:484",
         "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift:257",
         "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift:342",
         "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift:172",
@@ -300,33 +335,37 @@
     },
     {
       "name": "checkmark.circle",
-      "count": 8,
+      "count": 10,
       "sites": [
         "HermesMobile/Features/Chat/ChatGoalControls.swift:27",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:653",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1442",
-        "HermesMobile/Features/Settings/SettingsView.swift:1019",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:652",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1441",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:218",
+        "HermesMobile/Features/Settings/SettingsView.swift:1144",
+        "HermesMobile/Features/Settings/SettingsView.swift:2596",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:88",
         "HermesMobile/Features/Workspace/GitCommitView.swift:101",
-        "HermesMobile/Features/Workspace/GitDiffView.swift:83",
+        "HermesMobile/Features/Workspace/GitDiffView.swift:81",
         "HermesMobile/Features/Workspace/GitWorkspaceView.swift:89"
       ]
     },
     {
       "name": "checkmark.circle.fill",
-      "count": 11,
+      "count": 13,
       "sites": [
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:231",
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:247",
+        "HermesMobile/Features/Bots/HermexPushSectionView.swift:207",
         "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:105",
-        "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift:1168",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:252",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:346",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1235",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1684",
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:101",
-        "HermesMobile/Features/Onboarding/OnboardingView.swift:182",
+        "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift:1184",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:255",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:349",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1234",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1683",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:164",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:201",
+        "HermesMobile/Features/Onboarding/OnboardingView.swift:183",
         "HermesMobile/Features/Settings/AppIconSettingsSection.swift:149",
-        "HermesMobile/Features/Workspace/GitActionToastOverlay.swift:71"
+        "HermesMobile/Features/Workspace/GitActionToastOverlay.swift:86"
       ]
     },
     {
@@ -342,41 +381,53 @@
       "sites": [
         "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:135",
         "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:329",
-        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:213",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1389",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:203",
+        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:239",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1388",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:222",
         "HermesMobile/Features/Workspace/GitBranchPickerView.swift:31",
         "HermesMobile/Features/Workspace/GitTurnChangesCard.swift:68"
       ]
     },
     {
       "name": "chevron.forward",
-      "count": 10,
+      "count": 14,
       "sites": [
-        "HermesMobile/Features/Bots/BotCreateView.swift:227",
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:334",
-        "HermesMobile/Features/Chat/FilePathAutocompleteView.swift:102",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:680",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1157",
-        "HermesMobile/Features/SessionList/SessionListView.swift:906",
-        "HermesMobile/Features/Settings/SettingsView.swift:2079",
+        "HermesMobile/Features/Bots/BotCreateView.swift:271",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:211",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:337",
+        "HermesMobile/Features/Bots/BotRoomView.swift:315",
+        "HermesMobile/Features/Bots/HermexPushSectionView.swift:157",
+        "HermesMobile/Features/Chat/FilePathAutocompleteView.swift:109",
+        "HermesMobile/Features/Chat/ForkOrigin.swift:60",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:777",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1273",
+        "HermesMobile/Features/SessionList/SessionListView.swift:1073",
+        "HermesMobile/Features/Settings/SettingsView.swift:2207",
         "HermesMobile/Features/Skills/SkillsView.swift:238",
-        "HermesMobile/Features/Skills/SkillsView.swift:422",
+        "HermesMobile/Features/Skills/SkillsView.swift:423",
         "HermesMobile/Features/Tasks/TaskRunHistorySection.swift:147"
+      ]
+    },
+    {
+      "name": "chevron.left",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Chat/CameraPickerView.swift:451",
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:639"
       ]
     },
     {
       "name": "chevron.left.forwardslash.chevron.right",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:443"
+        "HermesMobile/Features/Settings/SettingsView.swift:507"
       ]
     },
     {
       "name": "chevron.up",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:126"
+        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:132"
       ]
     },
     {
@@ -390,111 +441,119 @@
       "name": "circle.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:131"
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:134"
       ]
     },
     {
       "name": "circle.lefthalf.filled",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:127"
+        "HermesMobile/Features/Settings/SettingsView.swift:153"
       ]
     },
     {
       "name": "clock",
-      "count": 2,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:264",
-        "HermesMobile/Features/Settings/SettingsView.swift:1060"
+        "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:91",
+        "HermesMobile/Features/Settings/SettingsView.swift:346",
+        "HermesMobile/Features/Settings/SettingsView.swift:1185"
       ]
     },
     {
       "name": "clock.arrow.2.circlepath",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:424"
+        "HermesMobile/Features/Settings/SettingsView.swift:488"
       ]
     },
     {
       "name": "clock.badge.exclamationmark",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:485"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:484"
       ]
     },
     {
       "name": "cpu",
-      "count": 4,
+      "count": 5,
       "sites": [
-        "HermesMobile/Features/Bots/BotCreateView.swift:60",
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:118",
-        "HermesMobile/Features/Settings/SettingsView.swift:398",
-        "HermesMobile/Features/Settings/SettingsView.swift:494"
+        "HermesMobile/Features/Bots/BotCreateView.swift:61",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:107",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:121",
+        "HermesMobile/Features/Settings/SettingsView.swift:143",
+        "HermesMobile/Features/Settings/SettingsView.swift:562"
       ]
     },
     {
       "name": "cup.and.saucer",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:588"
+        "HermesMobile/Features/Settings/SettingsView.swift:674"
       ]
     },
     {
       "name": "curlybraces",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:827"
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:943"
       ]
     },
     {
       "name": "desktopcomputer",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:431",
-        "HermesMobile/Features/Bots/BotRoomComposerView.swift:124"
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:508",
+        "HermesMobile/Features/Bots/BotRoomComposerView.swift:121"
       ]
     },
     {
       "name": "doc",
-      "count": 1,
+      "count": 2,
       "sites": [
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:427"
+        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:93",
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:426"
       ]
     },
     {
       "name": "doc.on.doc",
-      "count": 7,
+      "count": 11,
       "sites": [
-        "HermesMobile/Features/Chat/ChatMessageActions.swift:106",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:772",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:795",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:839",
+        "HermesMobile/Features/Bots/BotConnectionView.swift:106",
+        "HermesMobile/Features/Bots/BotConnectionView.swift:218",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:340",
+        "HermesMobile/Features/Bots/BotMessageActions.swift:59",
+        "HermesMobile/Features/Chat/ChatMessageActions.swift:169",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:881",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:911",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:955",
         "HermesMobile/Features/Tasks/TaskRunOutputSheet.swift:59",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:165",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:253"
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:168",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:274"
       ]
     },
     {
       "name": "doc.questionmark",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:198"
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:203"
       ]
     },
     {
       "name": "doc.richtext",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:821"
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:937"
       ]
     },
     {
       "name": "doc.text",
-      "count": 4,
+      "count": 5,
       "sites": [
-        "HermesMobile/Features/Skills/SkillsView.swift:355",
-        "HermesMobile/Features/Skills/SkillsView.swift:409",
-        "HermesMobile/Features/Skills/SkillsView.swift:460",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:316",
+        "HermesMobile/Features/Skills/SkillsView.swift:356",
+        "HermesMobile/Features/Skills/SkillsView.swift:410",
+        "HermesMobile/Features/Skills/SkillsView.swift:461",
         "HermesMobile/Features/Tasks/TaskRunOutputSheet.swift:42"
       ]
     },
@@ -502,43 +561,53 @@
       "name": "doc.text.magnifyingglass",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:65",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:67",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:85"
       ]
     },
     {
       "name": "ellipsis",
-      "count": 4,
+      "count": 5,
       "sites": [
-        "HermesMobile/Features/Bots/BotRoomProfileView.swift:63",
-        "HermesMobile/Features/Chat/ChatMessageMeta.swift:61",
-        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:48",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1345"
+        "HermesMobile/Features/Bots/BotArtifactMessageView.swift:221",
+        "HermesMobile/Features/Bots/BotRoomProfileView.swift:70",
+        "HermesMobile/Features/Chat/ChatMessageMeta.swift:78",
+        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:52",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1461"
       ]
     },
     {
       "name": "ellipsis.circle",
       "count": 5,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:408",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1215",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1721",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:411",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1214",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1720",
         "HermesMobile/Features/Tasks/TaskDetailView.swift:271",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:173"
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:176"
       ]
     },
     {
       "name": "exclamationmark.circle",
-      "count": 8,
+      "count": 9,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:245",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:255",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:349",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:635",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:248",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:258",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:352",
         "HermesMobile/Features/Kanban/KanbanCardEditorView.swift:189",
         "HermesMobile/Features/Kanban/KanbanCardEditorView.swift:198",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1239",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1238",
         "HermesMobile/Features/Workspace/GitActionsMenuButton.swift:78",
         "HermesMobile/Features/Workspace/GitCommitView.swift:184"
+      ]
+    },
+    {
+      "name": "exclamationmark.circle.fill",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Bots/BotConnectionView.swift:64",
+        "HermesMobile/Features/Bots/BotConnectionView.swift:175"
       ]
     },
     {
@@ -550,35 +619,37 @@
     },
     {
       "name": "exclamationmark.triangle",
-      "count": 38,
+      "count": 40,
       "sites": [
-        "HermesMobile/Features/Bots/BotArtifactPreview.swift:73",
+        "HermesMobile/Features/Bots/BotArtifactPreview.swift:78",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:637",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:14",
         "HermesMobile/Features/Bots/BotProfileEditorView.swift:33",
-        "HermesMobile/Features/Chat/ChatAttachmentPreviewView.swift:110",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1080",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1103",
-        "HermesMobile/Features/Chat/ChatTranscriptView.swift:98",
+        "HermesMobile/Features/Chat/ChatAttachmentPreviewView.swift:103",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1252",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1275",
+        "HermesMobile/Features/Chat/ChatTranscriptView.swift:126",
         "HermesMobile/Features/Chat/ImageLightboxView.swift:134",
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:698",
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:667",
         "HermesMobile/Features/Insights/InsightsView.swift:59",
         "HermesMobile/Features/Insights/InsightsView.swift:102",
         "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:17",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:58",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:598",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:59",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:601",
         "HermesMobile/Features/Kanban/KanbanLabView.swift:194",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:848",
-        "HermesMobile/Features/Memory/MemoryView.swift:58",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:248",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:484",
-        "HermesMobile/Features/SessionList/SessionListView.swift:1739",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:847",
+        "HermesMobile/Features/Memory/MemoryView.swift:59",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:342",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:578",
+        "HermesMobile/Features/SessionList/SessionListView.swift:2140",
         "HermesMobile/Features/Settings/ArchivedSessionsView.swift:64",
         "HermesMobile/Features/Settings/DefaultProfilePickerView.swift:109",
         "HermesMobile/Features/Settings/ProvidersView.swift:88",
-        "HermesMobile/Features/Settings/SettingsView.swift:1065",
-        "HermesMobile/Features/Settings/SettingsView.swift:1737",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:137",
+        "HermesMobile/Features/Settings/SettingsView.swift:1190",
+        "HermesMobile/Features/Settings/SettingsView.swift:1829",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:156",
         "HermesMobile/Features/Skills/SkillsView.swift:51",
-        "HermesMobile/Features/Skills/SkillsView.swift:326",
+        "HermesMobile/Features/Skills/SkillsView.swift:327",
         "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift:229",
         "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift:143",
         "HermesMobile/Features/Tasks/TaskRunOutputSheet.swift:34",
@@ -586,7 +657,7 @@
         "HermesMobile/Features/Workspace/FileBrowserView.swift:56",
         "HermesMobile/Features/Workspace/FileBrowserView.swift:110",
         "HermesMobile/Features/Workspace/FileBrowserView.swift:250",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:53",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:55",
         "HermesMobile/Features/Workspace/GitCommitView.swift:73",
         "HermesMobile/Features/Workspace/WorkspaceManagerView.swift:33",
         "HermesMobile/Features/Workspace/WorkspaceManagerView.swift:244"
@@ -594,16 +665,18 @@
     },
     {
       "name": "exclamationmark.triangle.fill",
-      "count": 9,
+      "count": 11,
       "sites": [
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:105",
-        "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:36",
+        "HermesMobile/Features/Bots/BotConnectionView.swift:184",
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:115",
+        "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:29",
+        "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:47",
         "HermesMobile/Features/Chat/InlineAudioPlayerView.swift:84",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:830",
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:109",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:829",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:207",
         "HermesMobile/Features/Settings/ProvidersView.swift:108",
         "HermesMobile/Features/Settings/ProvidersView.swift:204",
-        "HermesMobile/Features/Settings/SettingsView.swift:2410",
+        "HermesMobile/Features/Settings/SettingsView.swift:2663",
         "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:102"
       ]
     },
@@ -611,37 +684,39 @@
       "name": "eye.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1681"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1680"
       ]
     },
     {
       "name": "eye.slash",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:302"
+        "HermesMobile/Features/Settings/SettingsView.swift:384"
       ]
     },
     {
       "name": "face.smiling",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotCreateView.swift:150",
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:235"
+        "HermesMobile/Features/Bots/BotCreateView.swift:194",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:238"
       ]
     },
     {
       "name": "folder",
-      "count": 11,
+      "count": 13,
       "sites": [
+        "HermesMobile/Features/Bots/BotsInboxView.swift:464",
         "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:16",
         "HermesMobile/Features/Chat/ChatComposerSelectorSheets.swift:66",
-        "HermesMobile/Features/Chat/ChatView.swift:824",
-        "HermesMobile/Features/Chat/FilePathAutocompleteView.swift:122",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:343",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:347",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:810",
-        "HermesMobile/Features/Settings/SettingsView.swift:322",
-        "HermesMobile/Features/Settings/SettingsView.swift:416",
+        "HermesMobile/Features/Chat/ChatView.swift:919",
+        "HermesMobile/Features/Chat/FilePathAutocompleteView.swift:129",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:437",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:441",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:926",
+        "HermesMobile/Features/Settings/SettingsView.swift:394",
+        "HermesMobile/Features/Settings/SettingsView.swift:480",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:980",
         "HermesMobile/Features/Workspace/WorkspaceManagerView.swift:74",
         "HermesMobile/Features/Workspace/WorkspaceManagerView.swift:257"
       ]
@@ -650,15 +725,23 @@
       "name": "folder.badge.gearshape",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Memory/MemoryView.swift:150",
-        "HermesMobile/Features/Settings/SettingsView.swift:388"
+        "HermesMobile/Features/Memory/MemoryView.swift:153",
+        "HermesMobile/Features/Settings/SettingsView.swift:462"
+      ]
+    },
+    {
+      "name": "folder.badge.minus",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Bots/BotsInboxView.swift:459"
       ]
     },
     {
       "name": "folder.badge.plus",
-      "count": 1,
+      "count": 2,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:916"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:457",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1032"
       ]
     },
     {
@@ -672,23 +755,25 @@
       "name": "gauge.with.dots.needle.67percent",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:274"
+        "HermesMobile/Features/Settings/SettingsView.swift:356"
       ]
     },
     {
       "name": "gearshape",
       "count": 3,
       "sites": [
-        "HermesMobile/Features/Bots/BotsInboxView.swift:130",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1002",
-        "HermesMobile/Features/Settings/SettingsView.swift:473"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:209",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1118",
+        "HermesMobile/Features/Settings/SettingsView.swift:538"
       ]
     },
     {
       "name": "hammer",
-      "count": 2,
+      "count": 4,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:356",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:110",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:112",
+        "HermesMobile/Features/Settings/SettingsView.swift:430",
         "HermesMobile/Features/Skills/SkillsView.swift:61"
       ]
     },
@@ -696,7 +781,7 @@
       "name": "hand.raised",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:564"
+        "HermesMobile/Features/Settings/SettingsView.swift:637"
       ]
     },
     {
@@ -707,17 +792,38 @@
       ]
     },
     {
+      "name": "heart",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Settings/SettingsView.swift:662"
+      ]
+    },
+    {
+      "name": "info.circle",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Shared/HermexTooltip.swift:49"
+      ]
+    },
+    {
       "name": "iphone.radiowaves.left.and.right",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:160"
+        "HermesMobile/Features/Settings/SettingsView.swift:186"
+      ]
+    },
+    {
+      "name": "key",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:644"
       ]
     },
     {
       "name": "key.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:62"
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:105"
       ]
     },
     {
@@ -725,21 +831,28 @@
       "count": 2,
       "sites": [
         "HermesMobile/Features/Settings/ProvidersView.swift:98",
-        "HermesMobile/Features/Settings/SettingsView.swift:527"
+        "HermesMobile/Features/Settings/SettingsView.swift:595"
+      ]
+    },
+    {
+      "name": "keyboard.chevron.compact.down",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Settings/SettingsView.swift:282"
       ]
     },
     {
       "name": "ladybug",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:616"
+        "HermesMobile/Features/Settings/SettingsView.swift:703"
       ]
     },
     {
       "name": "line.3.horizontal.decrease",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotSearchView.swift:178"
+        "HermesMobile/Features/Bots/BotSearchView.swift:176"
       ]
     },
     {
@@ -751,11 +864,12 @@
     },
     {
       "name": "link",
-      "count": 3,
+      "count": 4,
       "sites": [
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:540",
         "HermesMobile/Features/Chat/TranscriptLinkPreviewView.swift:258",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:2157",
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:40"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:2156",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:49"
       ]
     },
     {
@@ -769,7 +883,7 @@
       "name": "list.bullet.rectangle",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:540"
+        "HermesMobile/Features/Settings/SettingsView.swift:608"
       ]
     },
     {
@@ -777,14 +891,14 @@
       "count": 2,
       "sites": [
         "HermesMobile/Features/Kanban/KanbanLabView.swift:176",
-        "HermesMobile/Features/Settings/SettingsView.swift:312"
+        "HermesMobile/Features/Settings/SettingsView.swift:221"
       ]
     },
     {
       "name": "lock.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Memory/MemoryView.swift:157"
+        "HermesMobile/Features/Memory/MemoryView.swift:160"
       ]
     },
     {
@@ -803,13 +917,14 @@
     },
     {
       "name": "magnifyingglass",
-      "count": 7,
+      "count": 8,
       "sites": [
         "HermesMobile/Features/Bots/BotSearchView.swift:83",
-        "HermesMobile/Features/Bots/BotSearchView.swift:150",
-        "HermesMobile/Features/Bots/BotsInboxView.swift:113",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:675",
-        "HermesMobile/Features/SessionList/SessionListView.swift:677",
+        "HermesMobile/Features/Bots/BotSearchView.swift:148",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:187",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:772",
+        "HermesMobile/Features/SessionList/SessionListView.swift:851",
+        "HermesMobile/Features/Shared/HermexSearch.swift:58",
         "HermesMobile/Features/Skills/SkillsView.swift:67",
         "HermesMobile/Features/Workspace/FileBrowserView.swift:135"
       ]
@@ -818,36 +933,39 @@
       "name": "mic",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:204"
+        "HermesMobile/Features/Settings/SettingsView.swift:268"
       ]
     },
     {
       "name": "mic.badge.plus",
-      "count": 2,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1070",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1095"
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:423",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1242",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1267"
       ]
     },
     {
       "name": "mic.fill",
-      "count": 1,
+      "count": 2,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1064"
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:417",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1236"
       ]
     },
     {
       "name": "minus",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:52"
+        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:56"
       ]
     },
     {
       "name": "minus.circle",
-      "count": 2,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:294",
+        "HermesMobile/Features/Bots/BotMessageActions.swift:71",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:297",
         "HermesMobile/Features/Workspace/GitCommitView.swift:146"
       ]
     },
@@ -862,7 +980,7 @@
       "name": "network",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Onboarding/OnboardingView.swift:171",
+        "HermesMobile/Features/Onboarding/OnboardingView.swift:172",
         "HermesMobile/Features/Onboarding/OnboardingWelcomePage.swift:84"
       ]
     },
@@ -870,28 +988,28 @@
       "name": "number",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:408"
+        "HermesMobile/Features/Settings/SettingsView.swift:472"
       ]
     },
     {
       "name": "paintbrush.pointed",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:146"
+        "HermesMobile/Features/Settings/SettingsView.swift:172"
       ]
     },
     {
       "name": "paperclip",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerView.swift:895"
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:603"
       ]
     },
     {
       "name": "paperplane",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:248"
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:251"
       ]
     },
     {
@@ -910,12 +1028,15 @@
     },
     {
       "name": "pencil",
-      "count": 6,
+      "count": 9,
       "sites": [
-        "HermesMobile/Features/Chat/ChatMessageActions.swift:89",
-        "HermesMobile/Features/Memory/MemoryView.swift:134",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:787",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1334",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:395",
+        "HermesMobile/Features/Chat/ChatMessageActions.swift:152",
+        "HermesMobile/Features/Memory/MemoryView.swift:137",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:903",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1450",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:690",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:710",
         "HermesMobile/Features/Tasks/TaskDetailView.swift:258",
         "HermesMobile/Features/Workspace/WorkspaceManagerView.swift:178"
       ]
@@ -924,14 +1045,31 @@
       "name": "person",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:2136"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:2135"
       ]
     },
     {
       "name": "person.2",
+      "count": 3,
+      "sites": [
+        "HermesMobile/Features/Bots/BotChatView.swift:256",
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:23",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:193"
+      ]
+    },
+    {
+      "name": "person.badge.key",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotsInboxView.swift:119"
+        "HermesMobile/Features/Settings/SettingsView.swift:926"
+      ]
+    },
+    {
+      "name": "person.badge.key.fill",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:227",
+        "HermesMobile/Features/Settings/SettingsView.swift:2605"
       ]
     },
     {
@@ -940,10 +1078,10 @@
       "sites": [
         "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:45",
         "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:62",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:242",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:336",
         "HermesMobile/Features/Settings/DefaultProfilePickerView.swift:116",
-        "HermesMobile/Features/Settings/SettingsView.swift:380",
-        "HermesMobile/Features/Settings/SettingsView.swift:508",
+        "HermesMobile/Features/Settings/SettingsView.swift:454",
+        "HermesMobile/Features/Settings/SettingsView.swift:576",
         "HermesMobile/Features/Tasks/CronJobConfigurationPickers.swift:238"
       ]
     },
@@ -951,43 +1089,67 @@
       "name": "person.crop.circle.badge.questionmark",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotsInboxView.swift:245"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:349"
+      ]
+    },
+    {
+      "name": "person.fill",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:87"
       ]
     },
     {
       "name": "photo",
-      "count": 7,
+      "count": 8,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:155",
-        "HermesMobile/Features/Chat/MessageBubbleView.swift:602",
-        "HermesMobile/Features/Chat/MessageBubbleView.swift:710",
+        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:85",
+        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:200",
+        "HermesMobile/Features/Chat/MessageBubbleView.swift:769",
+        "HermesMobile/Features/Chat/MessageBubbleView.swift:885",
         "HermesMobile/Features/Chat/TranscriptMediaImageLightbox.swift:50",
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:730",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:84",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:282"
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:699",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:86",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:303"
+      ]
+    },
+    {
+      "name": "photo.badge.exclamationmark",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:734"
       ]
     },
     {
       "name": "photo.on.rectangle",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:184",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:904"
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:187",
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:729"
+      ]
+    },
+    {
+      "name": "photo.on.rectangle.angled",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:607"
       ]
     },
     {
       "name": "pin",
-      "count": 2,
+      "count": 4,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:576",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:780"
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:673",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:896",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:728",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:745"
       ]
     },
     {
       "name": "pin.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionRowView.swift:232"
+        "HermesMobile/Features/SessionList/SessionRowView.swift:244"
       ]
     },
     {
@@ -1011,22 +1173,23 @@
       "name": "play.rectangle.fill",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:541"
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:540"
       ]
     },
     {
       "name": "plus",
-      "count": 13,
+      "count": 14,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:223",
-        "HermesMobile/Features/Bots/BotsInboxView.swift:125",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:866",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1402",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1537",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:328",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:996",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:364",
+        "HermesMobile/Features/Bots/BotQuickRepliesEditorView.swift:101",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:203",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1075",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1401",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1536",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:422",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1112",
         "HermesMobile/Features/Settings/DefaultProfilePickerView.swift:128",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:225",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:244",
         "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift:206",
         "HermesMobile/Features/Tasks/TasksView.swift:32",
         "HermesMobile/Features/Workspace/GitBranchPickerView.swift:112",
@@ -1037,108 +1200,122 @@
       "name": "plus.bubble",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Bots/BotsInboxView.swift:118"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:192"
       ]
     },
     {
       "name": "plus.circle",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:805",
+        "HermesMobile/Features/Settings/SettingsView.swift:900",
         "HermesMobile/Features/Workspace/GitCommitView.swift:143"
       ]
     },
     {
       "name": "plus.circle.fill",
-      "count": 1,
+      "count": 2,
       "sites": [
+        "HermesMobile/Features/Bots/BotQuickRepliesEditorView.swift:62",
         "HermesMobile/Features/Shared/CustomHeadersEditor.swift:46"
       ]
     },
     {
       "name": "plus.square.on.square",
-      "count": 1,
+      "count": 4,
       "sites": [
-        "HermesMobile/Features/Bots/BotsInboxView.swift:270"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:436",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:689",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:709",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:807"
       ]
     },
     {
       "name": "questionmark",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/ProviderGlyphGalleryView.swift:91"
+        "HermesMobile/Features/Settings/ProviderGlyphGalleryView.swift:106"
       ]
     },
     {
       "name": "questionmark.circle",
       "count": 9,
       "sites": [
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:215",
-        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:108",
-        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:187",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:259",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:357",
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:231",
+        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:114",
+        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:204",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:262",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:360",
         "HermesMobile/Features/Kanban/KanbanCardEditorView.swift:204",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:669",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1246",
-        "HermesMobile/Features/Settings/SettingsView.swift:576"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:668",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1245",
+        "HermesMobile/Features/Settings/SettingsView.swift:649"
       ]
     },
     {
       "name": "quote.opening",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/ResponseSelectionInput.swift:264"
+        "HermesMobile/Features/Chat/ResponseSelectionInput.swift:265"
       ]
     },
     {
       "name": "rectangle.compress.vertical",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:244"
+        "HermesMobile/Features/Settings/SettingsView.swift:326"
       ]
     },
     {
       "name": "rectangle.expand.vertical",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:226"
+        "HermesMobile/Features/Settings/SettingsView.swift:308"
       ]
     },
     {
       "name": "rectangle.portrait.slash",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:46"
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:47"
       ]
     },
     {
       "name": "rectangle.split.3x1",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:348"
+        "HermesMobile/Features/Settings/SettingsView.swift:422"
       ]
     },
     {
       "name": "rectangle.stack.badge.minus",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:52",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:600"
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:53",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:599"
+      ]
+    },
+    {
+      "name": "safari",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:690",
+        "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:121"
       ]
     },
     {
       "name": "scissors",
-      "count": 1,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:589"
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:169",
+        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:168",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:592"
       ]
     },
     {
       "name": "server.rack",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:126",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:129",
         "HermesMobile/Features/Kanban/KanbanLabView.swift:188"
       ]
     },
@@ -1154,52 +1331,57 @@
       "count": 4,
       "sites": [
         "HermesMobile/Features/Bots/BotChatControlViews.swift:112",
-        "HermesMobile/Features/Bots/BotsInboxView.swift:257",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1382",
-        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:83"
+        "HermesMobile/Features/Bots/BotsInboxView.swift:422",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1381",
+        "HermesMobile/Features/Onboarding/OnboardingConnectPage.swift:134"
       ]
     },
     {
       "name": "sparkle",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Chat/MessageBubbleView.swift:165"
+        "HermesMobile/Features/Chat/MessageBubbleView.swift:258"
       ]
     },
     {
       "name": "sparkles",
       "count": 4,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:122",
-        "HermesMobile/Features/Settings/SettingsView.swift:254",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:125",
+        "HermesMobile/Features/Settings/SettingsView.swift:336",
         "HermesMobile/Features/Shared/AdaptiveGlassDebugFixture.swift:38",
         "HermesMobile/Features/Workspace/GitCommitView.swift:202"
       ]
     },
     {
       "name": "square.and.arrow.down",
-      "count": 2,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:451",
-        "HermesMobile/Features/SessionList/SessionListView.swift:374"
+        "HermesMobile/Features/Bots/BotArtifactPreview.swift:97",
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:450",
+        "HermesMobile/Features/SessionList/SessionListView.swift:500"
       ]
     },
     {
       "name": "square.and.arrow.up",
-      "count": 5,
+      "count": 9,
       "sites": [
+        "HermesMobile/Features/Bots/BotArtifactPreview.swift:101",
         "HermesMobile/Features/Chat/TranscriptMediaImageLightbox.swift:59",
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:336",
-        "HermesMobile/Features/Chat/TranscriptMediaView.swift:740",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:843",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:94"
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:335",
+        "HermesMobile/Features/Chat/TranscriptMediaView.swift:709",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:959",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:688",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:708",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:869",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:96"
       ]
     },
     {
       "name": "square.and.pencil",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/SessionList/SessionListView.swift:802",
+        "HermesMobile/Features/SessionList/SessionListView.swift:976",
         "HermesMobile/Features/Workspace/GitTurnChangesCard.swift:46"
       ]
     },
@@ -1207,7 +1389,7 @@
       "name": "square.grid.2x2",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:640"
+        "HermesMobile/Features/Settings/SettingsView.swift:727"
       ]
     },
     {
@@ -1221,7 +1403,7 @@
       "name": "star",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:604"
+        "HermesMobile/Features/Settings/SettingsView.swift:691"
       ]
     },
     {
@@ -1233,19 +1415,19 @@
     },
     {
       "name": "stop.circle",
-      "count": 1,
+      "count": 2,
       "sites": [
+        "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:141",
         "HermesMobile/Features/Chat/ChatGoalControls.swift:33"
       ]
     },
     {
       "name": "stop.fill",
-      "count": 4,
+      "count": 3,
       "sites": [
-        "HermesMobile/Features/Bots/BotChatComposerView.swift:286",
-        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:455",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:818",
-        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:138"
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:464",
+        "HermesMobile/Features/Bots/BotPendingRequestCard.swift:520",
+        "HermesMobile/Features/Chat/ClarificationRequestCard.swift:144"
       ]
     },
     {
@@ -1259,48 +1441,68 @@
       "name": "terminal",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:432"
+        "HermesMobile/Features/Settings/SettingsView.swift:496"
       ]
     },
     {
       "name": "testtube.2",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:2430"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:2431"
+      ]
+    },
+    {
+      "name": "text.alignleft",
+      "count": 1,
+      "sites": [
+        "HermesMobile/Features/Settings/SettingsView.swift:288"
       ]
     },
     {
       "name": "text.alignright",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:292"
+        "HermesMobile/Features/Settings/SettingsView.swift:374"
+      ]
+    },
+    {
+      "name": "text.bubble",
+      "count": 2,
+      "sites": [
+        "HermesMobile/Features/Bots/BotQuickRepliesEditorView.swift:18",
+        "HermesMobile/Features/Settings/SettingsView.swift:255"
       ]
     },
     {
       "name": "text.cursor",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:170",
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:246"
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:173",
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:267"
       ]
     },
     {
       "name": "text.justify.leading",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Workspace/FilePreviewView.swift:160"
+        "HermesMobile/Features/Workspace/FilePreviewView.swift:163"
       ]
     },
     {
       "name": "trash",
-      "count": 9,
+      "count": 14,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:186",
-        "HermesMobile/Features/Bots/BotsInboxView.swift:274",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:597",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:858",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1341",
-        "HermesMobile/Features/Shared/ModelPickerSheet.swift:412",
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:189",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:311",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:377",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:409",
+        "HermesMobile/Features/Bots/BotsInboxView.swift:440",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:694",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:974",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1457",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:808",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:870",
+        "HermesMobile/Features/Shared/ModelPickerSheet.swift:455",
         "HermesMobile/Features/Tasks/TaskDetailView.swift:267",
         "HermesMobile/Features/Tasks/TasksView.swift:243",
         "HermesMobile/Features/Workspace/GitCommitView.swift:149"
@@ -1308,25 +1510,28 @@
     },
     {
       "name": "wand.and.stars",
-      "count": 1,
+      "count": 2,
       "sites": [
+        "HermesMobile/Features/Chat/MessageBubbleView.swift:168",
         "HermesMobile/Features/Tasks/CronJobSkillsPicker.swift:152"
       ]
     },
     {
       "name": "waveform",
-      "count": 3,
+      "count": 5,
       "sites": [
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1062",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:1066",
-        "HermesMobile/Features/Settings/SettingsView.swift:169"
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:415",
+        "HermesMobile/Features/Bots/BotChatComposerView.swift:419",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1234",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:1238",
+        "HermesMobile/Features/Settings/SettingsView.swift:195"
       ]
     },
     {
       "name": "waveform.path.ecg",
       "count": 1,
       "sites": [
-        "HermesMobile/Features/Settings/SettingsView.swift:633"
+        "HermesMobile/Features/Settings/SettingsView.swift:720"
       ]
     },
     {
@@ -1340,35 +1545,38 @@
       "name": "wifi.slash",
       "count": 4,
       "sites": [
-        "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift:1144",
-        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:114",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:797",
-        "HermesMobile/Features/SessionList/SessionListComponents.swift:1627"
+        "HermesMobile/Features/Chat/ChatTranscriptSupportingViews.swift:1156",
+        "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:115",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:796",
+        "HermesMobile/Features/SessionList/SessionListComponents.swift:1743"
       ]
     },
     {
       "name": "wrench.and.screwdriver",
       "count": 2,
       "sites": [
-        "HermesMobile/Features/Bots/BotProfileEditorView.swift:124",
-        "HermesMobile/Features/Settings/SettingsView.swift:234"
+        "HermesMobile/Features/Bots/BotProfileEditorView.swift:127",
+        "HermesMobile/Features/Settings/SettingsView.swift:316"
       ]
     },
     {
       "name": "xmark",
-      "count": 11,
+      "count": 14,
       "sites": [
-        "HermesMobile/Features/Bots/BotCreateView.swift:99",
+        "HermesMobile/Features/Bots/BotCreateView.swift:103",
         "HermesMobile/Features/Bots/BotRoomCreateView.swift:94",
-        "HermesMobile/Features/Bots/BotSearchView.swift:143",
-        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:110",
-        "HermesMobile/Features/Chat/ChatComposerView.swift:21",
-        "HermesMobile/Features/Chat/ChatView.swift:244",
+        "HermesMobile/Features/Bots/BotSearchView.swift:141",
+        "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:155",
+        "HermesMobile/Features/Chat/ChatComposerView.swift:46",
+        "HermesMobile/Features/Chat/ChatView.swift:243",
         "HermesMobile/Features/Chat/ImageLightboxView.swift:175",
-        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:44",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1431",
-        "HermesMobile/Features/SessionList/SessionListView.swift:758",
-        "HermesMobile/Features/Workspace/GitActionToastOverlay.swift:116"
+        "HermesMobile/Features/Chat/ToolCallLogRowView.swift:48",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1430",
+        "HermesMobile/Features/SessionList/SessionListView.swift:932",
+        "HermesMobile/Features/SessionList/TipJarCard.swift:127",
+        "HermesMobile/Features/Shared/ActionToast.swift:191",
+        "HermesMobile/Features/Shared/HermexOverlayLab.swift:655",
+        "HermesMobile/Features/Workspace/GitActionToastOverlay.swift:131"
       ]
     },
     {
@@ -1376,33 +1584,71 @@
       "count": 2,
       "sites": [
         "HermesMobile/Features/Chat/ChatGoalControls.swift:28",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:661"
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:660"
       ]
     },
     {
       "name": "xmark.circle.fill",
-      "count": 5,
+      "count": 7,
       "sites": [
-        "HermesMobile/Features/Bots/BotSearchView.swift:160",
+        "HermesMobile/Features/Bots/BotSearchView.swift:158",
+        "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:22",
         "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:111",
-        "HermesMobile/Features/Kanban/KanbanLabView.swift:1753",
-        "HermesMobile/Features/SessionList/SessionListView.swift:728",
+        "HermesMobile/Features/Kanban/KanbanLabView.swift:1752",
+        "HermesMobile/Features/SessionList/SessionListView.swift:902",
+        "HermesMobile/Features/Shared/HermexSearch.swift:76",
         "HermesMobile/Features/Workspace/FileBrowserView.swift:148"
       ]
     }
   ],
   "computedSites": [
     {
-      "site": "HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:231",
+      "site": "HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:338",
       "expression": "AgentRunStatusStyle.symbolName(for: status)",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:245",
+      "site": "HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:352",
       "expression": "symbolName",
       "keyword": "systemName",
       "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Auth/AppLockWindow.swift:181",
+      "expression": "lock.capability.method.systemImage",
+      "keyword": "systemImage",
+      "callHead": "AppLockButton"
+    },
+    {
+      "site": "HermesMobile/Auth/AppLockWindow.swift:200",
+      "expression": "nil",
+      "keyword": "systemImage",
+      "callHead": "AppLockButton"
+    },
+    {
+      "site": "HermesMobile/Auth/AppLockWindow.swift:218",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Auth/AppLockWindow.swift:254",
+      "expression": "String?",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Auth/AppLockWindow.swift:265",
+      "expression": "systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Config/AppTheme.swift:853",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
     },
     {
       "site": "HermesMobile/Features/Bots/BotActivityViews.swift:60",
@@ -1411,103 +1657,139 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotArtifactMessageView.swift:64",
+      "site": "HermesMobile/Features/Bots/BotArtifactMessageView.swift:298",
       "expression": "reference.isAudioCandidate ? \"waveform\" : (reference.isRasterImageCandidate ? \"photo\" : \"doc\")",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotChatComposerView.swift:243",
-      "expression": "image",
-      "keyword": "systemName",
-      "callHead": "UIImage"
-    },
-    {
-      "site": "HermesMobile/Features/Bots/BotChatComposerView.swift:332",
-      "expression": "notice.isWarning ? \"exclamationmark.triangle\" : \"info.circle\"",
+      "site": "HermesMobile/Features/Bots/BotChatComposerView.swift:640",
+      "expression": "status.systemImage",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotCreateView.swift:160",
+      "site": "HermesMobile/Features/Bots/BotCreateView.swift:204",
       "expression": "icon(creator.outcomes[step]!)",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotCreateView.swift:216",
+      "site": "HermesMobile/Features/Bots/BotCreateView.swift:260",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "navigationRow"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotCreateView.swift:220",
+      "site": "HermesMobile/Features/Bots/BotCreateView.swift:264",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:131",
-      "expression": "Self.symbol(for: choice)",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:272",
-      "expression": "selectionSymbol(isPicked: isPicked, item: item)",
+      "site": "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:194",
+      "expression": "completion.hasFailures ? \"exclamationmark.triangle.fill\" : \"checkmark\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:366",
-      "expression": "credential.kind == .sudo ? \"lock.shield.fill\" : \"key.fill\"",
-      "keyword": "systemImage",
-      "callHead": "BotRequestHeader"
+      "site": "HermesMobile/Features/Bots/BotDelegatedWorkView.swift:298",
+      "expression": "completion.hasFailures",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:463",
+      "site": "HermesMobile/Features/Bots/BotMessageActions.swift:48",
+      "expression": "\"\"",
+      "keyword": "systemImage",
+      "callHead": "ChatMessageActionItem"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequest.swift:723",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:470",
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:147",
+      "expression": "Self.symbol(for: choice)",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:288",
+      "expression": "selectionSymbol(isPicked: isPicked, item: item)",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:401",
+      "expression": "symbol",
+      "keyword": "systemImage",
+      "callHead": "BotRequestHeader"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:649",
+      "expression": "symbol",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:768",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:775",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:250",
+      "site": "HermesMobile/Features/Bots/BotPendingRequestCard.swift:794",
+      "expression": "withdrawal.systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:253",
       "expression": "resultIcon(editor.outcomes[field]!)",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:266",
+      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:269",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "capabilityRow"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:269",
+      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:272",
       "expression": "systemImage",
       "keyword": "systemImage",
       "callHead": "navigationRow"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:323",
+      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:326",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "navigationRow"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:327",
+      "site": "HermesMobile/Features/Bots/BotProfileEditorView.swift:330",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotRoomComposerView.swift:72",
+      "site": "HermesMobile/Features/Bots/BotPromptMode.swift:19",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotRoomComposerView.swift:68",
       "expression": "stop ? \"stop.fill\" : \"arrow.up\"",
       "keyword": "systemName",
       "callHead": "Image"
@@ -1519,16 +1801,82 @@
       "callHead": "Button"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:262",
+      "site": "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:70",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "block"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotTurnOutcomeRow.swift:74",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:294",
       "expression": "profile.pinned ? \"pin.slash\" : \"pin\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:267",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:305",
       "expression": "profile.hidden ? \"eye\" : \"eye.slash\"",
       "keyword": "systemImage",
       "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:366",
+      "expression": "pinned ? \"pin.slash\" : \"pin\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:372",
+      "expression": "hidden ? \"eye\" : \"eye.slash\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:401",
+      "expression": "inbox.isRoomPinned(room) ? \"pin.slash\" : \"pin\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:406",
+      "expression": "inbox.isRoomHidden(room) ? \"eye\" : \"eye.slash\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:427",
+      "expression": "profile.pinned ? \"pin.slash\" : \"pin\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:432",
+      "expression": "profile.hidden ? \"eye\" : \"eye.slash\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/HermexPushSectionView.swift:219",
+      "expression": "isDone ? \"checkmark.circle.fill\" : (isRunning ? \"circle.dashed\" : \"circle\")",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/HermexPushSectionView.swift:314",
+      "expression": "symbol",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Bots/HermexPushSectionView.swift:362",
+      "expression": "symbol",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:128",
@@ -1549,22 +1897,52 @@
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatAttachmentPreviewView.swift:210",
+      "site": "HermesMobile/Features/Chat/CameraPickerView.swift:492",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "cameraControl"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CameraPickerView.swift:498",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatAttachmentPreviewView.swift:205",
       "expression": "item.inferredIsImage ? \"photo\" : \"doc.questionmark\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:174",
+      "site": "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:102",
+      "expression": "String",
+      "keyword": "systemName",
+      "callHead": "placeholderTile"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:103",
+      "expression": "systemName",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:265",
       "expression": "fileIconName",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerAttachmentStripView.swift:81",
-      "expression": "attachment.isImage ? \"photo\" : \"doc\"",
-      "keyword": "systemName",
-      "callHead": "Image"
+      "site": "HermesMobile/Features/Chat/ChatComposerPresentation.swift:62",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerPresentation.swift:96",
+      "expression": "choice.systemImage",
+      "keyword": "systemImage",
+      "callHead": "HermexAttachmentMenuRow"
     },
     {
       "site": "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:312",
@@ -1585,20 +1963,14 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:14",
-      "expression": "status.systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
+      "site": "HermesMobile/Features/Chat/ChatComposerSendGate.swift:53",
+      "expression": "String",
+      "keyword": "systemName",
+      "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:154",
-      "expression": "isCancelArmed ? \"xmark.circle.fill\" : \"chevron.up\"",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:42",
-      "expression": "symbolName",
+      "site": "HermesMobile/Features/Chat/ChatComposerView.swift:976",
+      "expression": "sendButton.systemName",
       "keyword": "systemName",
       "callHead": "Image"
     },
@@ -1607,6 +1979,24 @@
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:14",
+      "expression": "status.systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:70",
+      "expression": "symbolName",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatComposerVoiceControls.swift:177",
+      "expression": "isCancelArmed ? \"xmark.circle.fill\" : \"chevron.up\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
     },
     {
       "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:37",
@@ -1627,37 +2017,37 @@
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:120",
-      "expression": "item.systemImage",
-      "keyword": "systemName",
-      "callHead": "UIImage"
-    },
-    {
-      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:31",
+      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:35",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:57",
+      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:78",
+      "expression": "item.systemImage",
+      "keyword": "systemName",
+      "callHead": "UIImage"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:120",
       "expression": "item.systemImage",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:72",
+      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:135",
       "expression": "isListening ? \"speaker.slash\" : \"speaker.wave.2\"",
       "keyword": "systemImage",
       "callHead": "ChatMessageActionItem"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatMessageMeta.swift:117",
+      "site": "HermesMobile/Features/Chat/ChatMessageMeta.swift:143",
       "expression": "showsCopied ? \"checkmark\" : \"doc.on.doc\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatView.swift:176",
+      "site": "HermesMobile/Features/Chat/ChatView.swift:175",
       "expression": "isPlaying ? \"pause.fill\" : \"play.fill\"",
       "keyword": "systemName",
       "callHead": "Image"
@@ -1667,6 +2057,42 @@
       "expression": "name",
       "keyword": "systemName",
       "callHead": "UIImage"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:619",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "menuRow"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:623",
+      "expression": "systemImage",
+      "keyword": "systemImage",
+      "callHead": "HermexAttachmentMenuRow"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:777",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "roundControl"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:783",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:1002",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Chat/CustomAttachmentPicker.swift:1008",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Chat/ImageLightboxView.swift:240",
@@ -1693,8 +2119,14 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/MarkdownRenderer.swift:434",
+      "site": "HermesMobile/Features/Chat/MarkdownRenderer.swift:505",
       "expression": "wrapsCodeBlockLines ? \"arrow.turn.down.left\" : \"arrow.left.and.right\"",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/MarkdownRenderer.swift:605",
+      "expression": "showsAllDiffLines ? \"chevron.up\" : \"chevron.down\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
@@ -1711,13 +2143,19 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:229",
+      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:322",
       "expression": "iconName",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:571",
+      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:409",
+      "expression": "userBubbleIsExpanded ? \"chevron.up\" : \"chevron.down\"",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:738",
       "expression": "fileIconName",
       "keyword": "systemName",
       "callHead": "Image"
@@ -1729,7 +2167,7 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/ToolActivityGroupView.swift:60",
+      "site": "HermesMobile/Features/Chat/ToolActivityGroupView.swift:88",
       "expression": "isExpanded ? \"chevron.up\" : \"chevron.down\"",
       "keyword": "systemName",
       "callHead": "Image"
@@ -1741,19 +2179,25 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/TranscriptLogRowView.swift:151",
+      "site": "HermesMobile/Features/Chat/ToolCallLogRowView.swift:190",
+      "expression": "showsAllDiffLines ? \"chevron.up\" : \"chevron.down\"",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Chat/TranscriptLogRowView.swift:162",
       "expression": "isExpanded ? \"chevron.up\" : \"chevron.down\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/TranscriptMediaView.swift:566",
+      "site": "HermesMobile/Features/Chat/TranscriptMediaView.swift:565",
       "expression": "iconName",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Chat/TranscriptMediaView.swift:854",
+      "site": "HermesMobile/Features/Chat/TranscriptMediaView.swift:823",
       "expression": "unavailableIconName",
       "keyword": "systemImage",
       "callHead": "Label"
@@ -1765,136 +2209,154 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:631",
+      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:634",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "unavailable"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:633",
+      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:636",
       "expression": "systemImage",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1133",
-      "expression": "model.selectedCardIDs.contains(card.cardID ?? \"\")\n                          ? \"checkmark.circle.fill\"\n                          : \"circle\"",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1325",
-      "expression": "model.hasActiveFilters ? \"line.3.horizontal.decrease.circle\" : \"rectangle.stack\"",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1413",
-      "expression": "KanbanDispatcherPresentation.toolbarSystemImage(\n                        for: model.dispatchState\n                    )",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1451",
-      "expression": "KanbanHeaderPresentation.cardFiltersSystemImage(\n                                hasActiveFilters: model.hasActiveFilters\n                            )",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1458",
-      "expression": "KanbanHeaderPresentation.overflowSystemImage(\n                            hasActiveFilters: model.hasActiveFilters\n                        )",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1469",
-      "expression": "String",
-      "keyword": "systemImage",
-      "callHead": "unavailableContent"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1471",
-      "expression": "systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1698",
-      "expression": "KanbanBoardRowAction.edit.systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1707",
-      "expression": "KanbanBoardRowAction.makeActive.systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1715",
-      "expression": "KanbanBoardRowAction.archive.systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2086",
-      "expression": "stalenessImage",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2165",
-      "expression": "String",
-      "keyword": "systemImage",
-      "callHead": "metadataLabel"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2169",
-      "expression": "systemImage",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2255",
-      "expression": "String",
-      "keyword": "systemImage",
-      "callHead": null
-    },
-    {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:478",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:477",
       "expression": "dispatchStatusIcon(dispatch)",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:639",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:638",
       "expression": "summary.needsAttention.isEmpty ? \"checkmark.circle.fill\" : \"exclamationmark.triangle.fill\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:681",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:680",
       "expression": "member.outcome == .failed ? \"xmark.circle\" : \"questionmark.circle\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:763",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:762",
       "expression": "hasRecoveryError ? \"exclamationmark.circle\" : \"archivebox\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Memory/MemoryView.swift:126",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1132",
+      "expression": "model.selectedCardIDs.contains(card.cardID ?? \"\") ? \"checkmark.circle.fill\" : \"circle\"",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1324",
+      "expression": "model.hasActiveFilters ? \"line.3.horizontal.decrease.circle\" : \"rectangle.stack\"",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1412",
+      "expression": "KanbanDispatcherPresentation.toolbarSystemImage( for: model.dispatchState )",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1450",
+      "expression": "KanbanHeaderPresentation.cardFiltersSystemImage( hasActiveFilters: model.hasActiveFilters )",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1457",
+      "expression": "KanbanHeaderPresentation.overflowSystemImage( hasActiveFilters: model.hasActiveFilters )",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1468",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "unavailableContent"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1470",
+      "expression": "systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1697",
+      "expression": "KanbanBoardRowAction.edit.systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1706",
+      "expression": "KanbanBoardRowAction.makeActive.systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1714",
+      "expression": "KanbanBoardRowAction.archive.systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2085",
+      "expression": "stalenessImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2164",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": "metadataLabel"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2168",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2254",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Memory/MemoryView.swift:129",
       "expression": "section.systemImage",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Memory/MemoryView.swift:294",
+      "site": "HermesMobile/Features/Memory/MemoryView.swift:297",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:5",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:9",
+      "expression": "systemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:82",
+      "expression": "didCopy ? \"checkmark\" : \"doc.on.doc\"",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:107",
@@ -1933,70 +2395,58 @@
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:5",
-      "expression": "String",
-      "keyword": "systemImage",
-      "callHead": null
-    },
-    {
-      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:82",
-      "expression": "didCopy ? \"checkmark\" : \"doc.on.doc\"",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Onboarding/OnboardingComponents.swift:9",
-      "expression": "systemImage",
-      "keyword": "systemImage",
-      "callHead": "Label"
-    },
-    {
       "site": "HermesMobile/Features/Onboarding/OnboardingFeaturesPage.swift:56",
       "expression": "icon",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1442",
-      "expression": "String",
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:888",
+      "expression": "isUnread ? \"envelope.open\" : \"envelope.badge\"",
       "keyword": "systemImage",
-      "callHead": null
+      "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1446",
-      "expression": "systemImage",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1466",
-      "expression": "String",
-      "keyword": "systemImage",
-      "callHead": null
-    },
-    {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1471",
-      "expression": "systemImage",
-      "keyword": "systemName",
-      "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:887",
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1003",
       "expression": "session.projectId == nil ? \"checkmark\" : \"tray\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:904",
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1020",
       "expression": "isSelected ? \"checkmark\" : \"folder\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
     {
-      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:981",
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1097",
       "expression": "entry.isActive ? \"checkmark\" : \"server.rack\"",
       "keyword": "systemImage",
       "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1558",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1562",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1582",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/SessionList/SessionListComponents.swift:1587",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Settings/ArchivedSessionsView.swift:182",
@@ -2017,94 +2467,118 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1028",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1153",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "updateNoteRow"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1030",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1155",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1094",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1219",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "updateMessageRow"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1096",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1221",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1639",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1731",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1647",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1739",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": "init"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1661",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1753",
       "expression": "systemImage",
       "keyword": "systemImage",
       "callHead": "SettingsRowLabel"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1669",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1761",
       "expression": "systemImage",
       "keyword": "systemImage",
       "callHead": "SettingsRowLabel"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1693",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1785",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1697",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1789",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1814",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1906",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1864",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1956",
       "expression": "systemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1878",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:1970",
       "expression": "accessorySystemImage",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1926",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:2018",
       "expression": "String",
       "keyword": "systemImage",
       "callHead": null
     },
     {
-      "site": "HermesMobile/Features/Settings/SettingsView.swift:1931",
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:2023",
       "expression": "systemImage",
       "keyword": "systemImage",
       "callHead": "SettingsRowLabel"
+    },
+    {
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:2041",
+      "expression": "capability.method.systemImage",
+      "keyword": "systemImage",
+      "callHead": "SettingsToggleRow"
+    },
+    {
+      "site": "HermesMobile/Features/Settings/SettingsView.swift:2336",
+      "expression": "account.kind == .hermes ? \"person.badge.key\" : \"bell.badge\"",
+      "keyword": "systemImage",
+      "callHead": "SettingsAccessoryRow"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/ActionToast.swift:10",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Shared/ActionToast.swift:162",
+      "expression": "toast.systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Shared/AdaptiveGlassDebugFixture.swift:77",
@@ -2119,22 +2593,118 @@
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:278",
+      "site": "HermesMobile/Features/Shared/AttachmentTile.swift:15",
+      "expression": "fileType.iconName",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexAvatar.swift:8",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexAvatar.swift:15",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexBanner.swift:127",
+      "expression": "icon",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexBanner.swift:166",
+      "expression": "icon",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexButton.swift:242",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexButton.swift:245",
+      "expression": "icon",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexButton.swift:249",
+      "expression": "icon",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexContentUnavailable.swift:40",
+      "expression": "String",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexContentUnavailable.swift:109",
+      "expression": "systemImage",
+      "keyword": "systemImage",
+      "callHead": "HermexAvatar"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexPopoverMenu.swift:63",
+      "expression": "String?",
+      "keyword": "systemImage",
+      "callHead": null
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexPopoverMenu.swift:71",
+      "expression": "String?",
+      "keyword": "systemImage",
+      "callHead": "init"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexPopoverMenu.swift:498",
+      "expression": "systemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/HermexToast.swift:52",
+      "expression": "icon",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/ListItem.swift:202",
+      "expression": "rowIndicatorSystemImage",
+      "keyword": "systemName",
+      "callHead": "Image"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:301",
       "expression": "isFavorite ? \"star.fill\" : \"star\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:376",
+      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:419",
       "expression": "isExpanded ? \"chevron.up\" : \"chevron.down\"",
       "keyword": "systemName",
       "callHead": "Image"
     },
     {
-      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:403",
+      "site": "HermesMobile/Features/Shared/ModelPickerSheet.swift:446",
       "expression": "isFavorite(option) ? \"star.slash\" : \"star\"",
       "keyword": "systemImage",
       "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Shared/Tag.swift:100",
+      "expression": "icon",
+      "keyword": "systemName",
+      "callHead": "Image"
     },
     {
       "site": "HermesMobile/Features/Skills/SkillsView.swift:155",
@@ -2144,7 +2714,7 @@
     },
     {
       "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:135",
-      "expression": "pauseResumeSystemImage",
+      "expression": "job.pauseResumeSystemImage",
       "keyword": "systemImage",
       "callHead": "footerButton"
     },
@@ -2162,7 +2732,13 @@
     },
     {
       "site": "HermesMobile/Features/Tasks/TaskDetailView.swift:250",
-      "expression": "pauseResumeSystemImage",
+      "expression": "viewModel.job.pauseResumeSystemImage",
+      "keyword": "systemImage",
+      "callHead": "Label"
+    },
+    {
+      "site": "HermesMobile/Features/Workspace/FileBrowserView.swift:69",
+      "expression": "searchText.isEmpty ? \"folder\" : \"magnifyingglass\"",
       "keyword": "systemImage",
       "callHead": "Label"
     },
@@ -2177,12 +2753,6 @@
       "expression": "node.isSymlink ? \"link\" : \"folder\"",
       "keyword": "systemName",
       "callHead": "Image"
-    },
-    {
-      "site": "HermesMobile/Features/Workspace/FileBrowserView.swift:69",
-      "expression": "searchText.isEmpty ? \"folder\" : \"magnifyingglass\"",
-      "keyword": "systemImage",
-      "callHead": "Label"
     },
     {
       "site": "HermesMobile/Features/Workspace/GitBranchPickerView.swift:162",

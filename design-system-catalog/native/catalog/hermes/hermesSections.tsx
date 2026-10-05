@@ -938,71 +938,18 @@ function HermesShadowGallery() {
   );
 }
 
-// ─── Token Coverage (overview-only) ──────────────────────────────────────────
-interface CoverageRowTotals {
-  total?: number;
-  uniqueNames?: number;
-  totalUses?: number;
-}
-
-interface CoverageRow {
-  id: string;
-  totals: CoverageRowTotals;
-  dispositions: Record<string, number>;
-  reconciliation: string;
-  source: string;
-}
-
-function formatCoverageTotals(totals: CoverageRowTotals): string {
-  if (typeof totals.total === 'number') return `total: ${totals.total.toLocaleString()}`;
-  const parts: string[] = [];
-  if (typeof totals.uniqueNames === 'number') parts.push(`${totals.uniqueNames.toLocaleString()} unique names`);
-  if (typeof totals.totalUses === 'number') parts.push(`${totals.totalUses.toLocaleString()} total uses`);
-  return parts.join(' · ');
-}
-
-function formatCoverageDispositions(dispositions: Record<string, number>): string {
-  return Object.entries(dispositions)
-    .map(([key, value]) => `${key}: ${value.toLocaleString()}`)
-    .join(' · ');
-}
-
+// ─── Foundation boundary facts (overview-only) ───────────────────────────────
+// These three facts describe boundaries that remain true regardless of how much of the foundation
+// layer production code eventually adopts — they are not migration-count claims, and carry no totals
+// or worksheet provenance. A prior version of this table also rendered a per-token-family disposition
+// breakdown sourced from planning worksheets, reconciling each family's total against named
+// disposition counts; that presentation was removed because it stated historical/planning figures as
+// if they were the current, completed production migration or final adopted call-site population,
+// which was never verified against production source at render time. Don't reintroduce a
+// totals/worksheet table here.
 function HermesTokenCoverageTable() {
-  const coverageRows: CoverageRow[] = [
-    { id: 'typography-raw', totals: { total: 455 }, dispositions: { migratedToAppFont: 397, iconSizingOutOfScope: 58, retainedException: 0 }, reconciliation: 'migratedToAppFont + iconSizingOutOfScope + retainedException === totals.total (455)', source: "TY-6/TY-9 worksheet" },
-    { id: 'typography-appfont-deprecated', totals: { total: 156 }, dispositions: { migratedViaTY7: 136, migratedViaTY8: 10, iconSizingOutOfScope: 10, retainedException: 0 }, reconciliation: 'migratedViaTY7 + migratedViaTY8 (10) + iconSizingOutOfScope + retainedException === totals.total (156)', source: 'TY-7/TY-8/TY-9 worksheet' },
-    { id: 'font-role-direct-argument', totals: { total: 8 }, dispositions: { migrated: 8 }, reconciliation: 'migrated === totals.total (8)', source: 'TY-8/TY-9 worksheet' },
-    { id: 'font-role-stored-property', totals: { total: 10 }, dispositions: { migrated: 10 }, reconciliation: 'migrated === totals.total (10)', source: 'TY-8/TY-9 worksheet' },
-    { id: 'font-role-applied', totals: { total: 5 }, dispositions: { migrated: 5 }, reconciliation: 'migrated === totals.total (5)', source: 'TY-8/TY-9 worksheet' },
-    { id: 'color-ramp', totals: { total: 99 }, dispositions: { definedAndTested: 99 }, reconciliation: 'definedAndTested === totals.total (99)', source: "CO-1's exhaustive HermesColorRamp enum definition + HermesColorTests" },
-    { id: 'color-product-palette', totals: { total: 14 }, dispositions: { definedAndTested: 14 }, reconciliation: 'definedAndTested === totals.total (14)', source: "CO-2's exhaustive HermesProductPalette enum definition + HermesProductPaletteTests/ExistingProductPaletteValueTests" },
-    { id: 'spacing', totals: { total: 1042 }, dispositions: { migratedOnScale: 646, roundedAndMigrated: 368, retainedException: 28 }, reconciliation: 'migratedOnScale + roundedAndMigrated + retainedException === totals.total (1,042)', source: 'SR-2/SR-3 worksheet' },
-    { id: 'radius', totals: { total: 135 }, dispositions: { migratedOnScale: 66, roundedAndMigrated: 67, retainedException: 2 }, reconciliation: 'migratedOnScale + roundedAndMigrated + retainedException === totals.total (135)', source: "SR-5/SR-6/SR-7 worksheet" },
-    { id: 'motion', totals: { total: 35 }, dispositions: { onScaleMigrated: 12, offScaleNormalized: 21, namedException: 2 }, reconciliation: "onScaleMigrated + offScaleNormalized + namedException === totals.total (35)", source: 'MO-2 worksheet' },
-    { id: 'shadow', totals: { total: 13 }, dispositions: { migrated: 12, retainedException: 1 }, reconciliation: 'migrated + retainedException === totals.total (13)', source: 'SH-2 completeness-gate transcript' },
-    { id: 'icon-literals', totals: { uniqueNames: 158, totalUses: 442 }, dispositions: { cataloguedNames: 158 }, reconciliation: "the sum of each of the 158 names' own site-list length === totals.totalUses (442)", source: "ST-2's generated hermesIconInventory.generated.json" },
-    { id: 'icon-computed', totals: { total: 139 }, dispositions: { traced: 139, unresolvedExternal: 0 }, reconciliation: 'traced + unresolvedExternal === totals.total (139)', source: "CC-2's hermesIconComputedSiteTrace.generated.json zero-untraced gate" },
-  ];
-
   return (
     <DividedStack>
-      <VariantGroup
-        name="Migration-count reconciliation"
-        desc="Every adopted Hermex token family's final call-site (or fixed-definition) population, reconciled to its own disposition breakdown"
-        align="left"
-      >
-        <View style={recon.stack}>
-          {coverageRows.map((row, i) => (
-            <TokenRow key={row.id} use={`${row.reconciliation} — ${row.source}`} last={i === coverageRows.length - 1}>
-              <View style={recon.stack}>
-                <Text style={recon.motionName}>{row.id}</Text>
-                <Text style={recon.motionValue}>{formatCoverageTotals(row.totals)}</Text>
-                <Text style={recon.motionValue}>{formatCoverageDispositions(row.dispositions)}</Text>
-              </View>
-            </TokenRow>
-          ))}
-        </View>
-      </VariantGroup>
       <VariantGroup name="What remains true even at full adoption" align="left">
         <View style={recon.stack}>
           <Text style={recon.caption}>Hermex draws its icons from Apple's own SF Symbols, not a Hermex-authored icon library.</Text>
@@ -1873,17 +1820,17 @@ AttachmentFileBadge(
         { name: 'Text Input', useWhen: 'For a value the user types and keeps — a name, URL, credential, or code — rather than a query that filters or looks up content; any filter or lookup field is Search, even inline inside a sheet or card.' },
       ],
       adoptionStatus: {
-        state: 'partially-adopted',
-        detail: 'HermexSelectionSheet.swift already composes HermexSearchField directly for its optional search slot — a real, current production call site, so this is not a genuinely uncalled foundation component. Production\'s eight existing screen-level search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating a screen onto `.hermexSearch` is deferred to a separate issue.',
+        state: 'foundation-available',
+        detail: 'HermexSearchField is internally composed by the foundation-only `HermexSelectionSheet.swift` for its optional search slot — but HermexSelectionSheet itself has no normal-runtime production call site (its only caller is the DEBUG-only HermexOverlayLab), so that internal composition is not a production adoption of Search. Production\'s eight existing screen-level search fields (Sessions, Model picker, Skills, Default profile, Cron job profile/skill pickers, Git branch picker, Kanban) still call native `.searchable` directly; migrating a screen onto `.hermexSearch` is deferred to a separate issue.',
       },
-      useSummary: 'HermexSelectionSheet.swift is a real, current caller of HermexSearchField; no top-level screen has migrated off `.searchable` yet. Production keeps its existing eight direct `.searchable` call sites unchanged.',
+      useSummary: 'HermexSearchField is foundation-only: it is composed internally by the foundation-only `HermexSelectionSheet.swift`, which itself has no normal-runtime production call site. No production screen has adopted `HermexSearchField` or `.hermexSearch`; production keeps its existing eight direct `.searchable` call sites unchanged.',
       implementationNotes: {
-        status: 'HermexSelectionSheet.swift composes HermexSearchField directly; no screen-level `.searchable` call site has migrated yet.',
+        status: 'Foundation-available; composed internally by the foundation-only HermexSelectionSheet.swift, which has no normal-runtime production call site. No screen-level `.searchable` call site has migrated yet.',
         sourcePaths: ['HermesMobile/Features/Shared/HermexSearch.swift', 'HermesMobile/Features/Shared/HermexSelectionSheet.swift'],
         notes: [
           'One canonical visual implementation: `HermexSearchField` owns chrome, local `@FocusState`, the clear control, and `.submitLabel(.search)`/`.onSubmit` wiring around a native `TextField`; `.hermexSearch(...)` only composes that same field as a `.safeAreaInset(edge: .top)` — there is no second field implementation.',
           'Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience; Hermex cannot truthfully reproduce that native placement contract once it draws its own chrome.',
-          'HermexSelectionSheet.swift\'s optional search slot renders HermexSearchField directly — a real, current production call site, distinct from the screen-level `.searchable` migration below.',
+          'HermexSelectionSheet.swift\'s optional search slot renders HermexSearchField directly, but HermexSelectionSheet.swift itself is only called by the DEBUG-only HermexOverlayLab — not a normal-runtime production screen — so this internal composition is not a production call site for Search.',
           'Report only: production\'s eight existing direct `.searchable` screen call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating a screen onto `.hermexSearch` is scoped to a separate issue, not this slice.',
         ],
       },

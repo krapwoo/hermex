@@ -17,8 +17,11 @@ import { HERMES_ICON_SIZE, HERMES_ICON_TYPOGRAPHY_PAIRING, HERMES_ICON_AVATAR_PA
 
 const UNAVAILABLE_LABEL = 'Glyph unavailable in browser';
 const GENERATED_ICON_BASE_PATH = '/generated-icons';
-// A real, already-generated SF Symbol asset shared by every specimen below, so the size/pairing
-// galleries render the genuine simulator-rendered glyph rather than a substitute icon or shape.
+const GENERATED_ICON_SIZES_BASE_PATH = '/generated-icons/sizes';
+// The shared size-scale demo glyph for the size-step and Avatar-pairing galleries below. Each step
+// requests its own point-accurate asset (see sizeAssetUri), rendered by UIImage(systemName:) at
+// that exact point size — never the single 32pt overview asset resized in CSS, which would not
+// reflect how SF Symbols actually re-draws its strokes/weight at a different point size.
 const SCALE_DEMO_ICON = 'star.fill';
 
 export function buildHermesIconNames(): string[] {
@@ -29,6 +32,13 @@ export function buildHermesIconNames(): string[] {
 
 function iconAssetUri(name: string): string {
   return `${GENERATED_ICON_BASE_PATH}/${encodeURIComponent(name)}.png`;
+}
+
+// A dedicated, point-size-accurate render of SCALE_DEMO_ICON for the exact `size` requested —
+// generated alongside the overview assets by scripts/generate-icon-previews.mjs (see its
+// `sizes/manifest.json`) — rather than the single 32pt overview PNG resized to fit.
+function sizeAssetUri(size: number): string {
+  return `${GENERATED_ICON_SIZES_BASE_PATH}/${encodeURIComponent(SCALE_DEMO_ICON)}-${size}pt.png`;
 }
 
 function IconTile({ name }: { name: string }) {
@@ -80,7 +90,7 @@ function IconSizeScaleGallery() {
         <View key={name} style={styles.scaleCell}>
           <View style={styles.scaleGlyphArea}>
             <Image
-              source={{ uri: iconAssetUri(SCALE_DEMO_ICON) }}
+              source={{ uri: sizeAssetUri(size) }}
               style={{ width: size, height: size }}
               resizeMode="contain"
               accessibilityElementsHidden
@@ -126,7 +136,7 @@ function IconAvatarPairingGallery() {
             ]}
           >
             <Image
-              source={{ uri: iconAssetUri(SCALE_DEMO_ICON) }}
+              source={{ uri: sizeAssetUri(pairing.icon) }}
               style={{ width: pairing.icon, height: pairing.icon }}
               resizeMode="contain"
               accessibilityElementsHidden

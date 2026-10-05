@@ -4,10 +4,11 @@
 // evidence structure without pulling in a new toolchain.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { buildCodeMask } from '../scripts/generate-hermex-icon-inventory.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -169,15 +170,38 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
   assert.doesNotMatch(previews, /NativeSegmentedControlGallery|native iOS segmented Picker/);
 });
 
-test('Search guidance names the partially adopted Hermex foundation without contradicting deferred native call sites', () => {
+// Correction (2026-10-04): the guide claimed Search was `partially-adopted` on the strength of
+// HermexSelectionSheet.swift composing HermexSearchField. That composition is real, but
+// HermexSelectionSheet.swift itself has no normal-runtime production caller — its only caller is the
+// DEBUG-only HermexOverlayLab — so no shipped screen renders HermexSearchField. The guide must agree
+// with hermesSections.tsx, which already reports `foundation-available`.
+test('Search guidance reports the foundation-available Hermex foundation without contradicting deferred native call sites', () => {
   const guide = read('WHEN_TO_USE.md');
   const contributing = read('../CONTRIBUTING.md');
 
   assert.match(guide, /HermexSearchField/);
-  assert.match(guide, /partially-adopted/);
   assert.match(guide, /HermexSelectionSheet\.swift/);
-  assert.match(guide, /eight existing screen-level `\.searchable` call sites/);
-  assert.match(guide, /separate issue/);
+
+  // Scoped to the Search bullet itself: `partially-adopted` legitimately appears elsewhere in this
+  // document as one of the five closed-vocabulary adoptionStatus states.
+  const rawSearchBullet = guide.match(/- \*\*Search vs a generic Text Input\*\*[\s\S]*?(?=\n- \*\*|\n## )/)?.[0];
+  assert.ok(rawSearchBullet, 'expected a "Search vs a generic Text Input" bullet in WHEN_TO_USE.md');
+  // Prose assertions run against the unwrapped bullet, so a reflow never breaks them.
+  const searchBullet = rawSearchBullet.replace(/\s+/g, ' ').trim();
+  assert.match(searchBullet, /foundation-available/);
+  assert.doesNotMatch(
+    searchBullet,
+    /partially-adopted/,
+    'Search has no normal-runtime production call site to claim partial adoption from',
+  );
+  assert.match(
+    searchBullet,
+    /no normal-runtime production caller/,
+    'expected the bullet to state why the HermexSelectionSheet composition is not production adoption',
+  );
+  assert.match(searchBullet, /HermexOverlayLab/, 'expected the bullet to name the DEBUG-only lab as the sheet’s only caller');
+  assert.match(searchBullet, /eight existing screen-level `\.searchable` call sites/);
+  assert.match(searchBullet, /separate issue/);
   assert.doesNotMatch(guide, /no Hermex-owned alternative to adopt later/);
   assert.doesNotMatch(guide, /Search[\s\S]{0,500}adoptionStatus[^\n]*native-platform/);
   assert.doesNotMatch(
@@ -906,7 +930,9 @@ test('resolveJsonModule is enabled so the catalog JSON imports typecheck', () =>
 
 // Family plan 06, CC-2a: every computed (non-literal) systemName/systemImage site in the generated
 // inventory must carry exactly one hand-traced entry recording every concrete SF Symbol name that
-// site's expression can produce, resolved against the pinned protected Swift source.
+// site's expression can produce, resolved against the pinned protected Swift source. Call-graph
+// provenance starts from the computed site's nearest stable Swift declaration instead of a fragile
+// line number; source-derived resolver tests below keep the resolved-name sets honest.
 test('computed icon site trace JSON accounts for every site in the generated inventory with a valid status', () => {
   const inventoryPath = path.join(ROOT, 'native/catalog/hermes/hermesIconInventory.generated.json');
   const tracePath = path.join(ROOT, 'native/catalog/hermes/hermesIconComputedSiteTrace.generated.json');
@@ -915,6 +941,10 @@ test('computed icon site trace JSON accounts for every site in the generated inv
   const inventory = JSON.parse(readFileSync(inventoryPath, 'utf8'));
   const trace = JSON.parse(readFileSync(tracePath, 'utf8'));
   assert.ok(Array.isArray(trace.entries), 'expected trace JSON to have an entries array');
+  assert.equal(
+    trace.provenanceConvention,
+    "Call-graph anchors identify the computed site's nearest stable Swift declaration; resolvedNames are traced through that value flow and are not an exhaustive call-site list.",
+  );
 
   const inventorySites = inventory.computedSites.map((c) => c.site);
   const traceSites = trace.entries.map((e) => e.site);
@@ -934,7 +964,7 @@ test('computed icon site trace JSON accounts for every site in the generated inv
   for (const entry of trace.entries) {
     assert.match(
       entry.status,
-      /^(traced|unresolved-external)$/,
+      /^(traced|no-symbol|unresolved-external)$/,
       `expected a valid status for ${entry.site}, got ${entry.status}`,
     );
     assert.ok(Array.isArray(entry.resolvedNames), `expected resolvedNames to be an array for ${entry.site}`);
@@ -947,16 +977,421 @@ test('computed icon site trace JSON accounts for every site in the generated inv
       `expected resolvedNames to be unique for ${entry.site}`,
     );
     assert.ok(
-      entry.traceMethod === 'direct' || entry.traceMethod.startsWith('call-graph via '),
-      `expected traceMethod to be "direct" or start with "call-graph via " for ${entry.site}, got ${entry.traceMethod}`,
+      entry.traceMethod === 'direct' || entry.traceMethod.startsWith('call-graph from '),
+      `expected traceMethod to be "direct" or start with "call-graph from " for ${entry.site}, got ${entry.traceMethod}`,
     );
     if (entry.status === 'traced') {
       assert.ok(entry.resolvedNames.length > 0, `expected at least one resolvedName for traced site ${entry.site}`);
+    }
+    if (entry.status === 'no-symbol') {
+      assert.equal(entry.resolvedNames.length, 0, `expected no resolvedNames for no-symbol site ${entry.site}`);
     }
   }
 
   const sortedSites = [...traceSites].sort((a, b) => a.localeCompare(b));
   assert.deepEqual(traceSites, sortedSites, 'expected trace entries sorted by site');
+});
+
+function lineNumberAt(source, index) {
+  return source.slice(0, index).split('\n').length;
+}
+
+function stableSwiftSymbolAnchor(source, lineNumber) {
+  const mask = buildCodeMask(source);
+  const maskedSource = [...source]
+    .map((character, index) => (character === '\n' || mask[index] === 1 ? character : ' '))
+    .join('');
+  const sourceLines = source.split('\n');
+  const maskedLines = maskedSource.split('\n');
+  const attribute = String.raw`(?:@\w+(?:\([^)]*\))?\s+)*`;
+  const modifiers = String.raw`(?:(?:private|fileprivate|internal|public|open|final|indirect|static|class|nonisolated|override|mutating|nonmutating|convenience|required)\s+)*`;
+  const typePattern = new RegExp(String.raw`^\s*${attribute}${modifiers}(?:struct|class|enum|extension|actor|protocol)\s+([A-Za-z_][\w.]*)`);
+  const memberPattern = new RegExp(String.raw`^\s*${attribute}${modifiers}(?:func\s+[A-Za-z_]\w*|init\b|deinit\b|subscript\b|var\s+[A-Za-z_]\w*|let\s+[A-Za-z_]\w*)`);
+
+  let braceDepth = 0;
+  let fileMember = null;
+  let pendingType = null;
+  const typeStack = [];
+
+  for (let index = 0; index < lineNumber; index++) {
+    while (typeStack.length > 0 && braceDepth < typeStack.at(-1).bodyDepth) typeStack.pop();
+
+    const sourceLine = sourceLines[index];
+    const maskedLine = maskedLines[index];
+    const typeMatch = maskedLine.match(typePattern);
+    if (typeMatch) pendingType = { name: typeMatch[1], bodyDepth: null, member: null };
+
+    const activeType = typeStack.at(-1);
+    const memberDepth = activeType ? activeType.bodyDepth : 0;
+    if (!typeMatch && braceDepth === memberDepth && memberPattern.test(maskedLine)) {
+      if (activeType) activeType.member = sourceLine.trim();
+      else fileMember = sourceLine.trim();
+    }
+
+    const openingBraces = (maskedLine.match(/\{/g) ?? []).length;
+    const closingBraces = (maskedLine.match(/\}/g) ?? []).length;
+    if (pendingType && openingBraces > 0) {
+      pendingType.bodyDepth = braceDepth + 1;
+      typeStack.push(pendingType);
+      pendingType = null;
+    }
+
+    if (index + 1 === lineNumber) {
+      const containingType = typeStack.at(-1);
+      const member = containingType ? containingType.member : fileMember;
+      assert.ok(member, `expected a stable Swift declaration containing line ${lineNumber}`);
+      return `${containingType ? containingType.name : 'file'}::${member}`;
+    }
+
+    braceDepth += openingBraces - closingBraces;
+  }
+
+  throw new Error(`line ${lineNumber} is outside the Swift source`);
+}
+
+function stableTraceMethodForSite(site) {
+  const separator = site.lastIndexOf(':');
+  const sourcePath = site.slice(0, separator);
+  const lineNumber = Number(site.slice(separator + 1));
+  const source = read(`../${sourcePath}`);
+  return `call-graph from ${sourcePath}#${stableSwiftSymbolAnchor(source, lineNumber)}`;
+}
+
+function extractBalancedSwiftBlock(source, openIndex) {
+  assert.equal(source[openIndex], '{', `expected a Swift block opening brace at offset ${openIndex}`);
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = openIndex; index < source.length; index++) {
+    const character = source[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === '\\') escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if (character === '{') depth += 1;
+    if (character === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(openIndex + 1, index);
+    }
+  }
+  throw new Error(`unterminated Swift block at offset ${openIndex}`);
+}
+
+function returnedSwiftStringLiterals(body) {
+  const explicitReturns = [...body.matchAll(/\breturn\s+"([^"]+)"/g)].map((match) => match[1]);
+  const implicitReturns = [...body.matchAll(/^\s*"([^"]+)"\s*$/gm)].map((match) => match[1]);
+  return [...new Set([...explicitReturns, ...implicitReturns])].sort((a, b) => a.localeCompare(b));
+}
+
+function extractSwiftCalls(source, callee) {
+  const calls = [];
+  const pattern = new RegExp(`\\b${callee}\\s*\\(`, 'g');
+  for (const match of source.matchAll(pattern)) {
+    const openIndex = source.indexOf('(', match.index);
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let closeIndex = -1;
+    for (let index = openIndex; index < source.length; index++) {
+      const character = source[index];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (character === '\\') escaped = true;
+        else if (character === '"') inString = false;
+        continue;
+      }
+      if (character === '"') {
+        inString = true;
+        continue;
+      }
+      if (character === '(') depth += 1;
+      if (character === ')') {
+        depth -= 1;
+        if (depth === 0) {
+          closeIndex = index;
+          break;
+        }
+      }
+    }
+    assert.notEqual(closeIndex, -1, `expected a complete ${callee}(...) call`);
+    calls.push({
+      arguments: source.slice(openIndex + 1, closeIndex),
+      argumentsOffset: openIndex + 1,
+      line: lineNumberAt(source, match.index),
+    });
+  }
+  return calls;
+}
+
+function extractSwiftArgument(source, call, label) {
+  const labelMatch = call.arguments.match(new RegExp(`\\b${label}\\s*:`));
+  assert.ok(labelMatch, `expected ${label}: in Swift call arguments`);
+  const expressionStart = labelMatch.index + labelMatch[0].length;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let expressionEnd = call.arguments.length;
+  for (let index = expressionStart; index < call.arguments.length; index++) {
+    const character = call.arguments[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === '\\') escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if ('([{'.includes(character)) depth += 1;
+    if (')]}'.includes(character)) depth -= 1;
+    if (character === ',' && depth === 0) {
+      expressionEnd = index;
+      break;
+    }
+  }
+  return {
+    expression: call.arguments.slice(expressionStart, expressionEnd).trim(),
+    line: lineNumberAt(source, call.argumentsOffset + labelMatch.index),
+  };
+}
+
+function computedSiteEntriesForStruct(source, sourcePath, structName, trace) {
+  const structStart = source.indexOf(`private struct ${structName}`);
+  assert.notEqual(structStart, -1, `expected private struct ${structName}`);
+  const openIndex = source.indexOf('{', structStart);
+  const body = extractBalancedSwiftBlock(source, openIndex);
+  const entries = [];
+  for (const match of body.matchAll(/\bsystem(?:Image|Name)\s*:\s*(?:String|systemImage)\b/g)) {
+    const line = lineNumberAt(source, openIndex + 1 + match.index);
+    const site = `${sourcePath}:${line}`;
+    const entry = trace.entries.find((candidate) => candidate.site === site);
+    assert.ok(entry, `expected a computed-site trace entry for ${site}`);
+    entries.push(entry);
+  }
+  return entries;
+}
+
+function callerIconUnion(source, sourcePath, callee, trace) {
+  const names = new Set();
+  const calls = extractSwiftCalls(source, callee);
+  for (const call of calls) {
+    const argument = extractSwiftArgument(source, call, 'systemImage');
+    const literals = [...argument.expression.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+    if (literals.length > 0) {
+      for (const literal of literals) names.add(literal);
+      continue;
+    }
+    const site = `${sourcePath}:${argument.line}`;
+    const entry = trace.entries.find((candidate) => candidate.site === site);
+    assert.ok(entry, `expected a trace entry for computed ${callee} caller ${site}`);
+    for (const name of entry.resolvedNames) names.add(name);
+  }
+  return { calls, names: [...names].sort((a, b) => a.localeCompare(b)) };
+}
+
+test('Live Activity computed icon traces stay synchronized with AgentRunStatusStyle.symbolName', () => {
+  const sourcePath = '../HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift';
+  const source = read(sourcePath);
+  const signature = 'static func symbolName(for status: AgentRunActivityStatus) -> String {';
+  const functionStart = source.indexOf(signature);
+  assert.notEqual(functionStart, -1, `expected ${signature} in ${sourcePath}`);
+
+  const bodyStart = source.indexOf('{', functionStart);
+  const resolvedNames = returnedSwiftStringLiterals(extractBalancedSwiftBlock(source, bodyStart));
+  assert.equal(resolvedNames.length, 13, 'expected one concrete SF Symbol for every AgentRunActivityStatus case');
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  for (const site of [
+    'HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:338',
+    'HermesLiveActivityWidget/AgentRunLiveActivityWidget.swift:352',
+  ]) {
+    const entry = trace.entries.find((candidate) => candidate.site === site);
+    assert.ok(entry, `expected a computed-site trace entry for ${site}`);
+    assert.deepEqual(entry.resolvedNames, resolvedNames, `expected ${site} to include every symbol returned by AgentRunStatusStyle.symbolName`);
+    assert.equal(
+      entry.traceMethod,
+      stableTraceMethodForSite(site),
+      `expected ${site} to begin its call-graph trace at the containing Swift declaration`,
+    );
+  }
+});
+
+test('ToolCallLogRowView icon trace stays synchronized with ToolCallSummaryFormatter.icon', () => {
+  const sourcePath = '../HermesMobile/Features/Chat/ToolCallSummaryFormatter.swift';
+  const source = read(sourcePath);
+  const signature = 'private static func icon(kind: Kind, name: String?) -> String {';
+  const functionStart = source.indexOf(signature);
+  assert.notEqual(functionStart, -1, `expected ${signature} in ${sourcePath}`);
+  const bodyStart = source.indexOf('{', functionStart);
+  const resolvedNames = returnedSwiftStringLiterals(extractBalancedSwiftBlock(source, bodyStart));
+  assert.equal(resolvedNames.length, 16, 'expected every ToolCallSummaryFormatter icon return to be traced');
+
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Features/Chat/ToolCallLogRowView.swift:23');
+  assert.ok(entry, 'expected the ToolCallLogRowView row.icon computed-site trace');
+  assert.deepEqual(entry.resolvedNames, resolvedNames);
+  assert.equal(
+    entry.traceMethod,
+    stableTraceMethodForSite(entry.site),
+  );
+});
+
+test('Settings wrapper computed icon traces stay synchronized with every production caller', () => {
+  const sourcePath = 'HermesMobile/Features/Settings/SettingsView.swift';
+  const source = read(`../${sourcePath}`);
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const picker = callerIconUnion(source, sourcePath, 'SettingsPickerRow', trace);
+  const toggle = callerIconUnion(source, sourcePath, 'SettingsToggleRow', trace);
+  const accessory = callerIconUnion(source, sourcePath, 'SettingsAccessoryRow', trace);
+  const rowLabelNames = [...new Set([...picker.names, ...toggle.names])].sort((a, b) => a.localeCompare(b));
+
+  const contracts = [
+    ['SettingsPickerRow', picker.names],
+    ['SettingsToggleRow', toggle.names],
+    ['SettingsAccessoryRow', accessory.names],
+    ['SettingsRowLabel', rowLabelNames],
+  ];
+  for (const [structName, names] of contracts) {
+    const entries = computedSiteEntriesForStruct(source, sourcePath, structName, trace);
+    assert.ok(entries.length > 0, `expected computed icon sites inside ${structName}`);
+    for (const entry of entries) {
+      assert.deepEqual(entry.resolvedNames, names, `expected ${entry.site} to include every ${structName} caller icon`);
+      assert.equal(entry.traceMethod, stableTraceMethodForSite(entry.site));
+    }
+  }
+});
+
+test('computed icon trace call-graph provenance uses stable path#symbol anchors at the actual computed sites', () => {
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  for (const entry of trace.entries) {
+    if (entry.traceMethod === 'direct') continue;
+    assert.ok(entry.traceMethod.startsWith('call-graph from '), `expected stable call-graph provenance for ${entry.site}`);
+    const match = entry.traceMethod.match(/^call-graph from ([^#]+)#(.+)$/);
+    assert.ok(match, `expected path#symbol call-graph provenance for ${entry.site}`);
+    const [, sourcePath, symbolAnchor] = match;
+    const separator = entry.site.lastIndexOf(':');
+    const sitePath = entry.site.slice(0, separator);
+    const siteLine = Number(entry.site.slice(separator + 1));
+    assert.equal(sourcePath, sitePath, `expected ${entry.site} provenance to start from its own source file`);
+    const absolutePath = path.join(ROOT, '..', sourcePath);
+    assert.ok(existsSync(absolutePath), `expected provenance source ${sourcePath} for ${entry.site}`);
+    const source = readFileSync(absolutePath, 'utf8');
+    assert.equal(
+      symbolAnchor,
+      stableSwiftSymbolAnchor(source, siteLine),
+      `expected ${entry.site} to cite its nearest containing Swift declaration`,
+    );
+  }
+});
+
+test('App Lock capability trace stays synchronized with AppLockCapability.Method.systemImage', () => {
+  const source = read('../HermesMobile/Auth/AppLockWindow.swift');
+  const signature = 'var systemImage: String {';
+  const start = source.indexOf(signature);
+  assert.notEqual(start, -1, `expected ${signature} in AppLockWindow.swift`);
+  const body = extractBalancedSwiftBlock(source, source.indexOf('{', start));
+  const names = [...new Set([...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]))]
+    .sort((a, b) => a.localeCompare(b));
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Auth/AppLockWindow.swift:181');
+  assert.ok(entry, 'expected the App Lock method.systemImage trace');
+  assert.deepEqual(entry.resolvedNames, names);
+});
+
+test('message attachment file icon trace stays synchronized with GridAttachmentCell.fileIconName', () => {
+  const source = read('../HermesMobile/Features/Chat/MessageBubbleView.swift');
+  const signature = 'private var fileIconName: String {';
+  const start = source.indexOf(signature);
+  assert.notEqual(start, -1, `expected ${signature} in MessageBubbleView.swift`);
+  const names = returnedSwiftStringLiterals(extractBalancedSwiftBlock(source, source.indexOf('{', start)));
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Features/Chat/MessageBubbleView.swift:738');
+  assert.ok(entry, 'expected the fileIconName computed-site trace');
+  assert.deepEqual(entry.resolvedNames, names);
+});
+
+test('composer chip renderer trace stays synchronized with the skill and quote symbol suppliers', () => {
+  const tokenSource = read('../HermesMobile/Features/Chat/ComposerChipToken.swift');
+  const textViewSource = read('../HermesMobile/Features/Chat/ComposerChipTextView.swift');
+  const skill = tokenSource.match(/private static let skillSymbol\s*=\s*"([^"]+)"/);
+  const quoteFunctionStart = textViewSource.indexOf('private func quoteString(');
+  assert.ok(skill, 'expected ComposerChipToken.skillSymbol');
+  assert.notEqual(quoteFunctionStart, -1, 'expected ComposerChipTextView.quoteString');
+  const quoteBody = extractBalancedSwiftBlock(textViewSource, textViewSource.indexOf('{', quoteFunctionStart));
+  const quote = quoteBody.match(/icon:\s*\.symbol\("([^"]+)"\)/);
+  assert.ok(quote, 'expected quoteString to supply a concrete symbol');
+
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Features/Chat/ComposerChipRendering.swift:167');
+  assert.ok(entry, 'expected the ComposerChipRenderer symbol trace');
+  assert.deepEqual(entry.resolvedNames, [skill[1], quote[1]].sort((a, b) => a.localeCompare(b)));
+});
+
+test('Settings accessory icon trace stays synchronized with its default and explicit caller overrides', () => {
+  const sourcePath = 'HermesMobile/Features/Settings/SettingsView.swift';
+  const source = read(`../${sourcePath}`);
+  const defaultMatch = source.match(/var accessorySystemImage\s*=\s*"([^"]+)"/);
+  assert.ok(defaultMatch, 'expected SettingsAccessoryRow.accessorySystemImage default');
+  const names = new Set([defaultMatch[1]]);
+  for (const call of extractSwiftCalls(source, 'SettingsAccessoryRow')) {
+    const override = call.arguments.match(/\baccessorySystemImage\s*:\s*"([^"]+)"/);
+    if (override) names.add(override[1]);
+  }
+
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+  const entry = trace.entries.find((candidate) => candidate.site === `${sourcePath}:1970`);
+  assert.ok(entry, 'expected SettingsAccessoryRow.accessorySystemImage trace');
+  assert.deepEqual(entry.resolvedNames, [...names].sort((a, b) => a.localeCompare(b)));
+});
+
+test('server update and task pause/resume traces stay synchronized with their value suppliers', () => {
+  const settingsSource = read('../HermesMobile/Features/Settings/SettingsView.swift');
+  const taskSource = read('../HermesMobile/Features/Tasks/TaskAgenda.swift');
+  const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
+
+  const settingsContracts = [
+    ['private var serverUpdateNote: some View {', [
+      'HermesMobile/Features/Settings/SettingsView.swift:1153',
+      'HermesMobile/Features/Settings/SettingsView.swift:1155',
+    ]],
+    ['private var serverUpdateAction: some View {', [
+      'HermesMobile/Features/Settings/SettingsView.swift:1219',
+      'HermesMobile/Features/Settings/SettingsView.swift:1221',
+    ]],
+  ];
+  for (const [signature, sites] of settingsContracts) {
+    const start = settingsSource.indexOf(signature);
+    assert.notEqual(start, -1, `expected ${signature} in SettingsView.swift`);
+    const body = extractBalancedSwiftBlock(settingsSource, settingsSource.indexOf('{', start));
+    const names = [...new Set([...body.matchAll(/systemImage:\s*"([^"]+)"/g)].map((match) => match[1]))]
+      .sort((a, b) => a.localeCompare(b));
+    for (const site of sites) {
+      const entry = trace.entries.find((candidate) => candidate.site === site);
+      assert.ok(entry, `expected computed-site trace entry for ${site}`);
+      assert.deepEqual(entry.resolvedNames, names);
+    }
+  }
+
+  const taskSignature = 'var pauseResumeSystemImage: String {';
+  const taskStart = taskSource.indexOf(taskSignature);
+  assert.notEqual(taskStart, -1, `expected ${taskSignature} in TaskAgenda.swift`);
+  const taskBody = extractBalancedSwiftBlock(taskSource, taskSource.indexOf('{', taskStart));
+  const taskNames = [...new Set([...taskBody.matchAll(/"([^"]+)"/g)].map((match) => match[1]))]
+    .sort((a, b) => a.localeCompare(b));
+  for (const site of [
+    'HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:135',
+    'HermesMobile/Features/Tasks/TaskDetailView.swift:250',
+  ]) {
+    const entry = trace.entries.find((candidate) => candidate.site === site);
+    assert.ok(entry, `expected computed-site trace entry for ${site}`);
+    assert.deepEqual(entry.resolvedNames, taskNames);
+  }
 });
 
 test('Hermex Token Coverage no longer claims no global spacing/radius scale or no shadow/elevation family exists, while still stating the honesty facts that remain true (no owned icon set, no semantic color layer, Dynamic Type owns type sizes)', () => {
@@ -1389,9 +1824,7 @@ test('HERMES_SEMANTIC_COLORS declares exactly the 13 roles, each with purpose/us
     assert.ok(referenceSrc.includes(heading), `expected group heading "${heading}"`);
   }
 
-  // Scoped to the visible primary galleries only — not the whole file, whose Token Coverage table
-  // (rendered only inside the overview's collapsed Implementation notes disclosure) still legitimately
-  // uses this historical terminology.
+  // Scoped to the visible primary galleries only.
   const primaryGalleryFnNames = [
     'HermesColorsGallery', 'HermesColorRampGallery', 'HermesProductPaletteGallery',
     'HermesGeometryGallery', 'HermesSpacingGallery', 'HermesShadowGallery',
@@ -1405,6 +1838,23 @@ test('HERMES_SEMANTIC_COLORS declares exactly the 13 roles, each with purpose/us
     'Proposed — not yet adopted',
   ]) {
     assert.doesNotMatch(gallerySrc, new RegExp(stale.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `expected the primary gallery source to no longer include "${stale}"`);
+  }
+
+  // The removed "Migration-count reconciliation" presentation and its stale planning-worksheet totals
+  // (397 typography and 1,042 spacing call sites among them) must not remain anywhere in the catalog,
+  // including inside the overview's Token Coverage table — that table must no longer present
+  // historical/planning counts as completed production migration or final adopted call-site
+  // populations.
+  for (const stale of [
+    'Migration-count reconciliation',
+    'migratedToAppFont',
+    'migratedViaTY7',
+    'TY-6/TY-9 worksheet',
+    'SR-2/SR-3 worksheet',
+    '\\b397\\b',
+    '1,042',
+  ]) {
+    assert.doesNotMatch(sectionsSrc, new RegExp(stale), `expected no stale migration-count vocabulary/total "${stale}" to remain anywhere in hermesSections.tsx`);
   }
 });
 
@@ -1427,19 +1877,24 @@ test('Hermex Colors renders Color ramps / Semantic roles / Product palettes thro
   assert.match(spacingGallery, /Separate content groups — 24 pt/);
 });
 
-// ─── Task 4: searchable 202-name visual icon inventory ──────────────────────────────────────────
+// ─── Task 4: searchable 228-name visual icon inventory ──────────────────────────────────────────
 
-test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 202-name union, and HermesIconReference renders a searchable grid of simulator-generated glyph previews with a per-tile fallback', () => {
+test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 228-name union, and HermesIconReference renders a searchable grid of simulator-generated glyph previews with a per-tile fallback', () => {
   const iconInventory = JSON.parse(read(HERMES_ICON_INVENTORY_PATH));
   const iconTrace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
   const literalNames = new Set(iconInventory.literals.map((entry) => entry.name));
   const computedNames = new Set(iconTrace.entries.flatMap((entry) => entry.resolvedNames));
   const union = [...new Set([...literalNames, ...computedNames])].sort((a, b) => a.localeCompare(b));
 
-  assert.equal(literalNames.size, 158);
-  assert.equal(computedNames.size, 154);
-  assert.equal(union.length, 202);
-  assert.equal(union.filter((name) => !literalNames.has(name)).length, 44);
+  // Issue #607 correction: the reproducible icon inventory scanner (generate-hermex-icon-inventory.mjs)
+  // revealed that the prior hand/ad-hoc-generated hermesIconInventory.generated.json had drifted
+  // badly out of date against current production source (158 literal names, missing hundreds of real
+  // call sites) — these counts match the current generated inventory plus the reconciled computed-site
+  // trace. Empty string arguments are no-symbol sites rather than literal SF Symbol names.
+  assert.equal(literalNames.size, 176);
+  assert.equal(computedNames.size, 177);
+  assert.equal(union.length, 228);
+  assert.equal(union.filter((name) => !literalNames.has(name)).length, 52);
 
   const referenceSrc = read(HERMES_ICON_REFERENCE_PATH);
   assert.match(referenceSrc, /import\s+hermesIconInventory\s+from\s+'\.\/hermesIconInventory\.generated\.json'/);
@@ -1519,6 +1974,75 @@ test('hermesAttachmentSize.ts no longer owns HERMES_ICON_SIZE_EXTRA_LARGE — th
   assert.doesNotMatch(src, /HERMES_ICON_SIZE_EXTRA_LARGE/, 'the duplicate icon-size export must be removed from hermesAttachmentSize.ts');
 });
 
+// ─── Point-accurate size-scale assets (correction: the five star.fill size specimens must come from
+// a real UIImage(systemName:) render at each point size, not the single 32pt overview PNG resized
+// in CSS) ──────────────────────────────────────────────────────────────────────────────────────
+
+test('generate-icon-previews.mjs\'s hardcoded SIZE_STEP_POINTS mirrors HERMES_ICON_SIZE\'s five steps exactly, in the same order', () => {
+  const generatorSrc = read(ICON_GENERATOR_SCRIPT_PATH);
+  const pointsMatch = generatorSrc.match(/SIZE_STEP_POINTS\s*=\s*\[([^\]]+)\]/);
+  assert.ok(pointsMatch, 'expected a SIZE_STEP_POINTS constant in generate-icon-previews.mjs');
+  const points = pointsMatch[1].split(',').map((n) => Number(n.trim()));
+
+  const sizeSrc = read(HERMES_ICON_SIZE_PATH);
+  const scaleBlockMatch = sizeSrc.match(/export const HERMES_ICON_SIZE = \{([^}]+)\}/);
+  assert.ok(scaleBlockMatch, 'expected HERMES_ICON_SIZE in hermesIconSize.ts');
+  const scaleValues = [...scaleBlockMatch[1].matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
+
+  assert.deepEqual(points, scaleValues, 'expected SIZE_STEP_POINTS to mirror HERMES_ICON_SIZE\'s five values in order');
+  assert.deepEqual(points, [12, 16, 20, 24, 32]);
+});
+
+test('generate-icon-previews.mjs renders and exports the five size-scale specimens as a second, independently-counted attachment group, alongside (not instead of) the 228-name overview union', () => {
+  const generatorSrc = read(ICON_GENERATOR_SCRIPT_PATH);
+  assert.match(generatorSrc, /EXPECTED_COUNT\s*=\s*228/);
+  assert.match(generatorSrc, /SIZE_SCALE_SYMBOL_NAME\s*=\s*'star\.fill'/);
+  assert.match(generatorSrc, /icon_size_/, 'expected a distinct attachment-name prefix for size-scale specimens');
+  assert.match(generatorSrc, /sizeAttachments\.length\s*!==\s*SIZE_STEP_POINTS\.length/, 'expected the size-scale attachment count to be validated independently of the overview count');
+  assert.match(generatorSrc, /overviewAttachments\.length\s*!==\s*EXPECTED_COUNT/, 'expected the overview attachment count to still be validated independently');
+  assert.match(generatorSrc, /SIZE_OUTPUT_DIR/);
+  assert.match(generatorSrc, /sizes\/manifest\.json|SIZE_OUTPUT_MANIFEST_PATH/);
+  assert.match(generatorSrc, /iconSizeStepSymbolName/, 'expected GeneratedNames.swift to also carry the size-scale symbol name');
+  assert.match(generatorSrc, /iconSizeStepPoints/, 'expected GeneratedNames.swift to also carry the size-scale point list');
+});
+
+test('IconRenderTests.swift renders each size-scale specimen at its own exact point size with no padding box, distinct from the fixed 64x64 overview render', () => {
+  const src = read(ICON_RENDERER_TEST_PATH);
+  const headerMatch = src.match(/func testRenderSizeScaleSpecimens\(\)[^{]*\{/);
+  assert.ok(headerMatch, 'expected func testRenderSizeScaleSpecimens() throws { ... } in IconRenderTests.swift');
+  const start = headerMatch.index + headerMatch[0].length - 1;
+  let depth = 0;
+  let end = -1;
+  for (let i = start; i < src.length; i++) {
+    if (src[i] === '{') depth += 1;
+    else if (src[i] === '}') { depth -= 1; if (depth === 0) { end = i; break; } }
+  }
+  assert.ok(end !== -1, 'unterminated testRenderSizeScaleSpecimens body');
+  const body = src.slice(start + 1, end);
+  assert.match(body, /iconSizeStepPoints/);
+  assert.match(body, /iconSizeStepSymbolName/);
+  assert.match(body, /UIImage\(systemName:\s*iconSizeStepSymbolName/);
+  assert.match(body, /UIImage\.SymbolConfiguration\(pointSize:\s*CGFloat\(pointSize\)/, 'expected each specimen rendered at its own point size, not a fixed 32pt configuration');
+  assert.match(body, /UIGraphicsImageRenderer\(size:\s*size,/, 'expected the renderer\'s own output size to be the symbol\'s real size, not a padded fixed box');
+  assert.doesNotMatch(body, /CGSize\(width:\s*64,\s*height:\s*64\)/, 'the size-scale render must not reuse the padded 64x64 overview box');
+  assert.match(body, /"icon_size_\\\(pointSize\)"/, 'expected a distinct icon_size_ attachment name per point size');
+  assert.match(body, /missing\.isEmpty/, 'expected the size-scale render to fail closed on any unresolved symbol, matching the overview render');
+});
+
+test('HermesIconReference.tsx\'s size-scale and Avatar-pairing galleries request the dedicated per-point-size asset, not the single 32pt overview asset resized in CSS', () => {
+  const src = read(HERMES_ICON_REFERENCE_PATH);
+  assert.match(src, /function sizeAssetUri/);
+  assert.match(src, /generated-icons\/sizes/);
+
+  const sizeGallery = extractFunctionBody(src, 'IconSizeScaleGallery');
+  assert.match(sizeGallery, /sizeAssetUri\(size\)/);
+  assert.doesNotMatch(sizeGallery, /iconAssetUri\(SCALE_DEMO_ICON\)/, 'the size-scale gallery must no longer resize the single overview asset');
+
+  const avatarGallery = extractFunctionBody(src, 'IconAvatarPairingGallery');
+  assert.match(avatarGallery, /sizeAssetUri\(pairing\.icon\)/);
+  assert.doesNotMatch(avatarGallery, /iconAssetUri\(SCALE_DEMO_ICON\)/, 'the Avatar-pairing gallery must no longer resize the single overview asset');
+});
+
 test('HermesComponentFamiliesPreviews.tsx and hermesSections.tsx read HERMES_ICON_SIZE.extraLarge from the canonical ./hermesIconSize module, not a duplicate export', () => {
   for (const sourcePath of [COMPONENT_FAMILIES_PREVIEWS_PATH, HERMES_SECTIONS_PATH]) {
     const src = read(sourcePath);
@@ -1547,7 +2071,7 @@ test('HermesIconReference renders a five-step default icon-size scale using a re
   }
   const scaleGalleryBody = extractFunctionBody(referenceSrc, 'IconSizeScaleGallery');
   assert.match(scaleGalleryBody, /\.map\(/, 'expected the size-scale gallery to render every step from its data source, not hand-duplicated tiles');
-  assert.match(scaleGalleryBody, /iconAssetUri\(/, 'expected the size-scale gallery to reuse the real generated SF Symbol asset helper, not a substitute glyph');
+  assert.match(scaleGalleryBody, /sizeAssetUri\(/, 'expected the size-scale gallery to reuse the real, point-accurate generated SF Symbol asset helper, not a substitute glyph');
 
   const referenceBody = extractFunctionBody(referenceSrc, 'HermesIconReference');
   const scaleIdx = referenceBody.indexOf('<IconSizeScaleGallery');
@@ -1616,7 +2140,7 @@ test('generate-icon-previews.mjs orchestrates a real iOS-runtime render on a por
   assert.match(src, /xcresulttool/);
   assert.match(src, /export/);
   assert.match(src, /attachments/);
-  assert.match(src, /202/, 'expected the generator to assert the authoritative 202-name count');
+  assert.match(src, /228/, 'expected the generator to assert the authoritative 228-name count');
   assert.match(src, /public[\\/]generated-icons/);
 
   // Fail-closed: a short symbol count, or any renderer failure, must stop the script rather than
@@ -1646,8 +2170,8 @@ test('Correction (2026-09-28): generate-icon-previews.mjs distinguishes optional
   );
 
   const mainBody = extractFunctionBody(src, 'main');
-  assert.match(mainBody, /names, found/, 'expected the 202-name union count check to remain unconditional inside main()');
-  assert.match(mainBody, /rendered PNG attachments, found/, 'expected the exact-202-attachments check to remain unconditional inside main()');
+  assert.match(mainBody, /names, found/, 'expected the 228-name union count check to remain unconditional inside main()');
+  assert.match(mainBody, /rendered PNG attachments, found/, 'expected the exact-228-attachments check to remain unconditional inside main()');
   assert.doesNotMatch(
     mainBody,
     /runSimulatorRender\([^)]*\)[\s\S]{0,40}catch[\s\S]{0,120}if\s*\(optional/,
@@ -1682,7 +2206,7 @@ test('Correction: npm run web is browser-only and consumes a complete checked-in
     ...inventory.literals.map((entry) => entry.name),
     ...trace.entries.flatMap((entry) => entry.resolvedNames),
   ])].sort((a, b) => a.localeCompare(b));
-  assert.equal(names.length, 202);
+  assert.equal(names.length, 228);
 
   const manifest = JSON.parse(read(`${GENERATED_ICON_DIRECTORY_PATH}/manifest.json`));
   assert.deepEqual(manifest, { schemaVersion: 1, count: names.length, names });
@@ -1690,12 +2214,32 @@ test('Correction: npm run web is browser-only and consumes a complete checked-in
     assert.ok(existsSync(path.join(ROOT, GENERATED_ICON_DIRECTORY_PATH, `${name}.png`)), `missing checked-in browser icon ${name}.png`);
   }
 
+  // The five point-accurate star.fill size-scale specimens live alongside the overview set, in
+  // their own subdirectory with their own small manifest (see generate-icon-previews.mjs).
+  const sizeStepPoints = [12, 16, 20, 24, 32];
+  const sizeManifest = JSON.parse(read(`${GENERATED_ICON_DIRECTORY_PATH}/sizes/manifest.json`));
+  assert.deepEqual(sizeManifest, {
+    schemaVersion: 1,
+    icon: 'star.fill',
+    sizes: sizeStepPoints.map((pointSize) => ({ pointSize, file: `star.fill-${pointSize}pt.png` })),
+  });
+  for (const pointSize of sizeStepPoints) {
+    assert.ok(
+      existsSync(path.join(ROOT, GENERATED_ICON_DIRECTORY_PATH, 'sizes', `star.fill-${pointSize}pt.png`)),
+      `missing checked-in size-scale specimen star.fill-${pointSize}pt.png`,
+    );
+  }
+
   const publishableAssets = execFileSync(
     'git', ['ls-files', '--cached', '--others', '--exclude-standard', GENERATED_ICON_DIRECTORY_PATH],
     { cwd: ROOT, encoding: 'utf8' },
   )
     .trim().split('\n').filter(Boolean);
-  assert.equal(publishableAssets.length, names.length + 1, 'expected all 202 PNGs plus manifest.json to be publishable by Git');
+  assert.equal(
+    publishableAssets.length,
+    names.length + 1 + sizeStepPoints.length + 1,
+    'expected all 228 overview PNGs + their manifest.json, plus all 5 size-scale PNGs + their own sizes/manifest.json, to be publishable by Git',
+  );
 });
 
 // Correction: explicit simulator-backed regeneration must name its destination explicitly rather than
@@ -3306,14 +3850,14 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
 // Native `.searchable` forwarding and `SearchFieldPlacement` are retired for the visible experience —
 // the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, and
 // platform accessibility. Production screens stay on their existing eight direct `.searchable` call
-// sites — migrating a *screen* onto it is a separate issue. But `HermexSelectionSheet.swift`
-// (HermesMobile/Features/Shared/HermexSelectionSheet.swift) already composes `HermexSearchField`
-// directly for its optional search slot, a real, current production call site — so Search cannot
-// truthfully claim zero production adoption the way a genuinely uncalled foundation component can;
-// it is partially adopted, the same documented pattern already used for Hermes Avatar/Hermex
-// Colors/Hermex Iconography/Transcript Activity. The preview becomes an interactive Hermex Search
-// family demonstration with custom Hermex field chrome (not a bare native reconstruction).
-test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful partially-adopted status naming its real HermexSelectionSheet caller, and an interactive family preview with custom chrome', () => {
+// sites — migrating a *screen* onto it is a separate issue. `HermexSelectionSheet.swift`
+// (HermesMobile/Features/Shared/HermexSelectionSheet.swift) composes `HermexSearchField` directly for
+// its own optional search slot, but HermexSelectionSheet.swift itself has no normal-runtime production
+// caller — its only caller is the DEBUG-only HermexOverlayLab — so that internal composition is not a
+// production call site for Search. Search is genuinely foundation-available with zero normal-runtime
+// production-screen adoption; the preview becomes an interactive Hermex Search family demonstration
+// with custom Hermex field chrome (not a bare native reconstruction).
+test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful foundation-available status naming the non-production HermexSelectionSheet composition, and an interactive family preview with custom chrome', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
 
@@ -3323,21 +3867,22 @@ test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation
   assert.doesNotMatch(search, /`\.searchable`\s*forwarding|forwards straight to native `\.searchable`/i, 'native .searchable forwarding is retired');
   assert.doesNotMatch(search, /SearchFieldPlacement/, 'SearchFieldPlacement is retired; Hermex cannot truthfully reproduce native navigation-drawer placement');
 
-  // Correction: HermexSelectionSheet.swift is a real, current production call site for
-  // HermexSearchField (it renders it directly for its optional search slot) — Search is not a
-  // genuinely uncalled foundation component, and must not contradict that fact elsewhere in the
-  // catalog (see the dedicated contradiction test below).
+  // Correction: HermexSelectionSheet.swift composes HermexSearchField directly for its own optional
+  // search slot, but HermexSelectionSheet.swift itself has no normal-runtime production caller (only
+  // the DEBUG-only HermexOverlayLab calls it) — so Search must not be called a production call site
+  // through that internal composition, and must not contradict that fact elsewhere in the catalog.
   const state = extractAdoptionState(search);
   assert.equal(
-    state, 'partially-adopted',
-    'expected Search to report partially-adopted — HermexSelectionSheet.swift already composes ' +
-      'HermexSearchField directly, so "foundation-available" (zero production adoption) is false'
+    state, 'foundation-available',
+    'expected Search to report foundation-available — HermexSelectionSheet.swift composes ' +
+      'HermexSearchField, but HermexSelectionSheet.swift itself has no normal-runtime production call site'
   );
-  assert.match(search, /HermexSelectionSheet(\.swift)?/, 'expected the adoptionStatus/notes to name HermexSelectionSheet as a real current caller of HermexSearchField');
-  assert.doesNotMatch(search, /no production call site yet|zero production adoption/i, 'Search must not claim zero production adoption — HermexSelectionSheet.swift already calls HermexSearchField directly');
+  assert.match(search, /HermexSelectionSheet(\.swift)?/, 'expected the adoptionStatus/notes to name HermexSelectionSheet as the internal, non-production caller of HermexSearchField');
+  assert.doesNotMatch(search, /a real,? current production call site|real current caller of HermexSearchField/i, 'HermexSelectionSheet.swift must not be called a production call site — it has no normal-runtime caller itself');
   assert.match(search, /eight existing|eight current/i, 'expected the adoptionStatus detail to still name the eight unchanged production .searchable *screen* callers');
   assert.match(search, /deferred to a separate issue|scoped to a separate issue|separate issue|separate slice/i, 'expected the adoptionStatus/notes to state migrating a screen is deferred to another slice/issue');
   assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'production-adopted'/, 'Search must not claim full production adoption — no screen has migrated off .searchable');
+  assert.doesNotMatch(search, /adoptionStatus:\s*\{\s*state:\s*'partially-adopted'/, 'Search must not claim partial production adoption — HermexSelectionSheet.swift has no normal-runtime production caller');
 
   assert.match(search, /HermesMobile\/Features\/Shared\/HermexSearch\.swift/, 'expected implementationNotes.sourcePaths to cite HermexSearch.swift');
 
@@ -7298,6 +7843,162 @@ test('Issue #607 Slice B: README.md and WHEN_TO_USE.md document the generated ma
     assert.match(doc, /design-system-guide/, 'expected the doc to name the lookup/receipt CLI');
   }
   assert.match(whenToUse, /receipt/, 'expected WHEN_TO_USE.md to document the receipt subcommand');
+});
+
+// ─── Reproducible icon inventory scanner (correction: the prior hermesIconInventory.generated.json
+// had drifted badly out of date against the current Swift source — several of its literal call
+// sites no longer matched the line they claimed, and hundreds of real systemName:/systemImage: call
+// sites across the production source were simply missing). generate-hermex-icon-inventory.mjs
+// replaces whatever produced that stale snapshot with a deterministic, re-runnable scanner this repo
+// actually owns and can regenerate/verify on demand. ────────────────────────────────────────────
+
+const GENERATE_ICON_INVENTORY_SCRIPT_PATH = 'scripts/generate-hermex-icon-inventory.mjs';
+
+test('Issue #607 correction: hermesIconInventory.generated.json exists, is fresh (matches `generate-hermex-icon-inventory.mjs --check`), and is byte-stable across repeated checks', () => {
+  assert.ok(existsSync(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH)), 'expected the icon inventory scanner script to exist');
+  assert.ok(existsSync(path.join(ROOT, HERMES_ICON_INVENTORY_PATH)), 'expected the checked-in hermesIconInventory.generated.json to exist');
+
+  const before = read(HERMES_ICON_INVENTORY_PATH);
+  const run = () => execFileSync(process.execPath, [GENERATE_ICON_INVENTORY_SCRIPT_PATH, '--check'], { cwd: ROOT, encoding: 'utf8' });
+  assert.doesNotThrow(() => run(), 'expected `--check` to pass against a fresh scan of the current production Swift source');
+  assert.doesNotThrow(() => run(), 'expected a second `--check` run to also pass, proving `--check` never mutates the file');
+  const after = read(HERMES_ICON_INVENTORY_PATH);
+  assert.equal(after, before, 'expected hermesIconInventory.generated.json bytes to stay unchanged across repeated --check runs');
+});
+
+test('Issue #607 correction: the icon inventory scanner only treats production Swift source roots as authoritative, never HermesMobileTests or the catalog\'s own reconstruction', () => {
+  const generatorSrc = read(GENERATE_ICON_INVENTORY_SCRIPT_PATH);
+  assert.match(generatorSrc, /SOURCE_ROOTS\s*=\s*\[[^\]]*'HermesMobile'[^\]]*\]/s);
+  assert.doesNotMatch(generatorSrc, /SOURCE_ROOTS\s*=\s*\[[^\]]*HermesMobileTests[^\]]*\]/s, 'HermesMobileTests is a test target, never a production call site');
+});
+
+test('Issue #607 correction: scanRepository() counts match a plain occurrence scan of systemName:/systemImage: across the production Swift source exactly (every real occurrence is classified as exactly one literal or computed site)', async () => {
+  const { scanRepository, SOURCE_ROOTS } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const inventory = scanRepository();
+  const totalLiteralSites = inventory.literals.reduce((sum, entry) => sum + entry.count, 0);
+  const totalFromScan = totalLiteralSites + inventory.computedSites.length;
+
+  let totalRawOccurrences = 0;
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); continue; }
+      if (!entry.name.endsWith('.swift')) continue;
+      const contents = readFileSync(full, 'utf8');
+      const matches = contents.match(/\bsystem(?:Name|Image)\s*:/g);
+      if (matches) totalRawOccurrences += matches.length;
+    }
+  };
+  for (const root of SOURCE_ROOTS) {
+    const absRoot = path.join(ROOT, '..', root);
+    if (existsSync(absRoot)) walk(absRoot);
+  }
+
+  assert.equal(totalFromScan, totalRawOccurrences, 'expected every systemName:/systemImage: occurrence in the scanned roots to be classified as exactly one literal or computed site');
+  assert.ok(inventory.literals.every((entry) => entry.count === entry.sites.length), 'expected each literal entry\'s count to match its own site-list length');
+});
+
+test('Issue #607 correction: the scanner is syntax-aware enough to ignore systemName:/systemImage: text inside line comments, block comments, and string literals, while still matching the real call sites around them', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = [
+    '// Image(systemName: "comment-fake") must never be scanned as real',
+    '/* also systemImage: "block-comment-fake" must never be scanned */',
+    'let doc = "call Image(systemName: \\"string-fake\\") in prose"',
+    'let real = Image(systemName: "real.icon.marker")',
+  ].join('\n');
+  const { literalSites, computedSites } = scanSwiftSource(source, 'Fake.swift');
+
+  assert.ok(!literalSites.has('comment-fake'), 'a line-comment occurrence must not be scanned');
+  assert.ok(!literalSites.has('block-comment-fake'), 'a block-comment occurrence must not be scanned');
+  assert.ok(!literalSites.has('string-fake'), 'an occurrence inside an unrelated string literal must not be scanned');
+  assert.ok(literalSites.has('real.icon.marker'), 'expected the one real call site among the noise to still be found');
+  assert.deepEqual(literalSites.get('real.icon.marker'), ['Fake.swift:4']);
+  assert.equal(computedSites.length, 0);
+});
+
+test('Issue #607 correction: the scanner classifies a literal systemName:/systemImage: string as a literal site with its real line number and callHead, and a non-literal argument as a computed site with its expression and callHead', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = [
+    'struct Example {',
+    '    var body: some View {',
+    '        Image(systemName: "checkmark.circle.fill")',
+    '        Image(systemName: isOn ? "a" : "b")',
+    '    }',
+    '}',
+  ].join('\n');
+  const { literalSites, computedSites } = scanSwiftSource(source, 'Example.swift');
+
+  assert.deepEqual(literalSites.get('checkmark.circle.fill'), ['Example.swift:3']);
+  assert.equal(computedSites.length, 1);
+  assert.equal(computedSites[0].site, 'Example.swift:4');
+  assert.equal(computedSites[0].expression, 'isOn ? "a" : "b"');
+  assert.equal(computedSites[0].callHead, 'Image');
+  assert.equal(computedSites[0].keyword, 'systemName');
+});
+
+test('Issue #607 correction: an empty systemName/systemImage string is classified as a no-symbol computed site, never as an SF Symbol name', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = 'Button("Dismiss", systemImage: "", action: dismiss)';
+  const { literalSites, computedSites } = scanSwiftSource(source, 'EmptyIcon.swift');
+
+  assert.equal(literalSites.size, 0, 'an empty string is not an SF Symbol name');
+  assert.deepEqual(computedSites, [{
+    site: 'EmptyIcon.swift:1',
+    expression: '""',
+    keyword: 'systemImage',
+    callHead: 'Button',
+  }]);
+});
+
+test('Issue #607 correction: the scanner stops a bare type-annotation expression at the property declaration boundary (newline or default-value `=`) instead of swallowing the next, unrelated declaration', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = [
+    'struct Example {',
+    '    var systemImage: String',
+    '    var isEnabled: Bool',
+    '    var systemName: String = "exclamationmark.triangle"',
+    '    var secondaryAction: Int',
+    '}',
+  ].join('\n');
+  const { literalSites, computedSites } = scanSwiftSource(source, 'Example2.swift');
+
+  assert.equal(literalSites.size, 0, 'the default-value literal here is behind a type annotation, not a bare literal argument, so it stays a computed site');
+  assert.equal(computedSites.length, 2);
+  assert.equal(computedSites[0].expression, 'String');
+  assert.equal(computedSites[0].callHead, null);
+  assert.equal(computedSites[1].expression, 'String');
+  assert.equal(computedSites[1].callHead, null);
+});
+
+test('Issue #607 correction: the scanner resolves callHead to null for a bare property declaration with no enclosing call, and to the enclosing function name for a parameter inside a declaration\'s parameter list', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = [
+    'struct Example {',
+    '    var systemImage: String',
+    '    func approvalButton(systemImage: String, title: String) -> some View { EmptyView() }',
+    '}',
+  ].join('\n');
+  const { computedSites } = scanSwiftSource(source, 'Example3.swift');
+
+  assert.equal(computedSites.length, 2);
+  assert.equal(computedSites[0].callHead, null, 'a bare stored-property declaration has no enclosing call');
+  assert.equal(computedSites[1].callHead, 'approvalButton', 'a parameter inside a function\'s own parameter list resolves to that function\'s name');
+});
+
+test('Issue #607 correction: the scanner demotes an interpolated string literal to a computed site rather than recording the raw, non-static interpolation text as a literal icon name', async () => {
+  const { scanSwiftSource } = await import(path.join(ROOT, GENERATE_ICON_INVENTORY_SCRIPT_PATH));
+  const source = 'Image(systemName: "icon.\\(variant)")';
+  const { literalSites, computedSites } = scanSwiftSource(source, 'Example4.swift');
+
+  assert.equal(literalSites.size, 0, 'an interpolated string is not a static literal icon name');
+  assert.equal(computedSites.length, 1);
+  assert.equal(computedSites[0].callHead, 'Image');
+});
+
+test('Issue #607 correction: native-preview/package.json documents an explicit generate:icon-inventory script wired to the real scanner', () => {
+  const packageJson = JSON.parse(read(NATIVE_PREVIEW_PACKAGE_JSON_PATH));
+  assert.ok(packageJson.scripts['generate:icon-inventory'], 'expected a documented explicit "generate:icon-inventory" script');
+  assert.match(packageJson.scripts['generate:icon-inventory'], /generate-hermex-icon-inventory\.mjs/);
 });
 
 test('Issue #607 Slice B: hermex-manifest.json exists, is fresh (matches `generate-hermex-manifest.mjs --check`), and is byte-stable across repeated checks', () => {

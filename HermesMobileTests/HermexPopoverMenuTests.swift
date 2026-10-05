@@ -704,26 +704,6 @@ import UIKit
         }
         return nil
     }
-
-    // MARK: - Adoption boundary
-
-    func testNoProductionScreenAdoptsHermexPopoverMenuYet() throws {
-        let root = resourceURL("HermesMobile")
-        let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
-        var adoptionSites: [String] = []
-        while let url = enumerator?.nextObject() as? URL {
-            guard url.pathExtension == "swift" else { continue }
-            guard !url.path.contains("/Features/Shared/") else { continue }
-            guard let contents = try? String(contentsOf: url, encoding: .utf8) else { continue }
-            if contents.contains("hermexPopoverMenu(") {
-                adoptionSites.append(url.lastPathComponent)
-            }
-        }
-        XCTAssertTrue(
-            adoptionSites.isEmpty,
-            "expected zero production adoption of hermexPopoverMenu( outside HermesMobile/Features/Shared (foundation + DEBUG Overlay Lab), found: \(adoptionSites)"
-        )
-    }
 }
 
 @MainActor @Observable

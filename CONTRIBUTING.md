@@ -119,8 +119,17 @@ For frontend contributions:
   `SecureField`) anywhere in production, and does not require or prove that
   any production screen has migrated onto a Design System component —
   migrating one is separate, issue-driven work, not something this script
-  gates. An automatic check only enforces the specific contracts encoded
-  above, nothing broader.
+  gates in general. The one exception is a second, narrower contract: a
+  fail-closed production-disconnection boundary scoped to exactly three named
+  files — `AppTheme.swift`, `TranscriptLogRowView.swift`, and
+  `CustomAttachmentPicker.swift` (see `PRODUCTION_BOUNDARY_PATTERNS` in the
+  script) — that briefly took on direct foundation dependencies during Issue
+  #607 and were deliberately reverted. That check only stops those specific,
+  already-reverted dependencies from drifting back in silently; it does not
+  forbid those three files from adopting the foundation for real. A future
+  intentional adoption in one of them updates `PRODUCTION_BOUNDARY_PATTERNS`
+  explicitly in that same change, rather than being gated away. An automatic
+  check only enforces the specific contracts encoded above, nothing broader.
 
 Hermex has one maintainer and limited review time. Opening a PR does not
 create an obligation to review or merge it.

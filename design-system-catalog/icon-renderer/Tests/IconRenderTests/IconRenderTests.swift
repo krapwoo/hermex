@@ -36,4 +36,38 @@ final class IconRenderTests: XCTestCase {
 
         XCTAssertTrue(missing.isEmpty, "UIImage(systemName:) returned nil for: \(missing.joined(separator: ", "))")
     }
+
+    // Renders the catalog's five default icon-size steps (HermesIconSize: xs/small/medium/large/
+    // extraLarge — 12/16/20/24/32pt) for the shared size-scale demo glyph `star.fill` directly at
+    // each point size, through the same `UIImage(systemName:)` API — a real, point-accurate asset
+    // per step, rather than one 32pt render resized in CSS. Each PNG is sized to the symbol's own
+    // rendered bounds at that point size (no padding box), so the browser catalog shows the glyph at
+    // its true relative scale across steps. `iconSizeStepPoints` (GeneratedNames.swift) is the same
+    // [12, 16, 20, 24, 32] source generate-icon-previews.mjs derives from hermesIconSize.ts.
+    func testRenderSizeScaleSpecimens() throws {
+        XCTAssertFalse(iconSizeStepPoints.isEmpty, "expected a non-empty size-step list from GeneratedNames.swift")
+
+        var missing: [Int] = []
+        for pointSize in iconSizeStepPoints {
+            let configuration = UIImage.SymbolConfiguration(pointSize: CGFloat(pointSize), weight: .regular)
+            guard let symbol = UIImage(systemName: iconSizeStepSymbolName, withConfiguration: configuration)?
+                .withTintColor(.black, renderingMode: .alwaysOriginal) else {
+                missing.append(pointSize)
+                continue
+            }
+            let size = symbol.size
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 2
+            let renderer = UIGraphicsImageRenderer(size: size, format: format)
+            let png = renderer.pngData { _ in
+                symbol.draw(at: .zero)
+            }
+            let attachment = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")
+            attachment.name = "icon_size_\(pointSize)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        XCTAssertTrue(missing.isEmpty, "UIImage(systemName:) returned nil for \(iconSizeStepSymbolName) at point size(s): \(missing.map(String.init).joined(separator: ", "))")
+    }
 }

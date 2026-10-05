@@ -6,8 +6,9 @@ import SwiftUI
 /// legacy `Banner`/`Banner.swift`. Title and description are independently caller-optional — the
 /// supported content combinations are title+description, title-only, and description-only — with no
 /// interactive collapse/disclosure state; "hide" means the caller simply omits that region. At least
-/// one of the two must be present, guarded by a debug/runtime invariant. This suite also pins zero
-/// production adoption in this branch and the DEBUG overlay lab's deterministic Banner fixtures.
+/// one of the two must be present, guarded by a debug/runtime invariant. This suite also records the
+/// current production boundary and the DEBUG overlay lab's deterministic Banner fixtures without
+/// prohibiting a later intentional production adoption.
 ///
 /// Non-directly-observable behavior (the conditional title/description rendering, the guard against
 /// both being absent, the accessibility-containment branch) stays a source contract read against the
@@ -385,11 +386,10 @@ final class HermexBannerTests: XCTestCase {
         )
     }
 
-    // MARK: - Production boundary: Banner remains foundation/catalog-only
+    // MARK: - Current composer-status behavior
 
-    func testMainChatComposerHasNoHermexBannerCallSite() throws {
+    func testMainChatComposerUsesComposerStatusViewWithErrorStyling() throws {
         let src = try source(Self.chatComposerViewPath)
-        XCTAssertFalse(src.contains("HermexBanner("), "expected zero new production Banner adoption in ChatComposerView")
         XCTAssertTrue(src.contains("ComposerStatusView("), "expected the existing composer status surface to remain production-owned")
         XCTAssertTrue(src.contains("isError: composerStatus.isError"), "expected error styling to remain on the existing status surface")
     }

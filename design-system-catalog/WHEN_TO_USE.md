@@ -107,10 +107,12 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   workspace file, bot mention, or quote rendered inline with editable/transcript text. There is no
   standalone chip component to adopt — every reference renders through one uniform chip image today.
 - **Search vs a generic Text Input** — `HermexSearchField` is the Hermex-owned Search foundation and
-  is `partially-adopted`: `HermexSelectionSheet.swift` already renders it directly, while production's
-  eight existing screen-level `.searchable` call sites remain unchanged. Use `.hermexSearch` for a
-  future pinned list-search migration, but keep each screen migration in a separate issue; the shared
-  field preserves native text-editing semantics through its system-backed `TextField`.
+  is `foundation-available`: `HermexSelectionSheet.swift` composes it directly, but that sheet has no
+  normal-runtime production caller of its own — its only caller is the DEBUG-only `HermexOverlayLab`
+  — so no shipped screen renders `HermexSearchField` today. Production's eight existing screen-level
+  `.searchable` call sites remain unchanged. Use `.hermexSearch` for a future pinned list-search
+  migration, but keep each screen migration in a separate issue; the shared field preserves native
+  text-editing semantics through its system-backed `TextField`.
 
 ## Checking a decision mechanically
 

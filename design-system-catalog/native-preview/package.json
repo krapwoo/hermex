@@ -21,6 +21,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "generate:icons": "node ../scripts/generate-icon-previews.mjs",
+    "generate:icon-inventory": "node ../scripts/generate-hermex-icon-inventory.mjs",
     "web": "expo start --web --port 8096"
   },
   "private": true
