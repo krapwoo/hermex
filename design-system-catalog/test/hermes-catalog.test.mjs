@@ -1311,7 +1311,7 @@ test('message attachment file icon trace stays synchronized with GridAttachmentC
   assert.notEqual(start, -1, `expected ${signature} in MessageBubbleView.swift`);
   const names = returnedSwiftStringLiterals(extractBalancedSwiftBlock(source, source.indexOf('{', start)));
   const trace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
-  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Features/Chat/MessageBubbleView.swift:738');
+  const entry = trace.entries.find((candidate) => candidate.site === 'HermesMobile/Features/Chat/MessageBubbleView.swift:740');
   assert.ok(entry, 'expected the fileIconName computed-site trace');
   assert.deepEqual(entry.resolvedNames, names);
 });
@@ -1385,8 +1385,8 @@ test('server update and task pause/resume traces stay synchronized with their va
   const taskNames = [...new Set([...taskBody.matchAll(/"([^"]+)"/g)].map((match) => match[1]))]
     .sort((a, b) => a.localeCompare(b));
   for (const site of [
-    'HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:135',
-    'HermesMobile/Features/Tasks/TaskDetailView.swift:250',
+    'HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:142',
+    'HermesMobile/Features/Tasks/TaskDetailView.swift:273',
   ]) {
     const entry = trace.entries.find((candidate) => candidate.site === site);
     assert.ok(entry, `expected computed-site trace entry for ${site}`);
@@ -1923,9 +1923,9 @@ test('Hermex Colors renders Color ramps / Semantic roles / Product palettes thro
   assert.match(spacingGallery, /Separate content groups — 24 pt/);
 });
 
-// ─── Task 4: searchable 228-name visual icon inventory ──────────────────────────────────────────
+// ─── Task 4: searchable 230-name visual icon inventory ──────────────────────────────────────────
 
-test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 228-name union, and HermesIconReference renders a searchable grid of simulator-generated glyph previews with a per-tile fallback', () => {
+test('buildHermesIconNames deduplicates the generated literal/computed inventories into the authoritative 230-name union, and HermesIconReference renders a searchable grid of simulator-generated glyph previews with a per-tile fallback', () => {
   const iconInventory = JSON.parse(read(HERMES_ICON_INVENTORY_PATH));
   const iconTrace = JSON.parse(read(HERMES_ICON_TRACE_PATH));
   const literalNames = new Set(iconInventory.literals.map((entry) => entry.name));
@@ -1937,10 +1937,10 @@ test('buildHermesIconNames deduplicates the generated literal/computed inventori
   // badly out of date against current production source (158 literal names, missing hundreds of real
   // call sites) — these counts match the current generated inventory plus the reconciled computed-site
   // trace. Empty string arguments are no-symbol sites rather than literal SF Symbol names.
-  assert.equal(literalNames.size, 176);
+  assert.equal(literalNames.size, 177);
   assert.equal(computedNames.size, 177);
-  assert.equal(union.length, 228);
-  assert.equal(union.filter((name) => !literalNames.has(name)).length, 52);
+  assert.equal(union.length, 230);
+  assert.equal(union.filter((name) => !literalNames.has(name)).length, 53);
 
   const referenceSrc = read(HERMES_ICON_REFERENCE_PATH);
   assert.match(referenceSrc, /import\s+hermesIconInventory\s+from\s+'\.\/hermesIconInventory\.generated\.json'/);
@@ -2039,9 +2039,9 @@ test('generate-icon-previews.mjs\'s hardcoded SIZE_STEP_POINTS mirrors HERMES_IC
   assert.deepEqual(points, [12, 16, 20, 24, 32]);
 });
 
-test('generate-icon-previews.mjs renders and exports the five size-scale specimens as a second, independently-counted attachment group, alongside (not instead of) the 228-name overview union', () => {
+test('generate-icon-previews.mjs renders and exports the five size-scale specimens as a second, independently-counted attachment group, alongside (not instead of) the 230-name overview union', () => {
   const generatorSrc = read(ICON_GENERATOR_SCRIPT_PATH);
-  assert.match(generatorSrc, /EXPECTED_COUNT\s*=\s*228/);
+  assert.match(generatorSrc, /EXPECTED_COUNT\s*=\s*230/);
   assert.match(generatorSrc, /SIZE_SCALE_SYMBOL_NAME\s*=\s*'star\.fill'/);
   assert.match(generatorSrc, /icon_size_/, 'expected a distinct attachment-name prefix for size-scale specimens');
   assert.match(generatorSrc, /sizeAttachments\.length\s*!==\s*SIZE_STEP_POINTS\.length/, 'expected the size-scale attachment count to be validated independently of the overview count');
@@ -2186,7 +2186,7 @@ test('generate-icon-previews.mjs orchestrates a real iOS-runtime render on a por
   assert.match(src, /xcresulttool/);
   assert.match(src, /export/);
   assert.match(src, /attachments/);
-  assert.match(src, /228/, 'expected the generator to assert the authoritative 228-name count');
+  assert.match(src, /230/, 'expected the generator to assert the authoritative 230-name count');
   assert.match(src, /public[\\/]generated-icons/);
 
   // Fail-closed: a short symbol count, or any renderer failure, must stop the script rather than
@@ -2216,8 +2216,8 @@ test('Correction (2026-09-28): generate-icon-previews.mjs distinguishes optional
   );
 
   const mainBody = extractFunctionBody(src, 'main');
-  assert.match(mainBody, /names, found/, 'expected the 228-name union count check to remain unconditional inside main()');
-  assert.match(mainBody, /rendered PNG attachments, found/, 'expected the exact-228-attachments check to remain unconditional inside main()');
+  assert.match(mainBody, /names, found/, 'expected the 230-name union count check to remain unconditional inside main()');
+  assert.match(mainBody, /rendered PNG attachments, found/, 'expected the exact-230-attachments check to remain unconditional inside main()');
   assert.doesNotMatch(
     mainBody,
     /runSimulatorRender\([^)]*\)[\s\S]{0,40}catch[\s\S]{0,120}if\s*\(optional/,
@@ -2252,7 +2252,7 @@ test('Correction: npm run web is browser-only and consumes a complete checked-in
     ...inventory.literals.map((entry) => entry.name),
     ...trace.entries.flatMap((entry) => entry.resolvedNames),
   ])].sort((a, b) => a.localeCompare(b));
-  assert.equal(names.length, 228);
+  assert.equal(names.length, 230);
 
   const manifest = JSON.parse(read(`${GENERATED_ICON_DIRECTORY_PATH}/manifest.json`));
   assert.deepEqual(manifest, { schemaVersion: 1, count: names.length, names });
@@ -2284,7 +2284,7 @@ test('Correction: npm run web is browser-only and consumes a complete checked-in
   assert.equal(
     publishableAssets.length,
     names.length + 1 + sizeStepPoints.length + 1,
-    'expected all 228 overview PNGs + their manifest.json, plus all 5 size-scale PNGs + their own sizes/manifest.json, to be publishable by Git',
+    'expected all 230 overview PNGs + their manifest.json, plus all 5 size-scale PNGs + their own sizes/manifest.json, to be publishable by Git',
   );
 });
 

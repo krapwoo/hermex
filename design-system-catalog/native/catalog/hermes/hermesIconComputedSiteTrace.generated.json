@@ -88,7 +88,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Config/AppTheme.swift:853",
+      "site": "HermesMobile/Config/AppTheme.swift:865",
       "resolvedNames": [
         "arrow.turn.up.right",
         "stop.circle",
@@ -109,7 +109,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotArtifactMessageView.swift:298",
+      "site": "HermesMobile/Features/Bots/BotArtifactMessageView.swift:356",
       "resolvedNames": [
         "doc",
         "photo",
@@ -351,7 +351,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:294",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:350",
       "resolvedNames": [
         "pin",
         "pin.slash"
@@ -360,7 +360,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:305",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:361",
       "resolvedNames": [
         "eye",
         "eye.slash"
@@ -369,7 +369,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:366",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:442",
       "resolvedNames": [
         "pin",
         "pin.slash"
@@ -378,7 +378,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:372",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:448",
       "resolvedNames": [
         "eye",
         "eye.slash"
@@ -387,7 +387,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:401",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:477",
       "resolvedNames": [
         "pin",
         "pin.slash"
@@ -396,7 +396,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:406",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:482",
       "resolvedNames": [
         "eye",
         "eye.slash"
@@ -405,7 +405,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:427",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:503",
       "resolvedNames": [
         "pin",
         "pin.slash"
@@ -414,7 +414,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:432",
+      "site": "HermesMobile/Features/Bots/BotsInboxView.swift:508",
       "resolvedNames": [
         "eye",
         "eye.slash"
@@ -474,36 +474,14 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:128",
+      "site": "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:162",
       "resolvedNames": [
         "checkmark.circle.fill",
         "lock.open",
         "star.fill",
         "xmark.circle.fill"
       ],
-      "traceMethod": "call-graph from HermesMobile/Features/Chat/ApprovalRequestOverlay.swift#ApprovalRequestOverlay::private func approvalButton(",
-      "status": "traced"
-    },
-    {
-      "site": "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:137",
-      "resolvedNames": [
-        "checkmark.circle.fill",
-        "lock.open",
-        "star.fill",
-        "xmark.circle.fill"
-      ],
-      "traceMethod": "call-graph from HermesMobile/Features/Chat/ApprovalRequestOverlay.swift#ApprovalRequestOverlay::private func approvalButton(",
-      "status": "traced"
-    },
-    {
-      "site": "HermesMobile/Features/Chat/ApprovalRequestOverlay.swift:146",
-      "resolvedNames": [
-        "checkmark.circle.fill",
-        "lock.open",
-        "star.fill",
-        "xmark.circle.fill"
-      ],
-      "traceMethod": "call-graph from HermesMobile/Features/Chat/ApprovalRequestOverlay.swift#ApprovalRequestOverlay::private func approvalButton(",
+      "traceMethod": "call-graph from HermesMobile/Features/Chat/ApprovalRequestOverlay.swift#ApprovalRequestOverlay::private func approvalButton(_ choice: ApprovalChoice) -> some View {",
       "status": "traced"
     },
     {
@@ -586,7 +564,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:312",
+      "site": "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:325",
       "resolvedNames": [
         "arrow.turn.up.right",
         "bolt",
@@ -597,7 +575,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:320",
+      "site": "HermesMobile/Features/Chat/ChatComposerSelectorControls.swift:333",
       "resolvedNames": [
         "arrow.turn.up.right",
         "bolt",
@@ -617,7 +595,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerSendGate.swift:53",
+      "site": "HermesMobile/Features/Chat/ChatComposerSendGate.swift:60",
       "resolvedNames": [
         "arrow.turn.up.right",
         "arrow.up",
@@ -629,7 +607,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatComposerView.swift:976",
+      "site": "HermesMobile/Features/Chat/ChatComposerView.swift:1041",
       "resolvedNames": [
         "arrow.turn.up.right",
         "arrow.up",
@@ -682,7 +660,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:37",
+      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:40",
       "resolvedNames": [
         "checkmark.circle",
         "pause.circle",
@@ -693,7 +671,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:58",
+      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:61",
       "resolvedNames": [
         "checkmark.circle",
         "list.bullet.clipboard",
@@ -705,7 +683,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:62",
+      "site": "HermesMobile/Features/Chat/ChatGoalControls.swift:65",
       "resolvedNames": [
         "checkmark.circle",
         "list.bullet.clipboard",
@@ -730,7 +708,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:135",
+      "site": "HermesMobile/Features/Chat/ChatMessageActions.swift:137",
       "resolvedNames": [
         "speaker.slash",
         "speaker.wave.2"
@@ -950,7 +928,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:738",
+      "site": "HermesMobile/Features/Chat/MessageBubbleView.swift:740",
       "resolvedNames": [
         "archivebox",
         "doc",
@@ -962,7 +940,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Chat/SlashCommandAutocompleteView.swift:278",
+      "site": "HermesMobile/Features/Chat/SlashCommandAutocompleteView.swift:292",
       "resolvedNames": [
         "bolt.fill"
       ],
@@ -1051,7 +1029,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:634",
+      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:645",
       "resolvedNames": [
         "exclamationmark.triangle",
         "rectangle.portrait.slash",
@@ -1061,7 +1039,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:636",
+      "site": "HermesMobile/Features/Kanban/KanbanCardDetailView.swift:647",
       "resolvedNames": [
         "exclamationmark.triangle",
         "rectangle.portrait.slash",
@@ -1071,7 +1049,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1132",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1174",
       "resolvedNames": [
         "checkmark.circle.fill",
         "circle"
@@ -1080,7 +1058,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1324",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1373",
       "resolvedNames": [
         "line.3.horizontal.decrease.circle",
         "rectangle.stack"
@@ -1089,7 +1067,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1412",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1461",
       "resolvedNames": [
         "bolt.horizontal.circle",
         "bolt.horizontal.circle.fill",
@@ -1099,7 +1077,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1450",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1499",
       "resolvedNames": [
         "line.3.horizontal.decrease.circle",
         "line.3.horizontal.decrease.circle.fill"
@@ -1108,7 +1086,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1457",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1506",
       "resolvedNames": [
         "ellipsis.circle",
         "ellipsis.circle.fill"
@@ -1117,7 +1095,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1468",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1517",
       "resolvedNames": [
         "exclamationmark.triangle",
         "lock",
@@ -1128,7 +1106,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1470",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1519",
       "resolvedNames": [
         "exclamationmark.triangle",
         "lock",
@@ -1139,7 +1117,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1697",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1746",
       "resolvedNames": [
         "pencil"
       ],
@@ -1147,7 +1125,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1706",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1755",
       "resolvedNames": [
         "checkmark.circle"
       ],
@@ -1155,7 +1133,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1714",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:1763",
       "resolvedNames": [
         "archivebox"
       ],
@@ -1163,7 +1141,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2085",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2154",
       "resolvedNames": [
         "clock",
         "clock.badge.exclamationmark",
@@ -1173,7 +1151,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2164",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2233",
       "resolvedNames": [
         "bubble.left",
         "building.2",
@@ -1184,7 +1162,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2168",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2237",
       "resolvedNames": [
         "bubble.left",
         "building.2",
@@ -1195,7 +1173,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2254",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:2323",
       "resolvedNames": [
         "archivebox",
         "checkmark.circle",
@@ -1205,7 +1183,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:477",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:486",
       "resolvedNames": [
         "arrow.triangle.2.circlepath",
         "checkmark.circle.fill",
@@ -1217,7 +1195,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:638",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:647",
       "resolvedNames": [
         "checkmark.circle.fill",
         "exclamationmark.triangle.fill"
@@ -1226,7 +1204,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:680",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:689",
       "resolvedNames": [
         "questionmark.circle",
         "xmark.circle"
@@ -1235,7 +1213,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:762",
+      "site": "HermesMobile/Features/Kanban/KanbanLabView.swift:773",
       "resolvedNames": [
         "archivebox",
         "exclamationmark.circle"
@@ -2005,7 +1983,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:135",
+      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:142",
       "resolvedNames": [
         "pause.fill",
         "play.circle"
@@ -2014,7 +1992,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:161",
+      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:171",
       "resolvedNames": [
         "pause.fill",
         "play.circle",
@@ -2024,7 +2002,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:166",
+      "site": "HermesMobile/Features/Tasks/TaskDetailHeaderCard.swift:181",
       "resolvedNames": [
         "pause.fill",
         "play.circle",
@@ -2034,7 +2012,7 @@
       "status": "traced"
     },
     {
-      "site": "HermesMobile/Features/Tasks/TaskDetailView.swift:250",
+      "site": "HermesMobile/Features/Tasks/TaskDetailView.swift:273",
       "resolvedNames": [
         "pause.fill",
         "play.circle"

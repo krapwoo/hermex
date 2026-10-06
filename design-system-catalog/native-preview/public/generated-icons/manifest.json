@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "count": 228,
+  "count": 230,
   "names": [
     "123.rectangle.fill",
     "archivebox",
@@ -26,6 +26,7 @@
     "arrow.up.doc",
     "arrow.up.forward",
     "arrow.up.forward.square",
+    "arrow.up.left.and.arrow.down.right",
     "arrow.up.message",
     "arrow.up.right",
     "bell",
@@ -174,6 +175,7 @@
     "plus.circle.fill",
     "plus.square.on.square",
     "powerplug",
+    "puzzlepiece.extension",
     "questionmark",
     "questionmark.bubble",
     "questionmark.circle",
