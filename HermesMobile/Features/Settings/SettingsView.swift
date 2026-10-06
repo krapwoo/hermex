@@ -2472,6 +2472,7 @@ struct AddServerView: View {
     @State private var form = OnboardingViewModel(entry: .addServer)
     /// The Add in flight; closing the sheet cancels it before a Hermes server is added.
     @State private var operation: Task<Void, Never>?
+    @State private var isConfirmingReplace = false
     @State private var displayName = ""
     @State private var initials = ""
     @State private var colorHex = HeaderLogoColor.defaultHex
@@ -2531,6 +2532,11 @@ struct AddServerView: View {
                         .disabled(!canSubmit)
                 }
             }
+        }
+        .confirmationDialog("Replace the webui server?", isPresented: $isConfirmingReplace, titleVisibility: .visible) {
+            Button("Replace", role: .destructive) { submit(replacingWebuiServer: true) }
+        } message: {
+            Text("Its sign-in, cached chats and drafts are removed from this iPhone. Conversations on the host stay.")
         }
         .adaptiveFormPresentation()
         .onDisappear { operation?.cancel() }
@@ -2665,15 +2671,24 @@ struct AddServerView: View {
                 .foregroundStyle(.orange)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+
+        if form.offersWebuiReplace {
+            SettingsButton(String(localized: "Replace…")) { isConfirmingReplace = true }
+                .disabled(form.isConnectionLocked)
+        }
     }
 
-    private func submit() {
+    private func submit() { submit(replacingWebuiServer: false) }
+
+    private func submit(replacingWebuiServer: Bool) {
         guard canSubmit, !form.isConnectionLocked else { return }
         operation = Task {
             // A URL means the server is already saved, so its chosen identity applies even
             // when the sheet closed meanwhile.
-            guard let url = await form.connect(authManager: authManager) else { return }
-            applyIdentity(to: url)
+            guard let url = await form.connect(authManager: authManager, replacingWebuiServer: replacingWebuiServer) else { return }
+            // A replaced webui server's name, initials and color stay unless new ones were chosen.
+            let choseIdentity = !displayName.isEmpty || !initials.isEmpty || colorHex != HeaderLogoColor.defaultHex
+            if !replacingWebuiServer || choseIdentity { applyIdentity(to: url) }
             dismiss()
         }
     }

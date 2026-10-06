@@ -38,6 +38,11 @@ enum HermesCall: Equatable, Sendable {
     /// focused row, which Hermex never has.
     case sessionActiveList
 
+    // Sessions
+    /// Mints a plain session under the Profile: no title, not hidden. The host writes no
+    /// row until its first prompt (`ConversationTarget.new`).
+    case sessionNew(profile: String)
+
     // Turns
     /// Always `queued`: even an idle Send can race Desktop, so a fresh send never
     /// inherits a host setting that converts it into a redirect or steer.
@@ -52,6 +57,13 @@ enum HermesCall: Equatable, Sendable {
     case sessionInterrupt(sessionID: String)
     case fileAttach(sessionID: String, name: String, dataURL: String)
 
+    // Side work (#1013): each runs beside the session's turn, even mid-turn, and answers
+    // `{task_id}`; its result arrives later on the session's runtime.
+    /// A side question over a snapshot of the conversation, tools off: `btw.complete`.
+    case promptBtw(sessionID: String, text: String)
+    /// A side agent in its own `bg_<id>` session under the Profile: `background.complete`.
+    case promptBackground(sessionID: String, text: String)
+
     // Answers to the host's requests
     case approvalRespond(sessionID: String, requestID: String, choice: BotApprovalRequest.Choice)
     case requestAnswer(id: String, result: RequestAnswer)
@@ -64,6 +76,8 @@ enum HermesCall: Equatable, Sendable {
     case modelOptions(sessionID: String, profile: String)
     /// The configured-provider inventory the Profile editors pick from.
     case configuredModelOptions
+    /// One Profile's models, outside any session: the Task editor's picker (#1040).
+    case profileModelOptions(profile: String)
     case configSet(sessionID: String, profile: String, setting: SessionSetting)
     case sessionCwdSet(sessionID: String, profile: String, cwd: String)
     case sessionControlRead(sessionID: String, profile: String)
@@ -73,6 +87,12 @@ enum HermesCall: Equatable, Sendable {
     case commandsCatalog(sessionID: String)
     case commandDispatch(name: String, argument: String, sessionID: String)
     case completePath(word: String, sessionID: String, profile: String)
+    /// `complete.slash` at a command's argument stage (#1036): `text` is one `/name …` line
+    /// with a space. The command stage is ranked on the phone from `commands.catalog`.
+    case completeSlash(text: String, sessionID: String)
+    /// Runs one typed `/name …` line on the session (#1036): the host's built-ins, the user's
+    /// quick commands (which can run shell) and plugin commands, as Desktop runs them.
+    case slashExec(sessionID: String, command: String)
 
     // Delegated work
     case subagentList(sessionID: String)
@@ -147,13 +167,19 @@ enum HermesCall: Equatable, Sendable {
         case answer(String)
     }
 
-    /// The runtime-scoped writes `config.set` may carry. The host still has a
-    /// missing-runtime fallback for effort/fast; never send global or display writes.
+    /// The writes `config.set` may carry. All are runtime-scoped except `personality`. The
+    /// host still has a missing-runtime fallback for effort/fast; never send global or display writes.
     enum SessionSetting: Equatable, Sendable {
         /// `value` must end in `--session` so the host never writes the Profile's default.
         case model(value: String, confirmExpensive: Bool)
         case reasoning(String)
         case fast(Bool)
+        /// The session's approval bypass: on auto-approves its dangerous commands, off asks again.
+        case yolo(Bool)
+        /// The one write that reaches the Profile, deliberately (#1016): the host has no
+        /// session-only personality, so it always writes the Profile's default and switches
+        /// this session too. `none` clears it. Sent without a scope, which the host ignores here.
+        case personality(String)
     }
 
     /// One immutable room creation. A deliberate retry resends the same value.
@@ -185,7 +211,7 @@ enum HermesCall: Equatable, Sendable {
         case .profilesConfigure: return "profiles.configure"
         case .profilesCreate: return "profiles.create"
         case .sessionList: return "session.list"
-        case .sessionCreate: return "session.create"
+        case .sessionCreate, .sessionNew: return "session.create"
         case .sessionTitle: return "session.title"
         case .sessionResume: return "session.resume"
         case .sessionEventsSince: return "session.events.since"
@@ -195,12 +221,14 @@ enum HermesCall: Equatable, Sendable {
         case .sessionRedirect: return "session.redirect"
         case .sessionInterrupt: return "session.interrupt"
         case .fileAttach: return "file.attach"
+        case .promptBtw: return "prompt.btw"
+        case .promptBackground: return "prompt.background"
         case .approvalRespond: return "approval.respond"
         case .requestAnswer: return "request.answer"
         case .clarifyLock: return "clarify.lock"
         case .connectionRespond: return "connection.respond"
         case .messageReact: return "message.react"
-        case .modelOptions, .configuredModelOptions: return "model.options"
+        case .modelOptions, .configuredModelOptions, .profileModelOptions: return "model.options"
         case .configSet: return "config.set"
         case .sessionCwdSet: return "session.cwd.set"
         case .sessionControlRead: return "session.control.read"
@@ -208,6 +236,8 @@ enum HermesCall: Equatable, Sendable {
         case .commandsCatalog: return "commands.catalog"
         case .commandDispatch: return "command.dispatch"
         case .completePath: return "complete.path"
+        case .completeSlash: return "complete.slash"
+        case .slashExec: return "slash.exec"
         case .subagentList: return "subagent.list"
         case .subagentTail: return "subagent.tail"
         case .subagentInterrupt: return "subagent.interrupt"
@@ -246,6 +276,7 @@ enum HermesCall: Equatable, Sendable {
         case .sessionCreate(let profile):
             return ["profile": .string(profile), "title": .string(Self.botChatTitle),
                     "hidden": .bool(true), "follow_profile_config": .bool(true)]
+        case .sessionNew(let profile): return ["profile": .string(profile)]
         case .sessionTitle(let sessionID): return ["session_id": .string(sessionID), "title": .string(Self.botChatTitle)]
         case .sessionResume(let profile, let sessionID, let omitMessages):
             var params: [String: BotJSON] = ["profile": .string(profile), "session_id": .string(sessionID),
@@ -262,7 +293,8 @@ enum HermesCall: Equatable, Sendable {
             // cutting at the first prompt legitimately empties the transcript.
             return ["session_id": .string(sessionID), "text": .string(text), "truncate_before_row_id": .number(Double(rowID)),
                     "confirm_truncate": .bool(true), "confirm_empty_truncate": .bool(true)]
-        case .sessionSteer(let sessionID, let text), .sessionRedirect(let sessionID, let text):
+        case .sessionSteer(let sessionID, let text), .sessionRedirect(let sessionID, let text),
+             .promptBtw(let sessionID, let text), .promptBackground(let sessionID, let text):
             return ["session_id": .string(sessionID), "text": .string(text)]
         case .sessionInterrupt(let sessionID), .commandsCatalog(let sessionID), .subagentList(let sessionID):
             return ["session_id": .string(sessionID)]
@@ -288,8 +320,10 @@ enum HermesCall: Equatable, Sendable {
         case .modelOptions(let sessionID, let profile), .sessionControlRead(let sessionID, let profile):
             return ["session_id": .string(sessionID), "profile": .string(profile)]
         case .configuredModelOptions: return ["include_unconfigured": .bool(false)]
+        case .profileModelOptions(let profile): return ["profile": .string(profile)]
         case .configSet(let sessionID, let profile, let setting):
-            var params: [String: BotJSON] = ["session_id": .string(sessionID), "profile": .string(profile), "scope": .string("session")]
+            var params: [String: BotJSON] = ["session_id": .string(sessionID), "profile": .string(profile)]
+            if case .personality = setting {} else { params["scope"] = .string("session") }
             switch setting {
             case .model(let value, let confirmExpensive):
                 params["key"] = .string("model"); params["value"] = .string(value)
@@ -298,6 +332,10 @@ enum HermesCall: Equatable, Sendable {
                 params["key"] = .string("reasoning"); params["value"] = .string(value)
             case .fast(let enabled):
                 params["key"] = .string("fast"); params["value"] = .string(enabled ? "fast" : "normal")
+            case .yolo(let enabled):
+                params["key"] = .string("yolo"); params["value"] = .string(enabled ? "on" : "off")
+            case .personality(let name):
+                params["key"] = .string("personality"); params["value"] = .string(name)
             }
             return params
         case .sessionCwdSet(let sessionID, let profile, let cwd):
@@ -308,6 +346,8 @@ enum HermesCall: Equatable, Sendable {
             return ["name": .string(name), "arg": .string(argument), "session_id": .string(sessionID)]
         case .completePath(let word, let sessionID, let profile):
             return ["word": .string(word), "session_id": .string(sessionID), "profile": .string(profile)]
+        case .completeSlash(let text, let sessionID): return ["text": .string(text), "session_id": .string(sessionID)]
+        case .slashExec(let sessionID, let command): return ["session_id": .string(sessionID), "command": .string(command)]
         case .subagentTail(let sessionID, let subagentID), .subagentInterrupt(let sessionID, let subagentID):
             return ["session_id": .string(sessionID), "subagent_id": .string(subagentID)]
         case .groupsList(let offset):
@@ -339,6 +379,11 @@ enum HermesCall: Equatable, Sendable {
         HermesCompatibility.release(version)?.lexicographicallyPrecedes([0, 21, 5]) ?? false
     }
 
+    /// One line that opens with `/` and names something after it.
+    private static func isSlashLine(_ text: String) -> Bool {
+        text.count > 1 && text.hasPrefix("/") && !text.contains(where: \.isNewline)
+    }
+
     /// The value rules each case's types cannot express. A case with none is `true`.
     private func admit() throws {
         let valid: Bool
@@ -350,20 +395,28 @@ enum HermesCall: Equatable, Sendable {
             else { valid = !name.isEmpty }
         case .profilesConfigure(let changes): valid = changes.isAdmissible
         case .profilesCreate(let profile): valid = profile.isAdmissible
-        case .sessionCreate(let profile): valid = !profile.isEmpty
+        case .sessionCreate(let profile), .sessionNew(let profile): valid = !profile.isEmpty
         case .sessionTitle(let sessionID), .commandsCatalog(let sessionID), .subagentList(let sessionID):
             valid = !sessionID.isEmpty
         case .configSet(let sessionID, _, let setting):
             switch setting {
             case .model(let value, _): valid = !sessionID.isEmpty && value.hasSuffix(" --session")
-            case .reasoning(let value): valid = !sessionID.isEmpty && BotModelCatalog.effortLevels.contains(value)
-            case .fast: valid = !sessionID.isEmpty
+            case .reasoning(let value): valid = !sessionID.isEmpty && HermesModelCatalog.effortLevels.contains(value)
+            case .fast, .yolo: valid = !sessionID.isEmpty
+            case .personality(let name):
+                valid = !sessionID.isEmpty && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             }
         case .commandDispatch(let name, _, let sessionID):
             // One bare name, so this never widens into the general slash runner:
             // the gateway resolves quick commands, which can run shell, ahead of skills.
             valid = !name.isEmpty && !name.hasPrefix("/") && name.rangeOfCharacter(from: .whitespacesAndNewlines) == nil
                 && !sessionID.isEmpty
+        case .completeSlash(let text, let sessionID):
+            // The argument stage only: a named command, then a space.
+            valid = !sessionID.isEmpty && Self.isSlashLine(text) && text.dropFirst().first?.isWhitespace == false
+                && text.contains(" ")
+        case .slashExec(let sessionID, let command):
+            valid = !sessionID.isEmpty && Self.isSlashLine(command) && command.dropFirst().first?.isWhitespace == false
         case .completePath(let word, let sessionID, let profile):
             valid = !word.isEmpty && !word.contains(where: \.isWhitespace) && !sessionID.isEmpty && !profile.isEmpty
         case .subagentTail(let sessionID, let subagentID), .subagentInterrupt(let sessionID, let subagentID):
@@ -381,7 +434,11 @@ enum HermesCall: Equatable, Sendable {
             valid = !sessionID.isEmpty && emoji?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != true
         case .promptRewind(let sessionID, let text, let rowID):
             valid = !sessionID.isEmpty && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && rowID > 0
+        case .promptBtw(let sessionID, let text), .promptBackground(let sessionID, let text):
+            // The host refuses empty text (4012).
+            valid = !sessionID.isEmpty && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .groupsList(let offset): valid = offset >= 0
+        case .profileModelOptions(let profile): valid = !profile.isEmpty
         case .groupsState(let roomID), .groupsDisband(let roomID): valid = BotRoomRPC.validID(roomID)
         case .groupsLog(let roomID, let sinceSeq, let limit):
             valid = BotRoomRPC.validID(roomID) && sinceSeq >= 0 && (1...Self.roomPageSize).contains(limit)

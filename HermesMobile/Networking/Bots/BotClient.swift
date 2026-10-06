@@ -93,6 +93,35 @@ import Foundation
         guard (try? JSONDecoder().decode(BotJSON.self, from: data))?["ok"].flag == true else { throw BotFailure.unsupported }
     }
 
+    func currentProfile() async throws -> String {
+        guard gateway.isAttached(consumerID) else { throw BotFailure.stale }
+        let attempt = self.attempt
+        let data = try await http.data(.profilesActive, validateDispatch: { try self.checkOwner(attempt) })
+        try checkOwner(attempt)
+        // Usually `default`, which `BotProfileName` reserves for creation, so only emptiness is refused.
+        guard let profile = (try? JSONDecoder().decode(BotJSON.self, from: data))?["current"].text,
+              !profile.isEmpty else { throw BotFailure.unsupported }
+        return profile
+    }
+
+    func sessionMessages(_ key: String, profile: String) async throws -> [BotJSON]? {
+        guard gateway.isAttached(consumerID) else { throw BotFailure.stale }
+        let attempt = self.attempt
+        let data: Data
+        do {
+            data = try await http.data(.sessionMessages(key: key, profile: profile),
+                                       validateDispatch: { try self.checkOwner(attempt) })
+        } catch BotFailure.rejected(404) {
+            try checkOwner(attempt)
+            return nil
+        }
+        try checkOwner(attempt)
+        guard let messages = (try? JSONDecoder().decode(BotJSON.self, from: data))?["messages"].list else {
+            throw BotFailure.unsupported
+        }
+        return messages
+    }
+
     func uploadImage(data: Data, filename: String, context: BotArtifactContext) async throws -> String {
         guard context.connectionID == http.connection.id, gateway.isAttached(consumerID) else { throw BotFailure.stale }
         let attempt = self.attempt

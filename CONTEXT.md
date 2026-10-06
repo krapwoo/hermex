@@ -31,8 +31,16 @@ An individual unit of work on a Board.
 _Avoid_: Task, Kanban task, work item
 
 **Status**:
-The workflow state of a Card: Triage, To Do, Ready, Running, Blocked, Done, or Archived.
+The workflow state of a Card: Triage, To Do, Scheduled, Ready, Running, Blocked, Review, Done, or Archived. Scheduled and Review exist only on a Hermes server.
 _Avoid_: Column, lane, stage
+
+**Scheduled**:
+The Status of a Card parked until a time or condition, waiting on the clock rather than a person. The Dispatcher skips it.
+_Avoid_: Delayed, snoozed
+
+**Review**:
+The Status of a Card whose work is finished and waits for a person to check it before Done.
+_Avoid_: Awaiting approval, QA
 
 **Column**:
 A visual grouping of Cards that share a Status.
@@ -94,8 +102,22 @@ _Avoid_: Bulk update, batch operation
 The mode for choosing Cards before applying a Bulk Action.
 _Avoid_: Multi-select, bulk mode
 
+## Tasks
+
+**Task Run**:
+One execution of a Task. On a Hermes server it is a session `cron_<task>_<time>`, and its output is that session's final reply; on a webui server it is an output file.
+_Avoid_: job run, execution
+
 ## Chat
 
 **Fork**:
 A chat created from another chat's history by Fork From Here or `/branch` (`/api/session/branch`). The server marks it `session_source: fork` with a `parent_session_id`, and Hermex shows a "Forked from" row that opens the parent. Agent child sessions (subagents, cron, CLI `/new`) also carry a parent but are not Forks.
 _Avoid_: Branch (for the chat), child session
+
+**Conversation target**:
+Which Hermes session a conversation attaches to: a bot's canonical Bot Chat, found by its title; a stored session, by its stored key; or a new session, created on first attach. Each target has its own draft and recent transcript (`ConversationTarget`).
+_Avoid_: chat target, session kind
+
+**Turn identity**:
+Which run a chat is following: a webui stream id, or for a Hermes session its stored key and the host's `turn_started_at`. A Hermes turn ends once `message.complete` and `session.info {running: false}` have both arrived.
+_Avoid_: stream id (for a Hermes turn), run id

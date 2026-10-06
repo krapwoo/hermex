@@ -10,6 +10,10 @@ struct TaskDetailView: View {
     @State private var viewModel: TaskDetailViewModel
     @State private var isPresentingEditTask = false
     @State private var isConfirmingDelete = false
+    @State private var isConfirmingRunNow = false
+    /// A Hermes host's Run Now, which follows the run until the host's outcome (#1041).
+    /// Leaving the screen cancels it, which stops the reads and leaves the run to the host.
+    @State private var runNowTask: Task<Void, Never>?
     /// Sheet identity lives here so the sheet is always tied to the run that was
     /// tapped; the view model only fetches its text.
     @State private var selectedRun: CronRunHistoryItem?
@@ -20,14 +24,19 @@ struct TaskDetailView: View {
         job: CronJob,
         runningElapsed: Double?,
         server: URL,
+        client: (any CronDataClient)? = nil,
         onAPIError: @escaping (Error) -> Void,
         onMutation: @escaping (CronJobListMutation) -> Void = { _ in }
     ) {
         self.server = server
         self.onAPIError = onAPIError
         self.onMutation = onMutation
-        _viewModel = State(initialValue: TaskDetailViewModel(job: job, runningElapsed: runningElapsed, server: server))
+        _viewModel = State(initialValue: TaskDetailViewModel(
+            job: job, runningElapsed: runningElapsed, server: server, client: client
+        ))
     }
+
+    private var features: CronFeatures { viewModel.client.cronFeatures }
 
     var body: some View {
         ScrollView {
@@ -37,7 +46,9 @@ struct TaskDetailView: View {
                     runningElapsed: viewModel.runningElapsed,
                     isBusy: isActionDisabled,
                     canSeeFullOutput: viewModel.latestRun != nil,
-                    runNow: { Task { await runNow() } },
+                    showsRunNow: features.offersRunNow(for: viewModel.job),
+                    runNowState: viewModel.runNowState,
+                    runNow: requestRunNow,
                     togglePauseResume: { Task { await togglePauseResume() } },
                     seeFullOutput: {
                         if let latest = viewModel.latestRun { open(latest) }
@@ -58,7 +69,7 @@ struct TaskDetailView: View {
                         canLoadMore: viewModel.canLoadMoreRuns,
                         remainingCount: viewModel.remainingRunCount,
                         errorMessage: viewModel.historyErrorMessage,
-                        isFailedRun: viewModel.isFailedRun,
+                        outcome: viewModel.outcome,
                         selectRun: open,
                         retry: { Task { await viewModel.loadHistory() } },
                         loadMore: { Task { await viewModel.loadMoreRuns() } }
@@ -79,7 +90,9 @@ struct TaskDetailView: View {
                 saveTitle: String(localized: "Save"),
                 isSaving: viewModel.isMutating,
                 errorMessage: viewModel.actionErrorMessage,
-                deliveryOptions: viewModel.deliveryOptions
+                deliveryOptions: viewModel.deliveryOptions,
+                client: viewModel.client,
+                locksProfile: features.isProfileScoped
             ) { draft in
                 let didUpdate = await viewModel.update(from: draft)
                 handleActionResult(didUpdate)
@@ -103,8 +116,18 @@ struct TaskDetailView: View {
         } message: {
             Text("This removes the scheduled task from the Hermes server.")
         }
+        .alert("Run Now?", isPresented: $isConfirmingRunNow) {
+            Button("Run Now", action: startRunNow)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This also resumes the Task.")
+        }
         .task {
             await loadDetail()
+        }
+        .onDisappear {
+            runNowTask?.cancel()
+            runNowTask = nil
         }
     }
 
@@ -237,12 +260,12 @@ struct TaskDetailView: View {
             .disabled(viewModel.isLoading)
 
             Menu {
-                Button {
-                    Task { await runNow() }
-                } label: {
-                    Label("Run Now", systemImage: "play.fill")
+                if features.offersRunNow(for: viewModel.job) {
+                    Button(action: requestRunNow) {
+                        Label("Run Now", systemImage: "play.fill")
+                    }
+                    .disabled(isActionDisabled || viewModel.runNowState != .idle)
                 }
-                .disabled(isActionDisabled)
 
                 Button {
                     Task { await togglePauseResume() }
@@ -293,11 +316,32 @@ struct TaskDetailView: View {
         if let lastError = viewModel.lastError {
             onAPIError(lastError)
         }
+        // A Hermes host's detail re-reads its job, which the list then shows too (#1040).
+        if let mutation = viewModel.lastMutation {
+            onMutation(mutation)
+        }
     }
 
-    private func runNow() async {
-        let didRun = await viewModel.runNow()
-        handleActionResult(didRun)
+    /// Runs the Task, asking first when that also resumes it (a paused Task on a Hermes host).
+    private func requestRunNow() {
+        if features.runNowResumes(viewModel.job) {
+            isConfirmingRunNow = true
+        } else {
+            startRunNow()
+        }
+    }
+
+    private func startRunNow() {
+        guard runNowTask == nil else { return }
+        let run = Task {
+            let didRun = await viewModel.runNow()
+            guard !Task.isCancelled else { return }
+            runNowTask = nil
+            handleActionResult(didRun)
+        }
+        if features.runNowWaitsForRun {
+            runNowTask = run
+        }
     }
 
     private func togglePauseResume() async {

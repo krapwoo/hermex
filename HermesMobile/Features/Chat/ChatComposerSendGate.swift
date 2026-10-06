@@ -40,12 +40,19 @@ struct ChatComposerSendButton: Equatable {
     /// What a tap on Send does to the running response; nil while idle or
     /// while the circle is Stop.
     let runningBehavior: StreamingSendBehavior?
+    /// A Hermes session with files staged (#1012): only a fresh turn takes them, so Steer
+    /// drops out and a Steer default queues them. Stop and send stays, text-only, and
+    /// leaves them staged (the Bot rule, `BotPromptMode.busyChoices`).
+    let stagedFilesDropSteer: Bool
 
-    init(isWaitingForStream: Bool, hasText: Bool, hasQuotes: Bool, defaultBehavior: StreamingSendBehavior) {
+    init(isWaitingForStream: Bool, hasText: Bool, hasQuotes: Bool, defaultBehavior: StreamingSendBehavior,
+         stagedFilesDropSteer: Bool = false) {
         showsStop = ChatComposerSendGate.showsStopButton(
             isWaitingForStream: isWaitingForStream, hasText: hasText, hasQuotes: hasQuotes
         )
-        runningBehavior = isWaitingForStream && !showsStop ? defaultBehavior : nil
+        let behavior: StreamingSendBehavior = stagedFilesDropSteer && defaultBehavior == .steer ? .queue : defaultBehavior
+        runningBehavior = isWaitingForStream && !showsStop ? behavior : nil
+        self.stagedFilesDropSteer = stagedFilesDropSteer
     }
 
     /// The circle's one SF Symbol: Stop, the running default's symbol, or the
@@ -60,10 +67,11 @@ struct ChatComposerSendButton: Equatable {
         return runningBehavior?.settingsDescription ?? String(localized: "Send")
     }
 
-    /// The long-press choices, in the Bot card's order. Unlike Bots, staged
+    /// The long-press choices, in the Bot card's order. On a webui session, staged
     /// files keep Steer: a steer carries them as an attached-files note (#856).
     var choices: [StreamingSendBehavior] {
-        runningBehavior == nil ? [] : [.steer, .queue, .interrupt]
+        guard runningBehavior != nil else { return [] }
+        return stagedFilesDropSteer ? [.queue, .interrupt] : [.steer, .queue, .interrupt]
     }
 }
 

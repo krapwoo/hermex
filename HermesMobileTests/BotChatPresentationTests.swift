@@ -708,6 +708,42 @@ import XCTest
         XCTAssertEqual(BotPromptMode.busyChoices(hasAttachments: true), [.queue, .redirect])
     }
 
+    /// A sent prompt's bubble keeps only the typed text (#1017): the image pair and each
+    /// `@file:` block, plain or quoted, become attachments that keep the host path the
+    /// preview downloads. Copy copies the typed text. A line the rule does not read stays.
+    func testSentPromptSplitsTypedTextFromItsAttachments() {
+        let uuid = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        let content = "Compare these\n\n"
+            + "[The user attached an image: dashboard_20261004_031500_ab12cd34_photo.jpg]\n"
+            + "[Examine it with the vision_analyze tool using image_url: /home/u/.hermes/images/dashboard_20261004_031500_ab12cd34_photo.jpg]\n\n"
+            + "@file:attachments/\(uuid)-notes.txt\n\n"
+            + "@file:`/home/u/.hermes/attachments/\(uuid)-Q3 report.pdf`"
+        let prompt = BotPrompt(ChatMessage(role: "user", content: content, timestamp: 1, messageId: "u1", rowID: 7))
+        XCTAssertEqual(prompt.message.content, "Compare these")
+        XCTAssertEqual(prompt.message.rowID, 7, "reactions still address the row")
+        XCTAssertEqual(prompt.attachments.map(\.name), ["photo.jpg", "notes.txt", "Q3 report.pdf"])
+        XCTAssertEqual(prompt.attachments.map(\.reference.rawReference), [
+            "/home/u/.hermes/images/dashboard_20261004_031500_ab12cd34_photo.jpg",
+            "attachments/\(uuid)-notes.txt",
+            "/home/u/.hermes/attachments/\(uuid)-Q3 report.pdf"
+        ])
+        XCTAssertEqual(prompt.attachments.map(\.reference.isRasterImageCandidate), [true, false, false])
+
+        var copied: String?
+        let copy = BotMessageActions.items(copyText: prompt.message.content, isHapticsEnabled: false) { copied = $0 }
+        copy.first { $0.kind == .copy }?.perform()
+        XCTAssertEqual(copied, "Compare these")
+
+        let attachmentOnly = BotPrompt(ChatMessage(role: "user", content: "@file:\"/h/\(uuid)-a b.pdf\"", timestamp: 1, messageId: "u2"))
+        XCTAssertFalse(attachmentOnly.hasText)
+        XCTAssertEqual(attachmentOnly.attachments.map(\.name), ["a b.pdf"])
+
+        let unread = "Look at @file:src/app.swift\n\n[The user attached an image: x.png]"
+        let typed = BotPrompt(ChatMessage(role: "user", content: unread, timestamp: 1, messageId: "u3"))
+        XCTAssertEqual(typed.message.content, unread)
+        XCTAssertTrue(typed.attachments.isEmpty)
+    }
+
     func testOnlyUserMessagesAndTurnEndingRepliesCarryAFooterTime() {
         let messages = [
             botRow("u1", "user", at: 1_000),
@@ -1127,6 +1163,69 @@ import XCTest
         await settle(window)
         let shown = try screenshot(window, name: "sessions-approval-overlay-ax5")
         XCTAssertTrue(shown.contains("Skip all"), shown)
+    }
+
+    /// A Hermes session's approval offers only the host's choices: a smart-denied one shows
+    /// Allow once and Deny, and no Allow session or Always allow (#1011).
+    func testHermesApprovalOverlayShowsOnlyTheHostsChoices() async throws {
+        let approval = try XCTUnwrap(BotApprovalRequest(.object([
+            "request_id": .string("q-1"), "command": .string("rm -rf build"), "description": .string("recursive delete"),
+            "choices": .array([.string("once"), .string("deny")])
+        ])))
+        let window = try show(ApprovalRequestOverlay(
+            content: approval.overlayContent(pendingCount: 1),
+            isResponding: false, errorMessage: nil, onChoice: { _ in }, onSkipAll: {}
+        ))
+        defer { close(window) }
+        let shown = try await screenshot(window, name: "hermes-approval-overlay", awaiting: ["Allow once", "Deny", "Skip all"])
+        XCTAssertTrue(["Allow once", "Deny", "Skip all"].allSatisfy(shown.contains), shown)
+        XCTAssertFalse(shown.contains("Allow session"), shown)
+        XCTAssertFalse(shown.contains("Always allow"), shown)
+    }
+
+    /// A Hermes session's sudo prompt shows in the clarification's slot as the Bot credential
+    /// card, measured and then shown whole, with its masked field (#1011).
+    func testHermesSudoPromptShowsTheCredentialCardAboveTheComposer() async throws {
+        let window = try show(VStack {
+            Spacer()
+            HermesRequestInset(
+                request: .credential(BotCredentialRequest(kind: .sudo, requestID: "srq-s1", envVar: nil, prompt: nil)),
+                identity: "default on Mac", maximumExpandedHeight: 600, isEnabled: true, isAnswering: false,
+                isStopping: false, isHapticsEnabled: false, onAnswer: { _ in }, onSkip: {}, onCredential: { _ in },
+                onStop: {}, onDismissKeyboard: {}, onFootprintChange: { _ in }
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 80)
+        })
+        defer { close(window) }
+        let shown = try await screenshot(window, name: "hermes-sudo-inset", awaiting: ["Administrator password needed", "Skip"])
+        XCTAssertTrue(shown.contains("Administrator password needed"), shown)
+        XCTAssertTrue(shown.contains("Skip"), shown)
+        let field = try XCTUnwrap(descendants(window).compactMap { $0 as? UITextField }.first, "Expected the credential field")
+        XCTAssertTrue(field.isSecureTextEntry)
+    }
+
+    /// With no room for a line of the card (a tall composer under the keyboard), a Hermes
+    /// request falls back to its bar, as the webui clarification card does, and the collapse
+    /// puts the keyboard away (#1011). With room it stays open.
+    func testHermesRequestInsetFallsBackToItsBarWhenTheCardCannotFit() async throws {
+        var collapses: [CGFloat: Int] = [:]
+        for height: CGFloat in [40, 600] {
+            let window = try show(VStack {
+                Spacer()
+                HermesRequestInset(
+                    request: .credential(BotCredentialRequest(kind: .sudo, requestID: "srq-s1", envVar: nil, prompt: nil)),
+                    identity: "default on Mac", maximumExpandedHeight: height, isEnabled: true, isAnswering: false,
+                    isStopping: false, isHapticsEnabled: false, onAnswer: { _ in }, onSkip: {}, onCredential: { _ in },
+                    onStop: {}, onDismissKeyboard: { collapses[height, default: 0] += 1 }, onFootprintChange: { _ in }
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 80)
+            })
+            await settle(window) { collapses[height] != nil }
+            close(window)
+        }
+        XCTAssertEqual(collapses, [40: 1], "only the card with no room collapses, once")
     }
 
     /// A sudo prompt is answered here, not at the Mac: a masked field, a Skip,

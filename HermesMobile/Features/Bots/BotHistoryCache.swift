@@ -328,12 +328,16 @@ actor BotHistoryCache {
 /// while the history actor invalidates entries. Snapshots contain value types only:
 /// no clients, callbacks, approval state, or credentials cross this boundary.
 final class BotRecentTranscripts: @unchecked Sendable {
-    enum Conversation: Hashable { case bot(String), room(String) }
+    /// A Bot Chat by Profile, a room, or a Hermes session by Profile and stored key.
+    enum Conversation: Hashable { case bot(String), room(String), session(profile: String, key: String) }
     struct Key: Hashable {
         let scope: BotHistoryCache.Scope
         let conversation: Conversation
         static func bot(server: URL, connectionID: UUID, profile: String) -> Key {
             Key(scope: .init(server: server, connectionID: connectionID), conversation: .bot(profile))
+        }
+        static func session(server: URL, connectionID: UUID, profile: String, key: String) -> Key {
+            Key(scope: .init(server: server, connectionID: connectionID), conversation: .session(profile: profile, key: key))
         }
         static func room(_ room: BotRoomKey) -> Key {
             Key(scope: .init(server: room.server, connectionID: room.connectionID), conversation: .room(room.roomID))

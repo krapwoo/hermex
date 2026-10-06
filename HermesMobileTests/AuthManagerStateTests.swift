@@ -598,9 +598,9 @@ final class AuthManagerStateTests: XCTestCase {
         keychain: InMemoryKeychainStore = InMemoryKeychainStore(),
         registry: ServerRegistry? = nil,
         connections: HermesConnections? = nil,
-        headerStore: CustomHeaderStore = CustomHeaderStore()
+        headerStore: CustomHeaderStore = CustomHeaderStore(),
+        preferences: UserDefaults = .ephemeral()
     ) async throws -> AuthManager {
-        let preferences = UserDefaults.ephemeral()
         preferences.set(true, forKey: BotModeGate.isEnabledKey)
         let manager = AuthManager(
             keychain: keychain,
@@ -740,7 +740,10 @@ final class AuthManagerStateTests: XCTestCase {
 
     func testSigningOutOfAHermesServerDeletesOnlyItsSignInAndShowsItsForm() async throws {
         let keychain = InMemoryKeychainStore()
-        let manager = try await makeHermesManager(keychain: keychain)
+        let preferences = UserDefaults.ephemeral()
+        let manager = try await makeHermesManager(keychain: keychain, preferences: preferences)
+        HermesProfilePreference.save("work", for: hermesServer, in: preferences)
+        HermesProfilePreference.save("work", for: webuiServer, in: preferences)
         let side = BotConnection(id: UUID(), name: "Side", address: hermesServer, username: "me", password: "secret")
         try BotConnectionStore(keychain: keychain).save(side, server: webuiServer)
         let cookies = HTTPCookieStorage.shared
@@ -753,6 +756,9 @@ final class AuthManagerStateTests: XCTestCase {
         XCTAssertNil(try BotConnectionStore(keychain: keychain).load(server: hermesServer))
         XCTAssertEqual(try BotConnectionStore(keychain: keychain).load(server: webuiServer), side)
         XCTAssertEqual(cookies.cookies(for: webuiServer)?.count, 1)
+        XCTAssertNil(preferences.string(forKey: HermesProfilePreference.key(for: hermesServer)),
+                     "the remembered Profile goes with the sign-in (#1015)")
+        XCTAssertEqual(preferences.string(forKey: HermesProfilePreference.key(for: webuiServer)), "work")
     }
 
     /// The Hermes server shares the webui server's host on another port, where cookies
@@ -896,6 +902,84 @@ final class AuthManagerStateTests: XCTestCase {
         let login = try XCTUnwrap(HermesHostFixture.requests.first { $0.url?.path == "/auth/password-login" })
         XCTAssertEqual(login.value(forHTTPHeaderField: "CF-Access-Client-Id"), "id.access")
         XCTAssertEqual(HermesHostFixture.count("/auth/password-login"), 1)
+    }
+
+    // MARK: - Replacing a webui server with a Hermes server (#1027)
+
+    /// The host at a saved webui server's address now runs the dashboard. Connect offers
+    /// Replace without signing in; a refused Replace keeps the webui server; a confirmed one
+    /// signs in once and swaps the servers, keeping the webui server's name.
+    func testADashboardAtASavedWebuiAddressReplacesItOnlyAfterItsSignInSucceeds() async throws {
+        defer { HermesHostFixture.reset() }
+        for entry in [OnboardingViewModel.Entry.onboarding, .addServer] {
+            HermesHostFixture.reset()
+            let keychain = InMemoryKeychainStore()
+            let headers = CustomHeaderStore()
+            let manager = makeFormManager(keychain: keychain, headerStore: headers)
+            await manager.configure(serverURLString: hermesServer.absoluteString, password: "",
+                                    customHeaders: [CustomHeader(name: "X-Webui", value: "token")])
+            let webui = try XCTUnwrap(manager.activeServer)
+            manager.updateServerIdentity(webui, displayName: "Studio Mac", initials: "SM", headerLogoColorHex: "#34C759")
+            // Onboarding shows for the webui server once its session is refused.
+            if entry == .onboarding { manager.handleAPIError(APIError.unauthorized) }
+            var refusesSignIn = true
+            let form = makeForm(entry: entry) { request in
+                request.url?.path == "/auth/password-login" && refusesSignIn
+                    ? .json(401, .object(["error": .string("invalid_credentials")])) : nil
+            }
+            form.serverURLString = "hermes.example"
+            await form.connect(authManager: manager)
+            form.username = "me"
+            form.password = "secret"
+
+            let offered = await form.connect(authManager: manager)
+            XCTAssertNil(offered, "\(entry)")
+            XCTAssertTrue(form.offersWebuiReplace, "\(entry)")
+            XCTAssertEqual(form.errorMessage, "A webui server is saved at this address.", "\(entry)")
+            XCTAssertEqual(HermesHostFixture.count("/auth/password-login"), 0, "\(entry): no sign-in before Replace")
+
+            let refused = await form.connect(authManager: manager, replacingWebuiServer: true)
+            XCTAssertNil(refused, "\(entry)")
+            XCTAssertEqual(form.errorMessage, "Hermes didn't accept the username or password.", "\(entry)")
+            XCTAssertEqual(manager.servers.map(\.kind), [.webui], "\(entry): a refused sign-in keeps the webui server")
+            XCTAssertNil(try BotConnectionStore(keychain: keychain).load(server: hermesServer), "\(entry)")
+
+            refusesSignIn = false
+            let replaced = await form.connect(authManager: manager, replacingWebuiServer: true)
+
+            XCTAssertEqual(replaced, hermesServer, "\(entry)")
+            XCTAssertEqual(manager.state, .loggedIn(server: hermesServer), "\(entry)")
+            XCTAssertEqual(manager.servers.map(\.kind), [.hermes], "\(entry)")
+            XCTAssertEqual(manager.activeServer?.displayName, "Studio Mac", "\(entry)")
+            XCTAssertEqual(manager.activeServer?.headerLogoColorHex, "#34C759", "\(entry)")
+            XCTAssertEqual(try BotConnectionStore(keychain: keychain).load(server: hermesServer)?.username, "me", "\(entry)")
+            XCTAssertTrue(headers.snapshot().isEmpty, "\(entry): the webui's headers never go to a Hermes server")
+            XCTAssertEqual(HermesHostFixture.count("/auth/password-login"), 2, "\(entry)")
+        }
+    }
+
+    func testASavedHermesServerIsNeverReplaced() async throws {
+        defer { HermesHostFixture.reset() }
+        let keychain = InMemoryKeychainStore()
+        let manager = try await makeHermesManager(keychain: keychain)
+        let form = makeForm(entry: .addServer)
+        form.serverURLString = "hermes.example"
+        await form.connect(authManager: manager)
+        form.username = "me"
+        form.password = "other"
+
+        for replacing in [false, true] {
+            let added = await form.connect(authManager: manager, replacingWebuiServer: replacing)
+            XCTAssertNil(added)
+            XCTAssertFalse(form.offersWebuiReplace)
+            XCTAssertEqual(form.errorMessage, "This server is already configured.")
+        }
+        let replaced = await manager.replaceWebuiServer(with: hermesRecord(password: "other"))
+        XCTAssertFalse(replaced)
+        XCTAssertEqual(manager.lastErrorMessage, "This server is already configured.")
+        XCTAssertEqual(HermesHostFixture.count("/auth/password-login"), 0)
+        XCTAssertEqual(manager.servers.map(\.kind), [.webui, .hermes])
+        XCTAssertEqual(try BotConnectionStore(keychain: keychain).load(server: hermesServer)?.password, "secret")
     }
 
     func testASavedPasswordLeavesTheFormWhenTheAddressChanges() async throws {

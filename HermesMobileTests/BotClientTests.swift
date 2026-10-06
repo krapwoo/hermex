@@ -620,6 +620,20 @@ import XCTest
         }
     }
 
+    /// A side question or background task needs its session and some text (#1013); the host
+    /// refuses empty text.
+    func testSideTaskCallsAdmitOnlyASessionAndText() {
+        let rejected: [HermesCall] = [
+            .promptBtw(sessionID: "", text: "why?"),
+            .promptBtw(sessionID: "runtime", text: " \n"),
+            .promptBackground(sessionID: "", text: "sum up"),
+            .promptBackground(sessionID: "runtime", text: "")
+        ]
+        for call in rejected {
+            XCTAssertThrowsError(try call.params()) { XCTAssertEqual($0 as? BotFailure, .unsupported) }
+        }
+    }
+
     /// The inbox's live-status read is `session.active_list` with no parameters,
     /// exactly as Desktop's background sync sends it; anything else stays local.
     func testActiveListAllowlistAdmitsOnlyTheEmptyRead() async throws {
@@ -782,7 +796,8 @@ import XCTest
         func set(_ setting: HermesCall.SessionSetting, session: String = "runtime") -> HermesCall {
             .configSet(sessionID: session, profile: "default", setting: setting)
         }
-        for setting: HermesCall.SessionSetting in [.reasoning("off"), .reasoning("show"), .model(value: "model --provider provider", confirmExpensive: false)] {
+        for setting: HermesCall.SessionSetting in [.reasoning("off"), .reasoning("show"), .reasoning("hide"), .personality(" "),
+                                                   .model(value: "model --provider provider", confirmExpensive: false)] {
             do {
                 _ = try await client.call(set(setting))
                 XCTFail("Unsupported setting was dispatched")
