@@ -145,7 +145,7 @@
             "HermesMobile/Config/AppFont.swift"
           ],
           "notes": [
-            ".appFont(_:) takes only a named AppFont.Role (and, on the Text overload, a required dynamicTypeSize); it accepts no weight or design arguments, and scripts/hermex_design_system_adoption_audit.py fails closed on any customized call — the rule is enforced on the modifier itself, ahead of any screen migrating onto it."
+            ".appFont(_:) takes only a named AppFont.Role (and, on the Text overload, a required dynamicTypeSize); it accepts no weight or design arguments — the rule is enforced on the modifier's own signature, ahead of any screen migrating onto it. scripts/hermex_design_system_adoption_audit.py protects AppFont.swift's required foundation file/API snippets; it does not globally inspect or ban .appFont(_:) calls, other typography modifiers, or literal fonts across production."
           ]
         },
         "compositionSlots": [],
@@ -3685,7 +3685,7 @@
             "HermesMobile/Features/Shared/HermexContentUnavailable.swift"
           ],
           "notes": [
-            "The platform ContentUnavailableView is used directly across 30 production files (68 source references) in the current working tree, including ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, CronJobConfigurationPickers.swift, KanbanLabView.swift, InsightsView.swift, TasksView.swift, SkillsView.swift, and MemoryView.swift — none imports HermexContentUnavailable.swift. scripts/hermex_design_system_adoption_audit.py freezes this file/reference-count baseline so a future migration is a deliberate, reviewed change, not silent drift.",
+            "The platform ContentUnavailableView is used directly across 30 production files (68 source references) in the current working tree, including ModelPickerSheet.swift, DefaultProfilePickerView.swift, CronJobSkillsPicker.swift, CronJobConfigurationPickers.swift, KanbanLabView.swift, InsightsView.swift, TasksView.swift, SkillsView.swift, and MemoryView.swift — none imports HermexContentUnavailable.swift. That file/reference count is a descriptive snapshot of the current tree, not an enforced baseline: scripts/hermex_design_system_adoption_audit.py intentionally does not count or restrict native ContentUnavailableView call sites, so a future migration is ordinary issue-driven work, not something this script gates.",
             "HermexAvatar (also new, unadopted) is composed by HermexContentUnavailable's own icon-bearing variants for their identity glyph — an internal foundation-layer composition, not a claim about any production picker sheet's current icon treatment.",
             "The additive layout prop (.intrinsic default / .fullScreen) is also new and unadopted in this branch — no production screen passes layout: .fullScreen yet. .fullScreen reads the container height via GeometryReader and positions the content cluster at roughly one third of it, wrapped in a ScrollView for Dynamic Type/long-content robustness, instead of ContentUnavailableView's own centering."
           ]

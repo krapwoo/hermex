@@ -1419,6 +1419,28 @@ test('Hermex Typography describes the adopted .appFont(role:) mechanism, not the
   assert.match(section, /appFont\(role:\)|\.appFont\(/, 'expected Hermex Typography to describe the adopted .appFont(role:) modifier');
 });
 
+// Evidence-accuracy correction (PR #974 bounded truthfulness pass): the Hermex Font note claimed
+// scripts/hermex_design_system_adoption_audit.py "fails closed on any customized call" to
+// .appFont(_:). The audit's own module docstring says the opposite — it protects a small, named
+// set of foundation files/API snippets and explicitly does not globally inspect or ban typography
+// modifiers across production. The true boundary is .appFont(_:)'s own signature (named role only,
+// no weight/design parameters), not a global audit ban.
+test('Hermex Font does not claim the adoption audit fails closed on every customized .appFont(_:) call, and instead describes the modifier\'s own named-role-only signature plus the audit\'s narrower foundation-file scope', () => {
+  const src = hermesCatalogSource();
+  const section = extractHermesSection(src, 'Hermex Font');
+  assert.doesNotMatch(
+    section,
+    /adoption_audit\.py fails closed on any customized call/i,
+    'Hermex Font must not claim the adoption audit fails closed on every customized .appFont(_:) call — the audit protects selected foundation files/API snippets, not every call site',
+  );
+  assert.match(section, /accepts no weight or design arguments/i, "expected Hermex Font to describe .appFont(_:)'s own named-role-only signature");
+  assert.match(
+    section,
+    /does not globally (inspect|ban|restrict)/i,
+    'expected Hermex Font to state that the foundation audit does not globally inspect or ban typography modifiers',
+  );
+});
+
 test('Hermex Typography catalogs named semibold roles and the 14pt/12pt mono roles', () => {
   const src = hermesCatalogSource();
   const section = extractHermesSection(src, 'Hermex Typography');
@@ -1441,6 +1463,30 @@ test('ContentUnavailableView cites the verified production files + source refere
   assert.match(src, /68 source references/i, 'ContentUnavailableView should cite the verified 68 source references');
   const section = extractHermesSection(src, 'Content Unavailable');
   assert.match(section, /none imports HermexContentUnavailable\.swift/i);
+});
+
+// Evidence-accuracy correction (PR #974 bounded truthfulness pass): the Content Unavailable note
+// claimed scripts/hermex_design_system_adoption_audit.py "freezes this file/reference-count
+// baseline". The audit's own module docstring says the opposite — it intentionally does not count
+// or restrict native ContentUnavailableView call sites anywhere in production. The 30 files / 68
+// references figure may stay, but only as a descriptive current-tree snapshot, not an
+// audit-enforced baseline.
+test('Content Unavailable does not claim the adoption audit freezes the ContentUnavailableView file/reference-count baseline, and instead labels that count a current-tree snapshot the audit does not enforce', () => {
+  const src = hermesCatalogSource();
+  const section = extractHermesSection(src, 'Content Unavailable');
+  assert.doesNotMatch(
+    section,
+    /adoption_audit\.py freezes this file\/reference-count baseline/i,
+    'Content Unavailable must not claim the adoption audit freezes the file/reference-count baseline — the audit intentionally does not count or restrict ContentUnavailableView call sites',
+  );
+  assert.match(section, /30 production files/i);
+  assert.match(section, /68 source references/i);
+  assert.match(
+    section,
+    /does not count or restrict/i,
+    'expected Content Unavailable to state that the audit does not count or restrict ContentUnavailableView call sites',
+  );
+  assert.match(section, /snapshot/i, 'expected the file/reference count to be labeled a current-tree snapshot');
 });
 
 // ─── Fable review correction packet (lineage c47cd161-f191-47d2-8851-2604a321c558) ────────────────
