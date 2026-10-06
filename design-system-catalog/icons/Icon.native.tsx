@@ -3,7 +3,7 @@
  *
  * Reads `ICON_PATHS[name]` and maps each primitive to the matching RN-SVG element. Stroke icons
  * get round caps/joins in the Lucide style; fill icons render solid. Per-primitive `fill`/`stroke`
- * overrides (used by the transit icons) win over the def-level mode.
+ * overrides win over the definition-level mode.
  */
 import React from 'react';
 import { Platform } from 'react-native';

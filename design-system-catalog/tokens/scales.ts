@@ -30,9 +30,8 @@ export const DS_SPACING = {
 } as const;
 
 /**
- * When to reach for each spacing step — grounded in how the existing components actually use them
- * (surveyed across native/components + the source app), not aspirational. Meant to be read by
- * whoever (human or AI) is deciding which step fits a new layout; also rendered in the catalog's
+ * When to reach for each spacing step — grounded in how the existing template components use them,
+ * not aspirational. Meant to be read by whoever (human or AI) is deciding which step fits a new layout; also rendered in the catalog's
  * Spacing page. When in doubt, reach for 800 first — it's what most components converge on.
  */
 export const DS_SPACING_USE: Record<SpacingStep, string> = {

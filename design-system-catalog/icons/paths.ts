@@ -31,9 +31,9 @@ export interface IconPrimitive {
   x2?: number;
   y2?: number;
   /**
-   * Optional per-primitive extensions — only used by the transit icons (subway/train/ferry),
-   * which come from translated groups and mix fill/stroke, and by fill icons that need an
-   * even-odd rule. Plain Lucide primitives omit all of these and inherit the def-level mode.
+   * Optional per-primitive extensions — for primitives that need a translation offset, mixed
+   * fill/stroke, or an even-odd fill rule. Plain Lucide primitives omit all of these and inherit
+   * the def-level mode.
    */
   translateX?: number;
   translateY?: number;
@@ -41,20 +41,20 @@ export interface IconPrimitive {
   fill?: 'color' | 'none';
   /** `'color'` → resolved icon color, `'none'` → no stroke. Overrides the def mode when present. */
   stroke?: 'color' | 'none';
-  /** Per-primitive stroke width (transit hairlines). Falls back to the def strokeWidth. */
+  /** Per-primitive stroke width. Falls back to the definition strokeWidth. */
   strokeWidth?: number;
   fillRule?: 'evenodd' | 'nonzero';
 }
 
 export interface IconDef {
-  viewBox: string; // e.g. '0 0 24 24' (or '0 0 16 16' for the transit icons)
+  viewBox: string; // e.g. '0 0 24 24'
   mode: 'stroke' | 'fill'; // stroke = Lucide style; fill = solid
   strokeWidth?: number; // only for mode:'stroke', default 2
   primitives: IconPrimitive[];
 }
 
 export const ICON_PATHS: Record<IconName, IconDef> = {
-  // ─── Briefcase (Icons 2: briefcase-business) ──────────────────────────────
+  // ─── Briefcase (briefcase-business) ──────────────────────────────
   briefcase: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -66,7 +66,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Home (Icons 2: house) ────────────────────────────────────────────────
+  // ─── Home (house) ────────────────────────────────────────────────
   home: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -79,7 +79,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Add (Icons 2: plus) ──────────────────────────────────────────────────
+  // ─── Add (plus) ──────────────────────────────────────────────────
   add: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -89,7 +89,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Pencil (Icons 2: pencil) ─────────────────────────────────────────────
+  // ─── Pencil (pencil) ─────────────────────────────────────────────
   pencil: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -102,7 +102,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Flag (Icons 2: flag-triangle-right) ──────────────────────────────────
+  // ─── Flag (flag-triangle-right) ──────────────────────────────────
   flag: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -111,7 +111,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Menu (Icons 2: menu) ─────────────────────────────────────────────────
+  // ─── Menu (menu) ─────────────────────────────────────────────────
   menu: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -122,7 +122,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Pin (Icons 2: pin — thumbtack/pushpin) ───────────────────────────────
+  // ─── Pin (pin — thumbtack/pushpin) ───────────────────────────────
   pin: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -135,7 +135,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Pin Filled (Icons 2: map-pin filled) ─────────────────────────────────
+  // ─── Pin Filled (map-pin filled) ─────────────────────────────────
   // MODE FILL — teardrop + dot as one even-odd path so the centre reads as a true cut-out.
   'pin-filled': {
     viewBox: '0 0 24 24',
@@ -149,7 +149,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Pin Hollow (Icons 2: map-pin) ────────────────────────────────────────
+  // ─── Pin Hollow (map-pin) ────────────────────────────────────────
   'pin-hollow': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -162,8 +162,8 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Walk (original 24×24 Figma export) ───────────────────────────────────
-  // MODE FILL — solid figure, no Icons 2 equivalent.
+  // ─── Walk (24×24, solid) ─────────────────────────────────────────────────
+  // MODE FILL — solid figure.
   walk: {
     viewBox: '0 0 24 24',
     mode: 'fill',
@@ -175,7 +175,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Clear (Icons 2: x) ───────────────────────────────────────────────────
+  // ─── Clear (x) ───────────────────────────────────────────────────
   clear: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -199,7 +199,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Chevrons (Icons 2: chevron-down/up/left/right) ───────────────────────
+  // ─── Chevrons (chevron-down/up/left/right) ───────────────────────
   'chevron-down': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -221,7 +221,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     primitives: [{ tag: 'path', d: 'm9 18 6-6-6-6' }],
   },
 
-  // ─── Move up-right (Icons 2: move-up-right) ───────────────────────────────
+  // ─── Move up-right (move-up-right) ───────────────────────────────
   'move-up-right': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -231,7 +231,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Footprints (Icons 2: footprints) ─────────────────────────────────────
+  // ─── Footprints (footprints) ─────────────────────────────────────
   footprints: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -249,7 +249,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Paperclip (Icons 2: paperclip) ───────────────────────────────────────
+  // ─── Paperclip (paperclip) ───────────────────────────────────────
   paperclip: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -261,7 +261,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Map (Icons 2: map) ───────────────────────────────────────────────────
+  // ─── Map (map) ───────────────────────────────────────────────────
   map: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -275,7 +275,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Info (Icons 2: info) ─────────────────────────────────────────────────
+  // ─── Info (info) ─────────────────────────────────────────────────
   info: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -297,7 +297,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Bug (Icons 2: bug) ───────────────────────────────────────────────────
+  // ─── Bug (bug) ───────────────────────────────────────────────────
   bug: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -316,7 +316,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Bell (Icons 2: bell) ─────────────────────────────────────────────────
+  // ─── Bell (bell) ─────────────────────────────────────────────────
   bell: {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -329,7 +329,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Bell-plus (Icons 2: bell-plus) ───────────────────────────────────────
+  // ─── Bell-plus (bell-plus) ───────────────────────────────────────
   'bell-plus': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -409,13 +409,11 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // MODE FILL — matches metro-native's own "circle-x filled" asset (assets/Icons 2/circle-x
-  // filled.svg): a solid circle r=10 at 12,12 with an × cut from it at the exact same line
+  // MODE FILL — a solid circle r=10 at 12,12 with an × cut from it at the same line
   // coordinates as Lucide's stroke circle-x — (15,9)-(9,15) and (9,9)-(15,15), 2px-equivalent
-  // width. That source draws the × as separate white strokes over a black circle (two fixed
-  // colors); rebuilt here as one even-odd cutout instead (same technique as pin-filled's dot
-  // cutout) — this renderer only ever paints a primitive in the caller's single `color`, so a
-  // cutout is what makes it read identically on any background, not just white.
+  // width. The × is rebuilt as one even-odd cutout (the same technique as pin-filled's dot
+  // cutout) because this renderer paints each primitive in the caller's single `color`; the
+  // cutout keeps the symbol legible on any background.
   // The × is ONE 12-point outline (the true union of the two crossing bars — each bar's own tip
   // corners, joined through the 4 inner points where the bars' edges actually intersect), not two
   // overlapping bar-shaped subpaths. Two separately-closed bars overlap in a diamond at the
@@ -490,7 +488,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Clock 8 (Icons 2: clock-8) ───────────────────────────────────────────
+  // ─── Clock 8 (clock-8) ───────────────────────────────────────────
   'clock-8': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -500,7 +498,7 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
     ],
   },
 
-  // ─── Triangle Alert (Icons 2: triangle-alert) ─────────────────────────────
+  // ─── Triangle Alert (triangle-alert) ─────────────────────────────
   'triangle-alert': {
     viewBox: '0 0 24 24',
     mode: 'stroke',
@@ -546,79 +544,6 @@ export const ICON_PATHS: Record<IconName, IconDef> = {
       { tag: 'circle', cx: 12, cy: 4, r: 2 },
       { tag: 'circle', cx: 20, cy: 12, r: 2 },
       { tag: 'circle', cx: 4, cy: 12, r: 2 },
-    ],
-  },
-
-  // ─── Subway (Figma transit — 16×16, solid) ────────────────────────────────
-  // MODE FILL — body + undercarriage, each from a translated group, even-odd.
-  subway: {
-    viewBox: '0 0 16 16',
-    mode: 'fill',
-    primitives: [
-      {
-        tag: 'path',
-        translateX: 3.33,
-        translateY: 2,
-        fillRule: 'evenodd',
-        d: 'M8 0C8.73627 0 9.33381 0.596778 9.33398 1.33301V9.33301C9.33398 9.5171 9.1841 9.66602 9 9.66602H0.333984C0.150187 9.66567 0 9.51689 0 9.33301V1.33301C0.000174405 0.596994 0.598011 0.000351672 1.33398 0H8ZM2.22266 6.69238C1.85487 6.69273 1.55682 6.99058 1.55664 7.3584V7.5127C1.55673 7.8806 1.85482 8.17934 2.22266 8.17969H2.44531C2.8134 8.17963 3.11222 7.88078 3.1123 7.5127V7.3584C3.11213 6.99039 2.81334 6.69244 2.44531 6.69238H2.22266ZM6.88965 6.69238C6.52157 6.69238 6.22283 6.99036 6.22266 7.3584V7.5127C6.22274 7.88081 6.52151 8.17969 6.88965 8.17969H7.1123C7.48024 8.17945 7.77824 7.88067 7.77832 7.5127V7.3584C7.77814 6.9905 7.48019 6.69262 7.1123 6.69238H6.88965ZM3 1.4873C2.63237 1.48783 2.33416 1.78561 2.33398 2.15332V4.53809C2.33398 4.90595 2.63226 5.20455 3 5.20508H6.33398C6.70202 5.2049 7 4.90617 7 4.53809V2.15332C6.99982 1.78539 6.70192 1.48748 6.33398 1.4873H3Z',
-      },
-      {
-        tag: 'path',
-        translateX: 3.07,
-        translateY: 12,
-        fillRule: 'evenodd',
-        d: 'M2.08028 0L1.31953 0.869141H8.54805L7.78731 0H8.49629L9.80098 1.49121C9.89791 1.60205 9.88641 1.7712 9.77559 1.86816C9.66482 1.96448 9.49644 1.95318 9.39961 1.84277L9.01387 1.40234H0.853713L0.467971 1.84277C0.370988 1.95327 0.201752 1.96491 0.0910178 1.86816C-0.0196679 1.77131 -0.0309286 1.60205 0.0656272 1.49121L0.531448 0.959961L1.37031 0H2.08028Z',
-      },
-    ],
-  },
-
-  // ─── Train (Figma transit — 16×16, solid) ─────────────────────────────────
-  // MODE FILL — body + rail, each from a translated group, even-odd.
-  train: {
-    viewBox: '0 0 16 16',
-    mode: 'fill',
-    primitives: [
-      {
-        tag: 'path',
-        translateX: 1.92,
-        translateY: 2.67,
-        fillRule: 'evenodd',
-        d: 'M12.0753 2.66699H11.4093C11.0413 2.66699 10.7426 2.96504 10.7423 3.33301V5.33301C10.7423 5.7012 11.0411 6 11.4093 6H12.0753V10H2.67201C0.487882 10 -0.770625 7.51822 0.520641 5.75684L3.94349 1.08984C4.44584 0.40511 5.24462 7.00301e-06 6.09388 0H12.0753V2.66699ZM6.0138 2.66699C5.79226 2.66699 5.58502 2.77731 5.46107 2.96094L4.11048 4.96094C3.81218 5.40361 4.12932 5.99986 4.66322 6H9.40931C9.77723 5.99988 10.0751 5.70187 10.0753 5.33398V3.33301C10.0751 2.96512 9.77723 2.66712 9.40931 2.66699H6.0138Z',
-      },
-      {
-        tag: 'path',
-        translateX: 4.337,
-        translateY: 13.34,
-        fillRule: 'evenodd',
-        d: 'M0.333333 0C0.149238 0 0 0.149238 0 0.333333C0 0.517428 0.149238 0.666667 0.333333 0.666667V0.333333V0ZM0.333333 0.333333V0.666667H9.66667V0.333333V0H0.333333V0.333333Z',
-      },
-    ],
-  },
-
-  // ─── Ferry (Figma transit — 16×16) ────────────────────────────────────────
-  // MODE FILL — hull (filled + stroked) + cabin (stroke only), each translated. Hairline stroke.
-  ferry: {
-    viewBox: '0 0 16 16',
-    mode: 'fill',
-    primitives: [
-      {
-        tag: 'path',
-        translateX: 1.337,
-        translateY: 6.329,
-        fill: 'color',
-        stroke: 'color',
-        strokeWidth: 0.666667,
-        d: 'M6.33333 7.00733C1.53333 5.94066 0.333333 3.34066 0.333333 1.67399L6.33333 0.340659L13 1.67399C13 3.34066 11.6667 5.94066 6.33333 7.00733Z',
-      },
-      {
-        tag: 'path',
-        translateX: 2.627,
-        translateY: 3.537,
-        fill: 'none',
-        stroke: 'color',
-        strokeWidth: 0.666667,
-        d: 'M5.03946 2.13324L0.743268 3.00017L2.58401 0.333336L7.49792 0.333418L9.84035 3.0337L5.03946 2.13324Z',
-      },
     ],
   },
 };

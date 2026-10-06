@@ -43,10 +43,8 @@ export const DS_MOTION_EASING_USE: Record<MotionEasingStep, string> = {
 };
 
 /** Spring physics config, shaped for `Animated.spring(value, DS_MOTION_SPRING)` (or Reanimated's
- *  `withSpring`). Grounded in the metro-native app this template was extracted from, where this exact
- *  config (there, `SHEET_SPRING_CONFIG`) drives its BottomSheet's snap-point transitions — a
- *  near-critically-damped spring (high damping relative to stiffness, `overshootClamping` on) that
- *  settles quickly with no bounce, unlike a playful/bouncy spring. */
+ *  `withSpring`). This near-critically-damped configuration uses high damping relative to stiffness
+ *  with `overshootClamping` enabled, so snap-point transitions settle quickly without bounce. */
 export interface MotionSpringConfig {
   stiffness: number;
   damping: number;

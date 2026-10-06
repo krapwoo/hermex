@@ -140,34 +140,34 @@ const demo = StyleSheet.create({
   // fills *this* box — it needs to be the full frame, not a small box hugging just the trigger.
   dropdownFrameContent: { flex: 1, alignSelf: 'stretch', padding: DS_SPACING[800] },
   dividerDemo: { width: '100%', gap: DS_SPACING[400] },
-  // Trip planner recipe — fills PhoneFrame edge-to-edge the same way dropdownFrameContent does.
+  // Profile setup recipe — fills PhoneFrame edge-to-edge the same way dropdownFrameContent does.
   recipeFrameContent: { flex: 1, alignSelf: 'stretch', padding: DS_SPACING[800] },
   recipeFields: { gap: DS_SPACING[600] },
   recipeDivider: { marginVertical: DS_SPACING[600] },
   recipeActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  // Saved trips recipe — fills PhoneFrame edge-to-edge (like dropdownFrameContent), with a
+  // Saved items recipe — fills PhoneFrame edge-to-edge (like dropdownFrameContent), with a
   // fixed TopNav header and Dock footer around a scrollable middle, the same fixed-header/
   // scrollable-body/fixed-footer shape a real screen would use.
-  savedTripsScreen: { flex: 1, alignSelf: 'stretch' },
+  savedItemsScreen: { flex: 1, alignSelf: 'stretch' },
   // A fixed cap (not `flex: 1`) — sidesteps a web-only flexbox quirk where a `flex: 1` ScrollView
   // nested inside PhoneFrame's own fixed height doesn't actually shrink to the space left after
   // TopNav/Dock, and grows PhoneFrame itself past its intended 480px instead of scrolling.
-  savedTripsScroll: { maxHeight: 320 },
-  savedTripsScrollContent: { padding: DS_SPACING[800], gap: DS_SPACING[600] },
-  // Shared by SavedTrips' small inline rows — the "Updating arrival times…" loading row and each
+  savedItemsScroll: { maxHeight: 320 },
+  savedItemsScrollContent: { padding: DS_SPACING[800], gap: DS_SPACING[600] },
+  // Shared by SavedItems' small inline rows — the "Updating arrival times…" loading row and each
   // list row's trailing badge+button cluster (identical layout, one key).
-  savedTripsInlineRow: { flexDirection: 'row', alignItems: 'center', gap: DS_SPACING[300] },
-  savedTripsLoadingText: { ...DS_TYPOGRAPHY.bodyXs, color: DS_SEMANTIC.text.muted },
+  savedItemsInlineRow: { flexDirection: 'row', alignItems: 'center', gap: DS_SPACING[300] },
+  savedItemsLoadingText: { ...DS_TYPOGRAPHY.bodyXs, color: DS_SEMANTIC.text.muted },
   // Floats over the top of the screen — same top/left/right inset Toast's own catalog demo uses —
   // instead of sitting inline in the flex flow and pushing the Dock down. A column with a small
   // gap, since back-to-back removals stack one toast per removal (newest on top).
-  savedTripsToastOverlay: { position: 'absolute', top: DS_SPACING[800], left: DS_SPACING[600], right: DS_SPACING[600], zIndex: 20, gap: DS_SPACING[300] },
+  savedItemsToastOverlay: { position: 'absolute', top: DS_SPACING[800], left: DS_SPACING[600], right: DS_SPACING[600], zIndex: 20, gap: DS_SPACING[300] },
   // Map mode's stand-in — a real map isn't in scope for this recipe, just enough to show the
   // SegmentedToggle actually switches the screen's content, not just its own thumb.
-  savedTripsMapPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: DS_SPACING[400], paddingVertical: DS_SPACING[2400] },
-  savedTripsMapPlaceholderText: { ...DS_TYPOGRAPHY.bodySm, color: DS_SEMANTIC.text.muted },
+  savedItemsMapPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: DS_SPACING[400], paddingVertical: DS_SPACING[2400] },
+  savedItemsMapPlaceholderText: { ...DS_TYPOGRAPHY.bodySm, color: DS_SEMANTIC.text.muted },
   // Report-an-issue recipe — the BottomSheet's own scrollable content area, so no separate
-  // ScrollView is needed here the way savedTripsScroll needs one (BottomSheet already scrolls its
+  // ScrollView is needed here the way savedItemsScroll needs one (BottomSheet already scrolls its
   // `children` past a height cap).
   reportContent: { gap: DS_SPACING[600] },
   reportSwitchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -265,8 +265,8 @@ export type SectionId =
   | 'Shadow'
   | 'Icons'
   | 'Manifest'
-  | 'TripPlannerForm'
-  | 'SavedTrips'
+  | 'ProfileSetupForm'
+  | 'SavedItems'
   | 'ReportIssue';
 
 // ─── Live interactive demos ────────────────────────────────────────────────────
@@ -314,14 +314,14 @@ function InputFieldDemo() {
       value={value}
       onChangeText={setValue}
       editable
-      placeholder="Search a station"
+      placeholder="Search projects"
     />
   );
 }
 
 function SearchFieldDemo() {
   const [value, setValue] = useState('');
-  return <SearchField value={value} onChangeText={setValue} placeholder="Search stations" />;
+  return <SearchField value={value} onChangeText={setValue} placeholder="Search items" />;
 }
 
 // ─── Recipes ────────────────────────────────────────────────────────────────────
@@ -329,8 +329,8 @@ function SearchFieldDemo() {
 // uses them, not one component in isolation. Rendered inside PhoneFrame so they read as an actual
 // screen rather than a loose cluster of controls on the documentation page.
 
-function TripPlannerFormDemo() {
-  const [from, setFrom] = useState('Current location');
+function ProfileSetupFormDemo() {
+  const [from, setFrom] = useState('Current account');
   const [to, setTo] = useState('');
   return (
     <PhoneFrame>
@@ -338,12 +338,12 @@ function TripPlannerFormDemo() {
         <Card>
           <View style={demo.recipeFields}>
             <InputField label="From" value={from} onChangeText={setFrom} editable />
-            <InputField label="To" value={to} onChangeText={setTo} editable placeholder="Where to?" />
+            <InputField label="To" value={to} onChangeText={setTo} editable placeholder="Choose a recipient" />
           </View>
           <Divider style={demo.recipeDivider} />
           <View style={demo.recipeActions}>
-            <Button variant="tertiary" size="medium" label="Add stop" onPress={() => {}} />
-            {/* trim() so a whitespace-only "destination" can't enable Continue. */}
+            <Button variant="tertiary" size="medium" label="Add recipient" onPress={() => {}} />
+            {/* trim() so a whitespace-only recipient can't enable Continue. */}
             <Button variant="primary" size="medium" label="Continue" onPress={() => {}} disabled={!to.trim()} />
           </View>
         </Card>
@@ -352,41 +352,41 @@ function TripPlannerFormDemo() {
   );
 }
 
-const SAVED_TRIPS_INITIAL = [
-  { id: 'uptown', title: 'Uptown & The Bronx', subtitle: '4 min · Subway', iconName: 'subway' as const, badgeVariant: 'positive' as const, badgeLabel: 'On time' },
-  { id: 'downtown', title: 'Downtown & Brooklyn', subtitle: '12 min · Train', iconName: 'train' as const, badgeVariant: 'warning' as const, badgeLabel: 'Delayed' },
-  { id: 'airport', title: 'Airport Express', subtitle: '22 min · Train', iconName: 'train' as const, badgeVariant: 'neutral' as const, badgeLabel: 'Scheduled' },
+const SAVED_ITEMS_INITIAL = [
+  { id: 'review', title: 'Design review', subtitle: 'Updated 4 min ago', iconName: 'pencil' as const, badgeVariant: 'positive' as const, badgeLabel: 'Ready' },
+  { id: 'release', title: 'Release checklist', subtitle: 'Updated 12 min ago', iconName: 'flag' as const, badgeVariant: 'warning' as const, badgeLabel: 'Needs review' },
+  { id: 'research', title: 'Research notes', subtitle: 'Updated 22 min ago', iconName: 'briefcase' as const, badgeVariant: 'neutral' as const, badgeLabel: 'Draft' },
 ];
-const SAVED_TRIPS_SORT_OPTIONS = [
-  { value: 'arrival', label: 'Arrival time' },
-  { value: 'distance', label: 'Distance' },
+const SAVED_ITEMS_SORT_OPTIONS = [
+  { value: 'updated', label: 'Last updated' },
+  { value: 'created', label: 'Date created' },
   { value: 'name', label: 'Name' },
 ];
-// How long the "Trip removed" toast stays up before auto-dismissing, same as a real snackbar —
+// How long the "Item removed" toast stays up before auto-dismissing, same as a real snackbar —
 // matches Toast's own doc comment ("expected to go away on its own or via its own action").
-const SAVED_TRIPS_TOAST_MS = 3000;
+const SAVED_ITEMS_TOAST_MS = 3000;
 
-function SavedTripsDemo() {
+function SavedItemsDemo() {
   const [tab, setTab] = useState('all');
   const [viewMode, setViewMode] = useState('list');
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('arrival');
+  const [sortBy, setSortBy] = useState('updated');
   const [pills, setPills] = useState<PillRowItem[]>([
-    { id: 'subway', label: 'Subway', variant: 'selected', iconName: 'subway' },
-    { id: 'train', label: 'Train', variant: 'not_selected', iconName: 'train' },
-    { id: 'ferry', label: 'Ferry', variant: 'not_selected', iconName: 'ferry' },
+    { id: 'recent', label: 'Recent', variant: 'selected', iconName: 'clock' },
+    { id: 'shared', label: 'Shared', variant: 'not_selected', iconName: 'users' },
+    { id: 'pinned', label: 'Pinned', variant: 'not_selected', iconName: 'pin' },
   ]);
   const [showFilterTip, setShowFilterTip] = useState(false);
-  const [trips, setTrips] = useState(SAVED_TRIPS_INITIAL);
-  // Toasts only appear right after a real action (removing a trip) and auto-dismiss — they never
+  const [items, setItems] = useState(SAVED_ITEMS_INITIAL);
+  // Toasts only appear right after a real action (removing an item) and auto-dismiss — they never
   // sit statically in the initial render, since that's not what Toast is for. Each removal gets its
-  // OWN stacked toast on its own 3s clock (newest on top), so removing a second trip while the
+  // OWN stacked toast on its own 3s clock (newest on top), so removing a second item while the
   // first toast is still up never cuts the first one short — the earlier single-toast version
   // reused one `visible` boolean, which couldn't restart its timer for a back-to-back removal.
   // `visible: false` plays Toast's own exit animation; the entry is dropped from the array only
   // after that animation has had time to run.
   const [toasts, setToasts] = useState<
-    Array<{ key: number; trip: (typeof SAVED_TRIPS_INITIAL)[number]; visible: boolean }>
+    Array<{ key: number; item: (typeof SAVED_ITEMS_INITIAL)[number]; visible: boolean }>
   >([]);
   const nextToastKey = useRef(0);
   const toastTimers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
@@ -401,24 +401,24 @@ function SavedTripsDemo() {
       setTimeout(() => setToasts((prev) => prev.filter((t) => t.key !== key)), DS_MOTION_DURATION.fast),
     );
   };
-  const removeTrip = (id: string) => {
-    const removed = trips.find((t) => t.id === id);
+  const removeItem = (id: string) => {
+    const removed = items.find((t) => t.id === id);
     if (!removed) return;
-    setTrips((prev) => prev.filter((t) => t.id !== id));
+    setItems((prev) => prev.filter((t) => t.id !== id));
     const key = nextToastKey.current++;
-    setToasts((prev) => [{ key, trip: removed, visible: true }, ...prev]);
-    toastTimers.current.push(setTimeout(() => hideToast(key), SAVED_TRIPS_TOAST_MS));
+    setToasts((prev) => [{ key, item: removed, visible: true }, ...prev]);
+    toastTimers.current.push(setTimeout(() => hideToast(key), SAVED_ITEMS_TOAST_MS));
   };
-  const undoRemove = (key: number, trip: (typeof SAVED_TRIPS_INITIAL)[number]) => {
-    setTrips((prev) => [...prev, trip]);
+  const undoRemove = (key: number, item: (typeof SAVED_ITEMS_INITIAL)[number]) => {
+    setItems((prev) => [...prev, item]);
     hideToast(key);
   };
 
   return (
     <PhoneFrame>
-      <View style={demo.savedTripsScreen}>
+      <View style={demo.savedItemsScreen}>
         <TopNav
-          title="Saved trips"
+          title="Saved items"
           trailing={
             <Tooltip visible={showFilterTip} label="Filter by mode" placement="bottom" align="right">
               <Button
@@ -434,8 +434,8 @@ function SavedTripsDemo() {
           }
         />
         <Surface tone="muted">
-          <ScrollView style={demo.savedTripsScroll} contentContainerStyle={demo.savedTripsScrollContent}>
-            <SearchField value={query} onChangeText={setQuery} placeholder="Search stations" />
+          <ScrollView style={demo.savedItemsScroll} contentContainerStyle={demo.savedItemsScrollContent}>
+            <SearchField value={query} onChangeText={setQuery} placeholder="Search items" />
             <SegmentedToggle
               value={viewMode}
               onChange={setViewMode}
@@ -445,9 +445,9 @@ function SavedTripsDemo() {
               ]}
             />
             {viewMode === 'map' ? (
-              <View style={demo.savedTripsMapPlaceholder}>
+              <View style={demo.savedItemsMapPlaceholder}>
                 <Icon name="map" size={DS_ICON_SIZE.xl} color={DS_SEMANTIC.text.muted} />
-                <Text style={demo.savedTripsMapPlaceholderText}>Map view</Text>
+                <Text style={demo.savedItemsMapPlaceholderText}>Map view</Text>
               </View>
             ) : (
               <>
@@ -464,8 +464,8 @@ function SavedTripsDemo() {
                   <EmptyState
                     iconName="waypoints"
                     title="No favorites yet"
-                    description="Star a trip to see it here."
-                    action={{ label: 'Browse trips', onPress: () => setTab('all') }}
+                    description="Star an item to see it here."
+                    action={{ label: 'Browse items', onPress: () => setTab('all') }}
                     secondaryAction={{ label: 'Not now', onPress: () => {} }}
                   />
                 ) : (
@@ -474,34 +474,34 @@ function SavedTripsDemo() {
                       pills={pills.map((p) => ({ ...p, onPress: () => setPills((prev) => prev.map((x) => ({ ...x, variant: x.id === p.id ? 'selected' : 'not_selected' }))) }))}
                       showAddPill={false}
                     />
-                    <View style={demo.savedTripsInlineRow}>
+                    <View style={demo.savedItemsInlineRow}>
                       <Loading size={14} />
-                      <Text style={demo.savedTripsLoadingText}>Updating arrival times…</Text>
+                      <Text style={demo.savedItemsLoadingText}>Updating items…</Text>
                     </View>
                     {/* Dropdown's own `label` prop, not a hand-rolled Text above it — the component
                         already owns the labeled-field pattern (PillRow, which has no label prop, is
                         the case where an external label is legitimately the only option). */}
-                    <Dropdown label="Sort by" value={sortBy} onChange={setSortBy} options={SAVED_TRIPS_SORT_OPTIONS} />
-                    <SectionHeader title="Nearby stations" />
-                    {trips.length > 0 ? (
+                    <Dropdown label="Sort by" value={sortBy} onChange={setSortBy} options={SAVED_ITEMS_SORT_OPTIONS} />
+                    <SectionHeader title="Recent items" />
+                    {items.length > 0 ? (
                       <List>
-                        {trips.map((trip) => (
+                        {items.map((item) => (
                           <ListItem
-                            key={trip.id}
-                            title={trip.title}
-                            subtitle={trip.subtitle}
-                            leading={<Avatar iconName={trip.iconName} size={40} />}
+                            key={item.id}
+                            title={item.title}
+                            subtitle={item.subtitle}
+                            leading={<Avatar iconName={item.iconName} size={40} />}
                             trailing={
-                              <View style={demo.savedTripsInlineRow}>
-                                <Badge variant={trip.badgeVariant} label={trip.badgeLabel} />
+                              <View style={demo.savedItemsInlineRow}>
+                                <Badge variant={item.badgeVariant} label={item.badgeLabel} />
                                 <Button
                                   variant="ghost"
                                   size="small"
                                   showIcon
                                   showLabel={false}
                                   iconName="clear"
-                                  accessibilityLabel={`Remove ${trip.title}`}
-                                  onPress={() => removeTrip(trip.id)}
+                                  accessibilityLabel={`Remove ${item.title}`}
+                                  onPress={() => removeItem(item.id)}
                                 />
                               </View>
                             }
@@ -511,8 +511,8 @@ function SavedTripsDemo() {
                     ) : (
                       <EmptyState
                         iconName="waypoints"
-                        title="No nearby trips"
-                        description="Removed trips you save will show up here again."
+                        title="No nearby items"
+                        description="Removed items you save will show up here again."
                       />
                     )}
                   </>
@@ -526,46 +526,46 @@ function SavedTripsDemo() {
             catalog demo uses. One Toast per pending removal, stacked newest-on-top; each entry
             stays in the array (with `visible: false`) through its own exit animation instead of
             being yanked out of the tree mid-motion. */}
-        <View style={demo.savedTripsToastOverlay} pointerEvents="box-none">
+        <View style={demo.savedItemsToastOverlay} pointerEvents="box-none">
           {toasts.map((t) => (
             <Toast
               key={t.key}
               visible={t.visible}
-              message={`${t.trip.title} removed`}
-              action={{ label: 'Undo', onPress: () => undoRemove(t.key, t.trip) }}
+              message={`${t.item.title} removed`}
+              action={{ label: 'Undo', onPress: () => undoRemove(t.key, t.item) }}
             />
           ))}
         </View>
         <Dock>
-          <Button label="Plan a new trip" onPress={() => {}} />
+          <Button label="Create item" onPress={() => {}} />
         </Dock>
       </View>
     </PhoneFrame>
   );
 }
 
-// Report-issue recipe's line picker — a PillRow, not a Dropdown, specifically because this lives
+// Report-issue recipe's area picker — a PillRow, not a Dropdown, specifically because this lives
 // inside a BottomSheet: Dropdown opens its own BottomSheet, and stacking two sheets traps the user
 // between backdrops (see BottomSheet's `useInsideBottomSheetWarning`).
-const REPORT_LINE_PILLS: PillRowItem[] = [
-  { id: '4', label: '4 Train' },
-  { id: '6', label: '6 Train' },
-  { id: 'q', label: 'Q Train' },
+const REPORT_AREA_PILLS: PillRowItem[] = [
+  { id: 'chat', label: 'Chat' },
+  { id: 'files', label: 'Files' },
+  { id: 'settings', label: 'Settings' },
 ];
 // Issue-type category — a PillRow (not SegmentedToggle): this is a data choice being filled into
 // the report, not a view/mode switch. SegmentedToggle is for "which mode is this screen in right
 // now" (e.g. Map vs List); a form's own answer belongs on Pill/Radio instead.
 const REPORT_ISSUE_TYPE_PILLS: PillRowItem[] = [
-  { id: 'delay', label: 'Delay' },
-  { id: 'crowding', label: 'Crowding' },
-  { id: 'safety', label: 'Safety' },
+  { id: 'bug', label: 'Bug' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'security', label: 'Security' },
 ];
 
 function ReportIssueDemo() {
   const [visible, setVisible] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [issueType, setIssueType] = useState('delay');
-  const [line, setLine] = useState('4');
+  const [issueType, setIssueType] = useState('bug');
+  const [area, setArea] = useState('chat');
   const [details, setDetails] = useState('');
   const [urgent, setUrgent] = useState(false);
   const [visibility, setVisibility] = useState('public');
@@ -601,8 +601,8 @@ function ReportIssueDemo() {
           <ProgressDots active={1} total={3} />
           <Banner
             variant="info"
-            title="Delays reported near 14 St"
-            description="Other riders flagged a signal problem in the last 10 minutes."
+            title="Similar issues reported"
+            description="Other people reported a related problem in the last 10 minutes."
           />
           <View>
             <Text style={demo.recipeFieldLabel}>Issue type</Text>
@@ -612,9 +612,9 @@ function ReportIssueDemo() {
             />
           </View>
           <View>
-            <Text style={demo.recipeFieldLabel}>Line</Text>
+            <Text style={demo.recipeFieldLabel}>Area</Text>
             <PillRow
-              pills={REPORT_LINE_PILLS.map((p) => ({ ...p, variant: p.id === line ? 'selected' : 'not_selected', onPress: () => setLine(p.id) }))}
+              pills={REPORT_AREA_PILLS.map((p) => ({ ...p, variant: p.id === area ? 'selected' : 'not_selected', onPress: () => setArea(p.id) }))}
               showAddPill={false}
             />
           </View>
@@ -669,21 +669,21 @@ function TextAreaDemo() {
 }
 
 const SAMPLE_DROPDOWN_OPTIONS = [
-  { value: 'uptown', label: 'Uptown & The Bronx' },
-  { value: 'downtown', label: 'Downtown & Brooklyn' },
-  { value: 'crosstown', label: 'Crosstown' },
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'alphabetical', label: 'Alphabetical' },
 ];
 
 function DropdownDemo() {
-  const [value, setValue] = useState('uptown');
+  const [value, setValue] = useState('newest');
   return (
     <PhoneFrame>
       <View style={demo.dropdownFrameContent}>
         <Dropdown
-          label="Direction"
+          label="Order"
           value={value}
           onChange={setValue}
-          placeholder="Choose a direction"
+          placeholder="Choose an order"
           options={SAMPLE_DROPDOWN_OPTIONS}
         />
       </View>
@@ -701,7 +701,7 @@ function BottomSheetDemo() {
         onDismiss={() => setVisible(false)}
         header={
           <TopNav
-            title="Trip details"
+            title="Item details"
             trailing={
               <Button
                 variant="secondary"
@@ -722,19 +722,19 @@ function BottomSheetDemo() {
         }
       >
         <View style={demo.sheetContent}>
-          <Text style={demo.cardTitle}>Uptown & The Bronx</Text>
-          <Text style={demo.cardBody}>Next train in 4 min · every 6–8 min.</Text>
+          <Text style={demo.cardTitle}>Weekly summary</Text>
+          <Text style={demo.cardBody}>Updated 4 min ago · refreshes hourly.</Text>
           {/* Long enough to overflow the phone frame's fixed height — demonstrates the Dock footer's
               `elevated` shadow turning on automatically once this content area actually scrolls. */}
-          <Text style={demo.cardBody}>Board at the front car for a faster transfer at Union Sq.</Text>
+          <Text style={demo.cardBody}>Pin this summary to keep it at the top of your list.</Text>
           <Text style={demo.cardBody}>
-            This line runs express between 96 St and 168 St during rush hours, skipping local stops in
-            between. Weekend service runs local along the full route, with some stations closed for
-            planned maintenance.
+            This summary collects activity from every project you follow, grouped by day. Older entries
+            move into the archive automatically, and items you have already reviewed are collapsed by
+            default.
           </Text>
           <Text style={demo.cardBody}>
-            Elevators are available at 168 St, 137 St, and 125 St — check the map for accessible
-            entrances before you travel.
+            Notification preferences control which updates appear here — adjust them in Settings at
+            any time.
           </Text>
         </View>
       </BottomSheet>
@@ -754,15 +754,15 @@ function SwitchLabelDemo() {
 
 function CheckboxDemo() {
   const [checked, setChecked] = useState(true);
-  return <Checkbox checked={checked} onChange={setChecked} label="Remember this trip" />;
+  return <Checkbox checked={checked} onChange={setChecked} label="Remember this item" />;
 }
 
 function RadioGroupDemo() {
-  const [value, setValue] = useState('uptown');
+  const [value, setValue] = useState('newest');
   return (
     <View style={demo.radioGroup}>
-      <Radio selected={value === 'uptown'} onPress={() => setValue('uptown')} label="Uptown & The Bronx" />
-      <Radio selected={value === 'downtown'} onPress={() => setValue('downtown')} label="Downtown & Brooklyn" />
+      <Radio selected={value === 'newest'} onPress={() => setValue('newest')} label="Newest first" />
+      <Radio selected={value === 'oldest'} onPress={() => setValue('oldest')} label="Oldest first" />
     </View>
   );
 }
@@ -770,14 +770,14 @@ function RadioGroupDemo() {
 function TooltipDemo() {
   const [visible, setVisible] = useState(true);
   return (
-    <Tooltip visible={visible} label="Tap to add a stop">
+    <Tooltip visible={visible} label="Tap to add an item">
       <Button
         variant="ghost"
         size="medium"
         showIcon
         showLabel={false}
         iconName="add"
-        accessibilityLabel="Add stop"
+        accessibilityLabel="Add item"
         onPress={() => setVisible((v) => !v)}
       />
     </Tooltip>
@@ -790,7 +790,7 @@ function DialogDemo() {
     <PhoneFrame>
       {!visible && <Button label="Open dialog" onPress={() => setVisible(true)} />}
       <Dialog visible={visible} onDismiss={() => setVisible(false)}>
-        <Text style={demo.cardTitle}>Delete this trip?</Text>
+        <Text style={demo.cardTitle}>Delete this item?</Text>
         <Text style={demo.cardBody}>This can't be undone.</Text>
         <View style={demo.dialogActions}>
           <ButtonGroup>
@@ -812,7 +812,7 @@ function ToastDemo() {
     <PhoneFrame>
       <Button label={visible ? 'Hide toast' : 'Show toast'} onPress={() => setVisible((v) => !v)} />
       <View style={demo.toastDemoOverlay} pointerEvents="box-none">
-        <Toast message="Trip saved" variant="success" visible={visible} />
+        <Toast message="Item saved" variant="success" visible={visible} />
       </View>
     </PhoneFrame>
   );
@@ -1044,21 +1044,21 @@ export const sections: SectionDef<SectionId>[] = [
     },
     states: {
       items: [
-        { key: 'with-icon', name: 'With icon', props: { iconPosition: 'leading' }, node: <Button label="Add stop" showIcon iconName="add" onPress={() => {}} /> },
+        { key: 'with-icon', name: 'With icon', props: { iconPosition: 'leading' }, node: <Button label="Add item" showIcon iconName="add" onPress={() => {}} /> },
         {
           key: 'trailing-icon',
           name: 'Trailing icon',
           props: { iconPosition: 'trailing' },
           node: <Button label="Continue" showIcon iconName="chevron-right" iconPosition="trailing" onPress={() => {}} />,
         },
-        { key: 'icon-only', name: 'Icon-only', node: <Button label="Add stop" showIcon showLabel={false} iconName="add" onPress={() => {}} /> },
+        { key: 'icon-only', name: 'Icon-only', node: <Button label="Add item" showIcon showLabel={false} iconName="add" onPress={() => {}} /> },
         { key: 'loading', name: 'Loading', node: <Button label="Loading" loading onPress={() => {}} /> },
         { key: 'disabled', name: 'Disabled', node: <Button label="Disabled" disabled onPress={() => {}} /> },
-        { key: 'full-width', name: 'Full width', fill: true, node: <Button label="Confirm trip" fullWidth onPress={() => {}} /> },
+        { key: 'full-width', name: 'Full width', fill: true, node: <Button label="Confirm item" fullWidth onPress={() => {}} /> },
         // Closes a real gap the completeness check surfaced: `size` was never explicitly demonstrated
         // anywhere in this section (every other example renders at the implicit 'large' default).
-        { key: 'medium', name: 'Medium size', props: { size: 'medium' }, node: <Button label="Add stop" size="medium" onPress={() => {}} /> },
-        { key: 'small', name: 'Small size', props: { size: 'small' }, node: <Button label="Add stop" size="small" onPress={() => {}} /> },
+        { key: 'medium', name: 'Medium size', props: { size: 'medium' }, node: <Button label="Add item" size="medium" onPress={() => {}} /> },
+        { key: 'small', name: 'Small size', props: { size: 'small' }, node: <Button label="Add item" size="small" onPress={() => {}} /> },
       ],
     },
   },
@@ -1230,7 +1230,7 @@ export const sections: SectionDef<SectionId>[] = [
           props: { variant: 'vertical' },
           node: (
             <ButtonGroup variant="vertical">
-              <Button label="Start trip" onPress={() => {}} />
+              <Button label="Start" onPress={() => {}} />
               <Button label="Save for later" variant="secondary" onPress={() => {}} />
               <Button label="Share" variant="tertiary" onPress={() => {}} />
             </ButtonGroup>
@@ -1260,8 +1260,8 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Default',
           node: (
             <Card>
-              <Text style={demo.cardTitle}>Uptown & The Bronx</Text>
-              <Text style={demo.cardBody}>Next train in 4 min · every 6–8 min</Text>
+              <Text style={demo.cardTitle}>Weekly summary</Text>
+              <Text style={demo.cardBody}>Updated 4 min ago · refreshes hourly</Text>
             </Card>
           ),
         },
@@ -1277,8 +1277,8 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Plain',
           node: (
             <Card>
-              <Text style={demo.cardTitle}>Uptown & The Bronx</Text>
-              <Text style={demo.cardBody}>Next train in 4 min · every 6–8 min</Text>
+              <Text style={demo.cardTitle}>Weekly summary</Text>
+              <Text style={demo.cardBody}>Updated 4 min ago · refreshes hourly</Text>
             </Card>
           ),
         },
@@ -1287,8 +1287,8 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Pressable',
           node: (
             <Card onPress={() => {}}>
-              <Text style={demo.cardTitle}>Crosstown Bus M14</Text>
-              <Text style={demo.cardBody}>Tap to view live arrivals</Text>
+              <Text style={demo.cardTitle}>Team activity</Text>
+              <Text style={demo.cardBody}>Tap to view recent updates</Text>
             </Card>
           ),
         },
@@ -1297,7 +1297,7 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Disabled',
           node: (
             <Card onPress={() => {}} disabled>
-              <Text style={demo.cardTitle}>Franklin Ave Shuttle</Text>
+              <Text style={demo.cardTitle}>Archived project</Text>
               <Text style={demo.cardBody}>Temporarily unavailable</Text>
             </Card>
           ),
@@ -1322,11 +1322,11 @@ export const sections: SectionDef<SectionId>[] = [
     variants: {
       itemsFill: true,
       items: [
-        { key: 'neutral', name: 'Neutral', props: { variant: 'neutral' }, node: <Banner variant="neutral" title="Schedule notice" description="Holiday schedule in effect Monday." /> },
-        { key: 'info', name: 'Info', props: { variant: 'info' }, node: <Banner variant="info" title="Weekend service change" description="The 6 runs express in both directions this weekend." /> },
-        { key: 'positive', name: 'Positive', props: { variant: 'positive' }, node: <Banner variant="positive" title="Service restored" description="All lines are running on a normal schedule." /> },
-        { key: 'warning', name: 'Warning', props: { variant: 'warning' }, node: <Banner variant="warning" title="Delays" description="Signal problems near 14 St." /> },
-        { key: 'negative', name: 'Negative', props: { variant: 'negative' }, node: <Banner variant="negative" title="Line suspended" description="No service between 96 St and 137 St until further notice." /> },
+        { key: 'neutral', name: 'Neutral', props: { variant: 'neutral' }, node: <Banner variant="neutral" title="Maintenance notice" description="Scheduled maintenance on Monday." /> },
+        { key: 'info', name: 'Info', props: { variant: 'info' }, node: <Banner variant="info" title="Weekend change" description="Sync runs less often this weekend." /> },
+        { key: 'positive', name: 'Positive', props: { variant: 'positive' }, node: <Banner variant="positive" title="Service restored" description="Everything is running normally." /> },
+        { key: 'warning', name: 'Warning', props: { variant: 'warning' }, node: <Banner variant="warning" title="Delays" description="Some updates are arriving slowly." /> },
+        { key: 'negative', name: 'Negative', props: { variant: 'negative' }, node: <Banner variant="negative" title="Sync paused" description="Sync is paused until further notice." /> },
       ],
     },
     states: {
@@ -1350,8 +1350,8 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <Banner
               variant="neutral"
-              title="Trip details"
-              description="Board at the front car for a faster transfer at Union Sq."
+              title="Item details"
+              description="Pin this summary to keep it at the top of your list."
               collapsible
             />
           ),
@@ -1362,8 +1362,8 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <Banner
               variant="neutral"
-              title="Trip details"
-              description="Board at the front car for a faster transfer at Union Sq."
+              title="Item details"
+              description="Pin this summary to keep it at the top of your list."
               collapsible
               defaultExpanded={false}
             />
@@ -1376,7 +1376,7 @@ export const sections: SectionDef<SectionId>[] = [
             <Banner
               variant="info"
               title="App update available"
-              description="Version 4.2 adds live bus tracking."
+              description="Version 4.2 adds offline drafts."
               action={{ label: 'Update', onPress: () => {} }}
             />
           ),
@@ -1387,8 +1387,8 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <Banner
               variant="neutral"
-              title="Fare increase"
-              description="New fares start March 1."
+              title="Plan change"
+              description="New plans start March 1."
               link={{ label: 'Learn more', onPress: () => {} }}
             />
           ),
@@ -1477,10 +1477,10 @@ export const sections: SectionDef<SectionId>[] = [
     id: 'InputField',
     path: 'native/components/InputField',
     description: 'A floating-label field. Resting: a centred, body-sized label with no border. Active (focused, or picker with active set) or filled: the label floats to a small top caption, row 2 shows the value/input, and a border fades in while active.',
-    whenToUse: 'A named field with a fixed identity ("To", "Arrive by") across the interaction. For free-text search with no floating label, use SearchField; for one of a small known set of choices, use Dropdown.',
+    whenToUse: 'A named field with a fixed identity ("To", "Due by") across the interaction. For free-text search with no floating label, use SearchField; for one of a small known set of choices, use Dropdown.',
     a11y: 'The editable mode is a live TextInput; the picker mode is a Pressable row. Either mode shows a clear button while active (focused, or active for a picker) with a value set. Provide a meaningful label.',
     props: [
-      { name: 'label', type: "'To' | 'From' | 'Walk time' | 'Arrive by' | 'Name' | 'icon'", default: 'To', desc: 'Leading label slot.' },
+      { name: 'label', type: "'To' | 'From' | 'Duration' | 'Due by' | 'Name' | 'icon'", default: 'To', desc: 'Leading label slot.' },
       { name: 'value', type: 'string', desc: 'Current value.' },
       { name: 'onChangeText', type: '(text: string) => void', desc: 'Editable-mode change handler.' },
       { name: 'editable', type: 'boolean', default: 'false', desc: 'Live TextInput vs. tappable picker.' },
@@ -1502,13 +1502,13 @@ export const sections: SectionDef<SectionId>[] = [
           key: 'default',
           name: 'Default',
           props: { label: 'To' },
-          node: <InputField label="To" placeholder="Search a station" onPress={() => {}} />,
+          node: <InputField label="To" placeholder="Search projects" onPress={() => {}} />,
         },
         {
           key: 'icon-label',
           name: 'Icon label',
           props: { label: 'icon' },
-          node: <InputField label="icon" labelIcon="flag" value="Custom stop" onPress={() => {}} />,
+          node: <InputField label="icon" labelIcon="flag" value="Custom label" onPress={() => {}} />,
         },
       ],
     },
@@ -1519,12 +1519,12 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'picker',
           name: 'Picker (filled)',
-          node: <InputField label="To" value="Grand Central" placeholder="Search a station" onPress={() => {}} />,
+          node: <InputField label="To" value="Design team" placeholder="Search projects" onPress={() => {}} />,
         },
         {
           key: 'active',
           name: 'Active (external picker open)',
-          node: <InputField label="To" value="Grand Central" placeholder="Search a station" active onPress={() => {}} />,
+          node: <InputField label="To" value="Design team" placeholder="Search projects" active onPress={() => {}} />,
         },
         {
           key: 'optional',
@@ -1535,16 +1535,16 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'value-icon',
           name: 'Value with icon',
-          props: { label: 'Walk time' },
-          node: <InputField label="Walk time" value="8 min" valueIcon="footprints" />,
+          props: { label: 'Duration' },
+          node: <InputField label="Duration" value="8 min" valueIcon="clock" />,
         },
         {
           key: 'value-accent',
           name: 'Accent value',
-          props: { label: 'Arrive by' },
-          node: <InputField label="Arrive by" value="9:12 AM" valueAccent />,
+          props: { label: 'Due by' },
+          node: <InputField label="Due by" value="9:12 AM" valueAccent />,
         },
-        { key: 'disabled', name: 'Disabled', node: <InputField label="Arrive by" value="9:12 AM" disabled /> },
+        { key: 'disabled', name: 'Disabled', node: <InputField label="Due by" value="9:12 AM" disabled /> },
       ],
     },
   },
@@ -1602,17 +1602,17 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'placeholder',
           name: 'Placeholder',
-          node: <Dropdown label="Direction" placeholder="Choose a direction" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} />,
+          node: <Dropdown label="Order" placeholder="Choose an order" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} />,
         },
         {
           key: 'no-label',
           name: 'No label',
-          node: <Dropdown value="uptown" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} />,
+          node: <Dropdown value="newest" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} />,
         },
         {
           key: 'disabled',
           name: 'Disabled',
-          node: <Dropdown label="Direction" value="uptown" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} disabled />,
+          node: <Dropdown label="Order" value="newest" options={SAMPLE_DROPDOWN_OPTIONS} onChange={() => {}} disabled />,
         },
       ],
     },
@@ -1641,9 +1641,9 @@ export const sections: SectionDef<SectionId>[] = [
     states: {
       itemsFill: true,
       items: [
-        { key: 'empty', name: 'Empty', node: <SearchField value="" onChangeText={() => {}} placeholder="Search stations" /> },
-        { key: 'filled', name: 'With value', node: <SearchField value="Union Sq" onChangeText={() => {}} /> },
-        { key: 'disabled', name: 'Disabled', node: <SearchField value="" onChangeText={() => {}} placeholder="Search stations" disabled /> },
+        { key: 'empty', name: 'Empty', node: <SearchField value="" onChangeText={() => {}} placeholder="Search items" /> },
+        { key: 'filled', name: 'With value', node: <SearchField value="Design review" onChangeText={() => {}} /> },
+        { key: 'disabled', name: 'Disabled', node: <SearchField value="" onChangeText={() => {}} placeholder="Search items" disabled /> },
       ],
     },
   },
@@ -1691,10 +1691,10 @@ export const sections: SectionDef<SectionId>[] = [
     },
     states: {
       items: [
-        { key: 'unchecked', name: 'Unchecked', node: <Checkbox checked={false} onChange={() => {}} label="Remember this trip" /> },
-        { key: 'checked', name: 'Checked', node: <Checkbox checked={true} onChange={() => {}} label="Remember this trip" /> },
+        { key: 'unchecked', name: 'Unchecked', node: <Checkbox checked={false} onChange={() => {}} label="Remember this item" /> },
+        { key: 'checked', name: 'Checked', node: <Checkbox checked={true} onChange={() => {}} label="Remember this item" /> },
         { key: 'no-label', name: 'No label', node: <Checkbox checked={true} onChange={() => {}} /> },
-        { key: 'disabled', name: 'Disabled', node: <Checkbox checked={true} onChange={() => {}} disabled label="Remember this trip" /> },
+        { key: 'disabled', name: 'Disabled', node: <Checkbox checked={true} onChange={() => {}} disabled label="Remember this item" /> },
       ],
     },
   },
@@ -1715,9 +1715,9 @@ export const sections: SectionDef<SectionId>[] = [
     },
     states: {
       items: [
-        { key: 'unselected', name: 'Unselected', node: <Radio selected={false} onPress={() => {}} label="Uptown & The Bronx" /> },
-        { key: 'selected', name: 'Selected', node: <Radio selected={true} onPress={() => {}} label="Uptown & The Bronx" /> },
-        { key: 'disabled', name: 'Disabled', node: <Radio selected={true} onPress={() => {}} disabled label="Uptown & The Bronx" /> },
+        { key: 'unselected', name: 'Unselected', node: <Radio selected={false} onPress={() => {}} label="Newest first" /> },
+        { key: 'selected', name: 'Selected', node: <Radio selected={true} onPress={() => {}} label="Newest first" /> },
+        { key: 'disabled', name: 'Disabled', node: <Radio selected={true} onPress={() => {}} disabled label="Newest first" /> },
       ],
     },
   },
@@ -1764,10 +1764,10 @@ export const sections: SectionDef<SectionId>[] = [
       itemsFill: true,
       items: [
         { key: 'base', name: 'Base (no variant)', node: <Toast message="Changes saved" /> },
-        { key: 'success', name: 'Success', props: { variant: 'success' }, node: <Toast message="Trip saved" variant="success" /> },
+        { key: 'success', name: 'Success', props: { variant: 'success' }, node: <Toast message="Item saved" variant="success" /> },
         { key: 'informational', name: 'Informational', props: { variant: 'informational' }, node: <Toast message="New app version available" variant="informational" /> },
-        { key: 'warning', name: 'Warning', props: { variant: 'warning' }, node: <Toast message="Signal delays reported" variant="warning" /> },
-        { key: 'negative', name: 'Negative', props: { variant: 'negative' }, node: <Toast message="Failed to save trip" variant="negative" /> },
+        { key: 'warning', name: 'Warning', props: { variant: 'warning' }, node: <Toast message="Sync delays reported" variant="warning" /> },
+        { key: 'negative', name: 'Negative', props: { variant: 'negative' }, node: <Toast message="Failed to save item" variant="negative" /> },
         { key: 'neutral', name: 'Neutral', props: { variant: 'neutral' }, node: <Toast message="3 new updates" variant="neutral" /> },
       ],
     },
@@ -1777,7 +1777,7 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'action',
           name: 'With action',
-          node: <Toast message="Trip removed" action={{ label: 'Undo', onPress: () => {} }} />,
+          node: <Toast message="Item removed" action={{ label: 'Undo', onPress: () => {} }} />,
         },
         {
           key: 'visible-toggle',
@@ -1953,7 +1953,7 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Default',
           node: (
             <TopNav
-              title="Trip planner"
+              title="Projects"
               leading={<Button variant="secondary" size="small" showIcon showLabel={false} iconName="chevron-left" accessibilityLabel="Back" onPress={() => {}} />}
               trailing={<Button variant="secondary" size="small" showIcon showLabel={false} iconName="search" accessibilityLabel="Search" onPress={() => {}} />}
             />
@@ -1970,7 +1970,7 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Leading only',
           node: (
             <TopNav
-              title="Trip details"
+              title="Item details"
               leading={<Button variant="secondary" size="small" showIcon showLabel={false} iconName="chevron-left" accessibilityLabel="Back" onPress={() => {}} />}
             />
           ),
@@ -1980,7 +1980,7 @@ export const sections: SectionDef<SectionId>[] = [
           name: 'Trailing only',
           node: (
             <TopNav
-              title="Saved trips"
+              title="Saved items"
               trailing={<Button variant="secondary" size="small" showIcon showLabel={false} iconName="add" accessibilityLabel="Add" onPress={() => {}} />}
             />
           ),
@@ -2005,7 +2005,7 @@ export const sections: SectionDef<SectionId>[] = [
     a11y: 'A plain View; each Button child carries its own accessibility role and label.',
     props: [
       { name: 'children', type: 'ReactNode', required: true, desc: 'Up to three full-width Button elements, stacked vertically. Extra children are dropped.' },
-      { name: 'caption', type: 'ReactNode', desc: 'Small text shown above the top button — e.g. a trip summary.' },
+      { name: 'caption', type: 'ReactNode', desc: 'Small text shown above the top button — e.g. an item summary.' },
       { name: 'showCaption', type: 'boolean', default: 'true', desc: 'Hide the caption row without unmounting caption content.' },
       { name: 'elevated', type: 'boolean', default: 'false', desc: 'Shows the upward-cast shadow, separating the Dock from scrollable content above it. BottomSheet sets this automatically for a Dock footer; set it yourself elsewhere.' },
     ],
@@ -2018,8 +2018,8 @@ export const sections: SectionDef<SectionId>[] = [
           key: 'default',
           name: 'Default',
           node: (
-            <Dock caption="3 stops · 24 min total">
-              <Button label="Start trip" onPress={() => {}} />
+            <Dock caption="3 items · 24 min total">
+              <Button label="Start" onPress={() => {}} />
               <Button label="Save for later" variant="secondary" onPress={() => {}} />
               <Button label="Share" variant="tertiary" onPress={() => {}} />
             </Dock>
@@ -2044,8 +2044,8 @@ export const sections: SectionDef<SectionId>[] = [
           key: 'caption-hidden',
           name: 'Caption hidden',
           node: (
-            <Dock caption="3 stops · 24 min total" showCaption={false}>
-              <Button label="Start trip" onPress={() => {}} />
+            <Dock caption="3 items · 24 min total" showCaption={false}>
+              <Button label="Start" onPress={() => {}} />
             </Dock>
           ),
         },
@@ -2062,8 +2062,8 @@ export const sections: SectionDef<SectionId>[] = [
           key: 'elevated',
           name: 'Elevated',
           node: (
-            <Dock elevated caption="3 stops · 24 min total">
-              <Button label="Start trip" onPress={() => {}} />
+            <Dock elevated caption="3 items · 24 min total">
+              <Button label="Start" onPress={() => {}} />
             </Dock>
           ),
         },
@@ -2120,8 +2120,8 @@ export const sections: SectionDef<SectionId>[] = [
           props: { placement: 'bottom' },
           node: (
             <View style={demo.tooltipDemoBox}>
-              <Tooltip visible label="Tap to add a stop" placement="bottom">
-                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add stop" onPress={() => {}} />
+              <Tooltip visible label="Tap to add an item" placement="bottom">
+                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add item" onPress={() => {}} />
               </Tooltip>
             </View>
           ),
@@ -2138,7 +2138,7 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <View style={demo.tooltipDemoBox}>
               <Tooltip visible label="Top left" placement="bottom" align="left">
-                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add stop" onPress={() => {}} />
+                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add item" onPress={() => {}} />
               </Tooltip>
             </View>
           ),
@@ -2150,7 +2150,7 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <View style={demo.tooltipDemoBox}>
               <Tooltip visible label="Top right" placement="bottom" align="right">
-                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add stop" onPress={() => {}} />
+                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add item" onPress={() => {}} />
               </Tooltip>
             </View>
           ),
@@ -2162,7 +2162,7 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <View style={demo.tooltipDemoBox}>
               <Tooltip visible label="Bottom left" placement="top" align="left">
-                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add stop" onPress={() => {}} />
+                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add item" onPress={() => {}} />
               </Tooltip>
             </View>
           ),
@@ -2174,7 +2174,7 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <View style={demo.tooltipDemoBox}>
               <Tooltip visible label="Bottom right" placement="top" align="right">
-                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add stop" onPress={() => {}} />
+                <Button variant="ghost" size="medium" showIcon showLabel={false} iconName="add" accessibilityLabel="Add item" onPress={() => {}} />
               </Tooltip>
             </View>
           ),
@@ -2252,7 +2252,7 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'leading',
           name: 'With leading',
-          node: <ListItem title="Jordan Lee" subtitle="Last trip: Uptown & The Bronx" leading={<Avatar initials="JL" size={32} />} />,
+          node: <ListItem title="Jordan Lee" subtitle="Last active: Design review" leading={<Avatar initials="JL" size={32} />} />,
         },
         {
           key: 'trailing',
@@ -2262,17 +2262,17 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'footer-text',
           name: 'With footer (text)',
-          node: <ListItem title="Signal delay" subtitle="Reported near 14 St" footer="2 min ago" />,
+          node: <ListItem title="Sync delay" subtitle="Reported by Jordan" footer="2 min ago" />,
         },
         {
           key: 'footer-badge',
           name: 'With footer (badge)',
-          node: <ListItem title="Line suspended" subtitle="96 St and 137 St" footer={<Badge variant="negative" label="Service alert" />} />,
+          node: <ListItem title="Sync paused" subtitle="2 projects affected" footer={<Badge variant="negative" label="Alert" />} />,
         },
         {
           key: 'footer-button',
           name: 'With footer (button)',
-          node: <ListItem title="Trip request" subtitle="Jordan Lee wants to share a ride" footer={<Button label="Accept" size="small" onPress={() => {}} />} />,
+          node: <ListItem title="Item request" subtitle="Jordan Lee wants to share a project" footer={<Button label="Accept" size="small" onPress={() => {}} />} />,
         },
         {
           key: 'trailing-text',
@@ -2328,7 +2328,7 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <List>
               <ListItem title="Notifications" trailing={<Icon name="chevron-right" color={DS_SEMANTIC.text.muted} />} onPress={() => {}} />
-              <ListItem title="Jordan Lee" subtitle="Last trip: Uptown & The Bronx" leading={<Avatar initials="JL" size={32} />} onPress={() => {}} />
+              <ListItem title="Jordan Lee" subtitle="Last active: Design review" leading={<Avatar initials="JL" size={32} />} onPress={() => {}} />
               <ListItem title="Delete account" onPress={() => {}} />
             </List>
           ),
@@ -2355,7 +2355,7 @@ export const sections: SectionDef<SectionId>[] = [
     // configurations live under "States".
     variants: {
       itemsFill: true,
-      items: [{ key: 'default', name: 'Default', node: <EmptyState title="No saved trips yet" /> }],
+      items: [{ key: 'default', name: 'Default', node: <EmptyState title="No saved items yet" /> }],
     },
     states: {
       itemsFill: true,
@@ -2363,7 +2363,7 @@ export const sections: SectionDef<SectionId>[] = [
         {
           key: 'description',
           name: 'With description',
-          node: <EmptyState iconName="search" title="No results found" description="Try a different station or address." />,
+          node: <EmptyState iconName="search" title="No results found" description="Try a different search term." />,
         },
         {
           key: 'action',
@@ -2371,9 +2371,9 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <EmptyState
               iconName="waypoints"
-              title="No saved trips yet"
-              description="Your saved trips will show up here."
-              action={{ label: 'Start a trip', onPress: () => {} }}
+              title="No saved items yet"
+              description="Your saved items will show up here."
+              action={{ label: 'Create an item', onPress: () => {} }}
             />
           ),
         },
@@ -2384,9 +2384,9 @@ export const sections: SectionDef<SectionId>[] = [
           node: (
             <EmptyState
               iconName="waypoints"
-              title="No saved trips yet"
-              description="Your saved trips will show up here."
-              action={{ label: 'Start a trip', onPress: () => {} }}
+              title="No saved items yet"
+              description="Your saved items will show up here."
+              action={{ label: 'Create an item', onPress: () => {} }}
               secondaryAction={{ label: 'Not now', onPress: () => {} }}
             />
           ),
@@ -2423,11 +2423,11 @@ export const sections: SectionDef<SectionId>[] = [
     variants: {
       itemsFill: true,
       items: [
-        { key: 'title-only', name: 'Title only', node: <SectionHeader title="Nearby stations" /> },
+        { key: 'title-only', name: 'Title only', node: <SectionHeader title="Recent items" /> },
         {
           key: 'with-icon',
           name: 'With icon',
-          node: <SectionHeader title="Trip details" labelIcon={{ name: 'info-circle', accessibilityLabel: 'About trip details' }} />,
+          node: <SectionHeader title="Item details" labelIcon={{ name: 'info-circle', accessibilityLabel: 'About item details' }} />,
         },
         {
           key: 'with-button',
@@ -2546,7 +2546,7 @@ export const sections: SectionDef<SectionId>[] = [
   {
     id: 'Motion',
     path: 'tokens/motion.ts',
-    description: 'Duration (one-shot transitions), loop duration (continuous, indeterminate loops like Loading/Shimmer), easing, and spring tokens for transitions/animations. Easings are cubic-bezier tuples, not Easing objects, so the token file stays free of any react-native import. The spring config is grounded in the metro-native app this template was extracted from, where the same values drive its BottomSheet\'s snap-point transitions.',
+    description: 'Duration (one-shot transitions), loop duration (continuous, indeterminate loops like Loading/Shimmer), easing, and spring tokens for transitions/animations. Easings are cubic-bezier tuples, not Easing objects, so the token file stays free of any react-native import. The spring config is near-critically damped for quick snap-point transitions without bounce.',
     tokenGallery: true,
     render: () => <MotionGallery />,
   },
@@ -2719,20 +2719,20 @@ export const sections: SectionDef<SectionId>[] = [
     },
   },
   {
-    id: 'TripPlannerForm',
+    id: 'ProfileSetupForm',
     path: 'Card · InputField · Divider · Button',
-    description: 'A composed real screen — not one component in isolation — showing how Card, InputField, Divider, and Button actually fit together: a From/To trip form with a secondary "Add stop" action and a primary "Continue" that\'s disabled until a destination is entered.',
+    description: 'A composed real screen — not one component in isolation — showing how Card, InputField, Divider, and Button actually fit together: a From/To form with a secondary "Add recipient" action and a primary "Continue" that\'s disabled until a recipient is entered.',
     tokenGallery: true,
     fullWidthLabel: 'Preview',
-    render: () => <TripPlannerFormDemo />,
+    render: () => <ProfileSetupFormDemo />,
   },
   {
-    id: 'SavedTrips',
+    id: 'SavedItems',
     path: 'TopNav · SearchField · UnderlineTabs · PillRow · SectionHeader · Dropdown · List · ListItem · Avatar · Badge · Loading · Toast · EmptyState · Tooltip · Dock',
-    description: 'A composed real screen — a saved-trips list with a search bar, tab switcher, mode filter pills, a sort Dropdown, and a bottom action bar. Switch to the "Favorites" tab (or remove every row) to see the EmptyState alternative to the list; tap the header icon to see its Tooltip; tap a row\'s trailing × to see the Toast, which only appears after that real action and auto-dismisses (or Undo) — remove two rows back-to-back and each removal gets its own stacked toast on its own clock.',
+    description: 'A composed real screen — a saved-items list with a search bar, tab switcher, mode filter pills, a sort Dropdown, and a bottom action bar. Switch to the "Favorites" tab (or remove every row) to see the EmptyState alternative to the list; tap the header icon to see its Tooltip; tap a row\'s trailing × to see the Toast, which only appears after that real action and auto-dismisses (or Undo) — remove two rows back-to-back and each removal gets its own stacked toast on its own clock.',
     tokenGallery: true,
     fullWidthLabel: 'Preview',
-    render: () => <SavedTripsDemo />,
+    render: () => <SavedItemsDemo />,
   },
   {
     id: 'ReportIssue',
@@ -2763,7 +2763,7 @@ export const nav: NavGroup<SectionId>[] = [
   { label: 'Overlays', ids: ['Tooltip', 'Dialog'] },
   { label: 'Layout', ids: ['Divider', 'ListItem', 'List', 'EmptyState', 'SectionHeader'] },
   { label: 'Sub-Parts', ids: ['AnimatedChevron', 'FieldContainer', 'InputClearButton', 'SkeletonGroup'] },
-  { label: 'Recipes', ids: ['TripPlannerForm', 'SavedTrips', 'ReportIssue'] },
+  { label: 'Recipes', ids: ['ProfileSetupForm', 'SavedItems', 'ReportIssue'] },
   { label: 'Tokens', ids: ['Colors', 'Spacing', 'Typography', 'Font', 'Motion', 'Radius', 'Shadow', 'Icons'] },
   { label: 'Reference', ids: ['Manifest'] },
 ];

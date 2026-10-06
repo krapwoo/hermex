@@ -1,7 +1,7 @@
 // Dev-only harness — not part of the reusable template. Hosts the Hermex Design System catalog
 // (the Phase 0 Hermex audit layer + the retained template catalog, combined) as the default route,
 // plus the template's own two worked catalog examples on their original query params, all browsable
-// with `expo start --web`, mirroring how metro-native previews its own `?ds=1` catalog.
+// with `expo start --web`, following the same query-parameter routing used by this harness.
 //
 //   http://localhost:8096/                   → HermesDesignSystemCatalog ("Hermex Design System")
 //   http://localhost:8096/?catalog=template  → CatalogExample ("Native App DS Template", untouched)

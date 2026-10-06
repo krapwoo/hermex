@@ -44,16 +44,12 @@ export type IconName =
   | 'thumb-up'
   | 'thumb-down'
   | 'users'
-  // Clock face (hour hand at 8) — used by the arrive-by row
+  // Clock face (hour hand at 8)
   | 'clock-8'
   | 'triangle-alert'
   | 'door-open'
   | 'navigation'
-  | 'waypoints'
-  // Transit mode icons
-  | 'subway'
-  | 'train'
-  | 'ferry';
+  | 'waypoints';
 
 /** Shared props consumed by both the native and web `Icon` renderers. */
 export interface IconRenderProps {

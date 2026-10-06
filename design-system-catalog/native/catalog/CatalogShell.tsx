@@ -92,7 +92,7 @@ export function CatalogShell<TId extends string>({
   intro,
   subtitle: subtitleOverride,
 }: {
-  /** Short product/app name — shown as the sidebar's own logo (e.g. "Metro NYC"). */
+  /** Short product/app name — shown as the sidebar's own logo (e.g. "Hermex"). */
   appName: string;
   /** What this catalog is (e.g. "Design System") — shown as the sidebar subtitle and as the
    *  large page heading in the main column. */

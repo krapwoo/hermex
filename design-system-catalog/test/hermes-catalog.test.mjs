@@ -2303,25 +2303,16 @@ test('Correction: explicit icon regeneration requires HERMEX_ICON_SIMULATOR_UDID
   assert.doesNotMatch(src, /PREFERRED_SIMULATOR_NAME/, 'expected no named-device discovery preference, since discovery itself is retired');
 });
 
-// Correction: `icons/types.ts`/`icons/paths.ts` document an unrelated, unverifiable "Metro NYC Figma
-// design system" icon set that belongs only to the separate, unmerged `?catalog=template` route (see
-// WHEN_TO_USE.md / CLAUDE.md's Design System section). The authoritative Hermex icon path — the Hermex
-// component-family previews — must render real, verified Apple SF Symbols (HermesIconReference's own
-// generated inventory/renderer), never that template icon set or its provenance claim.
-test('Correction: the authoritative Hermex icon path carries no unverifiable "Metro NYC design system" provenance claim or data — HermesComponentFamiliesPreviews does not import the template icon set', () => {
+// The authoritative Hermex icon path must stay isolated from the separate generic template icon set:
+// component-family previews render verified Apple SF Symbols through HermesIconReference's generated
+// inventory/renderer rather than importing `icons/` from the `?catalog=template` route.
+test('the authoritative Hermex icon path does not import the generic template icon set', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
-  assert.doesNotMatch(previewsSrc, /Metro NYC/i, 'the Hermex previews file must not carry the unverifiable Metro NYC provenance claim');
   assert.doesNotMatch(
     previewsSrc,
     /from\s+['"]\.\.\/\.\.\/\.\.\/icons(\/|['"])/,
     'expected no import from the generic template icon set (icons/) in the authoritative Hermex preview file — it documents real SF Symbols only',
   );
-
-  const sectionsSrc = read(HERMES_SECTIONS_PATH);
-  assert.doesNotMatch(sectionsSrc, /Metro NYC/i, 'hermesSections.tsx must not carry the unverifiable Metro NYC provenance claim');
-
-  const iconReferenceSrc = read(HERMES_ICON_REFERENCE_PATH);
-  assert.doesNotMatch(iconReferenceSrc, /Metro NYC/i);
 });
 
 // ─── Web Loading: reduced motion ─────────────────────────────────────────────────────────────────

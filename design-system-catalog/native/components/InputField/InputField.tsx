@@ -21,13 +21,13 @@ import type { IconName } from '../../../icons';
  * The label shown at the head of the field. Text variants render as a word; `'icon'` renders a
  * leading icon instead (supply `labelIcon`).
  */
-export type InputFieldLabelVariant = 'To' | 'From' | 'Walk time' | 'Arrive by' | 'Name' | 'icon';
+export type InputFieldLabelVariant = 'To' | 'From' | 'Duration' | 'Due by' | 'Name' | 'icon';
 
 const LABEL_TEXT: Record<Exclude<InputFieldLabelVariant, 'icon'>, string> = {
   To: 'To',
   From: 'From',
-  'Walk time': 'Walk time',
-  'Arrive by': 'Arrive by',
+  Duration: 'Duration',
+  'Due by': 'Due by',
   Name: 'Name',
 };
 

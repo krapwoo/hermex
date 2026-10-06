@@ -53,20 +53,20 @@ export const DS_TYPOGRAPHY = {
 export type TypographyToken = keyof typeof DS_TYPOGRAPHY;
 
 /**
- * When to reach for each type token — grounded in how the source app actually uses them, not
- * aspirational. Meant to be read by whoever (human or AI) is deciding which token fits a new piece
+ * When to reach for each type token — grounded in the template component examples, not aspirational.
+ * Meant to be read by whoever (human or AI) is deciding which token fits a new piece
  * of UI text; also rendered in the catalog's Typography page.
  */
 export const DS_TYPOGRAPHY_USE: Record<TypographyToken, string> = {
   labelXs: "Smallest UI label — tab labels, a status row's label, a section header's trailing button text.",
   labelSm: "Small UI label — a pill's text, a small button's label, a banner's title.",
   labelMd: "Standard UI label — a large button's label, an emphasized banner title.",
-  bodyXs: "Fine print / secondary meta text — settings captions, a bug-report hint, a train-info row's footnote.",
+  bodyXs: "Fine print / secondary meta text — settings captions, a bug-report hint, or a list row's footnote.",
   bodySm: "Small reading text — a toast's message, a text area's input, a banner's description.",
   bodyMd: "Standard reading text — a search field's input, an input field's value, a screen's body copy.",
-  emphasisSm: "A prominent standalone number — a train countdown, a success sheet's headline number.",
-  emphasisMd: 'A bigger emphasis number/headline — onboarding hero screens, a key stat on a saved/map screen.',
-  emphasisLg: "The largest 'big number' emphasis — an onboarding welcome hero, a live arrival countdown.",
+  emphasisSm: "A prominent standalone number — an unread count or a success sheet's headline number.",
+  emphasisMd: 'A bigger emphasis number/headline — onboarding hero screens or a key dashboard stat.',
+  emphasisLg: "The largest 'big number' emphasis — an onboarding welcome hero or a live progress total.",
   display: 'Reserved for a true hero/display moment — the largest size on the scale; no current consumer.',
   title: "A screen/page title — a settings screen's heading, an error state's title.",
 };

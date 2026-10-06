@@ -103,7 +103,7 @@ either behind a dev-only route in your Expo app):
 ```tsx
 import { CatalogExample } from '@ds/native/catalog/CatalogExample';
 // or: import { CatalogFrameworkExample } from '@ds/native/catalog/CatalogFrameworkExample';
-// e.g. render one from a `?ds=1` dev route, mirroring the pattern this template's source project used.
+// e.g. render one from a dev-only query route in your host app.
 ```
 
 For a quick browser preview without a host app, see `native-preview/` — a minimal throwaway Expo

@@ -1,12 +1,11 @@
 /**
  * Catalog-only design tokens.
  *
- * Deliberately independent of any host app's design-system tokens (e.g. Metro's DS_SEMANTIC /
- * DS_PALETTE / DS_SPACING) — the catalog is a tool for *documenting* a design system, not a
- * consumer of it. Keeping its own chrome on its own tokens means:
+ * Deliberately independent of any host app's design-system tokens — the catalog is a tool for
+ * *documenting* a design system, not a consumer of it. Keeping its own chrome on its own tokens means:
  *   1. A change to the host app's tokens never accidentally changes how the catalog looks.
  *   2. This whole `catalog/` folder can be copied into a different app's repo and used to
- *      document THAT app's components without dragging in Metro-specific values.
+ *      document that app's components without importing host-specific values.
  *
  * Every catalog-chrome font size (headings, labels, prop tables, nav, notes) should draw from
  * CATALOG_TYPE. The one exception is intentional: a section that renders a host app's own
