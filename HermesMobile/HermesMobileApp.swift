@@ -99,8 +99,8 @@ struct HermesMobileApp: App {
                     StreamingLabView()
                 }
             } else if ProcessInfo.processInfo.arguments.contains("--hermex-overlay-lab") {
-                // Launch argument hook so the unadopted custom overlay components (Dialog, and
-                // later Popover Menu) can be exercised in a signed simulator build without a
+                // Launch argument hook so the unadopted custom overlay components (Dialog and
+                // Popover Menu) can be exercised in a signed simulator build without a
                 // production call site (issue #607): `xcrun simctl launch <udid>
                 // com.uzairansar.hermesmobile --hermex-overlay-lab`
                 NavigationStack {

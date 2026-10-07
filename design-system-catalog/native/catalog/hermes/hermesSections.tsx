@@ -1364,7 +1364,7 @@ AttachmentFileBadge(
       { name: 'initials', type: 'String', required: true, desc: 'Displayed initials (production Swift).' },
       { name: 'colorHex / selectedHeaderLogoColor', type: 'String / Color', required: true, desc: 'Per-server or per-account Header Logo Color fill (production Swift).' },
       { name: 'size (ServerAvatarBadge, production Swift)', type: 'CGFloat', default: '32', desc: 'ServerAvatarBadge only — the inline header avatar uses a fixed search-chrome icon size instead.' },
-      { name: 'HermesAvatarSize (production Swift)', type: '.small (32) | .medium (40) | .large (48)', default: '.medium', desc: 'Named diameter token for bot-mark and other Avatar compositions. The Tip Jar companion uses .large instead of a local raw size.' },
+      { name: 'HermesAvatarSize (production Swift)', type: '.small (32) | .medium (40) | .large (48)', default: '.medium', desc: 'Named diameter token for Avatar compositions; production currently uses .small for AccordionList\'s leading slot.' },
       { name: 'systemImage (HermexAvatar, production Swift)', type: 'String', required: true, desc: 'An SF Symbol name, sized to HermesIconSize.Avatar at the chosen HermesAvatarSize.' },
       { name: 'isDecorative (HermexAvatar, production Swift)', type: 'Bool', default: 'true', desc: 'Hides the badge from VoiceOver when the surrounding content already names the identity, matching Content Unavailable\'s own combined accessibility element.' },
       {
@@ -1537,7 +1537,7 @@ AttachmentFileBadge(
         sourcePaths: ['HermesMobile/Features/Shared/HermexTextInput.swift'],
         notes: [
           'Deliberately thin: `HermexTextField` forwards to native `TextField`, `HermexSecureField` to native `SecureField`, and `HermexCodeInput` to exactly one native `TextField` whose `.keyboardType(.numberPad)`/`.textContentType(.oneTimeCode)` drive a decorative, accessibility-hidden `ForEach` row of digit boxes — none of the three own a clear button or their own focus, keyboard, autocorrection, or capitalization policy beyond Code\'s fixed digit-entry contract.',
-          'Report only: production\'s existing direct TextField and SecureField call sites (see the Design System Contract\'s frozen TextField/SecureField baselines) are unchanged by this branch and continue to call TextField/SecureField directly; migrating them onto the three wrappers is scoped to a separate issue, not this slice.',
+          'Report only: production\'s existing direct TextField and SecureField call sites are unchanged by this branch and continue to call TextField/SecureField directly; migrating them onto the three wrappers is scoped to a separate issue, not this slice.',
           'The chat composer\'s own text entry is a UIKit UITextView wrapped in UIViewRepresentable (ComposerTextView), not TextField/HermexTextField — its keyboard, draft, and attachment behavior stay documented under the Composer pattern, not here.',
           'TextEditor remains a native iOS control for multiline body text; this slice does not add a Hermex-owned multiline wrapper.',
           'This reconstruction uses plain React Native TextInput to approximate HermexTextField/HermexSecureField/HermexCodeInput visually; it does not compose the generic template InputField, which owns a different floating-label/clear-button visual language production does not use. The retained template catalog keeps its own InputField entry separately.',
@@ -1802,8 +1802,8 @@ AttachmentFileBadge(
   {
     id: 'Search',
     description:
-      'One custom Hermex-owned search field, `HermexSearchField`, plus `.hermexSearch(...)`, a convenience modifier that composes that exact field as a persistent top content inset. `HermexSearchField` owns its chrome (an adaptive Neutral surface and border, resting/focused/disabled), local focus, the conditional clear control, and keyboard-submit wiring; the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, autocorrection, and platform text-entry accessibility. Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience — Hermex cannot truthfully reproduce that native placement contract once it owns the chrome.',
-    whenToUse: 'Reach for `HermexSearchField` whenever the user enters a query that filters or looks up content; use `.hermexSearch` when that same field should stay pinned above a scrolling list. Search is defined by query behavior, not placement, so an inline lookup inside a sheet or card is still Search. Write a concise title and optional prompt, keep query edits live through the caller\'s binding, and pair filtered emptiness with a specific no-results state — the field never owns results.',
+      'One custom Hermex-owned search field, `HermexSearchField`, plus `.hermexSearch(...)`, a convenience modifier that composes that exact field as a persistent top content inset. `HermexSearchField` owns its chrome (an adaptive Neutral surface and border, resting/focused/disabled), local focus, the conditional clear control, and keyboard-submit wiring; the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, autocorrection, and platform text-entry accessibility. Native `.searchable` remains a valid, supported control and is what production\'s screen-level search uses today; `HermexSearchField` does not replace or deprecate it. The difference is placement ownership: `.searchable` lets the system place and draw the field in navigation chrome, while `HermexSearchField` draws Hermex chrome inside the content.',
+    whenToUse: 'Keep native `.searchable` when a screen\'s search belongs in the system navigation chrome — production\'s existing search screens do this. Reach for `HermexSearchField` when the search field is part of the content, and use `.hermexSearch` when that same field should stay pinned above a scrolling list. Search is defined by query behavior, not placement, so an inline lookup inside a sheet or card is still Search. Write a concise title and optional prompt, keep query edits live through the caller\'s binding, and pair filtered emptiness with a specific no-results state — the field never owns results.',
     props: [
       { name: 'title', type: 'LocalizedStringKey', required: true, desc: 'Caller-owned localizable title; doubles as the field\'s persistent accessibility label.' },
       { name: 'text', type: 'Binding<String>', required: true, desc: 'Live query binding; the field owns local focus, clear, and keyboard-submit wiring around it, while the caller owns filtering and results.' },
@@ -1814,8 +1814,8 @@ AttachmentFileBadge(
     a11y: 'The caller\'s title is the persistent accessible label; the search icon is decorative and hidden from accessibility. The clear control is exposed only while the query is nonempty, announces "Clear search", and keeps an independent 44pt minimum hit target. Dynamic Type may grow the field\'s height without clipping; RTL mirrors visual order while preserving logical leading/trailing behavior; Increased Contrast strengthens the border; Reduce Transparency falls back to an opaque surface.',
     render: () => <SearchFamilyGallery />,
     hermesReference: {
-      useWhen: 'Use `HermexSearchField` for any query that filters or looks up content, even inline inside a sheet or card; use `.hermexSearch(...)` when the same field should stay pinned above a scrolling list. Pair filtered emptiness with a specific no-results state.',
-      avoidWhen: 'Avoid adding scopes, suggestions, history, tokens/scopes, voice UI, remote requests, debounce, or result ownership to the field itself — the caller keeps owning filtering, results, loading, and error/no-results presentation.',
+      useWhen: 'Use `HermexSearchField` when a query field is part of the content — inline inside a sheet or card — and `.hermexSearch(...)` when that same field should stay pinned above a scrolling list. Native `.searchable` stays valid when the system should own search placement in navigation chrome. Pair filtered emptiness with a specific no-results state.',
+      avoidWhen: 'Avoid treating this entry as a mandate to replace a working native `.searchable` screen; migrating a screen is a separate, deliberate adoption decision. Avoid adding scopes, suggestions, history, tokens/scopes, voice UI, remote requests, debounce, or result ownership to the field itself — the caller keeps owning filtering, results, loading, and error/no-results presentation.',
       alternatives: [
         { name: 'Text Input', useWhen: 'For a value the user types and keeps — a name, URL, credential, or code — rather than a query that filters or looks up content; any filter or lookup field is Search, even inline inside a sheet or card.' },
       ],
@@ -1829,7 +1829,7 @@ AttachmentFileBadge(
         sourcePaths: ['HermesMobile/Features/Shared/HermexSearch.swift', 'HermesMobile/Features/Shared/HermexSelectionSheet.swift'],
         notes: [
           'One canonical visual implementation: `HermexSearchField` owns chrome, local `@FocusState`, the clear control, and `.submitLabel(.search)`/`.onSubmit` wiring around a native `TextField`; `.hermexSearch(...)` only composes that same field as a `.safeAreaInset(edge: .top)` — there is no second field implementation.',
-          'Native `.searchable` and its navigation-drawer placement parameter are retired for the visible experience; Hermex cannot truthfully reproduce that native placement contract once it draws its own chrome.',
+          'Native `.searchable` remains valid and production-used: HermexSearchField is an additional Hermex-owned option, not a replacement. A Hermex-drawn field cannot reproduce the system\'s navigation-chrome placement, so a screen that wants that placement keeps `.searchable`.',
           'HermexSelectionSheet.swift\'s optional search slot renders HermexSearchField directly, but HermexSelectionSheet.swift itself is only called by the DEBUG-only HermexOverlayLab — not a normal-runtime production screen — so this internal composition is not a production call site for Search.',
           'Report only: production\'s eight existing direct `.searchable` screen call sites (SessionListComponents.swift, ModelPickerSheet.swift, SkillsView.swift, DefaultProfilePickerView.swift, CronJobConfigurationPickers.swift, CronJobSkillsPicker.swift, GitBranchPickerView.swift, KanbanLabView.swift) are unchanged by this branch and continue to call `.searchable` directly; migrating a screen onto `.hermexSearch` is scoped to a separate issue, not this slice.',
         ],
@@ -3220,7 +3220,7 @@ export const hermesNav: NavGroup<HermesSectionId>[] = [
     // joined this group once its `.hermexSearch` foundation wrapper shipped over native
     // `.searchable` — it moved out of Native iOS even though production hasn't adopted the wrapper
     // yet, and stayed here once that wrapper became the custom HermexSearchField/.hermexSearch
-    // foundation with native `.searchable`/`SearchFieldPlacement` retired (see Search's own
+    // foundation, while native `.searchable` remains a valid, production-used control (see Search's own
     // adoptionStatus for the truthful, zero-adoption detail). Text Input
     // joined the same way once its three HermexTextField/HermexSecureField/HermexCodeInput
     // foundation wrappers shipped over native TextField/SecureField/a single numeric TextField — see

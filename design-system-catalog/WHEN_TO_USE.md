@@ -110,9 +110,10 @@ A few representative, real Hermex disambiguations — read as examples of how `u
   is `foundation-available`: `HermexSelectionSheet.swift` composes it directly, but that sheet has no
   normal-runtime production caller of its own — its only caller is the DEBUG-only `HermexOverlayLab`
   — so no shipped screen renders `HermexSearchField` today. Production's eight existing screen-level
-  `.searchable` call sites remain unchanged. Use `.hermexSearch` for a future pinned list-search
-  migration, but keep each screen migration in a separate issue; the shared field preserves native
-  text-editing semantics through its system-backed `TextField`.
+  `.searchable` call sites remain unchanged, and native `.searchable` stays a valid choice when the
+  system should own search placement in navigation chrome. Use `HermexSearchField` or `.hermexSearch`
+  when the field belongs in the content; migrating an existing screen is deliberate work for a
+  separate issue. The shared field preserves native text-editing semantics through its system-backed `TextField`.
 
 ## Checking a decision mechanically
 

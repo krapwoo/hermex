@@ -154,7 +154,7 @@ test('side-panel group titles omit the redundant Hermex suffix while native and 
   assert.doesNotMatch(
     search,
     /forwards straight to native `.searchable`|avoid[^']*custom chrome/i,
-    'native .searchable forwarding and the ban on custom chrome are retired',
+    'the Search entry must not describe HermexSearchField as forwarding to .searchable or ban custom chrome',
   );
 
   const segmented = extractHermesSection(src, 'Segmented Control');
@@ -3883,8 +3883,8 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
 
 // Search becomes a custom Hermex-owned shared foundation component: one canonical `HermexSearchField`
 // plus a `.hermexSearch(...)` convenience modifier that composes it as a persistent top content inset.
-// Native `.searchable` forwarding and `SearchFieldPlacement` are retired for the visible experience —
-// the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, and
+// Native `.searchable` remains a valid, production-used control — HermexSearchField is an additional
+// option, not a replacement — and the system-backed `TextField` still owns text editing, selection, dictation, IME/composition, and
 // platform accessibility. Production screens stay on their existing eight direct `.searchable` call
 // sites — migrating a *screen* onto it is a separate issue. `HermexSelectionSheet.swift`
 // (HermesMobile/Features/Shared/HermexSelectionSheet.swift) composes `HermexSearchField` directly for
@@ -3893,15 +3893,17 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
 // production call site for Search. Search is genuinely foundation-available with zero normal-runtime
 // production-screen adoption; the preview becomes an interactive Hermex Search family demonstration
 // with custom Hermex field chrome (not a bare native reconstruction).
-test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation with native .searchable/SearchFieldPlacement retired, a truthful foundation-available status naming the non-production HermexSelectionSheet composition, and an interactive family preview with custom chrome', () => {
+test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation that keeps native .searchable valid, a truthful foundation-available status naming the non-production HermexSelectionSheet composition, and an interactive family preview with custom chrome', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
 
   assert.match(search, /HermexSearchField/, 'expected the Search entry to name the canonical HermexSearchField component');
   assert.match(search, /`\.hermexSearch/, 'expected the Search entry to name the Hermex-owned .hermexSearch composition modifier');
   assert.match(search, /system-backed `TextField`|system-backed TextField/i, 'expected the Search entry to state the native TextField still owns text editing');
-  assert.doesNotMatch(search, /`\.searchable`\s*forwarding|forwards straight to native `\.searchable`/i, 'native .searchable forwarding is retired');
-  assert.doesNotMatch(search, /SearchFieldPlacement/, 'SearchFieldPlacement is retired; Hermex cannot truthfully reproduce native navigation-drawer placement');
+  assert.doesNotMatch(search, /`\.searchable`\s*forwarding|forwards straight to native `\.searchable`/i, 'HermexSearchField does not forward to .searchable');
+  assert.doesNotMatch(search, /retired/i, 'native .searchable is still valid and production-used — the Search guidance must not call it retired');
+  assert.match(search, /`\.searchable` remains (a )?valid/, 'expected the Search entry to state explicitly that native .searchable remains valid');
+  assert.doesNotMatch(search, /SearchFieldPlacement/, 'the Search entry describes placement ownership without naming SearchFieldPlacement');
 
   // Correction: HermexSelectionSheet.swift composes HermexSearchField directly for its own optional
   // search slot, but HermexSelectionSheet.swift itself has no normal-runtime production caller (only
