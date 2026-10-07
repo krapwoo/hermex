@@ -2179,6 +2179,10 @@ export function CheckboxFamilyGallery() {
 }
 
 // ─── Attachment ────────────────────────────────────────────────────────────────
+// Production's message-tile file glyph (MessageBubbleView.fileCell) is a raw 28pt; no HermesIconSize
+// step matches it, and the foundation leaves AttachmentFileGlyph's size to its caller.
+const MESSAGE_FILE_GLYPH_SIZE = 28;
+
 export function AttachmentTileGallery() {
   const fileIconPanelSize = { width: HERMES_ATTACHMENT_SIZE.fileIconPanelWidth, height: HERMES_ATTACHMENT_SIZE.fileIconPanelHeight };
   const accessibilityFileIconPanelSize = {
@@ -2213,12 +2217,12 @@ export function AttachmentTileGallery() {
       >
       <View style={preview.row}>
         <Card density="compact" style={[preview.messageFileTile, gridCellSize]}>
-          <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Red[500]} />
+          <Icon name="paperclip" size={MESSAGE_FILE_GLYPH_SIZE} color={HERMES_COLOR_RAMPS.Red[500]} />
           <Text style={[preview.tileName, messageFileNameWidth]} numberOfLines={2}>quarterly-report.pdf</Text>
           <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Red[500] }]}>PDF</Text>
         </Card>
         <Card density="compact" style={[preview.messageFileTile, gridCellSize]}>
-          <Icon name="waypoints" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Green[500]} />
+          <Icon name="waypoints" size={MESSAGE_FILE_GLYPH_SIZE} color={HERMES_COLOR_RAMPS.Green[500]} />
           <Text style={[preview.tileName, messageFileNameWidth]} numberOfLines={2}>Q3-actuals.xlsx</Text>
           <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Green[500] }]}>XLSX</Text>
         </Card>
@@ -2228,7 +2232,7 @@ export function AttachmentTileGallery() {
             style={[preview.composerFileTile, { width: HERMES_ATTACHMENT_SIZE.composerFileTileWidth, minHeight: HERMES_ATTACHMENT_SIZE.composerFileTileMinHeight }]}
           >
             <View style={[preview.fileIconPanel, fileIconPanelSize, { backgroundColor: HERMES_COLOR_RAMPS.Blue[100] }]}>
-              <Icon name="menu" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Blue[500]} />
+              <Icon name="menu" size={HERMES_ICON_SIZE.large} color={HERMES_COLOR_RAMPS.Blue[500]} />
               <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Blue[500] }]}>MD</Text>
             </View>
             <View style={[preview.composerTileText, { width: HERMES_ATTACHMENT_SIZE.composerFileTextWidth }]}>
@@ -2279,7 +2283,7 @@ export function AttachmentTileGallery() {
           ]}
         >
           <View style={[preview.fileIconPanel, accessibilityFileIconPanelSize, { backgroundColor: HERMES_COLOR_RAMPS.Red[100] }]}>
-            <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Red[500]} />
+            <Icon name="paperclip" size={HERMES_ICON_SIZE.large} color={HERMES_COLOR_RAMPS.Red[500]} />
             <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Red[500] }]}>PDF</Text>
           </View>
           <View style={[preview.composerTileText, { width: HERMES_ATTACHMENT_SIZE.composerFileTextWidthAccessibility }]}>
@@ -2338,14 +2342,14 @@ export function AttachmentTileGallery() {
       >
       <View style={preview.row}>
         <View style={[preview.tileBox, gridCellSize]}>
-          <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Neutral[500]} />
+          <Icon name="paperclip" size={MESSAGE_FILE_GLYPH_SIZE} color={HERMES_COLOR_RAMPS.Neutral[500]} />
           <Text style={[preview.tileName, { color: HERMES_COLOR_RAMPS.Neutral[500] }]} numberOfLines={2}>README</Text>
           <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Neutral[500] }]}>FILE</Text>
         </View>
         <Shimmer variant="container" width={HERMES_ATTACHMENT_SIZE.messageGridCell} height={HERMES_ATTACHMENT_SIZE.messageGridCell} style={preview.tileBox} />
         <View>
           <View style={[preview.tileBox, gridCellSize]}>
-            <Icon name="briefcase" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Orange[500]} />
+            <Icon name="briefcase" size={MESSAGE_FILE_GLYPH_SIZE} color={HERMES_COLOR_RAMPS.Orange[500]} />
             <Text style={[preview.tileName, { color: HERMES_COLOR_RAMPS.Orange[500] }]} numberOfLines={2}>backup.zip</Text>
             <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Orange[500] }]}>ZIP</Text>
           </View>
@@ -2723,7 +2727,7 @@ export function ComposerPatternPreview() {
                 { width: HERMES_ATTACHMENT_SIZE.fileIconPanelWidth, height: HERMES_ATTACHMENT_SIZE.fileIconPanelHeight, backgroundColor: HERMES_COLOR_RAMPS.Blue[100] },
               ]}
             >
-              <Icon name="paperclip" size={HERMES_ICON_SIZE.extraLarge} color={HERMES_COLOR_RAMPS.Blue[500]} />
+              <Icon name="paperclip" size={HERMES_ICON_SIZE.large} color={HERMES_COLOR_RAMPS.Blue[500]} />
               <Text style={[preview.tileExt, { color: HERMES_COLOR_RAMPS.Blue[500] }]}>MD</Text>
             </View>
             <View style={preview.composerTileText}>

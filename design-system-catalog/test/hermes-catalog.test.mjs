@@ -1555,8 +1555,9 @@ test('Pending-Request Surface reconstruction matches the real block/field corner
   assert.match(src, /prBlock:\s*\{[^}]*borderRadius:\s*12,/, 'block surface corner radius should be 12 (PendingRequestBlockSurface)');
   assert.match(src, /prField:\s*\{[^}]*borderRadius:\s*14,/, 'field surface corner radius should be 14 (PendingRequestFieldSurface)');
   assert.match(section, /caller-supplied|caller-provided/i, 'expected the card surface\'s radius to be captioned as a caller-supplied parameter, not a fixed constant');
-  assert.match(section, /24pt/, 'expected the Sessions caller value (ChatComposerMetrics.cardCornerRadius)');
-  assert.doesNotMatch(section, /26pt/, 'the retired pre-HermesRadius Sessions value must not remain in the Pending-Request reconstruction');
+  assert.match(section, /26pt/, 'expected the Sessions caller value (ChatComposerMetrics.cardCornerRadius = 26)');
+  assert.match(src, /prCard:\s*\{[^}]*borderRadius:\s*26,/, 'card reconstruction radius should match ChatComposerMetrics.cardCornerRadius (26)');
+  assert.doesNotMatch(section, /24pt/, 'ChatComposerMetrics.cardCornerRadius is 26 on master; 24pt was a stale documentation value');
 });
 
 test('Hermex Token Coverage preserves the three still-true honesty facts (SF Symbols in place of an owned icon set, no semantic color layer, Dynamic Type owns type sizes) inside the final coverage table', () => {
@@ -1789,7 +1790,8 @@ test('every primary Hermex entry declares hermesReference (never the removed her
   assert.doesNotMatch(navBlock, /Hermex Token Coverage/);
   assert.match(sectionsSrc, /function HermesTokenCoverageTable/);
   assert.match(sectionsSrc + read(HERMES_REFERENCE_DETAILS_PATH), /Implementation notes/);
-  assert.match(sectionsSrc, /Adopted in the verified local implementation; pending upstream acceptance\./);
+  assert.match(sectionsSrc, /Pre-existing production component already on master; this branch documents it without changing its implementation\./);
+  assert.doesNotMatch(sectionsSrc, /pending upstream acceptance/, 'production-adopted entries are already on master, not awaiting upstream acceptance');
 
   assert.doesNotMatch(sectionsSrc, /knownVariants|evidenceLevel|evidenceNote|disposition:/);
   assert.doesNotMatch(typesSrc, /HermesAudit|HermesDisposition|HermesEvidenceLevel/);
@@ -2089,7 +2091,7 @@ test('HermesIconReference.tsx\'s size-scale and Avatar-pairing galleries request
   assert.doesNotMatch(avatarGallery, /iconAssetUri\(SCALE_DEMO_ICON\)/, 'the Avatar-pairing gallery must no longer resize the single overview asset');
 });
 
-test('HermesComponentFamiliesPreviews.tsx and hermesSections.tsx read HERMES_ICON_SIZE.extraLarge from the canonical ./hermesIconSize module, not a duplicate export', () => {
+test('HermesComponentFamiliesPreviews.tsx and hermesSections.tsx read HERMES_ICON_SIZE from the canonical ./hermesIconSize module, not a duplicate export', () => {
   for (const sourcePath of [COMPONENT_FAMILIES_PREVIEWS_PATH, HERMES_SECTIONS_PATH]) {
     const src = read(sourcePath);
     assert.match(
@@ -2098,7 +2100,7 @@ test('HermesComponentFamiliesPreviews.tsx and hermesSections.tsx read HERMES_ICO
       `expected ${sourcePath} to import HERMES_ICON_SIZE from ./hermesIconSize`,
     );
     assert.doesNotMatch(src, /HERMES_ICON_SIZE_EXTRA_LARGE/, `expected ${sourcePath} to no longer reference the retired HERMES_ICON_SIZE_EXTRA_LARGE`);
-    assert.match(src, /HERMES_ICON_SIZE\.extraLarge\b/, `expected ${sourcePath} to reference HERMES_ICON_SIZE.extraLarge`);
+    assert.match(src, /HERMES_ICON_SIZE\.\w+\b/, `expected ${sourcePath} to read a HERMES_ICON_SIZE step`);
   }
 });
 
@@ -3893,6 +3895,32 @@ test('Controller correction (2026-09-29, Popover Menu rendered-fidelity gap 3): 
 // production call site for Search. Search is genuinely foundation-available with zero normal-runtime
 // production-screen adoption; the preview becomes an interactive Hermex Search family demonstration
 // with custom Hermex field chrome (not a bare native reconstruction).
+// PR #974 review: HermesAvatarSize is read only by other new foundation files (AccordionList's
+// leading-slot inset, HermexAvatar's diameter); no production screen uses it, and the composed
+// specimens live in the DEBUG-only HermexOverlayLab. The Avatar entry must not describe it as production usage.
+// PR #974 accuracy audit: ServerAvatarBadge is private to SettingsView (Servers list and server
+// editor); the Sessions header and the Identity editor draw their own inline circles. Turn summary
+// rows use TranscriptTurnFoldRowView, not TranscriptLogRowView.
+test('Avatar and Transcript Activity product-context destinations match the production views that actually render them', () => {
+  const src = read(HERMES_SECTIONS_PATH);
+  const avatar = extractHermesSection(src, 'Hermes Avatar');
+  assert.doesNotMatch(avatar, /header avatar \(ServerAvatarBadge\)/, 'the Sessions header draws its own inline avatar, not ServerAvatarBadge');
+  assert.doesNotMatch(avatar, /initials and header color via ServerAvatarBadge/, 'the Identity editor draws its own inline circle, not ServerAvatarBadge');
+  assert.doesNotMatch(avatar, /Use ServerAvatarBadge \(production\)/, 'ServerAvatarBadge is private to SettingsView and cannot be reused');
+  const activity = extractHermesSection(src, 'Transcript Activity');
+  assert.doesNotMatch(activity, /summary disclosure, tool-call log lines, and the "Thinking" reasoning block compose this pattern, using the existing TranscriptLogRowView/, 'turn summary rows use TranscriptTurnFoldRowView');
+  assert.match(activity, /TranscriptTurnFoldRowView/);
+});
+
+test('HermesAvatarSize is described as foundation-only geometry, not as a production adoption', () => {
+  const avatar = extractHermesSection(read(HERMES_SECTIONS_PATH), 'Hermes Avatar');
+  const prop = avatar.match(/name: 'HermesAvatarSize \(production Swift\)'[^\n]*/)?.[0];
+  assert.ok(prop, 'expected the HermesAvatarSize prop row in the Avatar entry');
+  assert.doesNotMatch(prop, /production currently uses|Tip Jar/i, 'HermesAvatarSize has no production screen caller and Tip Jar uses its own local size');
+  assert.match(prop, /AccordionList[\s\S]*HermexAvatar/, 'expected the prop row to name its foundation-only readers, AccordionList and HermexAvatar');
+  assert.match(prop, /no production screen uses it/, 'expected the prop row to state that no production screen uses HermesAvatarSize');
+});
+
 test('Search is a custom Hermex-owned HermexSearchField/.hermexSearch foundation that keeps native .searchable valid, a truthful foundation-available status naming the non-production HermexSelectionSheet composition, and an interactive family preview with custom chrome', () => {
   const sectionsSrc = read(HERMES_SECTIONS_PATH);
   const search = extractHermesSection(sectionsSrc, 'Search');
@@ -4283,14 +4311,14 @@ test('Correction (gap 2): the Card and Attachment previews render the real Card 
 });
 
 // ─── Attachment token/color/component-composition slice (2026-09-26 catalog owner brief) ─────────
-// Mirrors production's newly-adopted HermesAttachmentSize (HermesMobile/Config/HermesAttachmentSize.
-// swift) and HermesIconSize.extraLarge. This catalog slice needs its own source-of-truth module (not
+// Mirrors the foundation-only HermesAttachmentSize and HermesIconSize scales (both defined in
+// HermesMobile/Config/HermesSpacing.swift, with no production caller yet). This catalog slice needs its own source-of-truth module (not
 // a duplicate of the spacing/radius scale, not catalog chrome), real Hermex color-ramp values instead
 // of local hex/rgb literals, real Icon/Button composition instead of text glyphs, and a full-box
 // Shimmer/SkeletonGroup loading placeholder instead of a hand-built "Uploading…" tile.
 const HERMES_ATTACHMENT_SIZE_PATH = 'native/catalog/hermes/hermesAttachmentSize.ts';
 
-test('hermesAttachmentSize.ts defines the exact adopted HermesAttachmentSize component-size tokens and HermesIconSize.extraLarge, independent of the catalog\'s own spacing/radius scale', () => {
+test('hermesAttachmentSize.ts defines the exact foundation HermesAttachmentSize component-size tokens and HermesIconSize.large, independent of the catalog\'s own spacing/radius scale', () => {
   assert.ok(existsSync(path.join(ROOT, HERMES_ATTACHMENT_SIZE_PATH)), `${HERMES_ATTACHMENT_SIZE_PATH} should exist as the Attachment size token source of truth`);
   const src = read(HERMES_ATTACHMENT_SIZE_PATH);
   assert.match(src, /export const HERMES_ATTACHMENT_SIZE = \{/);
@@ -4323,7 +4351,7 @@ test('hermesAttachmentSize.ts defines the exact adopted HermesAttachmentSize com
   assert.doesNotMatch(src, /from\s*'\.\.\/\.\.\/\.\.\/tokens'/, 'this module must not depend on the catalog\'s own spacing/radius scale — it is a standalone, Attachment-specific size table, not catalog chrome or a spacing token');
 });
 
-test('AttachmentTileGallery sizes its examples from the adopted HermesAttachmentSize/HermesIconSize tokens, not local hardcoded geometry', () => {
+test('AttachmentTileGallery sizes its examples from the foundation HermesAttachmentSize/HermesIconSize tokens, not local hardcoded geometry', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   assert.match(
     previewsSrc,
@@ -4333,7 +4361,7 @@ test('AttachmentTileGallery sizes its examples from the adopted HermesAttachment
   assert.match(
     previewsSrc,
     /import\s*\{\s*HERMES_ICON_SIZE\s*\}\s*from\s*'\.\/hermesIconSize'/,
-    'expected HermesComponentFamiliesPreviews.tsx to import HermesIconSize.extraLarge from the canonical ./hermesIconSize module',
+    'expected HermesComponentFamiliesPreviews.tsx to import HermesIconSize from the canonical ./hermesIconSize module',
   );
   const body = extractFunctionBody(previewsSrc, 'AttachmentTileGallery');
   for (const key of [
@@ -4344,7 +4372,8 @@ test('AttachmentTileGallery sizes its examples from the adopted HermesAttachment
   ]) {
     assert.match(body, new RegExp(`HERMES_ATTACHMENT_SIZE\\.${key}\\b`), `expected AttachmentTileGallery to size an example from HERMES_ATTACHMENT_SIZE.${key}`);
   }
-  assert.match(body, /HERMES_ICON_SIZE\.extraLarge\b/, 'expected the file-type icon to render at the adopted HermesIconSize.extraLarge');
+  assert.match(body, /HERMES_ICON_SIZE\.large\b/, 'expected icon-panel file glyphs to render at HermesIconSize.large, matching AttachmentFileBadge');
+  assert.doesNotMatch(body, /HERMES_ICON_SIZE\.extraLarge\b/, 'no Attachment file glyph renders at HermesIconSize.extraLarge in Swift');
   assert.doesNotMatch(body, /width:\s*96\b|height:\s*96\b|width:\s*168\b/, 'the old hand-picked 96/168 geometry must be replaced by the adopted token references above');
 });
 
@@ -4427,7 +4456,7 @@ test('Attachment section documents HermesAttachmentSize geometry, states no new 
   ]) {
     assert.match(section, new RegExp(`HERMES_ATTACHMENT_SIZE\\.${key}\\b`), `expected the Attachment section to document HermesAttachmentSize.${key}`);
   }
-  assert.match(section, /HERMES_ICON_SIZE\.extraLarge\b/, 'expected the Attachment section to document HermesIconSize.extraLarge');
+  assert.match(section, /HERMES_ICON_SIZE\.large\b/, 'expected the Attachment section to document HermesIconSize.large (AttachmentFileBadge)');
   assert.match(section, /no new (?:global )?spacing[^.]*radius scale/i, 'expected the section to state HermesAttachmentSize is not a new global spacing/radius scale');
   assert.match(section, /no new color family/i, 'expected the section to state no new color family was introduced');
   assert.match(section, /native SwiftUI[^.]*remain/i, 'expected the section to restate that native/platform primitives remain underneath the Hermex compositions');
@@ -4444,7 +4473,7 @@ test('Correction (attachment parity): the message attachment example is sized fr
     'expected the message attachment Card to size itself from HERMES_ATTACHMENT_SIZE.messageGridCell (via gridCellSize) at the call site, not a fixed width on the shared style object',
   );
   const messageCard = body.match(/<Card density="compact" style=\{\[preview\.messageFileTile,\s*gridCellSize\]\}>([\s\S]*?)<\/Card>/)?.[1] ?? '';
-  assert.match(messageCard, /<Icon[^>]+HERMES_ICON_SIZE\.extraLarge/, 'message tile should render the file glyph directly in its vertical production anatomy');
+  assert.match(messageCard, /<Icon[^>]+MESSAGE_FILE_GLYPH_SIZE/, 'message tile should render the file glyph directly at production MessageBubbleView.fileCell\'s 28pt');
   assert.match(messageCard, /preview\.tileName/, 'message tile should render its centered filename with the compact message-tile text style');
   assert.match(messageCard, /preview\.tileExt/, 'message tile should render its extension label below the filename');
   assert.doesNotMatch(messageCard, /preview\.fileIconPanel|preview\.composerTileText|preview\.composerTileDetail/, 'message tile must not reuse the horizontal composer icon-panel/text-detail anatomy that makes the 118pt tile clip');
@@ -4453,7 +4482,7 @@ test('Correction (attachment parity): the message attachment example is sized fr
   assert.match(messageStyle, /justifyContent:\s*'center'/, 'message tile contents should be centered inside the fixed square');
 });
 
-test('Correction (attachment parity): ComposerPatternPreview\'s embedded Attachment example composes the same adopted HermesAttachmentSize/HermesIconSize/HERMES_COLOR_RAMPS tokens and real Icon as AttachmentTileGallery, not raw 44×52 geometry, hex/rgba literals, or a text-glyph icon', () => {
+test('Correction (attachment parity): ComposerPatternPreview\'s embedded Attachment example composes the same foundation HermesAttachmentSize/HermesIconSize/HERMES_COLOR_RAMPS tokens and real Icon as AttachmentTileGallery, not raw 44×52 geometry, hex/rgba literals, or a text-glyph icon', () => {
   const previewsSrc = read(COMPONENT_FAMILIES_PREVIEWS_PATH);
   const body = extractFunctionBody(previewsSrc, 'ComposerPatternPreview');
   // Scoped to just the embedded Attachment example's own <Card>...</Card> markup, not the whole
@@ -4471,7 +4500,7 @@ test('Correction (attachment parity): ComposerPatternPreview\'s embedded Attachm
   assert.match(attachmentMarkup, /<Icon\b[^>]*name="paperclip"/, 'expected the Composer pattern\'s file-type icon to be a real Icon, not a text glyph');
   assert.match(attachmentMarkup, /HERMES_ATTACHMENT_SIZE\.fileIconPanelWidth\b/, 'expected the Composer pattern\'s icon panel to size from HERMES_ATTACHMENT_SIZE.fileIconPanelWidth');
   assert.match(attachmentMarkup, /HERMES_ATTACHMENT_SIZE\.fileIconPanelHeight\b/, 'expected the Composer pattern\'s icon panel to size from HERMES_ATTACHMENT_SIZE.fileIconPanelHeight');
-  assert.match(attachmentMarkup, /HERMES_ICON_SIZE\.extraLarge\b/, 'expected the Composer pattern\'s file icon to render at the adopted HermesIconSize.extraLarge');
+  assert.match(attachmentMarkup, /HERMES_ICON_SIZE\.large\b/, 'expected the Composer pattern\'s file icon to render at HermesIconSize.large (24pt), matching ChatComposerAttachmentStripView');
   assert.match(attachmentMarkup, /HERMES_COLOR_RAMPS\.Blue\[100\]/, 'expected the Composer pattern\'s icon panel background to come from HERMES_COLOR_RAMPS.Blue[100]');
   assert.match(attachmentMarkup, /HERMES_COLOR_RAMPS\.Blue\[500\]/, 'expected the Composer pattern\'s icon/extension tint to come from HERMES_COLOR_RAMPS.Blue[500]');
 });

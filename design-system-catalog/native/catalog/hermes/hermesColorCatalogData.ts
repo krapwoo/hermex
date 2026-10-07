@@ -1,11 +1,12 @@
 /**
- * Hermex adopted color-ramp and semantic-color catalog data.
+ * Hermex Design System color-ramp and semantic-color catalog data (accepted into the Design System;
+ * the ramps have no production caller yet).
  *
- * Ramp data moved here from `hermesTokenProposal.ts` once family plan 02's CO-1 adopted
- * `HermesColorRamp` as real production Swift (`HermesMobile/Config/HermesColor.swift`, pinned
- * exactly by `HermesColorTests`) — these 99 values are display data for the adopted `Hermex Colors`
+ * Ramp data moved here from `hermesTokenProposal.ts` once family plan 02's CO-1 added
+ * `HermesColorRamp` to the app's Swift source (`HermesMobile/Config/HermesColor.swift`, pinned
+ * exactly by `HermesColorTests`; no production screen reads it yet) — these 99 values are display data for the accepted `Hermex Colors`
  * catalog page, not a proposal. `hermesTokenProposal.ts` no longer defines or exports any Color
- * data, and this module does not import anything from it — not even a type — so the adopted Color
+ * data, and this module does not import anything from it — not even a type — so the Color
  * data has no dependency on the proposal module at all.
  *
  * Semantic-color roles: only the 13 roles genuinely true today are kept here — the 11 roles
@@ -44,7 +45,7 @@ export const HERMES_COLOR_GENERATED_STEP_CONSUMPTION_RESTRICTION =
   'Every non-500 ramp step is a generated value, pinned exactly by HermesColorTests. No production UI pairing may consume a generated (non-500) step until that specific pairing has passed contrast validation, in both light and dark appearance and under Increased Contrast (spec §4.1). An unused, correctly-valued constant is compliant; a consumed, unvalidated one is not.';
 
 // A new, local, Color-only classification — deliberately not the proposal module's own
-// classification type (Finding N7/N8): the adopted Color data module has no dependency, not even a
+// classification type (Finding N7/N8): the Color data module has no dependency, not even a
 // type-only one, on the proposal module.
 export type HermesColorCatalogClassification = 'Platform-owned adaptive token' | 'Current production evidence';
 

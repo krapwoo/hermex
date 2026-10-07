@@ -1,12 +1,12 @@
 /**
- * Hermex adopted Attachment component-size tokens.
+ * Hermex Design System Attachment component-size tokens.
  *
- * Mirrors `HermesAttachmentSize` (HermesMobile/Config/HermesSpacing.swift), adopted in the verified
- * local implementation branch alongside this catalog slice. These are fixed component dimensions
+ * Mirrors `HermesAttachmentSize` (HermesMobile/Config/HermesSpacing.swift), defined in this branch's
+ * foundation layer with no production caller yet. These are fixed component dimensions
  * for the Attachment family specifically: not a new global spacing/radius scale (see
  * `tokens/scales.ts` for those, which this module does not import from) and not catalog chrome.
- * Attachment's own file-type icon renders at `HermesIconSize.extraLarge`, owned by the canonical
- * `./hermesIconSize` module, not duplicated here.
+ * Attachment's file-type glyph renders at `HermesIconSize.large` inside AttachmentFileBadge's icon
+ * panel, owned by the canonical `./hermesIconSize` module, not duplicated here.
  */
 
 export const HERMES_ATTACHMENT_SIZE = {

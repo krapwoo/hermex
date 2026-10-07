@@ -1,8 +1,8 @@
 /**
- * Hermex adopted icon-size tokens.
+ * Hermex Design System icon-size tokens (foundation-only; no production caller yet).
  *
  * Mirrors `HermesIconSize` (HermesMobile/Config/HermesSpacing.swift): the unchanged five-step base
- * scale, plus the semantic pairing aliases adopted alongside it — `HermesIconSize.Typography`
+ * scale, plus the semantic pairing aliases defined alongside it — `HermesIconSize.Typography`
  * (which AppFont.Role text an icon size sits beside inline) and `HermesIconSize.Avatar` (which
  * Avatar diameter an icon size sits inside, at the approved pairing: 32pt avatar → 20pt icon, 40pt
  * avatar → 24pt icon, 48pt avatar → 32pt icon). The canonical icon-size source of truth for this

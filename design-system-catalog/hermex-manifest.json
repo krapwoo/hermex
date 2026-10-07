@@ -281,7 +281,7 @@
         ],
         "adoptionStatus": {
           "state": "production-adopted",
-          "detail": "Adopted in the verified local implementation; pending upstream acceptance."
+          "detail": "Pre-existing production component already on master; this branch documents it without changing its implementation."
         },
         "usedIn": [
           {
@@ -299,7 +299,7 @@
           }
         ],
         "implementationNotes": {
-          "status": "Adopted in the verified local implementation; pending upstream acceptance.",
+          "status": "Pre-existing production component already on master; this branch documents it without changing its implementation.",
           "sourcePaths": [
             "HermesMobile/Features/Shared/AdaptiveGlassModifier.swift",
             "HermesMobileTests/AdaptiveGlassTests.swift"
@@ -495,12 +495,12 @@
         {
           "name": "iconName",
           "type": "String",
-          "desc": "SF Symbol for the file's extension — tablecells, doc.text, doc.richtext, archivebox, or a doc fallback; rendered at the adopted HermesIconSize.extraLarge."
+          "desc": "SF Symbol for the file's extension — tablecells, doc.text, doc.richtext, archivebox, or a doc fallback. AttachmentFileGlyph takes a caller-supplied size; AttachmentFileBadge renders it at HermesIconSize.large inside the icon panel."
         },
         {
           "name": "tintColor",
           "type": "Color",
-          "desc": "File-color mapping onto the adopted Hermex color ramps: spreadsheet → Green 500, text-like → Blue 500, PDF → Red 500, archive → Orange 500, unknown/default → Neutral 500."
+          "desc": "File-color mapping onto the (foundation-only) Hermex color ramps: spreadsheet → Green 500, text-like → Blue 500, PDF → Red 500, archive → Orange 500, unknown/default → Neutral 500."
         },
         {
           "name": "extensionLabel",
@@ -513,9 +513,9 @@
           "desc": "Fixed component geometry — not a spacing/radius token: HERMES_ATTACHMENT_SIZE.compactPreview (30), HERMES_ATTACHMENT_SIZE.messageGridCell (118), HERMES_ATTACHMENT_SIZE.composerImage (96; HERMES_ATTACHMENT_SIZE.composerImageAccessibility 108), HERMES_ATTACHMENT_SIZE.fileIconPanelWidth × HERMES_ATTACHMENT_SIZE.fileIconPanelHeight (58×68; HERMES_ATTACHMENT_SIZE.fileIconPanelWidthAccessibility × HERMES_ATTACHMENT_SIZE.fileIconPanelHeightAccessibility 76×84), HERMES_ATTACHMENT_SIZE.composerFileTextWidth (128; HERMES_ATTACHMENT_SIZE.composerFileTextWidthAccessibility 160), HERMES_ATTACHMENT_SIZE.composerFileTileWidth (222; HERMES_ATTACHMENT_SIZE.composerFileTileWidthAccessibility 280) × HERMES_ATTACHMENT_SIZE.composerFileTileMinHeight (92; HERMES_ATTACHMENT_SIZE.composerFileTileMinHeightAccessibility 112), HERMES_ATTACHMENT_SIZE.composerStripHeight (108; HERMES_ATTACHMENT_SIZE.composerStripHeightAccessibility 132), HERMES_ATTACHMENT_SIZE.messageFileTextInset (18), HERMES_ATTACHMENT_SIZE.removeControl (24), HERMES_ATTACHMENT_SIZE.removeOverlap (6), HERMES_ATTACHMENT_SIZE.accessibilityVerticalPadding (10). This is a fixed, Attachment-only set of named component dimensions, no new global spacing or radius scale."
         },
         {
-          "name": "HermesIconSize.extraLarge",
+          "name": "HermesIconSize.large",
           "type": "CGFloat",
-          "desc": "HERMES_ICON_SIZE.extraLarge (32) — the file-type icon's fixed render size inside its icon panel. A separate adopted icon-size family, no new color family."
+          "desc": "HERMES_ICON_SIZE.large (24) — the file-type glyph size AttachmentFileBadge uses inside its icon panel. A separate, foundation-only icon-size family; no new color family."
         }
       ],
       "category": "Components",
@@ -821,7 +821,7 @@
           "name": "HermesAvatarSize (production Swift)",
           "type": ".small (32) | .medium (40) | .large (48)",
           "default": ".medium",
-          "desc": "Named diameter token for Avatar compositions; production currently uses .small for AccordionList's leading slot."
+          "desc": "Named diameter token for Avatar compositions. Foundation-only: it is read only by other new foundation files (AccordionList's leading-slot inset and HermexAvatar's diameter) — no production screen uses it; the composed specimens live in the DEBUG-only HermexOverlayLab."
         },
         {
           "name": "systemImage (HermexAvatar, production Swift)",
@@ -846,7 +846,7 @@
       "variants": [],
       "states": [],
       "hermesReference": {
-        "useWhen": "Use ServerAvatarBadge (production) for the initials identity of the active server or account; use HermexAvatar for a circular SF Symbol identity badge at a named HermesAvatarSize, such as the glyph inside an empty or error state; use the bot-face system only for the Bots hero/idle face. HermexAvatar takes a system image only — it has no photo or initials mode.",
+        "useWhen": "For an initials identity, production has no shared component yet: ServerAvatarBadge is private to Settings, and the Sessions header and Identity editor each draw their own inline circle; use HermexAvatar for a circular SF Symbol identity badge at a named HermesAvatarSize, such as the glyph inside an empty or error state; use the bot-face system only for the Bots hero/idle face. HermexAvatar takes a system image only — it has no photo or initials mode.",
         "avoidWhen": "Avoid the new HermexAvatar.swift system-image badge as a production dependency today — no screen composes it yet. Avoid reaching for the bot-face system outside Bots — it is a separate drawing/motion system, not a general-purpose Avatar.",
         "alternatives": [
           {
@@ -862,17 +862,17 @@
         "usedIn": [
           {
             "screen": "Sessions",
-            "effect": "The pre-existing header avatar (ServerAvatarBadge) opens account and server controls; it becomes the search-close control when needed."
+            "effect": "The pre-existing inline header avatar (drawn directly in SessionListView, not ServerAvatarBadge) opens account and server controls; it becomes the search-close control when needed."
           },
           {
             "screen": "Servers",
             "path": "Settings → Servers",
-            "effect": "The pre-existing ServerAvatarBadge gives each configured server an initials badge."
+            "effect": "The pre-existing ServerAvatarBadge gives each configured server an initials badge in the server list and the server editor."
           },
           {
             "screen": "Identity",
             "path": "Settings → Identity",
-            "effect": "The pre-existing editor previews the selected initials and header color via ServerAvatarBadge."
+            "effect": "The pre-existing Sessions Avatar editor previews the selected initials and header color with its own inline circle."
           },
           {
             "screen": "Bots",
@@ -1885,14 +1885,14 @@
           "state": "foundation-available",
           "detail": "Available in this branch's foundation layer; no production call site exists yet."
         },
-        "useSummary": "A new, foundation-only component; the displayed name intentionally omits a Hermex prefix. Tasks, Usage, and Kanban each keep their own existing, direct native SwiftUI segmented control in this branch; migrating any of them is separate, issue-driven work, not something this foundation audit counts or gates.",
+        "useSummary": "A new, foundation-only component; the displayed name intentionally omits a Hermex prefix. Tasks and Usage each keep their own existing, direct native SwiftUI segmented control, and Kanban keeps its own UIKit status-control strip, in this branch; migrating any of them is separate, issue-driven work, not something this foundation audit counts or gates.",
         "implementationNotes": {
           "status": "Available in this branch's foundation layer; no production call site exists yet.",
           "sourcePaths": [
             "HermesMobile/Features/Shared/SegmentedControl.swift"
           ],
           "notes": [
-            "TasksView.swift, InsightsView.swift, UsageChartCard.swift, and KanbanLabView.swift each still construct their own native SwiftUI segmented control directly; none imports SegmentedControl.swift in this branch. Migrating any of them is separate, issue-driven work — this foundation audit does not count or gate native-control call sites."
+            "TasksView.swift, InsightsView.swift, and UsageChartCard.swift each still construct their own native SwiftUI segmented control directly, and KanbanLabView.swift keeps its own UIKit status-control strip (KanbanStatusControl); none imports SegmentedControl.swift in this branch. Migrating any of them is separate, issue-driven work — this foundation audit does not count or gate native-control call sites."
           ]
         },
         "compositionSlots": [],
@@ -2519,7 +2519,7 @@
             "HermesMobile/Features/Shared/HermexTooltip.swift"
           ],
           "notes": [
-            "Reuses the exact `.popover(isPresented:) { … }.presentationCompactAdaptation(.none)` pattern ContextWindowIndicatorView and GitBranchPickerView already established, rather than inventing a second anchored-presentation convention."
+            "Reuses the native `.popover(isPresented:)` pattern ContextWindowIndicatorView and GitBranchPickerView already established, with ContextWindowIndicatorView's own `.presentationCompactAdaptation(.none)` (GitBranchPickerView uses `.popover`), rather than inventing a second anchored-presentation convention."
           ]
         },
         "compositionSlots": [
@@ -3341,7 +3341,7 @@
         ],
         "adoptionStatus": {
           "state": "production-adopted",
-          "detail": "Adopted in the verified local implementation; pending upstream acceptance."
+          "detail": "Pre-existing production component already on master; this branch documents it without changing its implementation."
         },
         "useSummary": "TranscriptLogRowView.swift is the real, already-adopted production row: a tool call's log line, the \"Thinking\" reasoning block, and a bot activity/plan row all compose it directly today. This entry documents that same production component, not a separate foundation candidate.",
         "usedIn": [
@@ -3357,7 +3357,7 @@
           }
         ],
         "implementationNotes": {
-          "status": "Adopted in the verified local implementation; pending upstream acceptance.",
+          "status": "Pre-existing production component already on master; this branch documents it without changing its implementation.",
           "sourcePaths": [
             "HermesMobile/Features/Chat/TranscriptLogRowView.swift"
           ],
@@ -3532,10 +3532,10 @@
             "HermesMobile/Features/Shared/HermexComposerToolbar.swift"
           ],
           "notes": [
-            "Generalized from ComposerToolbarScroller.swift's own layout skeleton (one ScrollView(.horizontal) + one HStack, HermesSpacing.s8 item spacing, a 44pt minimum row height, hidden scroll indicators, size-based horizontal bounce, and never dismissing the keyboard on scroll) plus its edge-fades helper (now HermexComposerToolbarEdgeFades, with ComposerToolbarEdgeFades kept as a typealias for the production name); the row now applies HermesSpacing.s8 padding on all sides rather than only horizontal.",
+            "Generalized from ComposerToolbarScroller's own layout skeleton in ChatComposerToolbarScroller.swift (one ScrollView(.horizontal) + one HStack, HermesSpacing.s8 item spacing, a 44pt minimum row height, hidden scroll indicators, size-based horizontal bounce, and never dismissing the keyboard on scroll) plus an edge-fades rule modelled on production's HorizontalOverflowEdgeFades (HorizontalOverflowEdgeFades.swift, unchanged and still applied via .horizontalOverflowFades(_:) by ChatComposerToolbarScroller.swift and MarkdownRenderer.swift) — the new type is HermexComposerToolbarEdgeFades, with an unreferenced ComposerToolbarEdgeFades typealias; the row now applies HermesSpacing.s8 padding on all sides rather than only horizontal.",
             "Issue #607 round 3/4 correction: the elevated appearance's radius is the explicit HermesRadius.r24 token, superseding the earlier HermesRadius.card, and its all-around padding is HermesSpacing.s8, superseding the earlier HermesSpacing.s16 — this catalog reconstruction (HermesComponentFamiliesPreviews.tsx's composerToolbarElevated style) now matches both corrected values.",
             "The content slot is one ordered, zero-or-more arbitrary-content slot, not a button-only concept: the DEBUG overlay lab's \"Elevated, mixed content\" specimen and this catalog's \"Elevated — mixed content\" gallery specimen both demonstrate a display-only Tag alongside a real Button in the same row.",
-            "Report only: no production call site imports or composes HermexComposerToolbar( in this branch; ChatComposerView.swift, BotChatComposerView.swift, and BotRoomComposerView.swift all keep calling their own existing ComposerToolbarScroller unchanged. Migrating one onto Composer Toolbar is scoped to a separate adoption issue, not this slice."
+            "Report only: no production call site imports or composes HermexComposerToolbar( in this branch; ChatComposerView.swift and BotChatComposerView.swift keep calling their own existing ComposerToolbarScroller unchanged. Migrating one onto Composer Toolbar is scoped to a separate adoption issue, not this slice."
           ]
         },
         "compositionSlots": [
@@ -3713,7 +3713,7 @@
         {
           "name": "pendingRequestCardSurface(cornerRadius:)",
           "type": "(CGFloat) -> some View",
-          "desc": "Defined in PendingRequestSurfaces.swift, not HermexCard.swift — a separate, pre-existing function, unconditionally secondarySystemBackground + stroke, deliberately opaque so it always renders above live transcript text. cornerRadius is caller-supplied — 24pt (ChatComposerMetrics.cardCornerRadius) for the Sessions clarification card, a Bot-card-specific value for the Bot card."
+          "desc": "Defined in PendingRequestSurfaces.swift, not HermexCard.swift — a separate, pre-existing function, unconditionally secondarySystemBackground + stroke, deliberately opaque so it always renders above live transcript text. cornerRadius is caller-supplied — 26pt (ChatComposerMetrics.cardCornerRadius) for the Sessions clarification card, a Bot-card-specific value for the Bot card."
         },
         {
           "name": "pendingRequestBlockSurface()",
@@ -3767,7 +3767,7 @@
         ],
         "adoptionStatus": {
           "state": "production-adopted",
-          "detail": "Adopted in the verified local implementation; pending upstream acceptance."
+          "detail": "Pre-existing production component already on master; this branch documents it without changing its implementation."
         },
         "usedIn": [
           {
@@ -3782,7 +3782,7 @@
           }
         ],
         "implementationNotes": {
-          "status": "Adopted in the verified local implementation; pending upstream acceptance.",
+          "status": "Pre-existing production component already on master; this branch documents it without changing its implementation.",
           "sourcePaths": [
             "HermesMobile/Features/Chat/PendingRequestSurfaces.swift",
             "HermesMobile/Features/Chat/ClarificationRequestCard.swift",
@@ -3790,7 +3790,7 @@
             "HermesMobile/Features/Bots/BotRoomComposerView.swift"
           ],
           "notes": [
-            "Decision controls belong to production's pre-existing .chatDecision(_:) ButtonStyle, not the new, unadopted Buttons family documented in this catalog: PendingRequestSubmitButton uses .chatTactile(.icon), and the Yes/No/Approve/Deny choices use .chatDecision(.primary/.secondary/.destructive) — see Buttons for that new (foundation-only) family's own accurate status.",
+            "Decision controls belong to production's pre-existing .chatDecision(_:) ButtonStyle, not the new, unadopted Buttons family documented in this catalog: PendingRequestSubmitButton uses .chatTactile(.icon), the Bot pending-request card's Yes/No/Approve/Deny choices use .chatDecision(.primary/.secondary/.destructive), and the Sessions clarification card's choices use .chatTactile(.capsule) — see Buttons for that new (foundation-only) family's own accurate status.",
             "ApprovalRequestOverlay.swift does not call pendingRequestCardSurface(cornerRadius:) — its own card surface is implemented separately and is not documented here."
           ]
         },
@@ -3918,7 +3918,7 @@
           {
             "screen": "Conversation",
             "path": "Sessions → open a conversation",
-            "effect": "A turn's summary disclosure, tool-call log lines, and the \"Thinking\" reasoning block compose this pattern, using the existing TranscriptLogRowView."
+            "effect": "Tool-call log lines and the \"Thinking\" reasoning block compose this pattern through the existing TranscriptLogRowView; a turn's summary disclosure uses its own TranscriptTurnFoldRowView."
           },
           {
             "screen": "Bots",
